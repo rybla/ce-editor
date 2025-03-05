@@ -7,7 +7,9 @@ import Data.Show.Generic (genericShow)
 
 --------------------------------------------------------------------------------
 
-data Expr = Expr Label (Array (Array Expr))
+data Expr = Expr Label (Array Expr)
+
+infix 0 Expr as %
 
 derive instance Generic Expr _
 

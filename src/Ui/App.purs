@@ -56,7 +56,7 @@ component = H.mkComponent { initialState, eval, render }
         state <- get
         handleAction action # runExceptT >>= flip either pure \err -> do
           put state
-          trace "App Error" err
+          trace "App . Error" err
         pure unit
     }
 
@@ -85,13 +85,7 @@ component = H.mkComponent { initialState, eval, render }
               [ HH.div [] [ HH.button [ HE.onClick $ const ClickMe ] [ text "click me!" ] ]
               ]
           ]
-      , HH.div
-          [ style do
-              tell [ "flex-grow: 1", "flex-shrink: 1" ]
-              tell [ "padding: 0.5em" ]
-          ]
-          [ HH.slot (Proxy @"Editor") unit Editor.component state.editor EditorOutput
-          ]
+      , HH.slot (Proxy @"Editor") unit Editor.component state.editor EditorOutput
       , HH.slot_ (Proxy @"Console") unit Console.component unit
       ]
 
