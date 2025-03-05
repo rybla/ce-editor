@@ -4,14 +4,17 @@ import Prelude
 
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.Except (ExceptT, runExceptT)
-import Control.Monad.State (get, modify_, put)
+import Control.Monad.State (get, gets, modify_, put)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (tell)
-import Data.Array (fold, mapWithIndex)
+import Data.Array (fold)
 import Data.Array as Array
 import Data.Either (Either(..))
-import Data.Expr (Expr(..))
+import Data.Eq.Generic (genericEq)
+import Data.Expr (Expr(..), (%))
 import Data.Expr as Expr
+import Data.FoldableWithIndex (foldMapWithIndex)
+import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe(..))
@@ -30,10 +33,13 @@ import Halogen.HTML.Properties as HP
 import Type.Prelude (Proxy(..))
 import Ui.Common (style, text)
 import Ui.Console as Console
+import Utility (todo)
 import Web.Event.Event as Event
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
 
+--------------------------------------------------------------------------------
+-- Editor
 --------------------------------------------------------------------------------
 
 data Query a = OtherQuery a
@@ -80,45 +86,59 @@ component = H.mkComponent { initialState, eval, render }
     }
 
   render state =
-    HH.div
-      [ style do
-          tell [ "flex-grow: 1", "flex-shrink: 1" ]
-          tell [ "overflow: scroll" ]
-          tell [ "padding: 0.5em" ]
-      ]
-      [ HH.slot (Proxy @"Engine") unit engine_component
-          { editor: state.editor
-          , expr: state.editor.initial_expr
-          }
-          EngineOutput_Action
-      , HH.slot (Proxy @"Expr") unit expr_component
-          { expr: state.editor.initial_expr }
-          ExprOutput_Action
-      ]
+    let
+      initial_expr = Expr.Root % state.editor.initial_exprs
+    in
+      HH.div
+        [ style do
+            tell [ "flex-grow: 1", "flex-shrink: 1" ]
+            tell [ "overflow: scroll" ]
+            tell [ "padding: 0.5em" ]
+        ]
+        [ HH.slot (Proxy @"Engine") unit engine_component
+            { editor: state.editor
+            , expr: initial_expr
+            , handle: state.editor.initial_handle
+            }
+            EngineOutput_Action
+        , HH.slot (Proxy @"Expr") unit expr_component
+            { expr: initial_expr
+            }
+            ExprOutput_Action
+        ]
 
 handleAction :: Action -> M' Unit
 handleAction Initialize = do
   lift $ trace "Editor" $ text "initialized"
-handleAction (EngineOutput_Action engine_output) = case engine_output of
+handleAction (EngineOutput_Action eo) = case eo of
   Output_EngineOutput o -> H.raise o # lift
-handleAction (ExprOutput_Action (is /\ expr_output)) = case expr_output of
+  ExprQuery_EngineOutput q -> H.tell (Proxy @"Expr") unit q # lift
+handleAction (ExprOutput_Action (is /\ eo)) = case eo of
   Output_ExprOutput o ->
     H.raise o # lift
-  ExprInteraction interaction -> do
-    H.tell (Proxy @"Engine") unit (ExprInteraction_EngineQuery is interaction) # lift
+  ExprInteraction pi -> do
+    H.tell (Proxy @"Engine") unit (ExprInteraction_EngineQuery is pi) # lift
+  PointInteraction_ExprOutput i pi ->
+    H.tell (Proxy @"Engine") unit (PointInteraction_EngineQuery (Expr.Index is i) pi) # lift
 
 --------------------------------------------------------------------------------
+-- Engine
+--------------------------------------------------------------------------------
 
-data EngineQuery a = ExprInteraction_EngineQuery (List Int) ExprInteraction a
+data EngineQuery a
+  = ExprInteraction_EngineQuery (List Int) ExprInteraction a
+  | PointInteraction_EngineQuery Expr.Index PointInteraction a
 
 type EngineInput =
   { editor :: Editor
   , expr :: Expr
+  , handle :: Expr.Handle
   }
 
 type EngineState =
   { editor :: Editor
   , expr :: Expr
+  , handle :: Expr.Handle
   }
 
 data EngineAction
@@ -127,7 +147,9 @@ data EngineAction
 
 type EngineSlots = () :: Row Type
 
-data EngineOutput = Output_EngineOutput Output
+data EngineOutput
+  = Output_EngineOutput Output
+  | ExprQuery_EngineOutput (forall a. a -> ExprQuery a)
 
 type EngineHTML = H.ComponentHTML EngineAction EngineSlots EngineM
 type EngineM' = ExceptT PlainHTML EngineM
@@ -162,12 +184,52 @@ initialEngineState :: EngineInput -> EngineState
 initialEngineState input =
   { editor: input.editor
   , expr: input.expr
+  , handle: input.handle
   }
 
 handleEngineQuery :: forall a. EngineQuery a -> EngineM' a
-handleEngineQuery (ExprInteraction_EngineQuery is interaction a) = case interaction of
+handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
   ClickExpr _event -> do
     traceEngineM "Engine" (text $ "got mouse click from expr at " <> show (Array.fromFoldable is)) # lift
+    -- deactivate previous handle points
+    gets _.handle >>= case _ of
+      Expr.Cursor (Expr.Index is0 i0) (Expr.Index is1 i1) -> do
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is0 $ PointQuery_ExprQuery i0 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is1 $ PointQuery_ExprQuery i1 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+      Expr.Select (Expr.Index is00 i00) (Expr.Index is01 i01) (Expr.Index is10 i10) (Expr.Index is11 i11) -> do
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is00 $ PointQuery_ExprQuery i00 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is01 $ PointQuery_ExprQuery i01 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is10 $ PointQuery_ExprQuery i10 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is11 $ PointQuery_ExprQuery i11 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+    -- update handle
+    case List.unsnoc is of
+      Nothing -> pure unit
+      Just { init, last } -> do
+        let ix0@(Expr.Index is0 i0) = Expr.Index init last
+        let ix1@(Expr.Index is1 i1) = Expr.Index init (last + 1)
+        modify_ _ { handle = Expr.Cursor ix0 ix1 }
+        -- activate new handle points
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is0 $ PointQuery_ExprQuery i0 $ ModifyPointState (_ { style = CursorLeftPointStyle }) a') # lift
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is1 $ PointQuery_ExprQuery i1 $ ModifyPointState (_ { style = CursorRightPointStyle }) a') # lift
+        pure unit
+    pure a
+handleEngineQuery (PointInteraction_EngineQuery ix@(Expr.Index is i) pi a) = case pi of
+  ClickPoint _event -> do
+    traceEngineM "Engine" (text $ "got mouse click from point at " <> show ix) # lift
+    -- deactivate previous handle points
+    gets _.handle >>= case _ of
+      Expr.Cursor (Expr.Index is0 i0) (Expr.Index is1 i1) -> do
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is0 $ PointQuery_ExprQuery i0 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is1 $ PointQuery_ExprQuery i1 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+      Expr.Select (Expr.Index is00 i00) (Expr.Index is01 i01) (Expr.Index is10 i10) (Expr.Index is11 i11) -> do
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is00 $ PointQuery_ExprQuery i00 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is01 $ PointQuery_ExprQuery i01 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is10 $ PointQuery_ExprQuery i10 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is11 $ PointQuery_ExprQuery i11 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+    -- update handle
+    modify_ _ { handle = Expr.Cursor ix ix }
+    -- activate new handle points
+    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is $ PointQuery_ExprQuery i $ ModifyPointState (_ { style = PointCursorPointStyle }) a') # lift
     pure a
 
 handleEngineAction :: EngineAction -> EngineM' Unit
@@ -178,9 +240,13 @@ handleEngineAction (ReceiveEngine input) = do
   put $ initialEngineState input
 
 --------------------------------------------------------------------------------
+-- Expr
+--------------------------------------------------------------------------------
 
 data ExprQuery a = ExprQuery (List Int) (ExprQuery' a)
-data ExprQuery' a = ModifyExprState (ExprState -> ExprState) a
+data ExprQuery' a
+  = ModifyExprState (ExprState -> ExprState) a
+  | PointQuery_ExprQuery Int (PointQuery a)
 
 type ExprInput =
   { expr :: Expr
@@ -196,11 +262,13 @@ data ExprAction
   | ReceiveExpr ExprInput
   | ExprOutput_ExprAction Int ExprOutput
   | ExprInteraction_ExprAction ExprInteraction
+  | PointOutput_ExprAction Int PointOutput
 
 -- | ClickExpr MouseEvent
 
 type ExprSlots =
   ( "Expr" :: H.Slot ExprQuery ExprOutput Int
+  , "Point" :: H.Slot PointQuery PointOutput Int
   )
 
 type ExprOutput = List Int /\ ExprOutput'
@@ -208,6 +276,7 @@ type ExprOutput = List Int /\ ExprOutput'
 data ExprOutput'
   = Output_ExprOutput Output
   | ExprInteraction ExprInteraction
+  | PointInteraction_ExprOutput Int PointInteraction
 
 data ExprInteraction = ClickExpr MouseEvent
 
@@ -254,13 +323,26 @@ expr_component = H.mkComponent { initialState: initialExprState, eval, render }
           [ [ HH.div [ HP.classes [ HH.ClassName "ExprLabel" ] ]
                 [ case l of
                     Expr.String s -> text s
+                    Expr.Root -> text "root"
                 ]
             ]
-          , es
-              # mapWithIndex \i e ->
-                  HH.slot (Proxy @"Expr") i expr_component
-                    { expr: e }
-                    (ExprOutput_ExprAction i)
+          , let
+              renderPoint i =
+                HH.slot (Proxy @"Point") i point_component
+                  {}
+                  (PointOutput_ExprAction i)
+              renderKid i e =
+                HH.slot (Proxy @"Expr") i expr_component
+                  { expr: e }
+                  (ExprOutput_ExprAction i)
+            in
+              fold
+                [ es # foldMapWithIndex \i e ->
+                    [ renderPoint i
+                    , renderKid i e
+                    ]
+                , [ renderPoint (Array.length es) ]
+                ]
           ]
       )
 
@@ -278,6 +360,10 @@ handleExprQuery (ExprQuery Nil q) = case q of
   ModifyExprState f a -> do
     modify_ f
     pure a
+  PointQuery_ExprQuery i pq -> do
+    H.query (Proxy @"Point") i pq # lift >>= case _ of
+      Nothing -> throwError none
+      Just a -> pure a
 
 handleExprAction :: ExprAction -> ExprM' Unit
 handleExprAction InitializeExpr = pure unit
@@ -287,13 +373,21 @@ handleExprAction (ReceiveExpr input) = do
   when (state /= state') do
     put state
     pingExpr
-handleExprAction (ExprInteraction_ExprAction interaction) = do
-  case interaction of
-    ClickExpr event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-  H.raise (none /\ ExprInteraction interaction) # lift
-  pingExpr
+-- kid Expr stuff
 handleExprAction (ExprOutput_ExprAction i (is /\ o)) = do
-  H.raise (List.Cons i is /\ o) # lift
+  H.raise ((i : is) /\ o) # lift
+handleExprAction (ExprInteraction_ExprAction ei) = do
+  case ei of
+    ClickExpr event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+  H.raise (none /\ ExprInteraction ei) # lift
+  pingExpr
+-- Point stuff
+handleExprAction (PointOutput_ExprAction i (Output_PointOutput o)) =
+  H.raise (none /\ Output_ExprOutput o) # lift
+handleExprAction (PointOutput_ExprAction i (PointInteraction pi)) = do
+  case pi of
+    ClickPoint event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+  H.raise (none /\ PointInteraction_ExprOutput i pi) # lift
 
 pingExpr :: ExprM' Unit
 pingExpr = do
@@ -302,13 +396,120 @@ pingExpr = do
   modify_ _ { ping = false }
 
 --------------------------------------------------------------------------------
+-- Point
+--------------------------------------------------------------------------------
+
+data PointQuery a = ModifyPointState (PointState -> PointState) a
+
+type PointInput = {}
+
+type PointState =
+  { style :: PointStyle
+  }
+
+data PointStyle
+  = NormalPointStyle
+  | PointCursorPointStyle
+  | CursorLeftPointStyle
+  | CursorRightPointStyle
+
+derive instance Generic PointStyle _
+
+instance Eq PointStyle where
+  eq x = genericEq x
+
+data PointAction
+  = InitializePoint
+  | ReceivePoint PointInput
+  | PointInteraction_PointAction PointInteraction
+
+type PointSlots = () :: Row Type
+
+data PointOutput
+  = Output_PointOutput Output
+  | PointInteraction PointInteraction
+
+data PointInteraction = ClickPoint MouseEvent
+
+type PointHTML = H.ComponentHTML PointAction PointSlots PointM
+type PointM' = ExceptT (Maybe PlainHTML) PointM
+type PointM = H.HalogenM PointState PointAction PointSlots PointOutput Aff
+
+point_component :: H.Component PointQuery PointInput PointOutput Aff
+point_component = H.mkComponent { initialState, eval, render }
+  where
+  initialState = initialPointStyle
+
+  eval = H.mkEval H.defaultEval
+    { initialize = pure InitializePoint
+    , receive = pure <<< ReceivePoint
+    , handleQuery = \query -> do
+        state <- get
+        handlePointQuery query # runExceptT >>= case _ of
+          Left mb_err -> do
+            put state
+            case mb_err of
+              Nothing -> pure unit
+              Just err -> tracePointM "Editor . Point . Error" err
+            pure none
+          Right a -> pure $ pure a
+    , handleAction = \action -> do
+        state <- get
+        handlePointAction action # runExceptT >>= case _ of
+          Left mb_err -> do
+            put state
+            case mb_err of
+              Nothing -> pure unit
+              Just err -> tracePointM "Editor . Point . Error" err
+          Right it -> pure it
+    }
+
+  render state =
+    HH.div
+      [ HP.classes $ fold
+          [ [ HH.ClassName "Point" ]
+          , case state.style of
+              NormalPointStyle -> []
+              PointCursorPointStyle -> [ HH.ClassName "PointCursor" ]
+              CursorLeftPointStyle -> [ HH.ClassName "CursorLeft" ]
+              CursorRightPointStyle -> [ HH.ClassName "CursorRight" ]
+          ]
+      , HE.onClick (ClickPoint >>> PointInteraction_PointAction)
+      ]
+      [ text " " ]
+
+initialPointStyle :: PointInput -> PointState
+initialPointStyle input =
+  { style: NormalPointStyle
+  }
+
+handlePointQuery :: forall a. PointQuery a -> PointM' a
+handlePointQuery (ModifyPointState f a) = do
+  modify_ f
+  pure a
+
+handlePointAction :: PointAction -> PointM' Unit
+handlePointAction InitializePoint = do
+  pure unit
+handlePointAction (ReceivePoint input) = do
+  state <- get
+  let state' = initialPointStyle input
+  when (state' /= state) do
+    put state'
+handlePointAction (PointInteraction_PointAction pi) = do
+  H.raise (PointInteraction pi) # lift
+
+--------------------------------------------------------------------------------
 
 trace :: String -> PlainHTML -> M Unit
 trace label content = H.raise $ TellConsole \a -> Console.AddMessage { label, content } a
 
+traceEngineM :: String -> PlainHTML -> EngineM Unit
+traceEngineM label content = H.raise $ Output_EngineOutput $ TellConsole \a -> Console.AddMessage { label, content } a
+
 traceExprM :: String -> PlainHTML -> ExprM Unit
 traceExprM label content = H.raise $ Tuple none $ Output_ExprOutput $ TellConsole \a -> Console.AddMessage { label, content } a
 
-traceEngineM :: String -> PlainHTML -> EngineM Unit
-traceEngineM label content = H.raise $ Output_EngineOutput $ TellConsole \a -> Console.AddMessage { label, content } a
+tracePointM :: String -> PlainHTML -> PointM Unit
+tracePointM label content = H.raise $ Output_PointOutput $ TellConsole \a -> Console.AddMessage { label, content } a
 
