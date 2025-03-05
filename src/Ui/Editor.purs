@@ -8,11 +8,15 @@ import Control.Monad.State (get, modify_, put)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (tell)
 import Data.Array (fold, mapWithIndex)
+import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Expr (Expr(..))
 import Data.Expr as Expr
-import Data.List (List)
+import Data.List (List(..), (:))
 import Data.List as List
+import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Editor (Editor)
 import Effect.Aff (Aff, Milliseconds(..))
@@ -26,7 +30,6 @@ import Halogen.HTML.Properties as HP
 import Type.Prelude (Proxy(..))
 import Ui.Common (style, text)
 import Ui.Console as Console
-import Utility (todo)
 import Web.Event.Event as Event
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
@@ -96,15 +99,17 @@ component = H.mkComponent { initialState, eval, render }
 handleAction :: Action -> M' Unit
 handleAction Initialize = do
   lift $ trace "Editor" $ text "initialized"
-handleAction (ExprOutput_Action (OutputExpr_Output _is o)) = do
-  -- TODO: use `is` as index to expr that was source of output
-  H.raise o # lift
-handleAction (EngineOutput_Action (OutputEngine_Output o)) = do
-  H.raise o # lift
+handleAction (EngineOutput_Action engine_output) = case engine_output of
+  Output_EngineOutput o -> H.raise o # lift
+handleAction (ExprOutput_Action (is /\ expr_output)) = case expr_output of
+  Output_ExprOutput o ->
+    H.raise o # lift
+  ExprInteraction interaction -> do
+    H.tell (Proxy @"Engine") unit (ExprInteraction_EngineQuery is interaction) # lift
 
 --------------------------------------------------------------------------------
 
-data EngineQuery a = OtherEngineQuery a
+data EngineQuery a = ExprInteraction_EngineQuery (List Int) ExprInteraction a
 
 type EngineInput =
   { editor :: Editor
@@ -122,7 +127,7 @@ data EngineAction
 
 type EngineSlots = () :: Row Type
 
-data EngineOutput = OutputEngine_Output Output
+data EngineOutput = Output_EngineOutput Output
 
 type EngineHTML = H.ComponentHTML EngineAction EngineSlots EngineM
 type EngineM' = ExceptT PlainHTML EngineM
@@ -160,7 +165,10 @@ initialEngineState input =
   }
 
 handleEngineQuery :: forall a. EngineQuery a -> EngineM' a
-handleEngineQuery (OtherEngineQuery a) = pure a
+handleEngineQuery (ExprInteraction_EngineQuery is interaction a) = case interaction of
+  ClickExpr _event -> do
+    traceEngineM "Engine" (text $ "got mouse click from expr at " <> show (Array.fromFoldable is)) # lift
+    pure a
 
 handleEngineAction :: EngineAction -> EngineM' Unit
 handleEngineAction InitializeEngine = do
@@ -171,7 +179,8 @@ handleEngineAction (ReceiveEngine input) = do
 
 --------------------------------------------------------------------------------
 
-data ExprQuery a = ModifyExprState (ExprState -> ExprState) a
+data ExprQuery a = ExprQuery (List Int) (ExprQuery' a)
+data ExprQuery' a = ModifyExprState (ExprState -> ExprState) a
 
 type ExprInput =
   { expr :: Expr
@@ -186,16 +195,24 @@ data ExprAction
   = InitializeExpr
   | ReceiveExpr ExprInput
   | ExprOutput_ExprAction Int ExprOutput
-  | ClickExpr MouseEvent
+  | ExprInteraction_ExprAction ExprInteraction
+
+-- | ClickExpr MouseEvent
 
 type ExprSlots =
   ( "Expr" :: H.Slot ExprQuery ExprOutput Int
   )
 
-data ExprOutput = OutputExpr_Output (List Int) Output
+type ExprOutput = List Int /\ ExprOutput'
+
+data ExprOutput'
+  = Output_ExprOutput Output
+  | ExprInteraction ExprInteraction
+
+data ExprInteraction = ClickExpr MouseEvent
 
 type ExprHTML = H.ComponentHTML ExprAction ExprSlots ExprM
-type ExprM' = ExceptT PlainHTML ExprM
+type ExprM' = ExceptT (Maybe PlainHTML) ExprM
 type ExprM = H.HalogenM ExprState ExprAction ExprSlots ExprOutput Aff
 
 expr_component :: H.Component ExprQuery ExprInput ExprOutput Aff
@@ -207,17 +224,21 @@ expr_component = H.mkComponent { initialState: initialExprState, eval, render }
     , handleQuery = \query -> do
         state <- get
         handleExprQuery query # runExceptT >>= case _ of
-          Left err -> do
+          Left mb_err -> do
             put state
-            traceExprM "Editor . Expr . Error" err
+            case mb_err of
+              Nothing -> pure unit
+              Just err -> traceExprM "Editor . Expr . Error" err
             pure none
           Right a -> pure $ pure a
     , handleAction = \action -> do
         state <- get
         handleExprAction action # runExceptT >>= case _ of
-          Left err -> do
+          Left mb_err -> do
+            case mb_err of
+              Nothing -> pure unit
+              Just err -> traceExprM "Editor . Expr . Error" err
             put state
-            traceExprM "Editor . Expr . Error" err
           Right it -> pure it
     }
 
@@ -227,7 +248,7 @@ expr_component = H.mkComponent { initialState: initialExprState, eval, render }
     } =
     HH.div
       [ HP.classes $ [ [ HH.ClassName "Expr" ], if ping then [ H.ClassName "ping" ] else [] ] # fold
-      , HE.onClick ClickExpr
+      , HE.onClick (ClickExpr >>> ExprInteraction_ExprAction)
       ]
       ( fold
           [ [ HH.div [ HP.classes [ HH.ClassName "ExprLabel" ] ]
@@ -250,9 +271,13 @@ initialExprState { expr } =
   }
 
 handleExprQuery :: forall a. ExprQuery a -> ExprM' a
-handleExprQuery (ModifyExprState f a) = do
-  modify_ f
-  pure a
+handleExprQuery (ExprQuery (i : is) q) = H.query (Proxy @"Expr") i (ExprQuery is q) # lift >>= case _ of
+  Nothing -> throwError none
+  Just a -> pure a
+handleExprQuery (ExprQuery Nil q) = case q of
+  ModifyExprState f a -> do
+    modify_ f
+    pure a
 
 handleExprAction :: ExprAction -> ExprM' Unit
 handleExprAction InitializeExpr = pure unit
@@ -262,11 +287,13 @@ handleExprAction (ReceiveExpr input) = do
   when (state /= state') do
     put state
     pingExpr
-handleExprAction (ClickExpr event) = do
-  event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+handleExprAction (ExprInteraction_ExprAction interaction) = do
+  case interaction of
+    ClickExpr event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+  H.raise (none /\ ExprInteraction interaction) # lift
   pingExpr
-handleExprAction (ExprOutput_ExprAction i (OutputExpr_Output is o)) = do
-  H.raise (OutputExpr_Output (List.Cons i is) o) # lift
+handleExprAction (ExprOutput_ExprAction i (is /\ o)) = do
+  H.raise (List.Cons i is /\ o) # lift
 
 pingExpr :: ExprM' Unit
 pingExpr = do
@@ -280,8 +307,8 @@ trace :: String -> PlainHTML -> M Unit
 trace label content = H.raise $ TellConsole \a -> Console.AddMessage { label, content } a
 
 traceExprM :: String -> PlainHTML -> ExprM Unit
-traceExprM label content = H.raise $ OutputExpr_Output none $ TellConsole \a -> Console.AddMessage { label, content } a
+traceExprM label content = H.raise $ Tuple none $ Output_ExprOutput $ TellConsole \a -> Console.AddMessage { label, content } a
 
 traceEngineM :: String -> PlainHTML -> EngineM Unit
-traceEngineM label content = H.raise $ OutputEngine_Output $ TellConsole \a -> Console.AddMessage { label, content } a
+traceEngineM label content = H.raise $ Output_EngineOutput $ TellConsole \a -> Console.AddMessage { label, content } a
 

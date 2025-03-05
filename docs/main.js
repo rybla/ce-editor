@@ -227,6 +227,31 @@
     return result;
   };
   var replicateImpl = typeof Array.prototype.fill === "function" ? replicateFill : replicatePolyfill;
+  var fromFoldableImpl = /* @__PURE__ */ function() {
+    function Cons2(head2, tail) {
+      this.head = head2;
+      this.tail = tail;
+    }
+    var emptyList = {};
+    function curryCons(head2) {
+      return function(tail) {
+        return new Cons2(head2, tail);
+      };
+    }
+    function listToArray(list) {
+      var result = [];
+      var count = 0;
+      var xs = list;
+      while (xs !== emptyList) {
+        result[count++] = xs.head;
+        xs = xs.tail;
+      }
+      return result;
+    }
+    return function(foldr4, xs) {
+      return listToArray(foldr4(curryCons)(emptyList)(xs));
+    };
+  }();
   var length = function(xs) {
     return xs.length;
   };
@@ -486,6 +511,15 @@
   var showIntImpl = function(n) {
     return n.toString();
   };
+  var showArrayImpl = function(f) {
+    return function(xs) {
+      var ss = [];
+      for (var i2 = 0, l = xs.length; i2 < l; i2++) {
+        ss[i2] = f(xs[i2]);
+      }
+      return "[" + ss.join(",") + "]";
+    };
+  };
 
   // output/Data.Show/index.js
   var showInt = {
@@ -493,6 +527,11 @@
   };
   var show = function(dict) {
     return dict.show;
+  };
+  var showArray = function(dictShow) {
+    return {
+      show: showArrayImpl(show(dictShow))
+    };
   };
 
   // output/Data.Generic.Rep/index.js
@@ -1457,6 +1496,9 @@
   };
   var range2 = /* @__PURE__ */ runFn2(rangeImpl);
   var mapWithIndex2 = /* @__PURE__ */ mapWithIndex(functorWithIndexArray);
+  var fromFoldable = function(dictFoldable) {
+    return runFn2(fromFoldableImpl)(foldr(dictFoldable));
+  };
   var fold2 = function(dictMonoid) {
     return fold1(dictMonoid);
   };
@@ -3339,9 +3381,9 @@
   var map9 = /* @__PURE__ */ map(functorEffect);
   var discard2 = /* @__PURE__ */ discard(discardUnit);
   var throwError2 = /* @__PURE__ */ throwError(monadThrowAff);
-  var selectElement = function(query3) {
+  var selectElement = function(query4) {
     return bind2(liftEffect3(bindFlipped4(composeKleisliFlipped2(function() {
-      var $16 = querySelector(query3);
+      var $16 = querySelector(query4);
       return function($17) {
         return $16(toParentNode($17));
       };
@@ -4226,7 +4268,7 @@
   var empty2 = /* @__PURE__ */ function() {
     return Leaf.value;
   }();
-  var fromFoldable = function(dictOrd) {
+  var fromFoldable2 = function(dictOrd) {
     var insert13 = insert(dictOrd);
     return function(dictFoldable) {
       return foldl(dictFoldable)(function(m) {
@@ -7901,9 +7943,18 @@
   var monadStateExceptT2 = /* @__PURE__ */ monadStateExceptT(monadStateHalogenM);
   var modify_5 = /* @__PURE__ */ modify_2(monadStateExceptT2);
   var liftAff2 = /* @__PURE__ */ liftAff(/* @__PURE__ */ monadAffExceptT(/* @__PURE__ */ monadAffHalogenM(monadAffAff)));
+  var bind6 = /* @__PURE__ */ bind(bindExceptT2);
+  var lift5 = /* @__PURE__ */ lift(monadTransExceptT)(monadHalogenM);
+  var ExprIsSymbol = {
+    reflectSymbol: function() {
+      return "Expr";
+    }
+  };
+  var query3 = /* @__PURE__ */ query()(ExprIsSymbol)(ordInt);
+  var throwError3 = /* @__PURE__ */ throwError(/* @__PURE__ */ monadThrowExceptT(monadHalogenM));
+  var none1 = /* @__PURE__ */ none(unfoldableMaybe);
   var applicativeExceptT2 = /* @__PURE__ */ applicativeExceptT(monadHalogenM);
   var pure11 = /* @__PURE__ */ pure(applicativeExceptT2);
-  var bind6 = /* @__PURE__ */ bind(bindExceptT2);
   var get3 = /* @__PURE__ */ get(monadStateExceptT2);
   var when4 = /* @__PURE__ */ when(applicativeExceptT2);
   var notEq2 = /* @__PURE__ */ notEq(/* @__PURE__ */ eqRec()(/* @__PURE__ */ eqRowCons(/* @__PURE__ */ eqRowCons(eqRowNil)()({
@@ -7917,14 +7968,17 @@
   })(eqExpr)));
   var put2 = /* @__PURE__ */ put(monadStateExceptT2);
   var liftEffect7 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectExceptT(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff)));
-  var lift5 = /* @__PURE__ */ lift(monadTransExceptT)(monadHalogenM);
+  var show3 = /* @__PURE__ */ show(/* @__PURE__ */ showArray(showInt));
+  var fromFoldable4 = /* @__PURE__ */ fromFoldable(foldableList);
+  var EngineIsSymbol = {
+    reflectSymbol: function() {
+      return "Engine";
+    }
+  };
+  var tell4 = /* @__PURE__ */ tell2()(EngineIsSymbol)(ordUnit);
   var fold4 = /* @__PURE__ */ fold2(monoidArray);
   var slot2 = /* @__PURE__ */ slot();
-  var slot1 = /* @__PURE__ */ slot2({
-    reflectSymbol: function() {
-      return "Expr";
-    }
-  });
+  var slot1 = /* @__PURE__ */ slot2(ExprIsSymbol);
   var slot22 = /* @__PURE__ */ slot1(ordInt);
   var pure15 = /* @__PURE__ */ pure(applicativeMaybe);
   var bind15 = /* @__PURE__ */ bind(bindHalogenM);
@@ -7932,14 +7986,9 @@
   var discard24 = /* @__PURE__ */ discard6(bindHalogenM);
   var put1 = /* @__PURE__ */ put(monadStateHalogenM);
   var pure24 = /* @__PURE__ */ pure(applicativeHalogenM);
-  var none1 = /* @__PURE__ */ none(unfoldableMaybe);
-  var tell4 = /* @__PURE__ */ tell(/* @__PURE__ */ monadTellWriterT(monoidArray)(monadIdentity));
+  var tell1 = /* @__PURE__ */ tell(/* @__PURE__ */ monadTellWriterT(monoidArray)(monadIdentity));
   var discard33 = /* @__PURE__ */ discard6(/* @__PURE__ */ bindWriterT(semigroupArray)(bindIdentity));
-  var slot3 = /* @__PURE__ */ slot2({
-    reflectSymbol: function() {
-      return "Engine";
-    }
-  })(ordUnit);
+  var slot3 = /* @__PURE__ */ slot2(EngineIsSymbol)(ordUnit);
   var slot4 = /* @__PURE__ */ slot1(ordUnit);
   var TellConsole = /* @__PURE__ */ function() {
     function TellConsole2(value0) {
@@ -7951,18 +8000,48 @@
     };
     return TellConsole2;
   }();
-  var OutputExpr_Output = /* @__PURE__ */ function() {
-    function OutputExpr_Output2(value0, value1) {
+  var ExprQuery = /* @__PURE__ */ function() {
+    function ExprQuery2(value0, value1) {
       this.value0 = value0;
       this.value1 = value1;
     }
     ;
-    OutputExpr_Output2.create = function(value0) {
+    ExprQuery2.create = function(value0) {
       return function(value1) {
-        return new OutputExpr_Output2(value0, value1);
+        return new ExprQuery2(value0, value1);
       };
     };
-    return OutputExpr_Output2;
+    return ExprQuery2;
+  }();
+  var ClickExpr = /* @__PURE__ */ function() {
+    function ClickExpr2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    ClickExpr2.create = function(value0) {
+      return new ClickExpr2(value0);
+    };
+    return ClickExpr2;
+  }();
+  var Output_ExprOutput = /* @__PURE__ */ function() {
+    function Output_ExprOutput2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    Output_ExprOutput2.create = function(value0) {
+      return new Output_ExprOutput2(value0);
+    };
+    return Output_ExprOutput2;
+  }();
+  var ExprInteraction = /* @__PURE__ */ function() {
+    function ExprInteraction2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    ExprInteraction2.create = function(value0) {
+      return new ExprInteraction2(value0);
+    };
+    return ExprInteraction2;
   }();
   var InitializeExpr = /* @__PURE__ */ function() {
     function InitializeExpr2() {
@@ -7994,25 +8073,41 @@
     };
     return ExprOutput_ExprAction2;
   }();
-  var ClickExpr = /* @__PURE__ */ function() {
-    function ClickExpr2(value0) {
+  var ExprInteraction_ExprAction = /* @__PURE__ */ function() {
+    function ExprInteraction_ExprAction2(value0) {
       this.value0 = value0;
     }
     ;
-    ClickExpr2.create = function(value0) {
-      return new ClickExpr2(value0);
+    ExprInteraction_ExprAction2.create = function(value0) {
+      return new ExprInteraction_ExprAction2(value0);
     };
-    return ClickExpr2;
+    return ExprInteraction_ExprAction2;
   }();
-  var OutputEngine_Output = /* @__PURE__ */ function() {
-    function OutputEngine_Output2(value0) {
+  var ExprInteraction_EngineQuery = /* @__PURE__ */ function() {
+    function ExprInteraction_EngineQuery2(value0, value1, value22) {
+      this.value0 = value0;
+      this.value1 = value1;
+      this.value2 = value22;
+    }
+    ;
+    ExprInteraction_EngineQuery2.create = function(value0) {
+      return function(value1) {
+        return function(value22) {
+          return new ExprInteraction_EngineQuery2(value0, value1, value22);
+        };
+      };
+    };
+    return ExprInteraction_EngineQuery2;
+  }();
+  var Output_EngineOutput = /* @__PURE__ */ function() {
+    function Output_EngineOutput2(value0) {
       this.value0 = value0;
     }
     ;
-    OutputEngine_Output2.create = function(value0) {
-      return new OutputEngine_Output2(value0);
+    Output_EngineOutput2.create = function(value0) {
+      return new Output_EngineOutput2(value0);
     };
-    return OutputEngine_Output2;
+    return Output_EngineOutput2;
   }();
   var InitializeEngine = /* @__PURE__ */ function() {
     function InitializeEngine2() {
@@ -8060,17 +8155,17 @@
   }();
   var traceExprM = function(label5) {
     return function(content3) {
-      return raise(new OutputExpr_Output(none3, new TellConsole(function(a2) {
+      return raise(new Tuple(none3, new Output_ExprOutput(new TellConsole(function(a2) {
         return new AddMessage({
           label: label5,
           content: content3
         }, a2);
-      })));
+      }))));
     };
   };
   var traceEngineM = function(label5) {
     return function(content3) {
-      return raise(new OutputEngine_Output(new TellConsole(function(a2) {
+      return raise(new Output_EngineOutput(new TellConsole(function(a2) {
         return new AddMessage({
           label: label5,
           content: content3
@@ -8089,29 +8184,29 @@
     };
   };
   var pingExpr = /* @__PURE__ */ discard13(/* @__PURE__ */ modify_5(function(v) {
-    var $73 = {};
-    for (var $74 in v) {
-      if ({}.hasOwnProperty.call(v, $74)) {
-        $73[$74] = v[$74];
+    var $87 = {};
+    for (var $88 in v) {
+      if ({}.hasOwnProperty.call(v, $88)) {
+        $87[$88] = v[$88];
       }
       ;
     }
     ;
-    $73.ping = true;
-    return $73;
+    $87.ping = true;
+    return $87;
   }))(function() {
     return discard13(liftAff2(delay(500)))(function() {
       return modify_5(function(v) {
-        var $76 = {};
-        for (var $77 in v) {
-          if ({}.hasOwnProperty.call(v, $77)) {
-            $76[$77] = v[$77];
+        var $90 = {};
+        for (var $91 in v) {
+          if ({}.hasOwnProperty.call(v, $91)) {
+            $90[$91] = v[$91];
           }
           ;
         }
         ;
-        $76.ping = false;
-        return $76;
+        $90.ping = false;
+        return $90;
       });
     });
   });
@@ -8128,9 +8223,27 @@
     };
   };
   var handleExprQuery = function(v) {
-    return discard13(modify_5(v.value0))(function() {
-      return pure11(v.value1);
-    });
+    if (v.value0 instanceof Cons) {
+      return bind6(lift5(query3($$Proxy.value)(v.value0.value0)(new ExprQuery(v.value0.value1, v.value1))))(function(v1) {
+        if (v1 instanceof Nothing) {
+          return throwError3(none1);
+        }
+        ;
+        if (v1 instanceof Just) {
+          return pure11(v1.value0);
+        }
+        ;
+        throw new Error("Failed pattern match at Ui.Editor (line 274, column 96 - line 276, column 19): " + [v1.constructor.name]);
+      });
+    }
+    ;
+    if (v.value0 instanceof Nil) {
+      return discard13(modify_5(v.value1.value0))(function() {
+        return pure11(v.value1.value1);
+      });
+    }
+    ;
+    throw new Error("Failed pattern match at Ui.Editor (line 273, column 1 - line 273, column 53): " + [v.constructor.name]);
   };
   var handleExprAction = function(v) {
     if (v instanceof InitializeExpr) {
@@ -8146,20 +8259,24 @@
       });
     }
     ;
-    if (v instanceof ClickExpr) {
-      return discard13(liftEffect7(stopPropagation(toEvent(v.value0))))(function() {
-        return pingExpr;
+    if (v instanceof ExprInteraction_ExprAction) {
+      return discard13(liftEffect7(stopPropagation(toEvent(v.value0.value0))))(function() {
+        return discard13(lift5(raise(new Tuple(none3, new ExprInteraction(v.value0)))))(function() {
+          return pingExpr;
+        });
       });
     }
     ;
     if (v instanceof ExprOutput_ExprAction) {
-      return lift5(raise(new OutputExpr_Output(new Cons(v.value0, v.value1.value0), v.value1.value1)));
+      return lift5(raise(new Tuple(new Cons(v.value0, v.value1.value0), v.value1.value1)));
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 257, column 1 - line 257, column 46): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 282, column 1 - line 282, column 46): " + [v.constructor.name]);
   };
   var handleEngineQuery = function(v) {
-    return pure11(v.value0);
+    return discard13(lift5(traceEngineM("Engine")(text6("got mouse click from expr at " + show3(fromFoldable4(v.value0))))))(function() {
+      return pure11(v.value2);
+    });
   };
   var handleEngineAction = function(v) {
     if (v instanceof InitializeEngine) {
@@ -8172,22 +8289,30 @@
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 165, column 1 - line 165, column 52): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 173, column 1 - line 173, column 52): " + [v.constructor.name]);
   };
   var handleAction = function(v) {
     if (v instanceof Initialize2) {
       return lift5(trace("Editor")(text6("initialized")));
     }
     ;
-    if (v instanceof ExprOutput_Action) {
-      return lift5(raise(v.value0.value1));
-    }
-    ;
     if (v instanceof EngineOutput_Action) {
       return lift5(raise(v.value0.value0));
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 96, column 1 - line 96, column 34): " + [v.constructor.name]);
+    if (v instanceof ExprOutput_Action) {
+      if (v.value0.value1 instanceof Output_ExprOutput) {
+        return lift5(raise(v.value0.value1.value0));
+      }
+      ;
+      if (v.value0.value1 instanceof ExprInteraction) {
+        return lift5(tell4($$Proxy.value)(unit)(ExprInteraction_EngineQuery.create(v.value0.value0)(v.value0.value1.value0)));
+      }
+      ;
+      throw new Error("Failed pattern match at Ui.Editor (line 104, column 56 - line 108, column 86): " + [v.value0.value1.constructor.name]);
+    }
+    ;
+    throw new Error("Failed pattern match at Ui.Editor (line 99, column 1 - line 99, column 34): " + [v.constructor.name]);
   };
   var $lazy_expr_component = /* @__PURE__ */ $runtime_lazy9("expr_component", "Ui.Editor", function() {
     var render = function(v) {
@@ -8197,9 +8322,11 @@
         }
         ;
         return [];
-      }()])), onClick(ClickExpr.create)])(fold4([[div2([classes(["ExprLabel"])])([text6(v.expr.value0.value0)])], mapWithIndex2(function(i2) {
+      }()])), onClick(function($161) {
+        return ExprInteraction_ExprAction.create(ClickExpr.create($161));
+      })])(fold4([[div2([classes(["ExprLabel"])])([text6(v.expr.value0.value0)])], mapWithIndex2(function(i2) {
         return function(e) {
-          return slot22($$Proxy.value)(i2)($lazy_expr_component(240))({
+          return slot22($$Proxy.value)(i2)($lazy_expr_component(261))({
             expr: e
           })(ExprOutput_ExprAction.create(i2));
         };
@@ -8208,15 +8335,25 @@
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure15(InitializeExpr.value),
-      receive: function($124) {
-        return pure15(ReceiveExpr.create($124));
+      receive: function($162) {
+        return pure15(ReceiveExpr.create($162));
       },
-      handleQuery: function(query3) {
+      handleQuery: function(query1) {
         return bind15(get1)(function(state3) {
-          return bind15(runExceptT(handleExprQuery(query3)))(function(v1) {
+          return bind15(runExceptT(handleExprQuery(query1)))(function(v1) {
             if (v1 instanceof Left) {
               return discard24(put1(state3))(function() {
-                return discard24(traceExprM("Editor . Expr . Error")(v1.value0))(function() {
+                return discard24(function() {
+                  if (v1.value0 instanceof Nothing) {
+                    return pure24(unit);
+                  }
+                  ;
+                  if (v1.value0 instanceof Just) {
+                    return traceExprM("Editor . Expr . Error")(v1.value0.value0);
+                  }
+                  ;
+                  throw new Error("Failed pattern match at Ui.Editor (line 229, column 13 - line 231, column 65): " + [v1.value0.constructor.name]);
+                }())(function() {
                   return pure24(none1);
                 });
               });
@@ -8226,7 +8363,7 @@
               return pure24(pure15(v1.value0));
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 209, column 48 - line 214, column 35): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 226, column 48 - line 233, column 35): " + [v1.constructor.name]);
           });
         });
       },
@@ -8234,8 +8371,18 @@
         return bind15(get1)(function(state3) {
           return bind15(runExceptT(handleExprAction(action2)))(function(v1) {
             if (v1 instanceof Left) {
-              return discard24(put1(state3))(function() {
-                return traceExprM("Editor . Expr . Error")(v1.value0);
+              return discard24(function() {
+                if (v1.value0 instanceof Nothing) {
+                  return pure24(unit);
+                }
+                ;
+                if (v1.value0 instanceof Just) {
+                  return traceExprM("Editor . Expr . Error")(v1.value0.value0);
+                }
+                ;
+                throw new Error("Failed pattern match at Ui.Editor (line 238, column 13 - line 240, column 65): " + [v1.value0.constructor.name]);
+              }())(function() {
+                return put1(state3);
               });
             }
             ;
@@ -8243,7 +8390,7 @@
               return pure24(v1.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 217, column 50 - line 221, column 30): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 236, column 50 - line 242, column 30): " + [v1.constructor.name]);
           });
         });
       }
@@ -8254,18 +8401,18 @@
       render
     });
   });
-  var expr_component = /* @__PURE__ */ $lazy_expr_component(201);
+  var expr_component = /* @__PURE__ */ $lazy_expr_component(218);
   var engine_component = /* @__PURE__ */ function() {
-    var render = $$const(div2([style3(tell4(["display: hidden"]))])([]));
+    var render = $$const(div2([style3(tell1(["display: hidden"]))])([]));
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure15(InitializeEngine.value),
-      receive: function($125) {
-        return pure15(ReceiveEngine.create($125));
+      receive: function($163) {
+        return pure15(ReceiveEngine.create($163));
       },
-      handleQuery: function(query3) {
+      handleQuery: function(query1) {
         return bind15(get1)(function(state3) {
-          return bind15(runExceptT(handleEngineQuery(query3)))(function(v1) {
+          return bind15(runExceptT(handleEngineQuery(query1)))(function(v1) {
             if (v1 instanceof Left) {
               return discard24(put1(state3))(function() {
                 return discard24(traceEngineM("Editor . Engine . Error")(v1.value0))(function() {
@@ -8278,7 +8425,7 @@
               return pure24(pure15(v1.value0));
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 139, column 50 - line 144, column 35): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 144, column 50 - line 149, column 35): " + [v1.constructor.name]);
           });
         });
       },
@@ -8295,7 +8442,7 @@
               return pure24(v1.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 147, column 52 - line 151, column 30): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 152, column 52 - line 156, column 30): " + [v1.constructor.name]);
           });
         });
       }
@@ -8308,9 +8455,9 @@
   }();
   var component2 = /* @__PURE__ */ function() {
     var render = function(state3) {
-      return div2([style3(discard33(tell4(["flex-grow: 1", "flex-shrink: 1"]))(function() {
-        return discard33(tell4(["overflow: scroll"]))(function() {
-          return tell4(["padding: 0.5em"]);
+      return div2([style3(discard33(tell1(["flex-grow: 1", "flex-shrink: 1"]))(function() {
+        return discard33(tell1(["overflow: scroll"]))(function() {
+          return tell1(["padding: 0.5em"]);
         });
       }))])([slot3($$Proxy.value)(unit)(engine_component)({
         editor: state3.editor,
@@ -8342,7 +8489,7 @@
               return pure24(v1.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 72, column 46 - line 76, column 30): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 75, column 46 - line 79, column 30): " + [v1.constructor.name]);
           });
         });
       }
@@ -8356,7 +8503,7 @@
 
   // output/Utility/index.js
   var toUnfoldable4 = /* @__PURE__ */ toUnfoldable2(unfoldableList);
-  var fromFoldable4 = /* @__PURE__ */ fromFoldable(ordString)(foldableList);
+  var fromFoldable5 = /* @__PURE__ */ fromFoldable2(ordString)(foldableList);
   var toUnfoldable1 = /* @__PURE__ */ toUnfoldable3(unfoldableList);
   var fromHomogeneous2 = /* @__PURE__ */ fromHomogeneous();
   var replaceFormatVars = function(sigma) {
@@ -8391,7 +8538,7 @@
   };
   var fromHomogeneousToMap = function() {
     return function(r) {
-      return fromFoldable4(toUnfoldable1(fromHomogeneous2(r)));
+      return fromFoldable5(toUnfoldable1(fromHomogeneous2(r)));
     };
   };
   var fromHomogeneousToMap1 = /* @__PURE__ */ fromHomogeneousToMap();
@@ -8413,9 +8560,9 @@
   var discard14 = /* @__PURE__ */ discard7(/* @__PURE__ */ bindExceptT(monadHalogenM));
   var lift6 = /* @__PURE__ */ lift(monadTransExceptT)(monadHalogenM);
   var pure16 = /* @__PURE__ */ pure(/* @__PURE__ */ applicativeExceptT(monadHalogenM));
-  var throwError3 = /* @__PURE__ */ throwError(/* @__PURE__ */ monadThrowExceptT(monadHalogenM));
+  var throwError4 = /* @__PURE__ */ throwError(/* @__PURE__ */ monadThrowExceptT(monadHalogenM));
   var discard25 = /* @__PURE__ */ discard7(/* @__PURE__ */ bindWriterT(semigroupArray)(bindIdentity));
-  var tell1 = /* @__PURE__ */ tell(/* @__PURE__ */ monadTellWriterT(monoidArray)(monadIdentity));
+  var tell12 = /* @__PURE__ */ tell(/* @__PURE__ */ monadTellWriterT(monoidArray)(monadIdentity));
   var format2 = /* @__PURE__ */ format();
   var slot5 = /* @__PURE__ */ slot()({
     reflectSymbol: function() {
@@ -8477,20 +8624,20 @@
       });
     }
     ;
-    return throwError3(span4([code2("handleAction"), text6(": unimplemented action")]));
+    return throwError4(span4([code2("handleAction"), text6(": unimplemented action")]));
   };
   var component3 = /* @__PURE__ */ function() {
     var render = function(state3) {
-      return div2([style3(discard25(tell1(["height: 100vh", "width: 100vw"]))(function() {
-        return tell1(["display: flex", "flex-direction: column"]);
-      }))])([div2([style3(discard25(tell1(["flex-grow: 0", "flex-shrink: 0"]))(function() {
-        return discard25(tell1(["background-color: black", "color: white"]))(function() {
-          return tell1(["display: flex", "flex-direction: row", "justify-content: space-between", "align-items: center"]);
+      return div2([style3(discard25(tell12(["height: 100vh", "width: 100vw"]))(function() {
+        return tell12(["display: flex", "flex-direction: column"]);
+      }))])([div2([style3(discard25(tell12(["flex-grow: 0", "flex-shrink: 0"]))(function() {
+        return discard25(tell12(["background-color: black", "color: white"]))(function() {
+          return tell12(["display: flex", "flex-direction: row", "justify-content: space-between", "align-items: center"]);
         });
-      }))])([div2([style3(tell1(["padding: 0.5em"]))])([text6(format2({
+      }))])([div2([style3(tell12(["padding: 0.5em"]))])([text6(format2({
         name: state3.editor.name
-      })("ce-editor | {{name}}"))]), div2([style3(discard25(tell1(["padding: 0.5em"]))(function() {
-        return tell1(["display: flex", "flex-direction: row", "gap: 0.5em"]);
+      })("ce-editor | {{name}}"))]), div2([style3(discard25(tell12(["padding: 0.5em"]))(function() {
+        return tell12(["display: flex", "flex-direction: row", "gap: 0.5em"]);
       }))])([div2([])([button([onClick($$const(ClickMe.value))])([text6("click me!")])])])]), slot5($$Proxy.value)(unit)(component2)(state3.editor)(EditorOutput.create), slot_3($$Proxy.value)(unit)(component)(unit)]);
     };
     var initialState = function(editor3) {
