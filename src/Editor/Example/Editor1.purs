@@ -18,4 +18,3 @@ example_expr n_branching n_height =
   String "B" %
     range 0 n_branching
     <#> \_ -> example_expr n_branching (n_height - 1)
-

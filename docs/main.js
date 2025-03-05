@@ -6710,10 +6710,10 @@
       var query1 = query2(dictIsSymbol);
       return function(dictOrd) {
         var query22 = query1(dictOrd);
-        return function(slot4) {
+        return function(slot6) {
           return function(label5) {
             return function(req) {
-              return $$void5(query22(slot4)(label5)(req(unit)));
+              return $$void5(query22(slot6)(label5)(req(unit)));
             };
           };
         };
@@ -7188,9 +7188,9 @@
           return function(handler3) {
             return function(childrenInRef) {
               return function(childrenOutRef) {
-                return unComponentSlot(function(slot4) {
+                return unComponentSlot(function(slot6) {
                   return function __do2() {
-                    var childrenIn = map17(slot4.pop)(read(childrenInRef))();
+                    var childrenIn = map17(slot6.pop)(read(childrenInRef))();
                     var $$var2 = function() {
                       if (childrenIn instanceof Just) {
                         write(childrenIn.value0.value1)(childrenInRef)();
@@ -7200,10 +7200,10 @@
                             flip(write)(st.handlerRef)(function() {
                               var $65 = maybe(pure12(unit))(handler3);
                               return function($66) {
-                                return $65(slot4.output($66));
+                                return $65(slot6.output($66));
                               };
                             }())();
-                            return handleAff(evalM(render)(st.selfRef)(st["component"]["eval"](new Receive(slot4.input, unit))))();
+                            return handleAff(evalM(render)(st.selfRef)(st["component"]["eval"](new Receive(slot6.input, unit))))();
                           };
                         })(dsx)();
                         return childrenIn.value0.value0;
@@ -7213,18 +7213,18 @@
                         return runComponent(lchs)(function() {
                           var $67 = maybe(pure12(unit))(handler3);
                           return function($68) {
-                            return $67(slot4.output($68));
+                            return $67(slot6.output($68));
                           };
-                        }())(slot4.input)(slot4.component)();
+                        }())(slot6.input)(slot6.component)();
                       }
                       ;
                       throw new Error("Failed pattern match at Halogen.Aff.Driver (line 213, column 14 - line 222, column 98): " + [childrenIn.constructor.name]);
                     }();
                     var isDuplicate = map17(function($69) {
-                      return isJust(slot4.get($69));
+                      return isJust(slot6.get($69));
                     })(read(childrenOutRef))();
                     when2(isDuplicate)(warn("Halogen: Duplicate slot address was detected during rendering, unexpected results may occur"))();
-                    modify_(slot4.set($$var2))(childrenOutRef)();
+                    modify_(slot6.set($$var2))(childrenOutRef)();
                     return bind4(read($$var2))(renderStateX2(function(v) {
                       if (v instanceof Nothing) {
                         return $$throw("Halogen internal error: child was not initialized in renderChild");
@@ -7516,36 +7516,36 @@
         var buildWidget2 = function(spec) {
           var buildThunk2 = buildThunk(unwrap3)(spec);
           var $lazy_patch = $runtime_lazy8("patch", "Halogen.VDom.Driver", function() {
-            return function(st, slot4) {
+            return function(st, slot6) {
               if (st instanceof Just) {
-                if (slot4 instanceof ComponentSlot) {
+                if (slot6 instanceof ComponentSlot) {
                   halt(st.value0);
-                  return $lazy_renderComponentSlot(100)(slot4.value0);
+                  return $lazy_renderComponentSlot(100)(slot6.value0);
                 }
                 ;
-                if (slot4 instanceof ThunkSlot) {
-                  var step$prime = step2(st.value0, slot4.value0);
+                if (slot6 instanceof ThunkSlot) {
+                  var step$prime = step2(st.value0, slot6.value0);
                   return mkStep(new Step(extract2(step$prime), new Just(step$prime), $lazy_patch(103), done));
                 }
                 ;
-                throw new Error("Failed pattern match at Halogen.VDom.Driver (line 97, column 22 - line 103, column 79): " + [slot4.constructor.name]);
+                throw new Error("Failed pattern match at Halogen.VDom.Driver (line 97, column 22 - line 103, column 79): " + [slot6.constructor.name]);
               }
               ;
-              return $lazy_render(104)(slot4);
+              return $lazy_render(104)(slot6);
             };
           });
           var $lazy_render = $runtime_lazy8("render", "Halogen.VDom.Driver", function() {
-            return function(slot4) {
-              if (slot4 instanceof ComponentSlot) {
-                return $lazy_renderComponentSlot(86)(slot4.value0);
+            return function(slot6) {
+              if (slot6 instanceof ComponentSlot) {
+                return $lazy_renderComponentSlot(86)(slot6.value0);
               }
               ;
-              if (slot4 instanceof ThunkSlot) {
-                var step3 = buildThunk2(slot4.value0);
+              if (slot6 instanceof ThunkSlot) {
+                var step3 = buildThunk2(slot6.value0);
                 return mkStep(new Step(extract2(step3), new Just(step3), $lazy_patch(89), done));
               }
               ;
-              throw new Error("Failed pattern match at Halogen.VDom.Driver (line 84, column 7 - line 89, column 75): " + [slot4.constructor.name]);
+              throw new Error("Failed pattern match at Halogen.VDom.Driver (line 84, column 7 - line 89, column 75): " + [slot6.constructor.name]);
             };
           });
           var $lazy_renderComponentSlot = $runtime_lazy8("renderComponentSlot", "Halogen.VDom.Driver", function() {
@@ -7809,11 +7809,15 @@
         });
       }))])(fold3([mapWithIndex3(function(i2) {
         return function(m) {
-          return new Tuple(show2(i2), div2([style3(discard12(tell3(["box-shadow: 0 0 0 1px black inset"]))(function() {
+          return new Tuple(show2(i2), div2([style3(discard12(tell3(["box-shadow: 0 0 0 1px black"]))(function() {
             return tell3(["display: flex", "flex-direction: row"]);
           }))])([div2([style3(discard12(tell3(["flex-grow: 0", "flex-shrink: 0"]))(function() {
             return discard12(tell3(["background-color: black", "color: white"]))(function() {
-              return tell3(["padding: 0.5em"]);
+              return discard12(tell3(["padding: 0.5em"]))(function() {
+                return discard12(tell3(["width: 10em"]))(function() {
+                  return tell3(["word-wrap: break-word", "overflow-wrap: break-word"]);
+                });
+              });
             });
           }))])([text5(m.label)]), div2([style3(tell3(["flex-grow: 1", "flex-shrink: 1"]))])([function() {
             var content3 = fromPlainHTML(m.content);
@@ -7914,14 +7918,14 @@
   var put2 = /* @__PURE__ */ put(monadStateExceptT2);
   var liftEffect7 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectExceptT(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff)));
   var lift5 = /* @__PURE__ */ lift(monadTransExceptT)(monadHalogenM);
-  var throwError3 = /* @__PURE__ */ throwError(/* @__PURE__ */ monadThrowExceptT(monadHalogenM));
   var fold4 = /* @__PURE__ */ fold2(monoidArray);
-  var slot2 = /* @__PURE__ */ slot()({
+  var slot2 = /* @__PURE__ */ slot();
+  var slot1 = /* @__PURE__ */ slot2({
     reflectSymbol: function() {
       return "Expr";
     }
   });
-  var slot1 = /* @__PURE__ */ slot2(ordInt);
+  var slot22 = /* @__PURE__ */ slot1(ordInt);
   var pure15 = /* @__PURE__ */ pure(applicativeMaybe);
   var bind15 = /* @__PURE__ */ bind(bindHalogenM);
   var get1 = /* @__PURE__ */ get(monadStateHalogenM);
@@ -7929,9 +7933,14 @@
   var put1 = /* @__PURE__ */ put(monadStateHalogenM);
   var pure24 = /* @__PURE__ */ pure(applicativeHalogenM);
   var none1 = /* @__PURE__ */ none(unfoldableMaybe);
-  var discard33 = /* @__PURE__ */ discard6(/* @__PURE__ */ bindWriterT(semigroupArray)(bindIdentity));
   var tell4 = /* @__PURE__ */ tell(/* @__PURE__ */ monadTellWriterT(monoidArray)(monadIdentity));
-  var slot22 = /* @__PURE__ */ slot2(ordUnit);
+  var discard33 = /* @__PURE__ */ discard6(/* @__PURE__ */ bindWriterT(semigroupArray)(bindIdentity));
+  var slot3 = /* @__PURE__ */ slot2({
+    reflectSymbol: function() {
+      return "Engine";
+    }
+  })(ordUnit);
+  var slot4 = /* @__PURE__ */ slot1(ordUnit);
   var TellConsole = /* @__PURE__ */ function() {
     function TellConsole2(value0) {
       this.value0 = value0;
@@ -7942,18 +7951,18 @@
     };
     return TellConsole2;
   }();
-  var OutputExprOutput = /* @__PURE__ */ function() {
-    function OutputExprOutput2(value0, value1) {
+  var OutputExpr_Output = /* @__PURE__ */ function() {
+    function OutputExpr_Output2(value0, value1) {
       this.value0 = value0;
       this.value1 = value1;
     }
     ;
-    OutputExprOutput2.create = function(value0) {
+    OutputExpr_Output2.create = function(value0) {
       return function(value1) {
-        return new OutputExprOutput2(value0, value1);
+        return new OutputExpr_Output2(value0, value1);
       };
     };
-    return OutputExprOutput2;
+    return OutputExpr_Output2;
   }();
   var InitializeExpr = /* @__PURE__ */ function() {
     function InitializeExpr2() {
@@ -7972,18 +7981,18 @@
     };
     return ReceiveExpr2;
   }();
-  var ExprOutputExprAction = /* @__PURE__ */ function() {
-    function ExprOutputExprAction2(value0, value1) {
+  var ExprOutput_ExprAction = /* @__PURE__ */ function() {
+    function ExprOutput_ExprAction2(value0, value1) {
       this.value0 = value0;
       this.value1 = value1;
     }
     ;
-    ExprOutputExprAction2.create = function(value0) {
+    ExprOutput_ExprAction2.create = function(value0) {
       return function(value1) {
-        return new ExprOutputExprAction2(value0, value1);
+        return new ExprOutput_ExprAction2(value0, value1);
       };
     };
-    return ExprOutputExprAction2;
+    return ExprOutput_ExprAction2;
   }();
   var ClickExpr = /* @__PURE__ */ function() {
     function ClickExpr2(value0) {
@@ -7995,6 +8004,33 @@
     };
     return ClickExpr2;
   }();
+  var OutputEngine_Output = /* @__PURE__ */ function() {
+    function OutputEngine_Output2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    OutputEngine_Output2.create = function(value0) {
+      return new OutputEngine_Output2(value0);
+    };
+    return OutputEngine_Output2;
+  }();
+  var InitializeEngine = /* @__PURE__ */ function() {
+    function InitializeEngine2() {
+    }
+    ;
+    InitializeEngine2.value = new InitializeEngine2();
+    return InitializeEngine2;
+  }();
+  var ReceiveEngine = /* @__PURE__ */ function() {
+    function ReceiveEngine2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    ReceiveEngine2.create = function(value0) {
+      return new ReceiveEngine2(value0);
+    };
+    return ReceiveEngine2;
+  }();
   var Initialize2 = /* @__PURE__ */ function() {
     function Initialize4() {
     }
@@ -8002,19 +8038,39 @@
     Initialize4.value = new Initialize4();
     return Initialize4;
   }();
-  var ExprOutputAction = /* @__PURE__ */ function() {
-    function ExprOutputAction2(value0) {
+  var ExprOutput_Action = /* @__PURE__ */ function() {
+    function ExprOutput_Action2(value0) {
       this.value0 = value0;
     }
     ;
-    ExprOutputAction2.create = function(value0) {
-      return new ExprOutputAction2(value0);
+    ExprOutput_Action2.create = function(value0) {
+      return new ExprOutput_Action2(value0);
     };
-    return ExprOutputAction2;
+    return ExprOutput_Action2;
+  }();
+  var EngineOutput_Action = /* @__PURE__ */ function() {
+    function EngineOutput_Action2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    EngineOutput_Action2.create = function(value0) {
+      return new EngineOutput_Action2(value0);
+    };
+    return EngineOutput_Action2;
   }();
   var traceExprM = function(label5) {
     return function(content3) {
-      return raise(new OutputExprOutput(none3, new TellConsole(function(a2) {
+      return raise(new OutputExpr_Output(none3, new TellConsole(function(a2) {
+        return new AddMessage({
+          label: label5,
+          content: content3
+        }, a2);
+      })));
+    };
+  };
+  var traceEngineM = function(label5) {
+    return function(content3) {
+      return raise(new OutputEngine_Output(new TellConsole(function(a2) {
         return new AddMessage({
           label: label5,
           content: content3
@@ -8033,29 +8089,29 @@
     };
   };
   var pingExpr = /* @__PURE__ */ discard13(/* @__PURE__ */ modify_5(function(v) {
-    var $67 = {};
-    for (var $68 in v) {
-      if ({}.hasOwnProperty.call(v, $68)) {
-        $67[$68] = v[$68];
+    var $73 = {};
+    for (var $74 in v) {
+      if ({}.hasOwnProperty.call(v, $74)) {
+        $73[$74] = v[$74];
       }
       ;
     }
     ;
-    $67.ping = true;
-    return $67;
+    $73.ping = true;
+    return $73;
   }))(function() {
     return discard13(liftAff2(delay(500)))(function() {
       return modify_5(function(v) {
-        var $70 = {};
-        for (var $71 in v) {
-          if ({}.hasOwnProperty.call(v, $71)) {
-            $70[$71] = v[$71];
+        var $76 = {};
+        for (var $77 in v) {
+          if ({}.hasOwnProperty.call(v, $77)) {
+            $76[$77] = v[$77];
           }
           ;
         }
         ;
-        $70.ping = false;
-        return $70;
+        $76.ping = false;
+        return $76;
       });
     });
   });
@@ -8063,6 +8119,12 @@
     return {
       expr: v.expr,
       ping: false
+    };
+  };
+  var initialEngineState = function(input3) {
+    return {
+      editor: input3.editor,
+      expr: input3.expr
     };
   };
   var handleExprQuery = function(v) {
@@ -8090,22 +8152,42 @@
       });
     }
     ;
-    if (v instanceof ExprOutputExprAction) {
-      return lift5(raise(new OutputExprOutput(new Cons(v.value0, v.value1.value0), v.value1.value1)));
+    if (v instanceof ExprOutput_ExprAction) {
+      return lift5(raise(new OutputExpr_Output(new Cons(v.value0, v.value1.value0), v.value1.value1)));
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 187, column 1 - line 187, column 46): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 257, column 1 - line 257, column 46): " + [v.constructor.name]);
+  };
+  var handleEngineQuery = function(v) {
+    return pure11(v.value0);
+  };
+  var handleEngineAction = function(v) {
+    if (v instanceof InitializeEngine) {
+      return lift5(traceEngineM("Editor . Engine")(text6("initialized")));
+    }
+    ;
+    if (v instanceof ReceiveEngine) {
+      return discard13(lift5(traceEngineM("Editor . Engine")(text6("received"))))(function() {
+        return put2(initialEngineState(v.value0));
+      });
+    }
+    ;
+    throw new Error("Failed pattern match at Ui.Editor (line 165, column 1 - line 165, column 52): " + [v.constructor.name]);
   };
   var handleAction = function(v) {
     if (v instanceof Initialize2) {
       return lift5(trace("Editor")(text6("initialized")));
     }
     ;
-    if (v instanceof ExprOutputAction) {
+    if (v instanceof ExprOutput_Action) {
       return lift5(raise(v.value0.value1));
     }
     ;
-    return throwError3(span4([code2("handleAction"), text6(": unimplemented action")]));
+    if (v instanceof EngineOutput_Action) {
+      return lift5(raise(v.value0.value0));
+    }
+    ;
+    throw new Error("Failed pattern match at Ui.Editor (line 96, column 1 - line 96, column 34): " + [v.constructor.name]);
   };
   var $lazy_expr_component = /* @__PURE__ */ $runtime_lazy9("expr_component", "Ui.Editor", function() {
     var render = function(v) {
@@ -8117,17 +8199,17 @@
         return [];
       }()])), onClick(ClickExpr.create)])(fold4([[div2([classes(["ExprLabel"])])([text6(v.expr.value0.value0)])], mapWithIndex2(function(i2) {
         return function(e) {
-          return slot1($$Proxy.value)(i2)($lazy_expr_component(169))({
+          return slot22($$Proxy.value)(i2)($lazy_expr_component(240))({
             expr: e
-          })(ExprOutputExprAction.create(i2));
+          })(ExprOutput_ExprAction.create(i2));
         };
       })(v.expr.value1)]));
     };
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure15(InitializeExpr.value),
-      receive: function($106) {
-        return pure15(ReceiveExpr.create($106));
+      receive: function($124) {
+        return pure15(ReceiveExpr.create($124));
       },
       handleQuery: function(query3) {
         return bind15(get1)(function(state3) {
@@ -8144,7 +8226,7 @@
               return pure24(pure15(v1.value0));
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 138, column 48 - line 143, column 35): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 209, column 48 - line 214, column 35): " + [v1.constructor.name]);
           });
         });
       },
@@ -8161,7 +8243,7 @@
               return pure24(v1.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 146, column 50 - line 150, column 30): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 217, column 50 - line 221, column 30): " + [v1.constructor.name]);
           });
         });
       }
@@ -8172,21 +8254,74 @@
       render
     });
   });
-  var expr_component = /* @__PURE__ */ $lazy_expr_component(130);
+  var expr_component = /* @__PURE__ */ $lazy_expr_component(201);
+  var engine_component = /* @__PURE__ */ function() {
+    var render = $$const(div2([style3(tell4(["display: hidden"]))])([]));
+    var $$eval = mkEval({
+      finalize: defaultEval.finalize,
+      initialize: pure15(InitializeEngine.value),
+      receive: function($125) {
+        return pure15(ReceiveEngine.create($125));
+      },
+      handleQuery: function(query3) {
+        return bind15(get1)(function(state3) {
+          return bind15(runExceptT(handleEngineQuery(query3)))(function(v1) {
+            if (v1 instanceof Left) {
+              return discard24(put1(state3))(function() {
+                return discard24(traceEngineM("Editor . Engine . Error")(v1.value0))(function() {
+                  return pure24(none1);
+                });
+              });
+            }
+            ;
+            if (v1 instanceof Right) {
+              return pure24(pure15(v1.value0));
+            }
+            ;
+            throw new Error("Failed pattern match at Ui.Editor (line 139, column 50 - line 144, column 35): " + [v1.constructor.name]);
+          });
+        });
+      },
+      handleAction: function(action2) {
+        return bind15(get1)(function(state3) {
+          return bind15(runExceptT(handleEngineAction(action2)))(function(v1) {
+            if (v1 instanceof Left) {
+              return discard24(put1(state3))(function() {
+                return traceEngineM("Editor . Engine . Error")(v1.value0);
+              });
+            }
+            ;
+            if (v1 instanceof Right) {
+              return pure24(v1.value0);
+            }
+            ;
+            throw new Error("Failed pattern match at Ui.Editor (line 147, column 52 - line 151, column 30): " + [v1.constructor.name]);
+          });
+        });
+      }
+    });
+    return mkComponent({
+      initialState: initialEngineState,
+      "eval": $$eval,
+      render
+    });
+  }();
   var component2 = /* @__PURE__ */ function() {
     var render = function(state3) {
       return div2([style3(discard33(tell4(["flex-grow: 1", "flex-shrink: 1"]))(function() {
         return discard33(tell4(["overflow: scroll"]))(function() {
           return tell4(["padding: 0.5em"]);
         });
-      }))])([slot22($$Proxy.value)(unit)(expr_component)({
-        expr: state3.expr
-      })(ExprOutputAction.create)]);
+      }))])([slot3($$Proxy.value)(unit)(engine_component)({
+        editor: state3.editor,
+        expr: state3.editor.initial_expr
+      })(EngineOutput_Action.create), slot4($$Proxy.value)(unit)(expr_component)({
+        expr: state3.editor.initial_expr
+      })(ExprOutput_Action.create)]);
     };
     var initialState = function(editor3) {
       return {
-        editor: editor3,
-        expr: editor3.initial_expr
+        editor: editor3
       };
     };
     var $$eval = mkEval({
@@ -8207,7 +8342,7 @@
               return pure24(v1.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 70, column 46 - line 74, column 30): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 72, column 46 - line 76, column 30): " + [v1.constructor.name]);
           });
         });
       }
@@ -8278,11 +8413,11 @@
   var discard14 = /* @__PURE__ */ discard7(/* @__PURE__ */ bindExceptT(monadHalogenM));
   var lift6 = /* @__PURE__ */ lift(monadTransExceptT)(monadHalogenM);
   var pure16 = /* @__PURE__ */ pure(/* @__PURE__ */ applicativeExceptT(monadHalogenM));
-  var throwError4 = /* @__PURE__ */ throwError(/* @__PURE__ */ monadThrowExceptT(monadHalogenM));
+  var throwError3 = /* @__PURE__ */ throwError(/* @__PURE__ */ monadThrowExceptT(monadHalogenM));
   var discard25 = /* @__PURE__ */ discard7(/* @__PURE__ */ bindWriterT(semigroupArray)(bindIdentity));
   var tell1 = /* @__PURE__ */ tell(/* @__PURE__ */ monadTellWriterT(monoidArray)(monadIdentity));
   var format2 = /* @__PURE__ */ format();
-  var slot3 = /* @__PURE__ */ slot()({
+  var slot5 = /* @__PURE__ */ slot()({
     reflectSymbol: function() {
       return "Editor";
     }
@@ -8342,7 +8477,7 @@
       });
     }
     ;
-    return throwError4(span4([code2("handleAction"), text6(": unimplemented action")]));
+    return throwError3(span4([code2("handleAction"), text6(": unimplemented action")]));
   };
   var component3 = /* @__PURE__ */ function() {
     var render = function(state3) {
@@ -8356,7 +8491,7 @@
         name: state3.editor.name
       })("ce-editor | {{name}}"))]), div2([style3(discard25(tell1(["padding: 0.5em"]))(function() {
         return tell1(["display: flex", "flex-direction: row", "gap: 0.5em"]);
-      }))])([div2([])([button([onClick($$const(ClickMe.value))])([text6("click me!")])])])]), slot3($$Proxy.value)(unit)(component2)(state3.editor)(EditorOutput.create), slot_3($$Proxy.value)(unit)(component)(unit)]);
+      }))])([div2([])([button([onClick($$const(ClickMe.value))])([text6("click me!")])])])]), slot5($$Proxy.value)(unit)(component2)(state3.editor)(EditorOutput.create), slot_3($$Proxy.value)(unit)(component)(unit)]);
     };
     var initialState = function(editor3) {
       return {

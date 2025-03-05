@@ -72,7 +72,7 @@ component = H.mkComponent { initialState, eval, render }
               Tuple (show i) $
                 HH.div
                   [ style do
-                      tell [ "box-shadow: 0 0 0 1px black inset" ]
+                      tell [ "box-shadow: 0 0 0 1px black" ]
                       tell [ "display: flex", "flex-direction: row" ]
                   ]
                   [ HH.div
@@ -80,6 +80,8 @@ component = H.mkComponent { initialState, eval, render }
                           tell [ "flex-grow: 0", "flex-shrink: 0" ]
                           tell [ "background-color: black", "color: white" ]
                           tell [ "padding: 0.5em" ]
+                          tell [ "width: 10em" ]
+                          tell [ "word-wrap: break-word", "overflow-wrap: break-word" ]
                       ]
                       [ HH.text m.label ]
                   , HH.div
