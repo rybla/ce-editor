@@ -45,6 +45,32 @@ html, body {
   padding: 0;
 }
 
+.Expr {
+  padding: 0.5em;
+
+  display: inline-flex;
+  flex-direction: row;
+  gap: 0.5em;
+
+  box-shadow: 0 0 0 1px black;
+
+  user-select: none;
+  cursor: pointer;
+  
+  background-color: white;
+
+  transition-property: background-color;
+  transition-duration: 0.5s;
+}
+
+.Expr.ping {
+  background-color: color-mix(in hsl, blue, white 50%);
+}
+
+.ExprLabel {
+  font-weigth: bold;
+}
+
 .ConsoleMessageContent {
   background-color: white;
 
@@ -53,8 +79,9 @@ html, body {
 }
 
 .ConsoleMessageContent.new {
-  background-color: color-mix(in hsl, blue, transparent 50%);
+  background-color: color-mix(in hsl, blue, white 50%);
 }
+
 </style>
 </head>
 

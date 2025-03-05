@@ -11,15 +11,24 @@ import Data.Array (fold, mapWithIndex)
 import Data.Either (Either(..))
 import Data.Expr (Expr(..))
 import Data.Expr as Expr
+import Data.List (List)
+import Data.List as List
 import Data.Unfoldable (none)
 import Editor (Editor)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, Milliseconds(..))
+import Effect.Aff as Aff
+import Halogen (liftAff, liftEffect)
 import Halogen as H
 import Halogen.HTML (PlainHTML)
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
+import Halogen.HTML.Properties as HP
 import Type.Prelude (Proxy(..))
 import Ui.Common (code, span, style, text)
 import Ui.Console as Console
+import Web.Event.Event as Event
+import Web.UIEvent.MouseEvent (MouseEvent)
+import Web.UIEvent.MouseEvent as MouseEvent
 
 --------------------------------------------------------------------------------
 
@@ -82,7 +91,8 @@ handleAction :: Action -> M' Unit
 handleAction Initialize = do
   lift $ trace "Editor" $ text "initialized"
 
-handleAction (ExprOutputAction (OutputExprOutput o)) = do
+-- TODO: use `is` as index to expr that was source of output
+handleAction (ExprOutputAction (OutputExprOutput is o)) = do
   H.raise o # lift
 
 handleAction _ =
@@ -98,28 +108,28 @@ type ExprInput =
 
 type ExprState =
   { expr :: Expr
+  , ping :: Boolean
   }
 
 data ExprAction
   = InitializeExpr
-  | ReceiveExpr ExprState
-  | ExprOutputExprAction ExprOutput
+  | ReceiveExpr ExprInput
+  | ExprOutputExprAction Int ExprOutput
+  | ClickExpr MouseEvent
 
 type ExprSlots =
   ( "Expr" :: H.Slot ExprQuery ExprOutput Int
   )
 
-data ExprOutput = OutputExprOutput Output
+data ExprOutput = OutputExprOutput (List Int) Output
 
 type ExprHTML = H.ComponentHTML ExprAction ExprSlots ExprM
 type ExprM' = ExceptT PlainHTML ExprM
 type ExprM = H.HalogenM ExprState ExprAction ExprSlots ExprOutput Aff
 
 expr_component :: H.Component ExprQuery ExprInput ExprOutput Aff
-expr_component = H.mkComponent { initialState, eval, render }
+expr_component = H.mkComponent { initialState: initialExprState, eval, render }
   where
-  initialState = identity
-
   eval = H.mkEval H.defaultEval
     { initialize = pure InitializeExpr
     , receive = pure <<< ReceiveExpr
@@ -142,26 +152,31 @@ expr_component = H.mkComponent { initialState, eval, render }
 
   render
     { expr: Expr l es
+    , ping
     } =
     HH.div
-      [ style do
-          tell [ "box-shadow: 0 0 0 1px black" ]
-          tell [ "padding: 0.5em" ]
-          tell [ "display: inline-flex", "flex-direction: row", "gap: 0.5em" ]
-      ] $ fold
-      [ [ HH.div
-            [ style do
-                tell [ "font-weight: bold" ]
-            ]
-            [ case l of
-                Expr.String s -> text s
-            ]
-        ]
-      , es
-          # mapWithIndex \i e -> HH.slot (Proxy @"Expr") i expr_component
-              { expr: e }
-              ExprOutputExprAction
+      [ HP.classes $ [ [ HH.ClassName "Expr" ], if ping then [ H.ClassName "ping" ] else [] ] # fold
+      , HE.onClick ClickExpr
       ]
+      ( fold
+          [ [ HH.div [ HP.classes [ HH.ClassName "ExprLabel" ] ]
+                [ case l of
+                    Expr.String s -> text s
+                ]
+            ]
+          , es
+              # mapWithIndex \i e ->
+                  HH.slot (Proxy @"Expr") i expr_component
+                    { expr: e }
+                    (ExprOutputExprAction i)
+          ]
+      )
+
+initialExprState :: ExprInput -> ExprState
+initialExprState { expr } =
+  { expr
+  , ping: false
+  }
 
 handleExprQuery :: forall a. ExprQuery a -> ExprM' a
 
@@ -171,13 +186,26 @@ handleExprQuery (ModifyExprState f a) = do
 
 handleExprAction :: ExprAction -> ExprM' Unit
 
-handleExprAction InitializeExpr = do
-  lift $ traceExprM "Editor . Expr" $ text "initialized"
+handleExprAction InitializeExpr = pure unit
 
-handleExprAction (ReceiveExpr state) = put state
+handleExprAction (ReceiveExpr input) = do
+  state <- get
+  let state' = initialExprState input
+  when (state /= state') do
+    put state
+    pingExpr
 
--- TODO: include index that gradually gets built up
-handleExprAction (ExprOutputExprAction o) = H.raise o # lift
+handleExprAction (ClickExpr event) = do
+  event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+  pingExpr
+
+handleExprAction (ExprOutputExprAction i (OutputExprOutput is o)) = H.raise (OutputExprOutput (List.Cons i is) o) # lift
+
+pingExpr :: ExprM' Unit
+pingExpr = do
+  modify_ _ { ping = true }
+  Aff.delay (Milliseconds 500.0) # liftAff
+  modify_ _ { ping = false }
 
 --------------------------------------------------------------------------------
 
@@ -206,5 +234,5 @@ trace :: String -> PlainHTML -> M Unit
 trace label content = H.raise $ TellConsole \a -> Console.AddMessage { label, content } a
 
 traceExprM :: String -> PlainHTML -> ExprM Unit
-traceExprM label content = H.raise $ OutputExprOutput $ TellConsole \a -> Console.AddMessage { label, content } a
+traceExprM label content = H.raise $ OutputExprOutput none $ TellConsole \a -> Console.AddMessage { label, content } a
 

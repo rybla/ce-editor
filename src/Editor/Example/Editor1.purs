@@ -9,7 +9,7 @@ import Editor.Common (Editor)
 editor :: Editor
 editor =
   { name: "Editor1"
-  , initial_expr: example_expr 2 4
+  , initial_expr: example_expr 2 2
   }
 
 example_expr :: Int -> Int -> Expr
