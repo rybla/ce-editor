@@ -2,6 +2,7 @@ module Ui.App where
 
 import Prelude
 
+import Control.Monad.Error.Class (throwError)
 import Control.Monad.Except (ExceptT, runExceptT)
 import Control.Monad.State (get, put)
 import Control.Monad.Trans.Class (lift)
@@ -14,15 +15,16 @@ import Halogen.HTML (PlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Type.Prelude (Proxy(..))
-import Ui.Common (style)
-import Ui.Console (Query(..), component) as Console
-import Utility (bug, format)
+import Ui.Common (code, span, style, text)
+import Ui.Console (Query(..), Output, component) as Console
+import Ui.Editor as Editor
+import Utility (format)
 
-type EHM = ExceptT PlainHTML HM
+--------------------------------------------------------------------------------
 
-type HM = H.HalogenM State Action Slots Output M
+type M' = ExceptT PlainHTML M
 
-type M = Aff
+type M = H.HalogenM State Action Slots Output Aff
 
 type State =
   { editor :: Editor
@@ -31,13 +33,17 @@ type State =
 data Action
   = Initialize
   | ClickMe
-  | OtherActions
+  | EditorOutput Editor.Output
+  | OtherAction
 
 type Slots =
-  ( "Console" :: H.Slot Console.Query Void Unit
+  ( "Editor" :: H.Slot Editor.Query Editor.Output Unit
+  , "Console" :: H.Slot Console.Query Console.Output Unit
   )
 
 type Output = Void
+
+--------------------------------------------------------------------------------
 
 component ∷ ∀ query. H.Component query Editor Output Aff
 component = H.mkComponent { initialState, eval, render }
@@ -50,7 +56,7 @@ component = H.mkComponent { initialState, eval, render }
         state <- get
         handleAction action # runExceptT >>= flip either pure \err -> do
           put state
-          trace "error" err
+          trace "App Error" err
         pure unit
     }
 
@@ -70,16 +76,13 @@ component = H.mkComponent { initialState, eval, render }
               [ style do
                   tell [ "padding: 0.5em" ]
               ]
-              [ HH.text $ "ce-editor | {{name}}" # format { name: state.editor.name } ]
+              [ text $ "ce-editor | {{name}}" # format { name: state.editor.name } ]
           , HH.div
               [ style do
                   tell [ "padding: 0.5em" ]
                   tell [ "display: flex", "flex-direction: row", "gap: 0.5em" ]
               ]
-              [ HH.div [] [ HH.button [ HE.onClick $ const ClickMe ] [ HH.text "click me!" ] ]
-              , HH.div [] [ HH.button [ HE.onClick $ const ClickMe ] [ HH.text "click me!" ] ]
-              , HH.div [] [ HH.button [ HE.onClick $ const ClickMe ] [ HH.text "click me!" ] ]
-              , HH.div [] [ HH.button [ HE.onClick $ const ClickMe ] [ HH.text "click me!" ] ]
+              [ HH.div [] [ HH.button [ HE.onClick $ const ClickMe ] [ text "click me!" ] ]
               ]
           ]
       , HH.div
@@ -87,30 +90,31 @@ component = H.mkComponent { initialState, eval, render }
               tell [ "flex-grow: 1", "flex-shrink: 1" ]
               tell [ "padding: 0.5em" ]
           ]
-          [ HH.text "{{Editor}}" ]
+          [ HH.slot (Proxy @"Editor") unit Editor.component state.editor EditorOutput
+          ]
       , HH.slot_ (Proxy @"Console") unit Console.component unit
       ]
 
 --------------------------------------------------------------------------------
 
-handleAction :: Action -> EHM Unit
+handleAction :: Action -> M' Unit
 handleAction Initialize = do
-  lift $ trace "App" $ HH.text "initialized"
+  lift $ trace "App" $ text "initialized"
   pure unit
+handleAction (EditorOutput (Editor.TellConsole q)) =
+  H.tell (Proxy @"Console") unit q # lift
 handleAction ClickMe = do
   lift $ trace "App" $ HH.div []
-    [ HH.div [] [ HH.text "you clicked the button!" ]
-    , HH.div [] [ HH.text "you clicked the button!" ]
-    , HH.div [] [ HH.text "you clicked the button!" ]
+    [ HH.div [] [ text "you clicked the button!" ]
+    , HH.div [] [ text "you clicked the button!" ]
+    , HH.div [] [ text "you clicked the button!" ]
     ]
   pure unit
-handleAction _ = bug "unimplemented action"
+handleAction _ =
+  throwError $ span [ code "handleAction", text ": unimplemented action" ]
 
 --------------------------------------------------------------------------------
 
-trace :: String -> PlainHTML -> HM Unit
+trace :: String -> PlainHTML -> M Unit
 trace label content = H.tell (Proxy @"Console") unit $ Console.AddMessage { label, content }
-
-code str = HH.code [] [ HH.text str ]
-text str = HH.text str
 
