@@ -1,0 +1,22 @@
+{
+  "name": "ce-editor",
+  "scripts": {
+    "build.spago": "spago build",
+    "build.template": "spago bundle --platform node --bundle-type app --module Template --outfile template.js && bun template.js",
+    "build": "bun run build.spago && bun run build.template",
+    "serve": "http-server docs/",
+    "start": "bun run build && bun run serve"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "esbuild": "^0.25.0",
+    "http-server": "^14.1.1",
+    "purescript": "^0.15.16-4",
+    "spago": "^0.93.43"
+  }
+}
