@@ -4,7 +4,7 @@ import Prelude
 
 import Common (ConsoleMessage)
 import Control.Monad.Writer (tell)
-import Data.Array (fold)
+import Data.Array (filter, fold)
 import Data.Array as Array
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Tuple (Tuple(..))
@@ -31,6 +31,8 @@ data Action
 
 type Output = Void
 
+disabledMessageLabels = [ "Drag" ]
+
 component ∷ forall input output. H.Component Query input output Aff
 component = H.mkComponent { initialState, eval, render }
   where
@@ -53,7 +55,7 @@ component = H.mkComponent { initialState, eval, render }
       [ classes [ "Console" ]
       , style do
           tell [ "flex-grow: 0", "flex-shrink: 0" ]
-          tell [ "height: 20em" ]
+          tell [ "height: 40em" ]
           tell [ "display: flex", "flex-direction: column" ]
       ]
       [ HH.div
@@ -70,47 +72,49 @@ component = H.mkComponent { initialState, eval, render }
               tell [ "padding: 0.5em" ]
               tell [ "display: flex", "flex-direction: column", "gap: 0.5em" ]
           ] $ fold
-          [ state.messages # mapWithIndex \i m ->
-              Tuple (show i) $
-                HH.div
-                  [ style do
-                      tell [ "box-shadow: 0 0 0 1px black" ]
-                      tell [ "display: flex", "flex-direction: row" ]
-                  ]
-                  [ HH.div
+          [ state.messages
+              # filter (not <<< (_ `Array.elem` disabledMessageLabels) <<< _.label)
+              # mapWithIndex \i m ->
+                  Tuple (show i) $
+                    HH.div
                       [ style do
-                          tell [ "flex-grow: 0", "flex-shrink: 0" ]
-                          tell [ "background-color: black", "color: white" ]
-                          tell [ "padding: 0.5em" ]
-                          tell [ "width: 10em" ]
-                          tell [ "word-wrap: break-word", "overflow-wrap: break-word" ]
+                          tell [ "box-shadow: 0 0 0 1px black" ]
+                          tell [ "display: flex", "flex-direction: row" ]
                       ]
-                      [ HH.text m.label ]
-                  , HH.div
-                      [ style do
-                          tell [ "flex-grow: 1", "flex-shrink: 1" ]
-                      ]
-                      [ let
-                          content = m.content # fromPlainHTML
-                        in
-                          HH.slot_ (Proxy @"ConsoleMessageContent") i Widget.initializer
-                            { initialState: true
-                            , initialize: do
-                                Aff.delay $ Milliseconds 100.0
-                                pure false
-                            , render: \new ->
-                                HH.div
-                                  [ style do
-                                      tell [ "padding: 0.5em" ]
-                                  , classes $ fold
-                                      [ [ "ConsoleMessageContent" ]
-                                      , if new then [ "new" ] else []
+                      [ HH.div
+                          [ style do
+                              tell [ "flex-grow: 0", "flex-shrink: 0" ]
+                              tell [ "background-color: black", "color: white" ]
+                              tell [ "padding: 0.5em" ]
+                              tell [ "width: 10em" ]
+                              tell [ "word-wrap: break-word", "overflow-wrap: break-word" ]
+                          ]
+                          [ HH.text m.label ]
+                      , HH.div
+                          [ style do
+                              tell [ "flex-grow: 1", "flex-shrink: 1" ]
+                          ]
+                          [ let
+                              content = m.content # fromPlainHTML
+                            in
+                              HH.slot_ (Proxy @"ConsoleMessageContent") i Widget.initializer
+                                { initialState: true
+                                , initialize: do
+                                    Aff.delay $ Milliseconds 100.0
+                                    pure false
+                                , render: \new ->
+                                    HH.div
+                                      [ style do
+                                          tell [ "padding: 0.5em" ]
+                                      , classes $ fold
+                                          [ [ "ConsoleMessageContent" ]
+                                          , if new then [ "new" ] else []
+                                          ]
                                       ]
-                                  ]
-                                  [ content ]
-                            }
+                                      [ content ]
+                                }
+                          ]
                       ]
-                  ]
           , [ let
                 l = Array.length state.messages
               in

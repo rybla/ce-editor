@@ -2,6 +2,7 @@ module Data.Expr where
 
 import Prelude
 
+import Data.Array as Array
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.List (List)
@@ -9,7 +10,7 @@ import Data.Maybe (Maybe(..))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (todo)
+import Utility (parens, todo)
 
 --------------------------------------------------------------------------------
 
@@ -48,7 +49,8 @@ data Point = Point (List Int) Int
 derive instance Generic Point _
 
 instance Show Point where
-  show x = genericShow x
+  -- show x = genericShow x
+  show (Point is j) = parens $ show (Array.fromFoldable is) <> " - " <> show j
 
 instance Eq Point where
   eq x = genericEq x
@@ -130,7 +132,8 @@ orderSiblings _ _ = Nothing
 
 getHandleFromTo :: Handle -> Handle -> Maybe Handle
 -- drag from a Point to a Point
-getHandleFromTo (Cursor_Handle (Cursor _ p0 Left_CursorFocus)) (Cursor_Handle (Cursor p1 p1_ _)) | p1 == p1_, areOrderedSiblings p1 p0 = Just $ Cursor_Handle (Cursor p1 p0 Left_CursorFocus)
-getHandleFromTo (Cursor_Handle (Cursor p0 _ Right_CursorFocus)) (Cursor_Handle (Cursor p1 p1_ _)) | p1 == p1_, areOrderedSiblings p0 p1 = Just $ Cursor_Handle (Cursor p0 p1 Right_CursorFocus)
+getHandleFromTo (Cursor_Handle (Cursor p0 p0_ Left_CursorFocus)) (Cursor_Handle (Cursor p1 p1_ _)) | p0 == p0_, p1 == p1_, areOrderedSiblings p1 p0 = Just $ Cursor_Handle (Cursor p1 p0 Left_CursorFocus)
+getHandleFromTo (Cursor_Handle (Cursor p0 p0_ Left_CursorFocus)) (Cursor_Handle (Cursor p1 p1_ _)) | p0 == p0_, p1 == p1_, areOrderedSiblings p0 p1 = Just $ Cursor_Handle (Cursor p0 p1 Right_CursorFocus)
 -- TODO: other cases
 getHandleFromTo _ _ = Nothing
+

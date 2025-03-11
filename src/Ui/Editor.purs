@@ -30,13 +30,19 @@ import Halogen.HTML (PlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
 import Ui.Common (column, list, style, text)
 import Ui.Console as Console
 import Utility (todo)
 import Web.Event.Event as Event
+import Web.HTML as HTML
+import Web.HTML.HTMLDocument as HTMLDocument
+import Web.HTML.Window as HTML.Window
+import Web.UIEvent.KeyboardEvent as KeyboardEvent
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
+import Web.UIEvent.MouseEvent.EventTypes as MouseEventType
 
 --------------------------------------------------------------------------------
 -- Editor
@@ -54,6 +60,7 @@ data Action
   = Initialize
   | ExprOutput_Action ExprOutput
   | EngineOutput_Action EngineOutput
+  | EngineQuery_Action (forall a. a -> EngineQuery a)
 
 type Slots =
   ( "Engine" :: H.Slot EngineQuery EngineOutput Unit
@@ -110,6 +117,11 @@ component = H.mkComponent { initialState, eval, render }
 handleAction :: Action -> M' Unit
 handleAction Initialize = do
   lift $ trace "Editor" $ text "initialized"
+  doc <- liftEffect $ HTML.Window.document =<< HTML.window
+  lift $ H.subscribe' \_sub_id -> HQE.eventListener MouseEventType.mouseup (HTMLDocument.toEventTarget doc) $ MouseEvent.fromEvent >=> \_e -> do
+    pure $ EngineQuery_Action EndDrag_EngineQuery
+handleAction (EngineQuery_Action q) = do
+  lift $ H.tell (Proxy @"Engine") unit q
 handleAction (EngineOutput_Action eo) = case eo of
   Output_EngineOutput o -> H.raise o # lift
   ExprQuery_EngineOutput q -> H.tell (Proxy @"Expr") unit q # lift
@@ -117,9 +129,9 @@ handleAction (ExprOutput_Action (is /\ eo)) = case eo of
   Output_ExprOutput o ->
     H.raise o # lift
   ExprInteraction pi -> do
-    H.tell (Proxy @"Engine") unit (ExprInteraction_EngineQuery is pi) # lift
+    lift $ H.tell (Proxy @"Engine") unit (ExprInteraction_EngineQuery is pi)
   PointInteraction_ExprOutput i pi ->
-    H.tell (Proxy @"Engine") unit (PointInteraction_EngineQuery (Expr.Point is i) pi) # lift
+    lift $ H.tell (Proxy @"Engine") unit (PointInteraction_EngineQuery (Expr.Point is i) pi)
 
 --------------------------------------------------------------------------------
 -- Engine
@@ -128,6 +140,7 @@ handleAction (ExprOutput_Action (is /\ eo)) = case eo of
 data EngineQuery a
   = ExprInteraction_EngineQuery (List Int) ExprInteraction a
   | PointInteraction_EngineQuery Expr.Point PointInteraction a
+  | EndDrag_EngineQuery a
 
 type EngineInput =
   { editor :: Editor
@@ -193,7 +206,7 @@ initialEngineState input =
 handleEngineQuery :: forall a. EngineQuery a -> EngineM' a
 handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
   ClickExpr _event -> do
-    traceEngineM "Engine" (text $ "got Click from Expr at " <> show (Array.fromFoldable is)) # lift
+    lift $ traceEngineM "Engine" (text $ "got Click from Expr at " <> show (Array.fromFoldable is))
     -- deactivate previous handle points
     deactivateHandle =<< gets _.handle
     -- update handle
@@ -208,35 +221,30 @@ handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
         H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is1 $ PointQuery_ExprQuery i1 $ ModifyPointState (_ { style = CursorRightPointStyle }) a') # lift
         pure unit
     pure a
-handleEngineQuery (PointInteraction_EngineQuery ix pi a) = case pi of
-  Click_PointInteraction _event -> do
-    traceEngineM "Click" (text $ "got Click from Point at " <> show ix) # lift
-    let handle = Expr.Cursor_Handle (Expr.Cursor ix ix Expr.Left_CursorFocus)
-    activateHandle handle
-    pure a
+handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
   StartDrag_PointInteraction _event -> do
-    traceEngineM "Drag" (text $ "got StartDrag from Point at " <> show ix) # lift
-    let handle = Expr.Cursor_Handle (Expr.Cursor ix ix Expr.Left_CursorFocus)
+    lift $ traceEngineM "Drag" $ list
+      [ text $ "got StartDrag from Point at " <> show p
+      ]
+    let handle = Expr.Cursor_Handle (Expr.Cursor p p Expr.Left_CursorFocus)
     modify_ _ { drag_origin_handle = Just handle }
     setHandle handle
     pure a
   MidDrag_PointInteraction _event -> do
-    -- traceEngineM "Drag" (text $ "got MidDrag from Point at " <> show ix) # lift
-    let handle = Expr.Cursor_Handle (Expr.Cursor ix ix Expr.Left_CursorFocus)
+    lift $ traceEngineM "Drag" $ list
+      [ text $ "got MidDrag from Point at " <> show p ]
+    let handle = Expr.Cursor_Handle (Expr.Cursor p p Expr.Left_CursorFocus)
     updateDrag handle
     pure a
-  EndDrag_PointInteraction _event -> do
-    traceEngineM "Drag" (text $ "got EndDrag from Point at " <> show ix) # lift
-    let handle = Expr.Cursor_Handle (Expr.Cursor ix ix Expr.Left_CursorFocus)
-    updateDrag handle
-    modify_ _ { drag_origin_handle = Nothing }
-    pure a
+handleEngineQuery (EndDrag_EngineQuery a) = do
+  modify_ _ { drag_origin_handle = Nothing }
+  pure a
 
 handleEngineAction :: EngineAction -> EngineM' Unit
 handleEngineAction InitializeEngine = do
-  traceEngineM "Editor . Engine" (text "initialized") # lift
+  lift $ traceEngineM "Editor . Engine" $ text "initialized"
 handleEngineAction (ReceiveEngine input) = do
-  traceEngineM "Editor . Engine" (text "received") # lift
+  lift $ traceEngineM "Editor . Engine" $ text "received"
   put $ initialEngineState input
 
 --------------------------------------------------------------------------------
@@ -251,7 +259,7 @@ updateDrag handle = do
           column
             [ text $ "updateDrag (failure)"
             , list
-                [ text $ "drag_origin_handle = " <> show handle
+                [ text $ "drag_origin_handle = " <> show drag_origin_handle
                 , text $ "            handle = " <> show handle
                 ]
             ]
@@ -261,7 +269,7 @@ updateDrag handle = do
           column
             [ text $ "updateDrag (success)"
             , list
-                [ text $ "drag_origin_handle = " <> show handle
+                [ text $ "drag_origin_handle = " <> show drag_origin_handle
                 , text $ "            handle = " <> show handle
                 , text $ "getHandleFromTo ==> " <> show handle'
                 ]
@@ -440,13 +448,11 @@ handleExprAction (ExprInteraction_ExprAction ei) = do
   H.raise (none /\ ExprInteraction ei) # lift
   pingExpr
 -- Point stuff
-handleExprAction (PointOutput_ExprAction i (Output_PointOutput o)) =
+handleExprAction (PointOutput_ExprAction _i (Output_PointOutput o)) =
   H.raise (none /\ Output_ExprOutput o) # lift
 handleExprAction (PointOutput_ExprAction i (PointInteraction pi)) = do
   case pi of
-    Click_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     StartDrag_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-    EndDrag_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     MidDrag_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
   H.raise (none /\ PointInteraction_ExprOutput i pi) # lift
 
@@ -491,9 +497,7 @@ data PointOutput
   | PointInteraction PointInteraction
 
 data PointInteraction
-  = Click_PointInteraction MouseEvent
-  | StartDrag_PointInteraction MouseEvent
-  | EndDrag_PointInteraction MouseEvent
+  = StartDrag_PointInteraction MouseEvent
   | MidDrag_PointInteraction MouseEvent
 
 type PointHTML = H.ComponentHTML PointAction PointSlots PointM
@@ -539,9 +543,7 @@ point_component = H.mkComponent { initialState, eval, render }
               CursorLeftPointStyle -> [ HH.ClassName "CursorLeft" ]
               CursorRightPointStyle -> [ HH.ClassName "CursorRight" ]
           ]
-      -- , HE.onClick (Click_PointInteraction >>> PointInteraction_PointAction)
       , HE.onMouseDown (StartDrag_PointInteraction >>> PointInteraction_PointAction)
-      , HE.onMouseUp (EndDrag_PointInteraction >>> PointInteraction_PointAction)
       , HE.onMouseEnter (MidDrag_PointInteraction >>> PointInteraction_PointAction)
       ]
       [ text " " ]

@@ -37,3 +37,7 @@ fromHomogeneousToMap r = r
   # Object.fromHomogeneous
   # (Object.toUnfoldable :: _ -> List _)
   # Map.fromFoldable
+
+parens s = "(" <> s <> ")"
+brackets s = "[" <> s <> "]"
+braces s = "{" <> s <> "}"
