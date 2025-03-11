@@ -233,33 +233,19 @@ toCursorHandle h@(Handle is_O j_OL j_OR is_I j_IL j_IR f) = do
     else
       bug $ "invalid Handle: " <> show h
 
-getHandleFromTo
-  :: Handle
-  -> Point
-  -> Maybe Handle
--- -- drag from a Point
--- getHandleFromTo (Point_Handle p) p'
-getHandleFromTo h p' | Just p <- toPointHandle h = case unit of
-  _ | p == p' -> pure $ mkPointHandle p'
-  _ | areOrderedSiblings p p' -> pure $ mkCursorHandle $ Cursor (getPath p) (getIndex p) (getIndex p') Right_CursorFocus
-  _ | areOrderedSiblings p' p -> pure $ mkCursorHandle $ Cursor (getPath p) (getIndex p') (getIndex p) Left_CursorFocus
-  _ | otherwise -> empty
--- _ | areOrderedSiblings p p' -> pure $ Cursor_Handle $ Cursor p p' Right_CursorFocus
--- _ | areOrderedSiblings p' p -> pure $ Cursor_Handle $ Cursor p' p Left_CursorFocus
--- -- drag from a Cursor
--- getHandleFromTo (Cursor_Handle (Cursor l _r Right_CursorFocus)) p'
---   | l == p' = pure $ Point_Handle p'
---   | areOrderedSiblings l p' = pure $ Cursor_Handle $ Cursor l p' Right_CursorFocus
---   | areOrderedSiblings p' l = pure $ Cursor_Handle $ Cursor p' l Left_CursorFocus
---   -- the second point in the Cursor should actually be the right-most sibling of `l`, right? 
---   -- but maybe this is fine for now, since you can adjust the selection post-hoc
---   | Just s <- getSelectFromPointToPoint l p' = pure $ Select_Handle s
--- getHandleFromTo (Cursor_Handle (Cursor _ r Left_CursorFocus)) p'
---   | r == p' = pure $ Point_Handle p'
---   | areOrderedSiblings p' r = pure $ Cursor_Handle $ Cursor p' r Left_CursorFocus
---   | areOrderedSiblings r p' = pure $ Cursor_Handle $ Cursor r p' Right_CursorFocus
-getHandleFromTo (Handle is_O j_OL j_OR is_I j_IL j_IR f) p = empty
-
-getHandleFromTo (Handle is_O j_OL j_OR is_I j_IL j_IR f) p = empty
+getHandleFromTo :: Handle -> Point -> Maybe Handle
+-- drag from a Point
+getHandleFromTo h p' | Just p <- toPointHandle h, p == p' = pure $ mkPointHandle p'
+getHandleFromTo h p' | Just p <- toPointHandle h, areOrderedSiblings p p' = pure $ mkCursorHandle $ Cursor (getPath p) (getIndex p) (getIndex p') Right_CursorFocus
+getHandleFromTo h p' | Just p <- toPointHandle h, areOrderedSiblings p' p = pure $ mkCursorHandle $ Cursor (getPath p) (getIndex p') (getIndex p) Left_CursorFocus
+-- drag from a Cursor
+-- adjust left point of Cursor
+getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, l == p' = pure $ mkPointHandle p'
+getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, areOrderedSiblings l p' = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex l) (getIndex p') Right_CursorFocus
+getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex p') (getIndex r) Left_CursorFocus
+-- adjust right point of Cursor
+getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, r == p' = pure $ mkPointHandle p'
+getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex p') (getIndex r) Left_CursorFocus
+getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex l) (getIndex p') Right_CursorFocus
 -- TODO
 getHandleFromTo _ _ = empty

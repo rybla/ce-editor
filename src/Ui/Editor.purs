@@ -221,6 +221,7 @@ handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
       _ | Just _ <- toPointHandle handle -> pure $ Expr.mkPointHandle p
       _ | Just c <- toCursorHandle handle, l /\ r <- getPointsOfCursor c, p == l -> pure $ Expr.mkCursorHandle $ Expr.Cursor (Expr.getPath p) (Expr.getIndex p) (Expr.getIndex r) Left_CursorFocus
       _ | Just c <- toCursorHandle handle, l /\ r <- getPointsOfCursor c, p == r -> pure $ Expr.mkCursorHandle $ Expr.Cursor (Expr.getPath p) (Expr.getIndex l) (Expr.getIndex p) Right_CursorFocus
+      _ | Just c <- toCursorHandle handle -> pure $ Expr.mkPointHandle p
       _ | otherwise -> throwError $ text "other StartDrag cases"
     modify_ _ { drag_origin_handle = Just h' }
     setHandle h'
