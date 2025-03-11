@@ -209,20 +209,15 @@ handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
     case List.unsnoc is of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
-        let handle = Expr.mkCursorHandle (Expr.Cursor init last (last + 1) Expr.Left_CursorFocus)
-        setHandle handle
+        let h = Expr.mkCursorHandle (Expr.Cursor init last (last + 1) Expr.Left_CursorFocus)
+        setHandle h
         pure unit
     pure a
 handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
   StartDrag_PointInteraction _event -> do
     lift $ traceEngineM "Drag" $ text $ "got StartDrag from Point at " <> show p
-    handle <- gets _.handle
-    h' <- case unit of
-      _ | Just _ <- toPointHandle handle -> pure $ Expr.mkPointHandle p
-      _ | Just c <- toCursorHandle handle, l /\ r <- getPointsOfCursor c, p == l -> pure $ Expr.mkCursorHandle $ Expr.Cursor (Expr.getPath p) (Expr.getIndex p) (Expr.getIndex r) Left_CursorFocus
-      _ | Just c <- toCursorHandle handle, l /\ r <- getPointsOfCursor c, p == r -> pure $ Expr.mkCursorHandle $ Expr.Cursor (Expr.getPath p) (Expr.getIndex l) (Expr.getIndex p) Right_CursorFocus
-      _ | Just c <- toCursorHandle handle -> pure $ Expr.mkPointHandle p
-      _ | otherwise -> throwError $ text "other StartDrag cases"
+    h <- gets _.handle
+    let h' = Expr.getDragOrigin h p
     modify_ _ { drag_origin_handle = Just h' }
     setHandle h'
     pure a
@@ -258,17 +253,17 @@ updateDragToPoint p = do
                 ]
             ]
         pure unit
-      Just handle' -> do
+      Just h' -> do
         lift $ traceEngineM "Drag" $
           column
             [ text $ "updateDragToPoint (success)"
             , list
                 [ text $ "drag_origin_handle = " <> show drag_origin_handle
                 , text $ "                 p = " <> show p
-                , text $ "getHandleFromTo ==> " <> show handle'
+                , text $ "getHandleFromTo ==> " <> show h'
                 ]
             ]
-        setHandle handle'
+        setHandle h'
 
 setHandle :: Expr.Handle -> EngineM' Unit
 setHandle h = do

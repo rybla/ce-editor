@@ -249,3 +249,11 @@ getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c
 getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex l) (getIndex p') Right_CursorFocus
 -- TODO
 getHandleFromTo _ _ = empty
+
+getDragOrigin :: Handle -> Point -> Handle
+getDragOrigin h p | Just _ <- toPointHandle h = mkPointHandle p
+getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, p == l = mkCursorHandle $ Cursor (getPath p) (getIndex p) (getIndex r) Left_CursorFocus
+getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, p == r = mkCursorHandle $ Cursor (getPath p) (getIndex l) (getIndex p) Right_CursorFocus
+getDragOrigin h p | Just c <- toCursorHandle h = mkPointHandle p
+getDragOrigin _ _ = bug "other StartDrag cases"
+
