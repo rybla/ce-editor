@@ -202,7 +202,7 @@ handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
       Just { init, last } -> do
         let ix0@(Expr.Point is0 i0) = Expr.Point init last
         let ix1@(Expr.Point is1 i1) = Expr.Point init (last + 1)
-        modify_ _ { handle = Expr.Cursor_Handle (Expr.Cursor ix0 ix1) }
+        modify_ _ { handle = Expr.Cursor_Handle (Expr.Cursor ix0 ix1 Expr.Left_CursorFocus) }
         -- activate new handle points
         H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is0 $ PointQuery_ExprQuery i0 $ ModifyPointState (_ { style = CursorLeftPointStyle }) a') # lift
         H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is1 $ PointQuery_ExprQuery i1 $ ModifyPointState (_ { style = CursorRightPointStyle }) a') # lift
@@ -211,24 +211,26 @@ handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
 handleEngineQuery (PointInteraction_EngineQuery ix@(Expr.Point is i) pi a) = case pi of
   Click_PointInteraction _event -> do
     when false do
-      traceEngineM "Engine" (text $ "got MouseClick from Point at " <> show ix) # lift
-      -- deactivate previous handle points
+      traceEngineM "Click" (text $ "got Click from Point at " <> show ix) # lift
       deactivateHandle =<< gets _.handle
-      -- update handle
-      modify_ _ { handle = Expr.Cursor_Handle (Expr.Cursor ix ix) }
-      -- activate new handle points
+      modify_ _ { handle = Expr.Cursor_Handle (Expr.Cursor ix ix Expr.Left_CursorFocus) }
       H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is $ PointQuery_ExprQuery i $ ModifyPointState (_ { style = PointCursorPointStyle }) a') # lift
     pure a
-  MouseDown_PointInteraction _event -> do
-    traceEngineM "Engine" (text $ "got MouseDown from Point at " <> show ix) # lift
-    -- deactivate previous handle points
+  StartDrag_PointInteraction _event -> do
+    traceEngineM "Drag" (text $ "got StartDrag from Point at " <> show ix) # lift
     deactivateHandle =<< gets _.handle
-    -- update handle
-    modify_ _ { handle = Expr.Cursor_Handle (Expr.Cursor ix ix) }
-    -- activate new handle points
+    modify_ _
+      { handle = Expr.Cursor_Handle (Expr.Cursor ix ix Expr.Left_CursorFocus)
+      , drag_origin_handle = pure $ Expr.Cursor_Handle (Expr.Cursor ix ix Expr.Left_CursorFocus)
+      }
     H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is $ PointQuery_ExprQuery i $ ModifyPointState (_ { style = PointCursorPointStyle }) a') # lift
     pure a
-  MouseUp_PointInteraction _event -> do
+  MidDrag_PointInteraction _event -> do
+    -- TODO
+    pure a
+  EndDrag_PointInteraction _event -> do
+    traceEngineM "Drag" (text $ "got EndDrag from Point at " <> show ix) # lift
+    modify_ _ { drag_origin_handle = Nothing }
     pure a
 
 handleEngineAction :: EngineAction -> EngineM' Unit
@@ -238,12 +240,23 @@ handleEngineAction (ReceiveEngine input) = do
   traceEngineM "Editor . Engine" (text "received") # lift
   put $ initialEngineState input
 
-deactivateHandle :: Expr.Handle -> EngineM' Unit
-deactivateHandle handle = case handle of
-  Expr.Cursor_Handle (Expr.Cursor (Expr.Point is0 i0) (Expr.Point is1 i1)) -> do
+activateHandle :: Expr.Handle -> EngineM' Unit
+activateHandle handle = case handle of
+  Expr.Cursor_Handle (Expr.Cursor (Expr.Point is0 i0) (Expr.Point is1 i1) _focus) -> do
     H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is0 $ PointQuery_ExprQuery i0 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
     H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is1 $ PointQuery_ExprQuery i1 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
-  Expr.Select_Handle (Expr.Select (Expr.Point is00 i00) (Expr.Point is01 i01) (Expr.Point is10 i10) (Expr.Point is11 i11)) -> do
+  Expr.Select_Handle (Expr.Select (Expr.Point is00 i00) (Expr.Point is01 i01) (Expr.Point is10 i10) (Expr.Point is11 i11) _focus) -> do
+    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is00 $ PointQuery_ExprQuery i00 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is01 $ PointQuery_ExprQuery i01 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is10 $ PointQuery_ExprQuery i10 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is11 $ PointQuery_ExprQuery i11 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+
+deactivateHandle :: Expr.Handle -> EngineM' Unit
+deactivateHandle handle = case handle of
+  Expr.Cursor_Handle (Expr.Cursor (Expr.Point is0 i0) (Expr.Point is1 i1) _focus) -> do
+    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is0 $ PointQuery_ExprQuery i0 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is1 $ PointQuery_ExprQuery i1 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+  Expr.Select_Handle (Expr.Select (Expr.Point is00 i00) (Expr.Point is01 i01) (Expr.Point is10 i10) (Expr.Point is11 i11) _focus) -> do
     H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is00 $ PointQuery_ExprQuery i00 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
     H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is01 $ PointQuery_ExprQuery i01 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
     H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is10 $ PointQuery_ExprQuery i10 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
@@ -397,8 +410,9 @@ handleExprAction (PointOutput_ExprAction i (Output_PointOutput o)) =
 handleExprAction (PointOutput_ExprAction i (PointInteraction pi)) = do
   case pi of
     Click_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-    MouseDown_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-    MouseUp_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+    StartDrag_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+    EndDrag_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+    MidDrag_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
   H.raise (none /\ PointInteraction_ExprOutput i pi) # lift
 
 pingExpr :: ExprM' Unit
@@ -443,8 +457,9 @@ data PointOutput
 
 data PointInteraction
   = Click_PointInteraction MouseEvent
-  | MouseDown_PointInteraction MouseEvent
-  | MouseUp_PointInteraction MouseEvent
+  | StartDrag_PointInteraction MouseEvent
+  | EndDrag_PointInteraction MouseEvent
+  | MidDrag_PointInteraction MouseEvent
 
 type PointHTML = H.ComponentHTML PointAction PointSlots PointM
 type PointM' = ExceptT (Maybe PlainHTML) PointM
@@ -490,8 +505,8 @@ point_component = H.mkComponent { initialState, eval, render }
               CursorRightPointStyle -> [ HH.ClassName "CursorRight" ]
           ]
       , HE.onClick (Click_PointInteraction >>> PointInteraction_PointAction)
-      , HE.onMouseDown (MouseDown_PointInteraction >>> PointInteraction_PointAction)
-      , HE.onMouseUp (MouseUp_PointInteraction >>> PointInteraction_PointAction)
+      , HE.onMouseDown (StartDrag_PointInteraction >>> PointInteraction_PointAction)
+      , HE.onMouseUp (EndDrag_PointInteraction >>> PointInteraction_PointAction)
       ]
       [ text " " ]
 

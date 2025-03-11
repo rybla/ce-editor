@@ -57,7 +57,55 @@ data Handle
   = Cursor_Handle Cursor
   | Select_Handle Select
 
-data Cursor = Cursor Point Point
+derive instance Generic Handle _
 
-data Select = Select Point Point Point Point
+instance Show Handle where
+  show x = genericShow x
+
+instance Eq Handle where
+  eq x = genericEq x
+
+data Cursor = Cursor Point Point CursorFocus
+
+derive instance Generic Cursor _
+
+instance Show Cursor where
+  show x = genericShow x
+
+instance Eq Cursor where
+  eq x = genericEq x
+
+data CursorFocus = Left_CursorFocus | Right_CursorFocus
+
+derive instance Generic CursorFocus _
+
+instance Show CursorFocus where
+  show x = genericShow x
+
+instance Eq CursorFocus where
+  eq x = genericEq x
+
+data Select = Select Point Point Point Point SelectFocus
+
+derive instance Generic Select _
+
+instance Show Select where
+  show x = genericShow x
+
+instance Eq Select where
+  eq x = genericEq x
+
+data SelectFocus
+  = OuterLeft_SelectFocus
+  | InnerLeft_SelectFocus
+  | InnerRight_SelectFocus
+  | OuterRightSelectFocus
+
+derive instance Generic SelectFocus _
+
+instance Show SelectFocus where
+  show x = genericShow x
+
+instance Eq SelectFocus where
+  eq x = genericEq x
 
