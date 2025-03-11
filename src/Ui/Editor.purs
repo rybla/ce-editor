@@ -11,7 +11,7 @@ import Data.Array (fold)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
-import Data.Expr (Expr(..), (%))
+import Data.Expr (CursorFocus(..), Expr(..), (%))
 import Data.Expr as Expr
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Generic.Rep (class Generic)
@@ -218,9 +218,18 @@ handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
 handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
   StartDrag_PointInteraction _event -> do
     lift $ traceEngineM "Drag" $ text $ "got StartDrag from Point at " <> show p
-    let handle = Expr.Point_Handle p
-    modify_ _ { drag_origin_handle = Just handle }
-    setHandle handle
+    handle <- gets _.handle
+    let
+      handle' = case handle of
+        Expr.Point_Handle _ ->
+          Expr.Point_Handle p
+        Expr.Cursor_Handle (Expr.Cursor l r _)
+          | p == l -> Expr.Cursor_Handle $ Expr.Cursor p r Left_CursorFocus
+          | p == r -> Expr.Cursor_Handle $ Expr.Cursor l p Right_CursorFocus
+          | otherwise -> Expr.Point_Handle p
+        Expr.Select_Handle _s -> todo "StartDrag at Select_Handle"
+    modify_ _ { drag_origin_handle = Just handle' }
+    setHandle handle'
     pure a
   MidDrag_PointInteraction _event -> do
     lift $ traceEngineM "Drag" $ text $ "got MidDrag from Point at " <> show p

@@ -31,7 +31,9 @@ data Action
 
 type Output = Void
 
-disabledMessageLabels = [ "Drag" ]
+disabledMessageLabels =
+  [ -- "Drag"
+  ]
 
 component ∷ forall input output. H.Component Query input output Aff
 component = H.mkComponent { initialState, eval, render }

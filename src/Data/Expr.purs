@@ -2,6 +2,7 @@ module Data.Expr where
 
 import Prelude
 
+import Control.Plus (empty)
 import Data.Array as Array
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
@@ -66,7 +67,10 @@ data Handle
 derive instance Generic Handle _
 
 instance Show Handle where
-  show x = genericShow x
+  -- show x = genericShow x
+  show (Point_Handle p) = "[[ " <> show p <> " ]]"
+  show (Cursor_Handle c) = "[[ " <> show c <> " ]]"
+  show (Select_Handle s) = "[[ " <> show s <> " ]]"
 
 instance Eq Handle where
   eq x = genericEq x
@@ -76,7 +80,8 @@ data Cursor = Cursor Point Point CursorFocus
 derive instance Generic Cursor _
 
 instance Show Cursor where
-  show x = genericShow x
+  -- show x = genericShow x
+  show (Cursor l r f) = show l <> " ... " <> show r <> " @ " <> show f
 
 instance Eq Cursor where
   eq x = genericEq x
@@ -86,7 +91,9 @@ data CursorFocus = Left_CursorFocus | Right_CursorFocus
 derive instance Generic CursorFocus _
 
 instance Show CursorFocus where
-  show x = genericShow x
+  -- show x = genericShow x
+  show Left_CursorFocus = "Left"
+  show Right_CursorFocus = "Right"
 
 instance Eq CursorFocus where
   eq x = genericEq x
@@ -132,9 +139,19 @@ orderSiblings p0@(Point _ j0) p1@(Point _ j1) | areSiblings p0 p1 =
 orderSiblings _ _ = Nothing
 
 getHandleFromTo :: Handle -> Point -> Maybe Handle
--- drag from a Point to a Point
-getHandleFromTo (Point_Handle p) p_ | p == p_ = Just $ Point_Handle p
-getHandleFromTo (Point_Handle p0) p1 | areOrderedSiblings p0 p1 = Just $ Cursor_Handle (Cursor p0 p1 Right_CursorFocus)
-getHandleFromTo (Point_Handle p0) p1 | areOrderedSiblings p1 p0 = Just $ Cursor_Handle (Cursor p1 p0 Left_CursorFocus)
--- TODO: other cases
-getHandleFromTo _ _ = Nothing
+-- drag from a Point
+getHandleFromTo (Point_Handle p) p'
+  | p == p' = pure $ Point_Handle p'
+  | areOrderedSiblings p p' = pure $ Cursor_Handle $ Cursor p p' Right_CursorFocus
+  | areOrderedSiblings p' p = pure $ Cursor_Handle $ Cursor p' p Left_CursorFocus
+-- drag from a Cursor
+getHandleFromTo (Cursor_Handle (Cursor l _r Right_CursorFocus)) p'
+  | l == p' = pure $ Point_Handle p'
+  | areOrderedSiblings l p' = pure $ Cursor_Handle $ Cursor l p' Right_CursorFocus
+  | areOrderedSiblings p' l = pure $ Cursor_Handle $ Cursor p' l Left_CursorFocus
+getHandleFromTo (Cursor_Handle (Cursor _ r Left_CursorFocus)) p'
+  | r == p' = pure $ Point_Handle p'
+  | areOrderedSiblings p' r = pure $ Cursor_Handle $ Cursor p' r Left_CursorFocus
+  | areOrderedSiblings r p' = pure $ Cursor_Handle $ Cursor r p' Right_CursorFocus
+-- TODO: drag from a Select
+getHandleFromTo _ _ = empty
