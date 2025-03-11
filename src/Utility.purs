@@ -25,7 +25,7 @@ replaceFormatVars :: Map String String -> String -> String
 replaceFormatVars sigma = go (Map.toUnfoldable sigma)
   where
   go Nil s = s
-  go ((k /\ v) : sigma') s = go sigma' $ String.replace (String.Pattern $ "{{" <> k <> "}}") (String.Replacement v) s
+  go ((k /\ v) : sigma') s = go sigma' $ String.replaceAll (String.Pattern $ "{{" <> k <> "}}") (String.Replacement v) s
 
 replaceFormatVars' ∷ forall r. Homogeneous r String ⇒ Record r → String → String
 replaceFormatVars' sigma = replaceFormatVars (fromHomogeneousToMap sigma)
@@ -37,4 +37,3 @@ fromHomogeneousToMap r = r
   # Object.fromHomogeneous
   # (Object.toUnfoldable :: _ -> List _)
   # Map.fromFoldable
-

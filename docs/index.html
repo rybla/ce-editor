@@ -9,10 +9,16 @@
   <title>Editor1</title>
   <script src="/main.js"></script>
   <style>
+    :root {
+      --background-color: rgb(146, 146, 146);
+    }
+
     html,
     body {
       margin: 0;
       padding: 0;
+
+      background-color: var(--background-color);
     }
 
     .Expr {
@@ -79,7 +85,7 @@
     }
 
     .ConsoleMessageContent {
-      background-color: white;
+      background-color: var(--background-color);
 
       transition-property: background-color;
       transition-duration: 0.5s;
