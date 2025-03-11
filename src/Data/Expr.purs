@@ -40,20 +40,24 @@ instance Eq Label where
 
 -- the List Int is the steps along Expr kis
 -- the final Int is the final point index in the last Expr's kids
-data Index = Index (List Int) Int
+data Point = Point (List Int) Int
 
-derive instance Generic Index _
+derive instance Generic Point _
 
-instance Show Index where
+instance Show Point where
   show x = genericShow x
 
-instance Eq Index where
+instance Eq Point where
   eq x = genericEq x
 
-instance Ord Index where
+instance Ord Point where
   compare x = genericCompare x
 
 data Handle
-  = Cursor Index Index
-  | Select Index Index Index Index
+  = Cursor_Handle Cursor
+  | Select_Handle Select
+
+data Cursor = Cursor Point Point
+
+data Select = Select Point Point Point Point
 
