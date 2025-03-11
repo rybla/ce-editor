@@ -218,14 +218,13 @@ handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
 handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
   StartDrag_PointInteraction _event -> do
     lift $ traceEngineM "Drag" $ text $ "got StartDrag from Point at " <> show p
-    let handle = Expr.Cursor_Handle (Expr.Cursor p p Expr.Left_CursorFocus)
+    let handle = Expr.Point_Handle p
     modify_ _ { drag_origin_handle = Just handle }
     setHandle handle
     pure a
   MidDrag_PointInteraction _event -> do
     lift $ traceEngineM "Drag" $ text $ "got MidDrag from Point at " <> show p
-    let handle = Expr.Cursor_Handle (Expr.Cursor p p Expr.Left_CursorFocus)
-    updateDrag handle
+    updateDragToPoint p
     pure a
 handleEngineQuery (EndDrag_EngineQuery a) = do
   modify_ _ { drag_origin_handle = Nothing }
@@ -240,28 +239,28 @@ handleEngineAction (ReceiveEngine input) = do
 
 --------------------------------------------------------------------------------
 
-updateDrag :: Expr.Handle -> EngineM' Unit
-updateDrag handle = do
+updateDragToPoint :: Expr.Point -> EngineM' Unit
+updateDragToPoint p = do
   gets _.drag_origin_handle >>= case _ of
     Nothing -> pure unit
-    Just drag_origin_handle -> case Expr.getHandleFromTo drag_origin_handle handle of
+    Just drag_origin_handle -> case Expr.getHandleFromTo drag_origin_handle p of
       Nothing -> do
         lift $ traceEngineM "Drag" $
           column
-            [ text $ "updateDrag (failure)"
+            [ text $ "updateDragToPoint (failure)"
             , list
                 [ text $ "drag_origin_handle = " <> show drag_origin_handle
-                , text $ "            handle = " <> show handle
+                , text $ "                 p = " <> show p
                 ]
             ]
         pure unit
       Just handle' -> do
         lift $ traceEngineM "Drag" $
           column
-            [ text $ "updateDrag (success)"
+            [ text $ "updateDragToPoint (success)"
             , list
                 [ text $ "drag_origin_handle = " <> show drag_origin_handle
-                , text $ "            handle = " <> show handle
+                , text $ "                 p = " <> show p
                 , text $ "getHandleFromTo ==> " <> show handle'
                 ]
             ]
@@ -278,7 +277,7 @@ setPointStyle (Expr.Point is i) style = H.raise (ExprQuery_EngineOutput \a' -> E
 
 activateHandle :: Expr.Handle -> EngineM' Unit
 activateHandle handle = case handle of
-  Expr.Cursor_Handle (Expr.Cursor p p_ _focus) | p == p_ -> do
+  Expr.Point_Handle p -> do
     setPointStyle p PointCursorPointStyle
   Expr.Cursor_Handle (Expr.Cursor l r _focus) -> do
     setPointStyle l CursorLeftPointStyle
@@ -288,7 +287,7 @@ activateHandle handle = case handle of
 
 deactivateHandle :: Expr.Handle -> EngineM' Unit
 deactivateHandle handle = case handle of
-  Expr.Cursor_Handle (Expr.Cursor p p_ _focus) | p == p_ -> do
+  Expr.Point_Handle p -> do
     setPointStyle p NormalPointStyle
   Expr.Cursor_Handle (Expr.Cursor l r _focus) -> do
     setPointStyle l NormalPointStyle

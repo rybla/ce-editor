@@ -10,7 +10,7 @@ import Data.Maybe (Maybe(..))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (parens, todo)
+import Utility (parens)
 
 --------------------------------------------------------------------------------
 
@@ -59,7 +59,8 @@ instance Ord Point where
   compare x = genericCompare x
 
 data Handle
-  = Cursor_Handle Cursor
+  = Point_Handle Point
+  | Cursor_Handle Cursor
   | Select_Handle Select
 
 derive instance Generic Handle _
@@ -130,10 +131,10 @@ orderSiblings p0@(Point _ j0) p1@(Point _ j1) | areSiblings p0 p1 =
     Just $ p1 /\ p0
 orderSiblings _ _ = Nothing
 
-getHandleFromTo :: Handle -> Handle -> Maybe Handle
+getHandleFromTo :: Handle -> Point -> Maybe Handle
 -- drag from a Point to a Point
-getHandleFromTo (Cursor_Handle (Cursor p0 p0_ Left_CursorFocus)) (Cursor_Handle (Cursor p1 p1_ _)) | p0 == p0_, p1 == p1_, areOrderedSiblings p1 p0 = Just $ Cursor_Handle (Cursor p1 p0 Left_CursorFocus)
-getHandleFromTo (Cursor_Handle (Cursor p0 p0_ Left_CursorFocus)) (Cursor_Handle (Cursor p1 p1_ _)) | p0 == p0_, p1 == p1_, areOrderedSiblings p0 p1 = Just $ Cursor_Handle (Cursor p0 p1 Right_CursorFocus)
+getHandleFromTo (Point_Handle p) p_ | p == p_ = Just $ Point_Handle p
+getHandleFromTo (Point_Handle p0) p1 | areOrderedSiblings p0 p1 = Just $ Cursor_Handle (Cursor p0 p1 Right_CursorFocus)
+getHandleFromTo (Point_Handle p0) p1 | areOrderedSiblings p1 p0 = Just $ Cursor_Handle (Cursor p1 p0 Left_CursorFocus)
 -- TODO: other cases
 getHandleFromTo _ _ = Nothing
-
