@@ -5,8 +5,10 @@ import Prelude
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.List (List)
+import Data.Maybe (Maybe(..))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
+import Utility (todo)
 
 --------------------------------------------------------------------------------
 
@@ -109,3 +111,14 @@ instance Show SelectFocus where
 instance Eq SelectFocus where
   eq x = genericEq x
 
+--------------------------------------------------------------------------------
+
+areSiblings :: Point -> Point -> Boolean
+areSiblings (Point is0 _j0) (Point is1 _j1) = is0 == is1
+
+getHandleFromTo :: Handle -> Handle -> Maybe Handle
+-- drag from a Point to a Point
+getHandleFromTo (Cursor_Handle (Cursor l0 _r0 Right_CursorFocus)) (Cursor_Handle (Cursor l1 r1 _)) | l1 == r1, areSiblings l0 r1 = Just $ Cursor_Handle (Cursor l0 r1 Right_CursorFocus)
+getHandleFromTo (Cursor_Handle (Cursor _l0 r0 Left_CursorFocus)) (Cursor_Handle (Cursor l1 r1 _)) | l1 == r1, areSiblings r0 l1 = Just $ Cursor_Handle (Cursor l1 r0 Left_CursorFocus)
+-- TODO: other cases
+getHandleFromTo _ _ = Nothing

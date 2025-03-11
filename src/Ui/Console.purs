@@ -16,9 +16,8 @@ import Halogen as H
 import Halogen.HTML (fromPlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
-import Halogen.HTML.Properties (classes)
 import Type.Proxy (Proxy(..))
-import Ui.Common (style)
+import Ui.Common (classes, style)
 import Ui.Widget (scrollToMe)
 import Ui.Widget as Widget
 
@@ -51,19 +50,22 @@ component = H.mkComponent { initialState, eval, render }
 
   render state =
     HH.div
-      [ style do
+      [ classes [ "Console" ]
+      , style do
           tell [ "flex-grow: 0", "flex-shrink: 0" ]
           tell [ "height: 20em" ]
           tell [ "display: flex", "flex-direction: column" ]
       ]
       [ HH.div
-          [ style do
+          [ classes [ "Header" ]
+          , style do
               tell [ "padding: 0.5em" ]
               tell [ "background-color: black", "color: white" ]
           ]
           [ HH.text "Console" ]
       , HHK.div
-          [ style do
+          [ classes [ "Body" ]
+          , style do
               tell [ "overflow-y: scroll" ]
               tell [ "padding: 0.5em" ]
               tell [ "display: flex", "flex-direction: column", "gap: 0.5em" ]
@@ -101,8 +103,8 @@ component = H.mkComponent { initialState, eval, render }
                                   [ style do
                                       tell [ "padding: 0.5em" ]
                                   , classes $ fold
-                                      [ [ H.ClassName "ConsoleMessageContent" ]
-                                      , if new then [ H.ClassName "new" ] else []
+                                      [ [ "ConsoleMessageContent" ]
+                                      , if new then [ "new" ] else []
                                       ]
                                   ]
                                   [ content ]
