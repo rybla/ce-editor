@@ -151,30 +151,6 @@ instance Show CursorFocus where
 instance Eq CursorFocus where
   eq x = genericEq x
 
-data Select = Select Point Point Point Point SelectFocus
-
-derive instance Generic Select _
-
-instance Show Select where
-  show x = genericShow x
-
-instance Eq Select where
-  eq x = genericEq x
-
-data SelectFocus
-  = OuterLeft_SelectFocus
-  | InnerLeft_SelectFocus
-  | InnerRight_SelectFocus
-  | OuterRightSelectFocus
-
-derive instance Generic SelectFocus _
-
-instance Show SelectFocus where
-  show x = genericShow x
-
-instance Eq SelectFocus where
-  eq x = genericEq x
-
 --------------------------------------------------------------------------------
 
 areSiblings :: Point -> Point -> Boolean
@@ -201,16 +177,16 @@ isAncestorSibling p0 p1 = go (getPath p0) (getPath p1)
   go (i0 : is0') (i1 : is1') | i0 == i1 = go is0' is1'
   go _ _ = empty
 
-getSelectFromPointToPoint :: Point -> Point -> Maybe Select
-getSelectFromPointToPoint p0 p1
-  | is1 <- getPath p1
-  , j1 <- getIndex p1
-  , Just (k0 /\ _is) <- isAncestorSibling p1 p0 =
-      if k0 < getIndex p1 then
-        pure $ Select (Point is1 (j1 - 1)) p0 p0 p1 OuterRightSelectFocus
-      else
-        pure $ Select p1 p0 p0 (Point is1 (j1 + 1)) OuterLeft_SelectFocus
-getSelectFromPointToPoint _ _ = empty
+-- getSelectFromPointToPoint :: Point -> Point -> Maybe Select
+-- getSelectFromPointToPoint p0 p1
+--   | is1 <- getPath p1
+--   , j1 <- getIndex p1
+--   , Just (k0 /\ _is) <- isAncestorSibling p1 p0 =
+--       if k0 < getIndex p1 then
+--         pure $ Select (Point is1 (j1 - 1)) p0 p0 p1 OuterRightSelectFocus
+--       else
+--         pure $ Select p1 p0 p0 (Point is1 (j1 + 1)) OuterLeft_SelectFocus
+-- getSelectFromPointToPoint _ _ = empty
 
 toPointHandle :: Handle -> Maybe Point
 toPointHandle (Handle is_O j_OL j_OR is_I j_IL j_IR _) = do
@@ -233,6 +209,13 @@ toCursorHandle h@(Handle is_O j_OL j_OR is_I j_IL j_IR f) = do
     else
       bug $ "invalid Handle: " <> show h
 
+getDragOrigin :: Handle -> Point -> Handle
+getDragOrigin h p | Just _ <- toPointHandle h = mkPointHandle p
+getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, p == l = mkCursorHandle $ Cursor (getPath p) (getIndex p) (getIndex r) Left_CursorFocus
+getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, p == r = mkCursorHandle $ Cursor (getPath p) (getIndex l) (getIndex p) Right_CursorFocus
+getDragOrigin h p | Just c <- toCursorHandle h = mkPointHandle p
+getDragOrigin _ _ = bug "other StartDrag cases"
+
 getHandleFromTo :: Handle -> Point -> Maybe Handle
 -- drag from a Point
 getHandleFromTo h p' | Just p <- toPointHandle h, p == p' = pure $ mkPointHandle p'
@@ -249,11 +232,4 @@ getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c
 getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex l) (getIndex p') Right_CursorFocus
 -- TODO
 getHandleFromTo _ _ = empty
-
-getDragOrigin :: Handle -> Point -> Handle
-getDragOrigin h p | Just _ <- toPointHandle h = mkPointHandle p
-getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, p == l = mkCursorHandle $ Cursor (getPath p) (getIndex p) (getIndex r) Left_CursorFocus
-getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, p == r = mkCursorHandle $ Cursor (getPath p) (getIndex l) (getIndex p) Right_CursorFocus
-getDragOrigin h p | Just c <- toCursorHandle h = mkPointHandle p
-getDragOrigin _ _ = bug "other StartDrag cases"
 
