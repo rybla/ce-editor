@@ -205,19 +205,14 @@ initialEngineState input =
 handleEngineQuery :: forall a. EngineQuery a -> EngineM' a
 handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
   ClickExpr _event -> do
-    lift $ traceEngineM "Engine" (text $ "got Click from Expr at " <> show (Array.fromFoldable is))
-    -- deactivate previous handle points
-    deactivateHandle =<< gets _.handle
-    -- update handle
+    lift $ traceEngineM "Engine" $ text $ "got Click from Expr at " <> show (Array.fromFoldable is)
     case List.unsnoc is of
-      Nothing -> pure unit
+      Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
-        let ix0@(Expr.Point is0 i0) = Expr.Point init last
-        let ix1@(Expr.Point is1 i1) = Expr.Point init (last + 1)
-        modify_ _ { handle = Expr.Cursor_Handle (Expr.Cursor ix0 ix1 Expr.Left_CursorFocus) }
-        -- activate new handle points
-        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is0 $ PointQuery_ExprQuery i0 $ ModifyPointState (_ { style = CursorLeftPointStyle }) a') # lift
-        H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is1 $ PointQuery_ExprQuery i1 $ ModifyPointState (_ { style = CursorRightPointStyle }) a') # lift
+        let ix0 = Expr.Point init last
+        let ix1 = Expr.Point init (last + 1)
+        let handle = Expr.Cursor_Handle (Expr.Cursor ix0 ix1 Expr.Left_CursorFocus)
+        setHandle handle
         pure unit
     pure a
 handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
