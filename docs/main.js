@@ -355,11 +355,11 @@
 
   // output/Data.Ord/foreign.js
   var unsafeCompareImpl = function(lt) {
-    return function(eq5) {
+    return function(eq4) {
       return function(gt) {
         return function(x) {
           return function(y) {
-            return x < y ? lt : x === y ? eq5 : gt;
+            return x < y ? lt : x === y ? eq4 : gt;
           };
         };
       };
@@ -1205,13 +1205,13 @@
     return v.value0;
   };
   var eqTuple = function(dictEq) {
-    var eq5 = eq(dictEq);
+    var eq4 = eq(dictEq);
     return function(dictEq1) {
       var eq14 = eq(dictEq1);
       return {
         eq: function(x) {
           return function(y) {
-            return eq5(x.value0)(y.value0) && eq14(x.value1)(y.value1);
+            return eq4(x.value0)(y.value0) && eq14(x.value1)(y.value1);
           };
         }
       };
@@ -1571,10 +1571,10 @@
   }();
   var filter = /* @__PURE__ */ runFn2(filterImpl);
   var elemIndex = function(dictEq) {
-    var eq22 = eq(dictEq);
+    var eq23 = eq(dictEq);
     return function(x) {
       return findIndex(function(v) {
-        return eq22(v)(x);
+        return eq23(v)(x);
       });
     };
   };
@@ -1612,11 +1612,11 @@
     }
   };
   var genericEqArgument = function(dictEq) {
-    var eq5 = eq(dictEq);
+    var eq4 = eq(dictEq);
     return {
       "genericEq'": function(v) {
         return function(v1) {
-          return eq5(v)(v1);
+          return eq4(v)(v1);
         };
       }
     };
@@ -2016,7 +2016,7 @@
   };
   var eq1List = {
     eq1: function(dictEq) {
-      var eq5 = eq(dictEq);
+      var eq4 = eq(dictEq);
       return function(xs) {
         return function(ys) {
           var go2 = function($copy_v) {
@@ -2040,7 +2040,7 @@
                   if (v instanceof Cons && v1 instanceof Cons) {
                     $tco_var_v = v.value1;
                     $tco_var_v1 = v1.value1;
-                    $copy_v2 = v2 && eq5(v1.value0)(v.value0);
+                    $copy_v2 = v2 && eq4(v1.value0)(v.value0);
                     return;
                   }
                   ;
@@ -2882,9 +2882,9 @@
   var genericEqConstructor2 = /* @__PURE__ */ genericEqConstructor(genericEqNoArguments);
   var genericEqSum2 = /* @__PURE__ */ genericEqSum(genericEqConstructor2);
   var eqList2 = /* @__PURE__ */ eqList(eqInt);
-  var eq3 = /* @__PURE__ */ eq(eqList2);
   var pure2 = /* @__PURE__ */ pure(applicativeMaybe);
   var empty4 = /* @__PURE__ */ empty(plusMaybe);
+  var eq13 = /* @__PURE__ */ eq(eqList2);
   var OuterLeft_SelectFocus = /* @__PURE__ */ function() {
     function OuterLeft_SelectFocus2() {
     }
@@ -3055,7 +3055,7 @@
         return "Right";
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 93, column 1 - line 96, column 35): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 99, column 1 - line 102, column 35): " + [v.constructor.name]);
     }
   };
   var show3 = /* @__PURE__ */ show(showCursorFocus);
@@ -3091,7 +3091,7 @@
         return OuterRightSelectFocus.value;
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 117, column 1 - line 117, column 38): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 123, column 1 - line 123, column 38): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof OuterLeft_SelectFocus) {
@@ -3110,7 +3110,7 @@
         return new Inr(new Inr(new Inr(NoArguments.value)));
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 117, column 1 - line 117, column 38): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 123, column 1 - line 123, column 38): " + [x.constructor.name]);
     }
   };
   var genericShow2 = /* @__PURE__ */ genericShow(genericSelectFocus_)(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor2({
@@ -3160,7 +3160,7 @@
         return "[[ " + (show5(v.value0) + " ]]");
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 69, column 1 - line 73, column 52): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 75, column 1 - line 79, column 52): " + [v.constructor.name]);
     }
   };
   var genericPoint_ = {
@@ -3211,7 +3211,7 @@
       return genericEq1(x);
     }
   };
-  var eq13 = /* @__PURE__ */ eq(eqPoint);
+  var eq22 = /* @__PURE__ */ eq(eqPoint);
   var eqLabel = {
     eq: function(x) {
       return genericEq2(x);
@@ -3223,15 +3223,74 @@
       return genericEq3(genericEqConstructor(genericEqProduct1(genericEqArgument(eqArray(eqExpr)))))(x);
     }
   };
+  var getPath = function(v) {
+    return v.value0;
+  };
+  var isAncestorSibling = function(p0) {
+    return function(p1) {
+      var go2 = function($copy_v) {
+        return function($copy_v1) {
+          var $tco_var_v = $copy_v;
+          var $tco_done = false;
+          var $tco_result;
+          function $tco_loop(v, v1) {
+            if (v instanceof Nil && v1 instanceof Cons) {
+              $tco_done = true;
+              return pure2(new Tuple(v1.value0, v1.value1));
+            }
+            ;
+            if (v instanceof Cons && (v1 instanceof Cons && v.value0 === v1.value0)) {
+              $tco_var_v = v.value1;
+              $copy_v1 = v1.value1;
+              return;
+            }
+            ;
+            $tco_done = true;
+            return empty4;
+          }
+          ;
+          while (!$tco_done) {
+            $tco_result = $tco_loop($tco_var_v, $copy_v1);
+          }
+          ;
+          return $tco_result;
+        };
+      };
+      return go2(getPath(p0))(getPath(p1));
+    };
+  };
+  var getIndex = function(v) {
+    return v.value1;
+  };
+  var getSelectFromPointToPoint = function(v) {
+    return function(v1) {
+      var v2 = function(v3) {
+        return empty4;
+      };
+      var $287 = getPath(v1);
+      var $288 = getIndex(v1);
+      var $289 = isAncestorSibling(v1)(v);
+      if ($289 instanceof Just) {
+        var $290 = $289.value0.value0 < getIndex(v1);
+        if ($290) {
+          return pure2(new Select(new Point($287, $288 - 1 | 0), v, v, v1, OuterRightSelectFocus.value));
+        }
+        ;
+        return pure2(new Select(v1, v, v, new Point($287, $288 + 1 | 0), OuterLeft_SelectFocus.value));
+      }
+      ;
+      return v2(true);
+    };
+  };
   var areOrderedSiblings = function(v) {
     return function(v1) {
-      return eq3(v.value0)(v1.value0) && v.value1 <= v1.value1;
+      return eq13(v.value0)(v1.value0) && v.value1 <= v1.value1;
     };
   };
   var getHandleFromTo = function(v) {
     return function(v1) {
       if (v instanceof Point_Handle) {
-        if (eq13(v.value0)(v1)) {
+        if (eq22(v.value0)(v1)) {
           return pure2(new Point_Handle(v1));
         }
         ;
@@ -3246,7 +3305,7 @@
       }
       ;
       if (v instanceof Cursor_Handle && v.value0.value2 instanceof Right_CursorFocus) {
-        if (eq13(v.value0.value0)(v1)) {
+        if (eq22(v.value0.value0)(v1)) {
           return pure2(new Point_Handle(v1));
         }
         ;
@@ -3260,22 +3319,34 @@
         ;
       }
       ;
-      if (v instanceof Cursor_Handle && v.value0.value2 instanceof Left_CursorFocus) {
-        if (eq13(v.value0.value1)(v1)) {
-          return pure2(new Point_Handle(v1));
+      var v2 = function(v3) {
+        if (v instanceof Cursor_Handle && v.value0.value2 instanceof Left_CursorFocus) {
+          if (eq22(v.value0.value1)(v1)) {
+            return pure2(new Point_Handle(v1));
+          }
+          ;
+          if (areOrderedSiblings(v1)(v.value0.value1)) {
+            return pure2(new Cursor_Handle(new Cursor(v1, v.value0.value1, Left_CursorFocus.value)));
+          }
+          ;
+          if (areOrderedSiblings(v.value0.value1)(v1)) {
+            return pure2(new Cursor_Handle(new Cursor(v.value0.value1, v1, Right_CursorFocus.value)));
+          }
+          ;
         }
         ;
-        if (areOrderedSiblings(v1)(v.value0.value1)) {
-          return pure2(new Cursor_Handle(new Cursor(v1, v.value0.value1, Left_CursorFocus.value)));
+        return empty4;
+      };
+      if (v instanceof Cursor_Handle && v.value0.value2 instanceof Right_CursorFocus) {
+        var $328 = getSelectFromPointToPoint(v.value0.value0)(v1);
+        if ($328 instanceof Just) {
+          return pure2(new Select_Handle($328.value0));
         }
         ;
-        if (areOrderedSiblings(v.value0.value1)(v1)) {
-          return pure2(new Cursor_Handle(new Cursor(v.value0.value1, v1, Right_CursorFocus.value)));
-        }
-        ;
+        return v2(true);
       }
       ;
-      return empty4;
+      return v2(true);
     };
   };
 
@@ -8877,7 +8948,7 @@
   var show12 = /* @__PURE__ */ show(showPoint);
   var show23 = /* @__PURE__ */ show(/* @__PURE__ */ showArray(showInt));
   var fromFoldable6 = /* @__PURE__ */ fromFoldable(foldableList);
-  var eq4 = /* @__PURE__ */ eq(eqPoint);
+  var eq3 = /* @__PURE__ */ eq(eqPoint);
   var tell32 = /* @__PURE__ */ tell(/* @__PURE__ */ monadTellWriterT(monoidArray)(monadIdentity));
   var discard33 = /* @__PURE__ */ discard6(/* @__PURE__ */ bindWriterT(semigroupArray)(bindIdentity));
   var slot4 = /* @__PURE__ */ slot2(EngineIsSymbol)(ordUnit);
@@ -9879,11 +9950,11 @@
               }
               ;
               if (handle instanceof Cursor_Handle) {
-                if (eq4(v.value0)(handle.value0.value0)) {
+                if (eq3(v.value0)(handle.value0.value0)) {
                   return new Cursor_Handle(new Cursor(v.value0, handle.value0.value1, Left_CursorFocus.value));
                 }
                 ;
-                if (eq4(v.value0)(handle.value0.value1)) {
+                if (eq3(v.value0)(handle.value0.value1)) {
                   return new Cursor_Handle(new Cursor(handle.value0.value0, v.value0, Right_CursorFocus.value));
                 }
                 ;

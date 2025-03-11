@@ -6,12 +6,12 @@ import Control.Plus (empty)
 import Data.Array as Array
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
-import Data.List (List)
+import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (parens)
+import Utility (parens, todo)
 
 --------------------------------------------------------------------------------
 
@@ -58,6 +58,12 @@ instance Eq Point where
 
 instance Ord Point where
   compare x = genericCompare x
+
+getPath :: Point -> List Int
+getPath (Point is _) = is
+
+getIndex :: Point -> Int
+getIndex (Point _ j) = j
 
 data Handle
   = Point_Handle Point
@@ -138,6 +144,27 @@ orderSiblings p0@(Point _ j0) p1@(Point _ j1) | areSiblings p0 p1 =
     Just $ p1 /\ p0
 orderSiblings _ _ = Nothing
 
+-- if p0 is a sibling of an ancestor of p1, then computes:
+--   - the index into the parent of p0 that goes down towards p1
+--   - the path that when appended to the end of p0's path is the path of p1
+isAncestorSibling :: Point -> Point -> Maybe (Int /\ List Int)
+isAncestorSibling p0 p1 = go (getPath p0) (getPath p1)
+  where
+  go Nil (i1 : is1') = pure $ i1 /\ is1'
+  go (i0 : is0') (i1 : is1') | i0 == i1 = go is0' is1'
+  go _ _ = empty
+
+getSelectFromPointToPoint :: Point -> Point -> Maybe Select
+getSelectFromPointToPoint p0 p1
+  | is1 <- getPath p1
+  , j1 <- getIndex p1
+  , Just (k0 /\ _is) <- isAncestorSibling p1 p0 =
+      if k0 < getIndex p1 then
+        pure $ Select (Point is1 (j1 - 1)) p0 p0 p1 OuterRightSelectFocus
+      else
+        pure $ Select p1 p0 p0 (Point is1 (j1 + 1)) OuterLeft_SelectFocus
+getSelectFromPointToPoint _ _ = empty
+
 getHandleFromTo :: Handle -> Point -> Maybe Handle
 -- drag from a Point
 getHandleFromTo (Point_Handle p) p'
@@ -149,6 +176,9 @@ getHandleFromTo (Cursor_Handle (Cursor l _r Right_CursorFocus)) p'
   | l == p' = pure $ Point_Handle p'
   | areOrderedSiblings l p' = pure $ Cursor_Handle $ Cursor l p' Right_CursorFocus
   | areOrderedSiblings p' l = pure $ Cursor_Handle $ Cursor p' l Left_CursorFocus
+  -- the second point in the Cursor should actually be the right-most sibling of `l`, right? 
+  -- but maybe this is fine for now, since you can adjust the selection post-hoc
+  | Just s <- getSelectFromPointToPoint l p' = pure $ Select_Handle s
 getHandleFromTo (Cursor_Handle (Cursor _ r Left_CursorFocus)) p'
   | r == p' = pure $ Point_Handle p'
   | areOrderedSiblings p' r = pure $ Cursor_Handle $ Cursor p' r Left_CursorFocus
