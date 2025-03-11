@@ -39,7 +39,6 @@ import Web.Event.Event as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
 import Web.HTML.Window as HTML.Window
-import Web.UIEvent.KeyboardEvent as KeyboardEvent
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
 import Web.UIEvent.MouseEvent.EventTypes as MouseEventType
@@ -223,16 +222,13 @@ handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
     pure a
 handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
   StartDrag_PointInteraction _event -> do
-    lift $ traceEngineM "Drag" $ list
-      [ text $ "got StartDrag from Point at " <> show p
-      ]
+    lift $ traceEngineM "Drag" $ text $ "got StartDrag from Point at " <> show p
     let handle = Expr.Cursor_Handle (Expr.Cursor p p Expr.Left_CursorFocus)
     modify_ _ { drag_origin_handle = Just handle }
     setHandle handle
     pure a
   MidDrag_PointInteraction _event -> do
-    lift $ traceEngineM "Drag" $ list
-      [ text $ "got MidDrag from Point at " <> show p ]
+    lift $ traceEngineM "Drag" $ text $ "got MidDrag from Point at " <> show p
     let handle = Expr.Cursor_Handle (Expr.Cursor p p Expr.Left_CursorFocus)
     updateDrag handle
     pure a
