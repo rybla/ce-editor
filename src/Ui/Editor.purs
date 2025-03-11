@@ -223,44 +223,12 @@ handleEngineQuery (PointInteraction_EngineQuery ix pi a) = case pi of
   MidDrag_PointInteraction _event -> do
     -- traceEngineM "Drag" (text $ "got MidDrag from Point at " <> show ix) # lift
     let handle = Expr.Cursor_Handle (Expr.Cursor ix ix Expr.Left_CursorFocus)
-    gets _.drag_origin_handle >>= case _ of
-      Nothing -> pure unit
-      Just drag_origin_handle -> do
-        case Expr.getHandleFromTo drag_origin_handle handle of
-          Nothing -> pure unit
-          Just handle' -> do
-            traceEngineM "Drag"
-              ( column
-                  [ text $ "got MidDrag from Point at " <> show ix
-                  , list
-                      [ text $ "handle = " <> show handle
-                      , text $ "drag_origin_handle = " <> show handle
-                      , text $ "getHandleFromTo ==> " <> show handle'
-                      ]
-                  ]
-              ) # lift
-            setHandle handle'
+    updateDrag handle
     pure a
   EndDrag_PointInteraction _event -> do
     traceEngineM "Drag" (text $ "got EndDrag from Point at " <> show ix) # lift
     let handle = Expr.Cursor_Handle (Expr.Cursor ix ix Expr.Left_CursorFocus)
-    gets _.drag_origin_handle >>= case _ of
-      Nothing -> pure unit
-      Just drag_origin_handle -> do
-        case Expr.getHandleFromTo drag_origin_handle handle of
-          Nothing -> pure unit
-          Just handle' -> do
-            traceEngineM "Drag"
-              ( column
-                  [ text $ "got EndDrag from Point at " <> show ix
-                  , list
-                      [ text $ "handle = " <> show handle
-                      , text $ "drag_origin_handle = " <> show handle
-                      , text $ "getHandleFromTo ==> " <> show handle'
-                      ]
-                  ]
-              ) # lift
-            setHandle handle'
+    updateDrag handle
     modify_ _ { drag_origin_handle = Nothing }
     pure a
 
@@ -273,33 +241,61 @@ handleEngineAction (ReceiveEngine input) = do
 
 --------------------------------------------------------------------------------
 
+updateDrag :: Expr.Handle -> EngineM' Unit
+updateDrag handle = do
+  gets _.drag_origin_handle >>= case _ of
+    Nothing -> pure unit
+    Just drag_origin_handle -> case Expr.getHandleFromTo drag_origin_handle handle of
+      Nothing -> do
+        lift $ traceEngineM "Drag" $
+          column
+            [ text $ "updateDrag (failure)"
+            , list
+                [ text $ "drag_origin_handle = " <> show handle
+                , text $ "            handle = " <> show handle
+                ]
+            ]
+        pure unit
+      Just handle' -> do
+        lift $ traceEngineM "Drag" $
+          column
+            [ text $ "updateDrag (success)"
+            , list
+                [ text $ "drag_origin_handle = " <> show handle
+                , text $ "            handle = " <> show handle
+                , text $ "getHandleFromTo ==> " <> show handle'
+                ]
+            ]
+        setHandle handle'
+
 setHandle :: Expr.Handle -> EngineM' Unit
 setHandle handle = do
   deactivateHandle =<< gets _.handle
   modify_ _ { handle = handle }
   activateHandle handle
 
+setPointStyle :: Expr.Point -> PointStyle -> EngineM' Unit
+setPointStyle (Expr.Point is i) style = H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is $ PointQuery_ExprQuery i $ ModifyPointState (_ { style = style }) a') # lift
+
 activateHandle :: Expr.Handle -> EngineM' Unit
 activateHandle handle = case handle of
-  Expr.Cursor_Handle (Expr.Cursor (Expr.Point is0 i0) (Expr.Point is1 i1) _focus) -> do
-    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is0 $ PointQuery_ExprQuery i0 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
-    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is1 $ PointQuery_ExprQuery i1 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
-  Expr.Select_Handle (Expr.Select (Expr.Point is00 i00) (Expr.Point is01 i01) (Expr.Point is10 i10) (Expr.Point is11 i11) _focus) -> do
-    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is00 $ PointQuery_ExprQuery i00 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
-    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is01 $ PointQuery_ExprQuery i01 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
-    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is10 $ PointQuery_ExprQuery i10 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
-    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is11 $ PointQuery_ExprQuery i11 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+  Expr.Cursor_Handle (Expr.Cursor p p_ _focus) | p == p_ -> do
+    setPointStyle p PointCursorPointStyle
+  Expr.Cursor_Handle (Expr.Cursor l r _focus) -> do
+    setPointStyle l CursorLeftPointStyle
+    setPointStyle r CursorRightPointStyle
+  Expr.Select_Handle (Expr.Select _lo _li _ri _ro _focus) -> do
+    todo "activateHandle for Select"
 
 deactivateHandle :: Expr.Handle -> EngineM' Unit
 deactivateHandle handle = case handle of
-  Expr.Cursor_Handle (Expr.Cursor (Expr.Point is0 i0) (Expr.Point is1 i1) _focus) -> do
-    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is0 $ PointQuery_ExprQuery i0 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
-    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is1 $ PointQuery_ExprQuery i1 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
-  Expr.Select_Handle (Expr.Select (Expr.Point is00 i00) (Expr.Point is01 i01) (Expr.Point is10 i10) (Expr.Point is11 i11) _focus) -> do
-    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is00 $ PointQuery_ExprQuery i00 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
-    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is01 $ PointQuery_ExprQuery i01 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
-    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is10 $ PointQuery_ExprQuery i10 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
-    H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is11 $ PointQuery_ExprQuery i11 $ ModifyPointState (_ { style = NormalPointStyle }) a') # lift
+  Expr.Cursor_Handle (Expr.Cursor p p_ _focus) | p == p_ -> do
+    setPointStyle p NormalPointStyle
+  Expr.Cursor_Handle (Expr.Cursor l r _focus) -> do
+    setPointStyle l NormalPointStyle
+    setPointStyle r NormalPointStyle
+  Expr.Select_Handle (Expr.Select _lo _li _ri _ro _focus) -> do
+    todo "deactivateHandle for Select"
 
 --------------------------------------------------------------------------------
 -- Expr

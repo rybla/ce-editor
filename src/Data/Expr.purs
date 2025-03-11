@@ -8,6 +8,7 @@ import Data.List (List)
 import Data.Maybe (Maybe(..))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
+import Data.Tuple.Nested (type (/\), (/\))
 import Utility (todo)
 
 --------------------------------------------------------------------------------
@@ -116,9 +117,20 @@ instance Eq SelectFocus where
 areSiblings :: Point -> Point -> Boolean
 areSiblings (Point is0 _j0) (Point is1 _j1) = is0 == is1
 
+areOrderedSiblings :: Point -> Point -> Boolean
+areOrderedSiblings (Point is0 j0) (Point is1 j1) = (is0 == is1) && (j0 <= j1)
+
+orderSiblings :: Point -> Point -> Maybe (Point /\ Point)
+orderSiblings p0@(Point _ j0) p1@(Point _ j1) | areSiblings p0 p1 =
+  if j0 <= j1 then
+    Just $ p0 /\ p1
+  else
+    Just $ p1 /\ p0
+orderSiblings _ _ = Nothing
+
 getHandleFromTo :: Handle -> Handle -> Maybe Handle
 -- drag from a Point to a Point
-getHandleFromTo (Cursor_Handle (Cursor l0 _r0 Right_CursorFocus)) (Cursor_Handle (Cursor l1 r1 _)) | l1 == r1, areSiblings l0 r1 = Just $ Cursor_Handle (Cursor l0 r1 Right_CursorFocus)
-getHandleFromTo (Cursor_Handle (Cursor _l0 r0 Left_CursorFocus)) (Cursor_Handle (Cursor l1 r1 _)) | l1 == r1, areSiblings r0 l1 = Just $ Cursor_Handle (Cursor l1 r0 Left_CursorFocus)
+getHandleFromTo (Cursor_Handle (Cursor _ p0 Left_CursorFocus)) (Cursor_Handle (Cursor p1 p1_ _)) | p1 == p1_, areOrderedSiblings p1 p0 = Just $ Cursor_Handle (Cursor p1 p0 Left_CursorFocus)
+getHandleFromTo (Cursor_Handle (Cursor p0 _ Right_CursorFocus)) (Cursor_Handle (Cursor p1 p1_ _)) | p1 == p1_, areOrderedSiblings p0 p1 = Just $ Cursor_Handle (Cursor p0 p1 Right_CursorFocus)
 -- TODO: other cases
 getHandleFromTo _ _ = Nothing
