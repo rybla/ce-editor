@@ -13,7 +13,7 @@ editor =
   -- , initial_exprs: [ example_expr 2 2 ]
   -- , initial_handle: Cursor_Handle (Cursor (Point none 0) (Point none 0) Left_CursorFocus)
   , initial_exprs: [ example_expr 1 1 ]
-  , initial_handle: Cursor_Handle (Cursor (Point none 0) (Point none 0) Left_CursorFocus)
+  , initial_handle: mkCursorHandle $ Cursor none 0 0 Left_CursorFocus
   }
 
 example_expr :: Int -> Int -> Expr

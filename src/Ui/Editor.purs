@@ -11,7 +11,7 @@ import Data.Array (fold)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
-import Data.Expr (CursorFocus(..), Expr(..), (%))
+import Data.Expr (CursorFocus(..), Expr(..), getLeftPoint, getPointsOfCursor, getRightPoint, toCursorHandle, toPointHandle, (%))
 import Data.Expr as Expr
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Generic.Rep (class Generic)
@@ -209,9 +209,7 @@ handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
     case List.unsnoc is of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
-        let ix0 = Expr.Point init last
-        let ix1 = Expr.Point init (last + 1)
-        let handle = Expr.Cursor_Handle (Expr.Cursor ix0 ix1 Expr.Left_CursorFocus)
+        let handle = Expr.mkCursorHandle (Expr.Cursor init last (last + 1) Expr.Left_CursorFocus)
         setHandle handle
         pure unit
     pure a
@@ -219,17 +217,13 @@ handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
   StartDrag_PointInteraction _event -> do
     lift $ traceEngineM "Drag" $ text $ "got StartDrag from Point at " <> show p
     handle <- gets _.handle
-    let
-      handle' = case handle of
-        Expr.Point_Handle _ ->
-          Expr.Point_Handle p
-        Expr.Cursor_Handle (Expr.Cursor l r _)
-          | p == l -> Expr.Cursor_Handle $ Expr.Cursor p r Left_CursorFocus
-          | p == r -> Expr.Cursor_Handle $ Expr.Cursor l p Right_CursorFocus
-          | otherwise -> Expr.Point_Handle p
-        Expr.Select_Handle _s -> todo "StartDrag at Select_Handle"
-    modify_ _ { drag_origin_handle = Just handle' }
-    setHandle handle'
+    h' <- case unit of
+      _ | Just _ <- toPointHandle handle -> pure $ Expr.mkPointHandle p
+      _ | Just c <- toCursorHandle handle, l /\ r <- getPointsOfCursor c, p == l -> pure $ Expr.mkCursorHandle $ Expr.Cursor (Expr.getPath p) (Expr.getIndex p) (Expr.getIndex r) Left_CursorFocus
+      _ | Just c <- toCursorHandle handle, l /\ r <- getPointsOfCursor c, p == r -> pure $ Expr.mkCursorHandle $ Expr.Cursor (Expr.getPath p) (Expr.getIndex l) (Expr.getIndex p) Right_CursorFocus
+      _ | otherwise -> throwError $ text "other StartDrag cases"
+    modify_ _ { drag_origin_handle = Just h' }
+    setHandle h'
     pure a
   MidDrag_PointInteraction _event -> do
     lift $ traceEngineM "Drag" $ text $ "got MidDrag from Point at " <> show p
@@ -276,33 +270,29 @@ updateDragToPoint p = do
         setHandle handle'
 
 setHandle :: Expr.Handle -> EngineM' Unit
-setHandle handle = do
+setHandle h = do
   deactivateHandle =<< gets _.handle
-  modify_ _ { handle = handle }
-  activateHandle handle
+  modify_ _ { handle = h }
+  activateHandle h
 
 setPointStyle :: Expr.Point -> PointStyle -> EngineM' Unit
 setPointStyle (Expr.Point is i) style = H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is $ PointQuery_ExprQuery i $ ModifyPointState (_ { style = style }) a') # lift
 
 activateHandle :: Expr.Handle -> EngineM' Unit
-activateHandle handle = case handle of
-  Expr.Point_Handle p -> do
-    setPointStyle p PointCursorPointStyle
-  Expr.Cursor_Handle (Expr.Cursor l r _focus) -> do
-    setPointStyle l CursorLeftPointStyle
-    setPointStyle r CursorRightPointStyle
-  Expr.Select_Handle (Expr.Select _lo _li _ri _ro _focus) -> do
-    todo "activateHandle for Select"
+activateHandle h | Just p <- Expr.toPointHandle h = do
+  setPointStyle p PointCursorPointStyle
+activateHandle h | Just c <- Expr.toCursorHandle h = do
+  setPointStyle (Expr.getLeftPoint c) CursorLeftPointStyle
+  setPointStyle (Expr.getRightPoint c) CursorRightPointStyle
+activateHandle h = todo "activateHandle"
 
 deactivateHandle :: Expr.Handle -> EngineM' Unit
-deactivateHandle handle = case handle of
-  Expr.Point_Handle p -> do
-    setPointStyle p NormalPointStyle
-  Expr.Cursor_Handle (Expr.Cursor l r _focus) -> do
-    setPointStyle l NormalPointStyle
-    setPointStyle r NormalPointStyle
-  Expr.Select_Handle (Expr.Select _lo _li _ri _ro _focus) -> do
-    todo "deactivateHandle for Select"
+deactivateHandle h | Just p <- Expr.toPointHandle h = do
+  setPointStyle p NormalPointStyle
+deactivateHandle h | Just c <- Expr.toCursorHandle h = do
+  setPointStyle (Expr.getLeftPoint c) NormalPointStyle
+  setPointStyle (Expr.getRightPoint c) NormalPointStyle
+deactivateHandle h = todo "deactivateHandle"
 
 --------------------------------------------------------------------------------
 -- Expr

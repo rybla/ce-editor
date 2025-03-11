@@ -7,6 +7,7 @@ import Control.Monad.Writer (tell)
 import Data.Array (filter, fold)
 import Data.Array as Array
 import Data.FunctorWithIndex (mapWithIndex)
+import Data.String as String
 import Data.Tuple (Tuple(..))
 import Data.Unfoldable (none)
 import Effect.Aff (Aff, Milliseconds(..))
@@ -79,43 +80,30 @@ component = H.mkComponent { initialState, eval, render }
               # mapWithIndex \i m ->
                   Tuple (show i) $
                     HH.div
-                      [ style do
-                          tell [ "box-shadow: 0 0 0 1px black" ]
-                          tell [ "display: flex", "flex-direction: row" ]
+                      [ classes $ fold
+                          [ [ "ConsoleMessage" ]
+                          , if m.label # String.contains (String.Pattern "Error") then [ "ConsoleMessageError" ] else []
+                          ]
                       ]
-                      [ HH.div
-                          [ style do
-                              tell [ "flex-grow: 0", "flex-shrink: 0" ]
-                              tell [ "background-color: black", "color: white" ]
-                              tell [ "padding: 0.5em" ]
-                              tell [ "width: 10em" ]
-                              tell [ "word-wrap: break-word", "overflow-wrap: break-word" ]
-                          ]
+                      [ HH.div [ classes [ "ConsoleMessageLabel" ] ]
                           [ HH.text m.label ]
-                      , HH.div
-                          [ style do
-                              tell [ "flex-grow: 1", "flex-shrink: 1" ]
-                          ]
-                          [ let
-                              content = m.content # fromPlainHTML
-                            in
-                              HH.slot_ (Proxy @"ConsoleMessageContent") i Widget.initializer
-                                { initialState: true
-                                , initialize: do
-                                    Aff.delay $ Milliseconds 100.0
-                                    pure false
-                                , render: \new ->
-                                    HH.div
-                                      [ style do
-                                          tell [ "padding: 0.5em" ]
-                                      , classes $ fold
-                                          [ [ "ConsoleMessageContent" ]
-                                          , if new then [ "new" ] else []
-                                          ]
+                      , let
+                          content = m.content # fromPlainHTML
+                        in
+                          HH.slot_ (Proxy @"ConsoleMessageBody") i Widget.initializer
+                            { initialState: true
+                            , initialize: do
+                                Aff.delay $ Milliseconds 100.0
+                                pure false
+                            , render: \new ->
+                                HH.div
+                                  [ classes $ fold
+                                      [ [ "ConsoleMessageBody" ]
+                                      , if new then [ "new" ] else []
                                       ]
-                                      [ content ]
-                                }
-                          ]
+                                  ]
+                                  [ content ]
+                            }
                       ]
           , [ let
                 l = Array.length state.messages

@@ -94,14 +94,43 @@
 
     .Console>.Body {}
 
-    .ConsoleMessageContent {
-      background-color: var(--background-color);
+    .ConsoleMessage {
+      box-shadow: 0 0 0 1px black;
 
+      display: flex;
+      flex-direction: row;
+    }
+
+    .ConsoleMessageLabel {
+      flex: 0 0;
+
+      background-color: black;
+      color: white;
+
+      padding: 0.5em;
+      min-width: 10em;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .ConsoleMessageError>.ConsoleMessageLabel {
+      color: red;
+    }
+
+    .ConsoleMessageBody {
+      flex: 1 1;
+      padding: 0.5em;
+      min-width: 0;
+      background-color: transparent;
       transition-property: background-color;
       transition-duration: 0.5s;
     }
 
-    .ConsoleMessageContent.new {
+    .ConsoleMessageError>.ConsoleMessageBody {
+      background-color: rgb(255, 196, 196);
+    }
+
+    .ConsoleMessageBody.new {
       background-color: color-mix(in hsl, blue, transparent 50%);
     }
   </style>
