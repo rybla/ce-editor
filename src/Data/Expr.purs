@@ -81,7 +81,6 @@ instance Eq Handle where
   eq x = genericEq x
 
 -- Handle is_O j_OL j_OR is_I j_IL j_IR f
-
 validHandle :: Handle -> Boolean
 validHandle (Handle is_O j_OL j_OR is_I j_IL j_IR f) =
   case is_I of
@@ -109,11 +108,21 @@ mkCursorHandle :: Cursor -> Handle
 mkCursorHandle (Cursor is l r Left_CursorFocus) = mkHandle is l r Nil l l InnerLeft_HandleFocus
 mkCursorHandle (Cursor is l r Right_CursorFocus) = mkHandle is l r Nil r r InnerRight_HandleFocus
 
+getPointsOfHandle :: Handle -> Point /\ Point /\ Point /\ Point
+getPointsOfHandle (Handle is_O j_OL j_OR is_I j_IL j_IR _) =
+  let
+    p_OL = Point is_O j_OL
+    p_IL = Point (is_O <> is_I) j_IL
+    p_IR = Point (is_O <> is_I) j_IR
+    p_OR = Point is_O j_OR
+  in
+    p_OL /\ p_IL /\ p_IR /\ p_OR
+
 data HandleFocus
   = OuterLeft_HandleFocus
   | InnerLeft_HandleFocus
   | InnerRight_HandleFocus
-  | OuterRightHandleFocus
+  | OuterRight_HandleFocus
 
 derive instance Generic HandleFocus _
 
@@ -200,7 +209,7 @@ toCursorHandle h@(Handle is_O j_OL j_OR is_I j_IL j_IR f) = do
   pure $ Cursor is_O j_OL j_OR
     if j_OL == j_I then
       case f of
-        OuterRightHandleFocus -> Right_CursorFocus
+        OuterRight_HandleFocus -> Right_CursorFocus
         _ -> Left_CursorFocus
     else if j_OR == j_I then
       case f of
@@ -211,10 +220,17 @@ toCursorHandle h@(Handle is_O j_OL j_OR is_I j_IL j_IR f) = do
 
 getDragOrigin :: Handle -> Point -> Handle
 getDragOrigin h p | Just _ <- toPointHandle h = mkPointHandle p
+-- starting from a point of existing Cursor Handle
 getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, p == l = mkCursorHandle $ Cursor (getPath p) (getIndex p) (getIndex r) Left_CursorFocus
 getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, p == r = mkCursorHandle $ Cursor (getPath p) (getIndex l) (getIndex p) Right_CursorFocus
 getDragOrigin h p | Just c <- toCursorHandle h = mkPointHandle p
-getDragOrigin _ _ = bug "other StartDrag cases"
+-- starting from a point of existing Handle
+-- TODO: choose prioritization for this in cases when two points of Handle are equal
+getDragOrigin h@(Handle is_O j_OL j_OR is_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getPointsOfHandle h, p == p_OL = Handle is_O j_OL j_OR is_I j_IL j_IR OuterLeft_HandleFocus
+getDragOrigin h@(Handle is_O j_OL j_OR is_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getPointsOfHandle h, p == p_IL = Handle is_O j_OL j_OR is_I j_IL j_IR InnerLeft_HandleFocus
+getDragOrigin h@(Handle is_O j_OL j_OR is_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getPointsOfHandle h, p == p_IR = Handle is_O j_OL j_OR is_I j_IL j_IR InnerRight_HandleFocus
+getDragOrigin h@(Handle is_O j_OL j_OR is_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getPointsOfHandle h, p == p_OR = Handle is_O j_OL j_OR is_I j_IL j_IR OuterRight_HandleFocus
+getDragOrigin _ p = mkPointHandle p
 
 getHandleFromTo :: Handle -> Point -> Maybe Handle
 -- drag from a Point
