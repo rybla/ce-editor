@@ -296,8 +296,6 @@ getDragOrigin h@(Handle is_O j_OL j_OR is_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_I
 getDragOrigin h@(Handle is_O j_OL j_OR is_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getHandlePoints h, p == p_OR = Handle is_O j_OL j_OR is_I j_IL j_IR OuterRight_HandleFocus
 getDragOrigin _ p = mkPointHandle p
 
--- isOrderedStepAndIndex :: Step
-
 getHandleFromTo :: Handle -> Point -> Maybe Handle
 
 -- drag from a Point to a Point
