@@ -12,7 +12,7 @@ import Data.Maybe (Maybe(..))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (bug, parens, todo)
+import Utility (bug, parens)
 
 --------------------------------------------------------------------------------
 
@@ -44,9 +44,20 @@ instance Eq Label where
 
 --------------------------------------------------------------------------------
 
+type Path = List Step
+
+type Step = Int
+
+stripPrefixOfPath :: Path -> Path -> Path
+stripPrefixOfPath Nil is' = is'
+stripPrefixOfPath (i : is) (i' : is') | i == i' = stripPrefixOfPath is is'
+stripPrefixOfPath is is' = bug $ "stripPrefixOfPath " <> show is <> " " <> show is'
+
+type Index = Int
+
 -- the List Int is the steps along Expr kis
 -- the final Int is the final point index in the last Expr's kids
-data Point = Point (List Int) Int
+data Point = Point Path Index
 
 derive instance Generic Point _
 
@@ -82,7 +93,7 @@ instance Eq Handle where
 
 -- Handle is_O j_OL j_OR is_I j_IL j_IR f
 validHandle :: Handle -> Boolean
-validHandle (Handle is_O j_OL j_OR is_I j_IL j_IR f) =
+validHandle (Handle _is_O j_OL j_OR is_I j_IL j_IR f) =
   case is_I of
     Nil ->
       (j_OL <= j_IL && j_IL <= j_IR && j_IR <= j_OR)
@@ -176,10 +187,10 @@ orderSiblings p0@(Point _ j0) p1@(Point _ j1) | areSiblings p0 p1 =
     Just $ p1 /\ p0
 orderSiblings _ _ = Nothing
 
--- if p0 is a sibling of an ancestor of p1, then computes:
---   - the index into the parent of p0 that goes down towards p1
---   - the path that when appended to the end of p0's path is the path of p1
-isAncestorSibling :: Point -> Point -> Maybe (Int /\ List Int)
+-- | if p0 is a sibling of an ancestor of p1, then computes:
+-- |   - the index into the parent of p0 that goes down towards p1
+-- |   - the path that when appended to the end of p0's path is the path of p1
+isAncestorSibling :: Point -> Point -> Maybe (Index /\ Path)
 isAncestorSibling p0 p1 = go (getPath p0) (getPath p1)
   where
   go Nil (i1 : is1') = pure $ i1 /\ is1'
@@ -232,11 +243,24 @@ getDragOrigin h@(Handle is_O j_OL j_OR is_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_I
 getDragOrigin h@(Handle is_O j_OL j_OR is_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getPointsOfHandle h, p == p_OR = Handle is_O j_OL j_OR is_I j_IL j_IR OuterRight_HandleFocus
 getDragOrigin _ p = mkPointHandle p
 
+-- isOrderedStepAndIndex :: Step
+
 getHandleFromTo :: Handle -> Point -> Maybe Handle
--- drag from a Point
+-- drag from a Point to a Point
+--   - drag from a Point to the same Point
 getHandleFromTo h p' | Just p <- toPointHandle h, p == p' = pure $ mkPointHandle p'
-getHandleFromTo h p' | Just p <- toPointHandle h, areOrderedSiblings p p' = pure $ mkCursorHandle $ Cursor (getPath p) (getIndex p) (getIndex p') Right_CursorFocus
-getHandleFromTo h p' | Just p <- toPointHandle h, areOrderedSiblings p' p = pure $ mkCursorHandle $ Cursor (getPath p) (getIndex p') (getIndex p) Left_CursorFocus
+--   - drag from a Point to a sibling Point
+--     - drag from a Point to a Left sibling Point
+getHandleFromTo h p_R | Just p_L <- toPointHandle h, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_L) (getIndex p_L) (getIndex p_R) Right_CursorFocus
+--     - drag from a Point to a Right sibling Point
+getHandleFromTo h p_L | Just p_R <- toPointHandle h, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_R) (getIndex p_L) (getIndex p_R) Left_CursorFocus
+--   - drag from an inner Point to an outer Point
+--     - drag from a inner left Point to an outer right Point
+getHandleFromTo h p_IL | Just p_OR <- toPointHandle h, Just (j_R /\ (i_L : is)) <- isAncestorSibling p_OR p_IL, i_L <= j_R = pure $ mkHandle (getPath p_OR) (getIndex p_OR - 1) (getIndex p_OR) (i_L : is) (getIndex p_IL) (getIndex p_IL) OuterRight_HandleFocus
+-- TODO: not done
+-- --     - drag from a inner left Point to an outer left Point
+-- getHandleFromTo h p_IL | Just p_OL <- toPointHandle h, Just (j_L /\ (i_L : is)) <- isAncestorSibling p_OL p_IL, j_L <= i_L = pure $ mkHandle (getPath p_OL) (getIndex p_OL - 1) (getIndex p_OL) (i_L : is) (getIndex p_IL) (getIndex p_IL) OuterRight_HandleFocus
+-- 
 -- drag from a Cursor
 -- adjust left point of Cursor
 getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, l == p' = pure $ mkPointHandle p'
@@ -248,4 +272,3 @@ getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c
 getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex l) (getIndex p') Right_CursorFocus
 -- TODO
 getHandleFromTo _ _ = empty
-

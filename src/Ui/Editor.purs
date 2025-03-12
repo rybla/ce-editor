@@ -11,7 +11,7 @@ import Data.Array (fold)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
-import Data.Expr (CursorFocus(..), Expr(..), getLeftPoint, getPointsOfCursor, getRightPoint, toCursorHandle, toPointHandle, (%))
+import Data.Expr (Expr(..), (%))
 import Data.Expr as Expr
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Generic.Rep (class Generic)
