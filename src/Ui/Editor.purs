@@ -33,7 +33,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
-import Ui.Common (column, list, style, text)
+import Ui.Common (classes, column, list, style, text)
 import Ui.Console as Console
 import Utility (allEqual, todo)
 import Web.Event.Event as Event
@@ -278,10 +278,10 @@ setPointStyle (Expr.Point is i) style = H.raise (ExprQuery_EngineOutput \a' -> E
 
 activateHandle :: Expr.Handle -> EngineM' Unit
 activateHandle h | Just p <- Expr.toPointHandle h = do
-  setPointStyle p PointCursor_PointStyle
+  setPointStyle p Cursor_Point_PointStyle
 activateHandle h | Just c <- Expr.toCursorHandle h = do
-  setPointStyle (Expr.getLeftPoint c) CursorLeft_PointStyle
-  setPointStyle (Expr.getRightPoint c) CursorRight_PointStyle
+  setPointStyle (Expr.getLeftPoint c) Cursor_Left_PointStyle
+  setPointStyle (Expr.getRightPoint c) Cursor_Right_PointStyle
 -- TODO: I probably need some more Select*_PointStyles to cover some of these cases
 activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil, allEqual [ j_OL, j_IL, j_IR ] = todo "activateHandle"
 activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil, allEqual [ j_IL, j_IR, j_OR ] = todo "activateHandle"
@@ -293,10 +293,10 @@ activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | allEqual [ j_OL, 
 activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | allEqual [ j_IR, j_OR ] = todo "activateHandle"
 activateHandle h@(Expr.Handle _is_O _j_OL _j_OR _is_I _j_IL _j_IR _f) = do
   let p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getPointsOfHandle h
-  setPointStyle p_OL SelectOuterLeft_PointStyle
-  setPointStyle p_IL SelectInnerLeft_PointStyle
-  setPointStyle p_IR SelectInnerRight_PointStyle
-  setPointStyle p_OR SelectOuterRight_PointStyle
+  setPointStyle p_OL Select_OuterLeft_PointStyle
+  setPointStyle p_IL Select_InnerLeft_PointStyle
+  setPointStyle p_IR Select_InnerRight_PointStyle
+  setPointStyle p_OR Select_OuterRight_PointStyle
 
 deactivateHandle :: Expr.Handle -> EngineM' Unit
 deactivateHandle h | Just p <- Expr.toPointHandle h = do
@@ -477,13 +477,20 @@ type PointState =
 
 data PointStyle
   = Normal_PointStyle
-  | PointCursor_PointStyle
-  | CursorLeft_PointStyle
-  | CursorRight_PointStyle
-  | SelectOuterLeft_PointStyle
-  | SelectInnerLeft_PointStyle
-  | SelectInnerRight_PointStyle
-  | SelectOuterRight_PointStyle
+  | Cursor_Point_PointStyle
+  | Cursor_Left_PointStyle
+  | Cursor_Right_PointStyle
+  | Select_OuterLeft_PointStyle
+  | Select_InnerLeft_PointStyle
+  | Select_InnerRight_PointStyle
+  | Select_OuterRight_PointStyle
+  | Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle
+  | Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle
+  | Select_Inline_InnerLeft_And_InnerRight_PointStyle
+  | Select_Inline_OuterLeft_And_InnerLeft_PointStyle
+  | Select_Inline_InnerRight_And_OuterRight_PointStyle
+  | Select_OuterLeft_And_InnerLeft_PointStyle
+  | Select_InnerRight_And_OuterRight_PointStyle
 
 derive instance Generic PointStyle _
 
@@ -540,17 +547,25 @@ point_component = H.mkComponent { initialState, eval, render }
 
   render state =
     HH.div
-      [ HP.classes $ fold
-          [ [ HH.ClassName "Point" ]
+      [ classes $ fold
+          [ [ "Point" ]
           , case state.style of
               Normal_PointStyle -> []
-              PointCursor_PointStyle -> [ HH.ClassName "PointCursor" ]
-              CursorLeft_PointStyle -> [ HH.ClassName "CursorLeft" ]
-              CursorRight_PointStyle -> [ HH.ClassName "CursorRight" ]
-              SelectOuterRight_PointStyle -> [ HH.ClassName "SelectOuterRight" ]
-              SelectInnerLeft_PointStyle -> [ HH.ClassName "SelectInnerLeft" ]
-              SelectInnerRight_PointStyle -> [ HH.ClassName "SelectInnerRight" ]
-              SelectOuterLeft_PointStyle -> [ HH.ClassName "SelectOuterLeft" ]
+              Cursor_Point_PointStyle -> [ "Cursor_Point" ]
+              Cursor_Left_PointStyle -> [ "Cursor_Left" ]
+              Cursor_Right_PointStyle -> [ "Cursor_Right" ]
+              Select_OuterRight_PointStyle -> [ "Select_OuterRight" ]
+              Select_InnerLeft_PointStyle -> [ "Select_InnerLeft" ]
+              Select_InnerRight_PointStyle -> [ "Select_InnerRight" ]
+              Select_OuterLeft_PointStyle -> [ "Select_OuterLeft" ]
+              Select_OuterLeft_PointStyle -> [ "Select_OuterLeft" ]
+              Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle -> [ "Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight" ]
+              Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle -> [ "Select_Inline_InnerLeft_And_InnerRight_And_OuterRight" ]
+              Select_Inline_InnerLeft_And_InnerRight_PointStyle -> [ "Select_Inline_InnerLeft_And_InnerRight" ]
+              Select_Inline_OuterLeft_And_InnerLeft_PointStyle -> [ "Select_Inline_OuterLeft_And_InnerLeft" ]
+              Select_Inline_InnerRight_And_OuterRight_PointStyle -> [ "Select_Inline_InnerRight_And_OuterRight" ]
+              Select_OuterLeft_And_InnerLeft_PointStyle -> [ "Select_OuterLeft_And_InnerLeft" ]
+              Select_InnerRight_And_OuterRight_PointStyle -> [ "Select_InnerRight_And_OuterRight" ]
           ]
       , HE.onMouseDown (StartDrag_PointInteraction >>> PointInteraction_PointAction)
       , HE.onMouseEnter (MidDrag_PointInteraction >>> PointInteraction_PointAction)
