@@ -4,15 +4,24 @@ import Data.Expr
 import Prelude
 
 import Data.List as List
-import Data.Maybe (maybe)
+import Data.Maybe (maybe, maybe')
 import Data.Tuple.Nested ((/\))
-import Test.Spec (Spec, describe, it)
+import Effect.Class.Console as Console
+import Test.Spec (Spec, before_, describe, it)
+import Test.Spec.Console (tellLns)
 import Test.Utilities (shouldEqual, throw)
+import Utility (bug)
 
 test :: Spec Unit
 test = describe "Expr" do
   test_isAncestorSibling
   test_drag
+
+test_validHandle :: Spec Unit
+test_validHandle = describe "validHandle" do
+  it "simple" do
+    -- invalid Handle: [[ [] | 0 .. 1 | [0] | 0 .. 0 @ OuterRight_HandleFocus ]]
+    validHandle (handle [] 0 1 [ 0 ] 0 0 OuterRight_HandleFocus) `shouldEqual` true
 
 test_isAncestorSibling :: Spec Unit
 test_isAncestorSibling = describe "isAncestorSibling" do
@@ -26,10 +35,12 @@ test_isAncestorSibling = describe "isAncestorSibling" do
 test_drag :: Spec Unit
 test_drag = describe "drag" do
   it "drag from cursor Right Point to a rightward sibling Point to adjust the cursor Handle" do
-    let
-      h = cursor [ 0 ] 0 1 Right_CursorFocus
-      p_R = point [ 0 ] 2
-      h' = cursor [ 0 ] 0 2 Right_CursorFocus
+    let h = cursor [ 0 ] 0 1 Right_CursorFocus
+    let p_R = point [ 0 ] 2
+    let h' = cursor [ 0 ] 0 2 Right_CursorFocus
+    c <- toCursorHandle h # maybe (throw "h should be a Cursor Handle") pure
+    let p_L = getCursorAnchorPoint c
+    areOrderedSiblings p_L p_R `shouldEqual` true
     getHandleFromTo h p_R `shouldEqual` pure h'
 
   it "drag from an inner left Point to an outer Right point to make a selection Handle" do

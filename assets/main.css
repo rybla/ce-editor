@@ -129,13 +129,6 @@ body {
   background-color: var(--handle-inner-background-color);
 }
 
-.Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight {
-  background-color: var(--handle-point-background-color);
-}
-
-.Select_Inline_InnerLeft_And_InnerRight_And_OuterRight {
-  background-color: var(--handle-point-background-color);
-}
 
 .Select_Inline_InnerLeft_And_InnerRight {
   background-color: var(--handle-point-background-color);

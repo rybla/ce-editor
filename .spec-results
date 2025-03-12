@@ -1,22 +1,36 @@
 [
   [
+    "Expr areOrderedSiblings left, right",
+    {
+      "timestamp": "1741793576683.0",
+      "success": false
+    }
+  ],
+  [
+    "Expr areOrderedSiblings simple",
+    {
+      "timestamp": "1741793298605.0",
+      "success": false
+    }
+  ],
+  [
     "Expr drag drag from an inner left Point to an outer Right point to make a selection Handle",
     {
-      "timestamp": "1741792891881.0",
+      "timestamp": "1741795682291.0",
       "success": true
     }
   ],
   [
     "Expr drag drag from cursor Right Point to a rightward sibling Point to adjust the cursor Handle",
     {
-      "timestamp": "1741792891881.0",
-      "success": false
+      "timestamp": "1741795682291.0",
+      "success": true
     }
   ],
   [
     "Expr isAncestorSibling simple",
     {
-      "timestamp": "1741792891881.0",
+      "timestamp": "1741795682291.0",
       "success": true
     }
   ]

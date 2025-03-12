@@ -532,19 +532,6 @@
   var compare = function(dict) {
     return dict.compare;
   };
-  var lessThan = function(dictOrd) {
-    var compare3 = compare(dictOrd);
-    return function(a1) {
-      return function(a2) {
-        var v = compare3(a1)(a2);
-        if (v instanceof LT) {
-          return true;
-        }
-        ;
-        return false;
-      };
-    };
-  };
   var lessThanOrEq = function(dictOrd) {
     var compare3 = compare(dictOrd);
     return function(a1) {
@@ -3154,7 +3141,7 @@
         return "Right";
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 244, column 1 - line 246, column 35): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 268, column 1 - line 270, column 35): " + [v.constructor.name]);
     }
   };
   var show5 = /* @__PURE__ */ show(showCursorFocus);
@@ -3332,7 +3319,6 @@
     }
   };
   var lessThanOrEq1 = /* @__PURE__ */ lessThanOrEq(ordIndex);
-  var lessThan1 = /* @__PURE__ */ lessThan(ordIndex);
   var eqExpr = {
     eq: function(x) {
       return genericEq22(genericEqConstructor(genericEqProduct1(genericEqArgument(eqArray(eqExpr)))))(x);
@@ -3346,8 +3332,8 @@
   var toCursorHandle = function(v) {
     return discard2(guard2(eq3(v.value3)(Nil.value) && eq4(v.value4)(v.value5)))(function() {
       return pure3(new Cursor(v.value0, v.value1, v.value2, function() {
-        var $365 = eq4(v.value1)(v.value4);
-        if ($365) {
+        var $359 = eq4(v.value1)(v.value4);
+        if ($359) {
           if (v.value6 instanceof OuterRight_HandleFocus) {
             return Right_CursorFocus.value;
           }
@@ -3355,8 +3341,8 @@
           return Left_CursorFocus.value;
         }
         ;
-        var $367 = eq4(v.value2)(v.value4);
-        if ($367) {
+        var $361 = eq4(v.value2)(v.value4);
+        if ($361) {
           if (v.value6 instanceof OuterLeft_HandleFocus) {
             return Left_CursorFocus.value;
           }
@@ -3374,16 +3360,16 @@
         var v3 = function(v4) {
           return spaces(["[[", show22(v.value0), "|", show3(v.value1), "..", show3(v.value2), "|", show22(v.value3), "|", show3(v.value4), "..", show3(v.value5), "@", show7(v.value6), "]]"]);
         };
-        var $385 = toCursorHandle(v);
-        if ($385 instanceof Just) {
-          return spaces(["[[", show6($385.value0), "]]"]);
+        var $379 = toCursorHandle(v);
+        if ($379 instanceof Just) {
+          return spaces(["[[", show6($379.value0), "]]"]);
         }
         ;
         return v3(true);
       };
-      var $388 = toPointHandle(v);
-      if ($388 instanceof Just) {
-        return spaces(["[[", show4($388.value0), "]]"]);
+      var $382 = toPointHandle(v);
+      if ($382 instanceof Just) {
+        return spaces(["[[", show4($382.value0), "]]"]);
       }
       ;
       return v1(true);
@@ -3407,7 +3393,7 @@
     }
     ;
     if (v1 instanceof Cons) {
-      return lessThan1(v.value1)(v.value4) && (orderedIndexAndStep(v.value1)(v1.value0) && orderedStepAndIndex(v1.value0)(v.value4)) && lessThanOrEq1(v.value4)(v.value5);
+      return orderedIndexAndStep(v.value1)(v1.value0) && orderedStepAndIndex(v1.value0)(v.value2) && lessThanOrEq1(v.value4)(v.value5);
     }
     ;
     throw new Error("Failed pattern match at Data.Expr (line 169, column 3 - line 174, column 23): " + [v1.constructor.name]);
@@ -3420,8 +3406,8 @@
             return function(j_IR) {
               return function(f) {
                 var h = new Handle(is_O, j_OL, j_OR, is_I, j_IL, j_IR, f);
-                var $411 = !validHandle(h);
-                if ($411) {
+                var $405 = !validHandle(h);
+                if ($405) {
                   return bug("invalid Handle: " + show8(h));
                 }
                 ;
@@ -3438,17 +3424,14 @@
   };
   var mkCursorHandle = function(v) {
     if (v.value3 instanceof Left_CursorFocus) {
-      return mkHandle(v.value0)(v.value1)(v.value2)(Nil.value)(v.value1)(v.value2)(InnerLeft_HandleFocus.value);
+      return mkHandle(v.value0)(v.value1)(v.value2)(Nil.value)(v.value1)(v.value1)(InnerLeft_HandleFocus.value);
     }
     ;
     if (v.value3 instanceof Right_CursorFocus) {
-      return mkHandle(v.value0)(v.value1)(v.value2)(Nil.value)(v.value1)(v.value2)(InnerRight_HandleFocus.value);
+      return mkHandle(v.value0)(v.value1)(v.value2)(Nil.value)(v.value2)(v.value2)(InnerRight_HandleFocus.value);
     }
     ;
     throw new Error("Failed pattern match at Data.Expr (line 190, column 1 - line 190, column 35): " + [v.constructor.name]);
-  };
-  var getPointsOfCursor = function(v) {
-    return new Tuple(new Point(v.value0, v.value1), new Point(v.value0, v.value2));
   };
   var getPath = function(v) {
     return v.value0;
@@ -3499,6 +3482,9 @@
     var p_IL = new Point(append12(v.value0)(v.value3), v.value4);
     return new Tuple(p_OL, new Tuple(p_IL, new Tuple(p_IR, p_OR)));
   };
+  var getCursorPoints = function(v) {
+    return new Tuple(new Point(v.value0, v.value1), new Point(v.value0, v.value2));
+  };
   var getDragOrigin = function(v) {
     return function(v1) {
       var v2 = function(v3) {
@@ -3511,51 +3497,51 @@
                     var v16 = function(v17) {
                       return mkPointHandle(v1);
                     };
-                    var $474 = getHandlePoints(v);
-                    var $475 = eq5(v1)($474.value1.value1.value1);
-                    if ($475) {
+                    var $468 = getHandlePoints(v);
+                    var $469 = eq5(v1)($468.value1.value1.value1);
+                    if ($469) {
                       return new Handle(v.value0, v.value1, v.value2, v.value3, v.value4, v.value5, OuterRight_HandleFocus.value);
                     }
                     ;
                     return v16(true);
                   };
-                  var $491 = getHandlePoints(v);
-                  var $492 = eq5(v1)($491.value1.value1.value0);
-                  if ($492) {
+                  var $485 = getHandlePoints(v);
+                  var $486 = eq5(v1)($485.value1.value1.value0);
+                  if ($486) {
                     return new Handle(v.value0, v.value1, v.value2, v.value3, v.value4, v.value5, InnerRight_HandleFocus.value);
                   }
                   ;
                   return v14(true);
                 };
-                var $508 = getHandlePoints(v);
-                var $509 = eq5(v1)($508.value1.value0);
-                if ($509) {
+                var $502 = getHandlePoints(v);
+                var $503 = eq5(v1)($502.value1.value0);
+                if ($503) {
                   return new Handle(v.value0, v.value1, v.value2, v.value3, v.value4, v.value5, InnerLeft_HandleFocus.value);
                 }
                 ;
                 return v12(true);
               };
-              var $525 = getHandlePoints(v);
-              var $526 = eq5(v1)($525.value0);
-              if ($526) {
+              var $519 = getHandlePoints(v);
+              var $520 = eq5(v1)($519.value0);
+              if ($520) {
                 return new Handle(v.value0, v.value1, v.value2, v.value3, v.value4, v.value5, OuterLeft_HandleFocus.value);
               }
               ;
               return v10(true);
             };
-            var $542 = toCursorHandle(v);
-            if ($542 instanceof Just) {
+            var $536 = toCursorHandle(v);
+            if ($536 instanceof Just) {
               return mkPointHandle(v1);
             }
             ;
             return v8(true);
           };
-          var $546 = toCursorHandle(v);
-          if ($546 instanceof Just) {
-            var $547 = getPointsOfCursor($546.value0);
-            var $548 = eq5(v1)($547.value1);
-            if ($548) {
-              return mkCursorHandle(new Cursor(getPath(v1), getIndex($547.value0), getIndex(v1), Right_CursorFocus.value));
+          var $540 = toCursorHandle(v);
+          if ($540 instanceof Just) {
+            var $541 = getCursorPoints($540.value0);
+            var $542 = eq5(v1)($541.value1);
+            if ($542) {
+              return mkCursorHandle(new Cursor(getPath(v1), getIndex($541.value0), getIndex(v1), Right_CursorFocus.value));
             }
             ;
             return v6(true);
@@ -3563,12 +3549,12 @@
           ;
           return v6(true);
         };
-        var $554 = toCursorHandle(v);
-        if ($554 instanceof Just) {
-          var $555 = getPointsOfCursor($554.value0);
-          var $556 = eq5(v1)($555.value0);
-          if ($556) {
-            return mkCursorHandle(new Cursor(getPath(v1), getIndex(v1), getIndex($555.value1), Left_CursorFocus.value));
+        var $548 = toCursorHandle(v);
+        if ($548 instanceof Just) {
+          var $549 = getCursorPoints($548.value0);
+          var $550 = eq5(v1)($549.value0);
+          if ($550) {
+            return mkCursorHandle(new Cursor(getPath(v1), getIndex(v1), getIndex($549.value1), Left_CursorFocus.value));
           }
           ;
           return v4(true);
@@ -3576,13 +3562,29 @@
         ;
         return v4(true);
       };
-      var $562 = toPointHandle(v);
-      if ($562 instanceof Just) {
+      var $556 = toPointHandle(v);
+      if ($556 instanceof Just) {
         return mkPointHandle(v1);
       }
       ;
       return v2(true);
     };
+  };
+  var getCursorFocus = function(v) {
+    return v.value3;
+  };
+  var getCursorAnchorPoint = function(c) {
+    var v = getCursorPoints(c);
+    var f = getCursorFocus(c);
+    if (f instanceof Left_CursorFocus) {
+      return v.value1;
+    }
+    ;
+    if (f instanceof Right_CursorFocus) {
+      return v.value0;
+    }
+    ;
+    throw new Error("Failed pattern match at Data.Expr (line 249, column 26 - line 251, column 25): " + [f.constructor.name]);
   };
   var consPath = function(i2) {
     return function(v) {
@@ -3602,70 +3604,14 @@
             var v8 = function(v92) {
               var v10 = function(v11) {
                 var v12 = function(v13) {
-                  var v14 = function(v15) {
-                    var v16 = function(v17) {
-                      var v18 = function(v19) {
-                        var v20 = function(v21) {
-                          return empty4;
-                        };
-                        var $587 = toCursorHandle(v);
-                        if ($587 instanceof Just) {
-                          var $588 = getPointsOfCursor($587.value0);
-                          var $589 = areOrderedSiblings(v1)($588.value1);
-                          if ($589) {
-                            return pure3(mkCursorHandle(new Cursor(getPath(v1), getIndex($588.value0), getIndex(v1), Right_CursorFocus.value)));
-                          }
-                          ;
-                          return v20(true);
-                        }
-                        ;
-                        return v20(true);
-                      };
-                      var $595 = toCursorHandle(v);
-                      if ($595 instanceof Just) {
-                        var $596 = getPointsOfCursor($595.value0);
-                        var $597 = areOrderedSiblings(v1)($596.value1);
-                        if ($597) {
-                          return pure3(mkCursorHandle(new Cursor(getPath(v1), getIndex(v1), getIndex($596.value1), Left_CursorFocus.value)));
-                        }
-                        ;
-                        return v18(true);
-                      }
-                      ;
-                      return v18(true);
-                    };
-                    var $603 = toCursorHandle(v);
-                    if ($603 instanceof Just) {
-                      var $604 = getPointsOfCursor($603.value0);
-                      var $605 = eq5($604.value1)(v1);
-                      if ($605) {
-                        return pure3(mkPointHandle(v1));
-                      }
-                      ;
-                      return v16(true);
-                    }
-                    ;
-                    return v16(true);
-                  };
-                  var $611 = toCursorHandle(v);
-                  if ($611 instanceof Just) {
-                    var $612 = getPointsOfCursor($611.value0);
-                    var $613 = areOrderedSiblings(v1)($612.value1);
-                    if ($613) {
-                      return pure3(mkCursorHandle(new Cursor(getPath(v1), getIndex(v1), getIndex($612.value1), Left_CursorFocus.value)));
-                    }
-                    ;
-                    return v14(true);
-                  }
-                  ;
-                  return v14(true);
+                  return empty4;
                 };
-                var $619 = toCursorHandle(v);
-                if ($619 instanceof Just) {
-                  var $620 = getPointsOfCursor($619.value0);
-                  var $621 = areOrderedSiblings($620.value0)(v1);
-                  if ($621) {
-                    return pure3(mkCursorHandle(new Cursor(getPath(v1), getIndex($620.value0), getIndex(v1), Right_CursorFocus.value)));
+                var $594 = toCursorHandle(v);
+                if ($594 instanceof Just) {
+                  var $595 = getCursorAnchorPoint($594.value0);
+                  var $596 = areOrderedSiblings(v1)($595);
+                  if ($596) {
+                    return pure3(mkCursorHandle(new Cursor(getPath(v1), getIndex(v1), getIndex($595), Left_CursorFocus.value)));
                   }
                   ;
                   return v12(true);
@@ -3673,12 +3619,12 @@
                 ;
                 return v12(true);
               };
-              var $627 = toCursorHandle(v);
-              if ($627 instanceof Just) {
-                var $628 = getPointsOfCursor($627.value0);
-                var $629 = eq5($628.value0)(v1);
-                if ($629) {
-                  return pure3(mkPointHandle(v1));
+              var $600 = toCursorHandle(v);
+              if ($600 instanceof Just) {
+                var $601 = getCursorAnchorPoint($600.value0);
+                var $602 = areOrderedSiblings($601)(v1);
+                if ($602) {
+                  return pure3(mkCursorHandle(new Cursor(getPath(v1), getIndex($601), getIndex(v1), Right_CursorFocus.value)));
                 }
                 ;
                 return v10(true);
@@ -3686,14 +3632,14 @@
               ;
               return v10(true);
             };
-            var $635 = toPointHandle(v);
-            if ($635 instanceof Just) {
-              var $636 = isAncestorSibling(v1)($635.value0);
-              if ($636 instanceof Just) {
-                var $637 = orderedStepAndIndex($636.value0.value0)(getIndex(v1));
-                if ($637) {
-                  var v9 = getIndicesAroundStep($636.value0.value0);
-                  return pure3(mkHandle(getPath(v1))(v9.value0)(getIndex(v1))(consPath($636.value0.value0)($636.value0.value1))(getIndex($635.value0))(getIndex($635.value0))(OuterRight_HandleFocus.value));
+            var $606 = toPointHandle(v);
+            if ($606 instanceof Just) {
+              var $607 = isAncestorSibling(v1)($606.value0);
+              if ($607 instanceof Just) {
+                var $608 = orderedStepAndIndex($607.value0.value0)(getIndex(v1));
+                if ($608) {
+                  var v9 = getIndicesAroundStep($607.value0.value0);
+                  return pure3(mkHandle(getPath(v1))(v9.value0)(getIndex(v1))(consPath($607.value0.value0)($607.value0.value1))(getIndex($606.value0))(getIndex($606.value0))(OuterRight_HandleFocus.value));
                 }
                 ;
                 return v8(true);
@@ -3704,11 +3650,11 @@
             ;
             return v8(true);
           };
-          var $647 = toPointHandle(v);
-          if ($647 instanceof Just) {
-            var $648 = areOrderedSiblings(v1)($647.value0);
-            if ($648) {
-              return pure3(mkCursorHandle(new Cursor(getPath($647.value0), getIndex(v1), getIndex($647.value0), Left_CursorFocus.value)));
+          var $618 = toPointHandle(v);
+          if ($618 instanceof Just) {
+            var $619 = areOrderedSiblings(v1)($618.value0);
+            if ($619) {
+              return pure3(mkCursorHandle(new Cursor(getPath($618.value0), getIndex(v1), getIndex($618.value0), Left_CursorFocus.value)));
             }
             ;
             return v6(true);
@@ -3716,11 +3662,11 @@
           ;
           return v6(true);
         };
-        var $652 = toPointHandle(v);
-        if ($652 instanceof Just) {
-          var $653 = areOrderedSiblings($652.value0)(v1);
-          if ($653) {
-            return pure3(mkCursorHandle(new Cursor(getPath($652.value0), getIndex($652.value0), getIndex(v1), Right_CursorFocus.value)));
+        var $623 = toPointHandle(v);
+        if ($623 instanceof Just) {
+          var $624 = areOrderedSiblings($623.value0)(v1);
+          if ($624) {
+            return pure3(mkCursorHandle(new Cursor(getPath($623.value0), getIndex($623.value0), getIndex(v1), Right_CursorFocus.value)));
           }
           ;
           return v4(true);
@@ -3728,10 +3674,10 @@
         ;
         return v4(true);
       };
-      var $657 = toPointHandle(v);
-      if ($657 instanceof Just) {
-        var $658 = eq5($657.value0)(v1);
-        if ($658) {
+      var $628 = toPointHandle(v);
+      if ($628 instanceof Just) {
+        var $629 = eq5($628.value0)(v1);
+        if ($629) {
           return pure3(mkPointHandle(v1));
         }
         ;
@@ -9421,20 +9367,6 @@
     Select_OuterRight_PointStyle2.value = new Select_OuterRight_PointStyle2();
     return Select_OuterRight_PointStyle2;
   }();
-  var Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle = /* @__PURE__ */ function() {
-    function Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle2() {
-    }
-    ;
-    Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle2.value = new Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle2();
-    return Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle2;
-  }();
-  var Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle = /* @__PURE__ */ function() {
-    function Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle2() {
-    }
-    ;
-    Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle2.value = new Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle2();
-    return Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle2;
-  }();
   var Select_Inline_InnerLeft_And_InnerRight_PointStyle = /* @__PURE__ */ function() {
     function Select_Inline_InnerLeft_And_InnerRight_PointStyle2() {
     }
@@ -9843,38 +9775,30 @@
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl)))))))) {
-        return Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle.value;
-      }
-      ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl))))))))) {
-        return Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle.value;
-      }
-      ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl)))))))))) {
         return Select_Inline_InnerLeft_And_InnerRight_PointStyle.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl))))))))))) {
+      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl))))))))) {
         return Select_Inline_OuterLeft_And_InnerLeft_PointStyle.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl)))))))))))) {
+      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl)))))))))) {
         return Select_Inline_InnerRight_And_OuterRight_PointStyle.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl))))))))))))) {
+      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl))))))))))) {
         return Select_OuterLeft_And_InnerLeft_PointStyle.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl)))))))))))))) {
+      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl)))))))))))) {
         return Select_InnerRight_And_OuterRight_PointStyle.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr)))))))))))))) {
+      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr)))))))))))) {
         return Select_InnerLeft_And_InnerRight_PointStyle.value;
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 512, column 1 - line 512, column 37): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 509, column 1 - line 509, column 37): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof Plain_PointStyle) {
@@ -9909,42 +9833,34 @@
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value))))))));
       }
       ;
-      if (x instanceof Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle) {
+      if (x instanceof Select_Inline_InnerLeft_And_InnerRight_PointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))))))));
       }
       ;
-      if (x instanceof Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle) {
+      if (x instanceof Select_Inline_OuterLeft_And_InnerLeft_PointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value))))))))));
       }
       ;
-      if (x instanceof Select_Inline_InnerLeft_And_InnerRight_PointStyle) {
+      if (x instanceof Select_Inline_InnerRight_And_OuterRight_PointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))))))))));
       }
       ;
-      if (x instanceof Select_Inline_OuterLeft_And_InnerLeft_PointStyle) {
+      if (x instanceof Select_OuterLeft_And_InnerLeft_PointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value))))))))))));
       }
       ;
-      if (x instanceof Select_Inline_InnerRight_And_OuterRight_PointStyle) {
+      if (x instanceof Select_InnerRight_And_OuterRight_PointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))))))))))));
       }
       ;
-      if (x instanceof Select_OuterLeft_And_InnerLeft_PointStyle) {
-        return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value))))))))))))));
-      }
-      ;
-      if (x instanceof Select_InnerRight_And_OuterRight_PointStyle) {
-        return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))))))))))))));
-      }
-      ;
       if (x instanceof Select_InnerLeft_And_InnerRight_PointStyle) {
-        return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(NoArguments.value)))))))))))))));
+        return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(NoArguments.value)))))))))))));
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 512, column 1 - line 512, column 37): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 509, column 1 - line 509, column 37): " + [x.constructor.name]);
     }
   };
-  var genericEq3 = /* @__PURE__ */ genericEq(genericPointStyle_)(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(genericEqConstructor3))))))))))))))));
+  var genericEq3 = /* @__PURE__ */ genericEq(genericPointStyle_)(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(genericEqConstructor3))))))))))))));
   var eqPointStyle = {
     eq: function(x) {
       return genericEq3(x);
@@ -10004,7 +9920,7 @@
       return identity9;
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 321, column 1 - line 321, column 56): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 320, column 1 - line 320, column 56): " + [v.constructor.name]);
   };
   var setPointStyle = function(v) {
     return function(style4) {
@@ -10032,52 +9948,39 @@
                 return togglePointStyles(v)([new Tuple(v2, Cursor_Point_PointStyle.value)]);
               }
               ;
-              var v6 = function(v7) {
-                if (v1 && allEqual2([v2, v3, v4])) {
-                  return togglePointStyles(v)([new Tuple(v2, Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle.value), new Tuple(v5, Select_OuterRight_PointStyle.value)]);
-                }
-                ;
-                if (v1 && allEqual2([v3, v4, v5])) {
-                  return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_PointStyle.value), new Tuple(v3, Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle.value)]);
-                }
-                ;
-                if (v1 && allEqual2([v3, v4])) {
-                  return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_PointStyle.value), new Tuple(v3, Select_Inline_InnerLeft_And_InnerRight_PointStyle.value), new Tuple(v5, Select_OuterRight_PointStyle.value)]);
-                }
-                ;
-                if (v1 && allEqual2([v2, v3])) {
-                  return togglePointStyles(v)([new Tuple(v2, Select_Inline_OuterLeft_And_InnerLeft_PointStyle.value), new Tuple(v4, Select_InnerRight_PointStyle.value), new Tuple(v5, Select_OuterRight_PointStyle.value)]);
-                }
-                ;
-                if (v1 && allEqual2([v4, v5])) {
-                  return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_PointStyle.value), new Tuple(v3, Select_InnerLeft_PointStyle.value), new Tuple(v4, Select_Inline_InnerRight_And_OuterRight_PointStyle.value)]);
-                }
-                ;
-                if (allEqual2([v2, v3])) {
-                  return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_And_InnerLeft_PointStyle.value), new Tuple(v4, Select_InnerRight_PointStyle.value), new Tuple(v5, Select_OuterRight_PointStyle.value)]);
-                }
-                ;
-                if (allEqual2([v4, v5])) {
-                  return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_PointStyle.value), new Tuple(v3, Select_InnerLeft_PointStyle.value), new Tuple(v4, Select_InnerRight_And_OuterRight_PointStyle.value)]);
-                }
-                ;
-                if (allEqual2([v3, v4])) {
-                  return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_PointStyle.value), new Tuple(v3, Select_InnerLeft_And_InnerRight_PointStyle.value), new Tuple(v5, Select_OuterRight_PointStyle.value)]);
-                }
-                ;
-                return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_PointStyle.value), new Tuple(v3, Select_InnerLeft_PointStyle.value), new Tuple(v4, Select_InnerRight_PointStyle.value), new Tuple(v5, Select_OuterRight_PointStyle.value)]);
-              };
-              var $326 = allEqual2([v2, v3]);
-              if ($326) {
-                var $327 = allEqual2([v4, v5]);
-                if ($327) {
-                  return togglePointStyles(v)([new Tuple(v2, Cursor_Left_PointStyle.value), new Tuple(v4, Cursor_Right_PointStyle.value)]);
-                }
-                ;
-                return v6(true);
+              if (v1 && allEqual2([v2, v3, v4])) {
+                return togglePointStyles(v)([new Tuple(v2, Cursor_Left_PointStyle.value), new Tuple(v5, Cursor_Right_PointStyle.value)]);
               }
               ;
-              return v6(true);
+              if (v1 && allEqual2([v3, v4, v5])) {
+                return togglePointStyles(v)([new Tuple(v2, Cursor_Left_PointStyle.value), new Tuple(v3, Cursor_Right_PointStyle.value)]);
+              }
+              ;
+              if (v1 && allEqual2([v3, v4])) {
+                return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_PointStyle.value), new Tuple(v3, Select_Inline_InnerLeft_And_InnerRight_PointStyle.value), new Tuple(v5, Select_OuterRight_PointStyle.value)]);
+              }
+              ;
+              if (v1 && allEqual2([v2, v3])) {
+                return togglePointStyles(v)([new Tuple(v2, Select_Inline_OuterLeft_And_InnerLeft_PointStyle.value), new Tuple(v4, Select_InnerRight_PointStyle.value), new Tuple(v5, Select_OuterRight_PointStyle.value)]);
+              }
+              ;
+              if (v1 && allEqual2([v4, v5])) {
+                return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_PointStyle.value), new Tuple(v3, Select_InnerLeft_PointStyle.value), new Tuple(v4, Select_Inline_InnerRight_And_OuterRight_PointStyle.value)]);
+              }
+              ;
+              if (allEqual2([v2, v3])) {
+                return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_And_InnerLeft_PointStyle.value), new Tuple(v4, Select_InnerRight_PointStyle.value), new Tuple(v5, Select_OuterRight_PointStyle.value)]);
+              }
+              ;
+              if (allEqual2([v4, v5])) {
+                return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_PointStyle.value), new Tuple(v3, Select_InnerLeft_PointStyle.value), new Tuple(v4, Select_InnerRight_And_OuterRight_PointStyle.value)]);
+              }
+              ;
+              if (allEqual2([v3, v4])) {
+                return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_PointStyle.value), new Tuple(v3, Select_InnerLeft_And_InnerRight_PointStyle.value), new Tuple(v5, Select_OuterRight_PointStyle.value)]);
+              }
+              ;
+              return togglePointStyles(v)([new Tuple(v2, Select_OuterLeft_PointStyle.value), new Tuple(v3, Select_InnerLeft_PointStyle.value), new Tuple(v4, Select_InnerRight_PointStyle.value), new Tuple(v5, Select_OuterRight_PointStyle.value)]);
             };
           };
         };
@@ -10095,16 +9998,16 @@
       return v.handle;
     })))(function() {
       return discard13(modify_5(function(v) {
-        var $344 = {};
-        for (var $345 in v) {
-          if ({}.hasOwnProperty.call(v, $345)) {
-            $344[$345] = v[$345];
+        var $295 = {};
+        for (var $296 in v) {
+          if ({}.hasOwnProperty.call(v, $296)) {
+            $295[$296] = v[$296];
           }
           ;
         }
         ;
-        $344.handle = h;
-        return $344;
+        $295.handle = h;
+        return $295;
       }))(function() {
         var v = getHandlePoints(h);
         return discard13(lift5(traceEngineM("Drag")(list([text6("p_OL = " + show10(v.value0)), text6("p_IL = " + show10(v.value1.value0)), text6("p_IR = " + show10(v.value1.value1.value0)), text6("p_OR = " + show10(v.value1.value1.value1))]))))(function() {
@@ -10142,29 +10045,29 @@
     });
   };
   var pingExpr = /* @__PURE__ */ discard13(/* @__PURE__ */ modify_5(function(v) {
-    var $358 = {};
-    for (var $359 in v) {
-      if ({}.hasOwnProperty.call(v, $359)) {
-        $358[$359] = v[$359];
+    var $309 = {};
+    for (var $310 in v) {
+      if ({}.hasOwnProperty.call(v, $310)) {
+        $309[$310] = v[$310];
       }
       ;
     }
     ;
-    $358.ping = true;
-    return $358;
+    $309.ping = true;
+    return $309;
   }))(function() {
     return discard13(liftAff2(delay(500)))(function() {
       return modify_5(function(v) {
-        var $361 = {};
-        for (var $362 in v) {
-          if ({}.hasOwnProperty.call(v, $362)) {
-            $361[$362] = v[$362];
+        var $312 = {};
+        for (var $313 in v) {
+          if ({}.hasOwnProperty.call(v, $313)) {
+            $312[$313] = v[$313];
           }
           ;
         }
         ;
-        $361.ping = false;
-        return $361;
+        $312.ping = false;
+        return $312;
       });
     });
   });
@@ -10208,7 +10111,7 @@
       return lift5(raise(new PointInteraction(v.value0)));
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 603, column 1 - line 603, column 49): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 598, column 1 - line 598, column 49): " + [v.constructor.name]);
   };
   var point_component = /* @__PURE__ */ function() {
     var render = function(state3) {
@@ -10249,14 +10152,6 @@
           return ["Select_OuterLeft"];
         }
         ;
-        if (state3.style instanceof Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle) {
-          return ["Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight"];
-        }
-        ;
-        if (state3.style instanceof Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle) {
-          return ["Select_Inline_InnerLeft_And_InnerRight_And_OuterRight"];
-        }
-        ;
         if (state3.style instanceof Select_Inline_InnerLeft_And_InnerRight_PointStyle) {
           return ["Select_Inline_InnerLeft_And_InnerRight"];
         }
@@ -10281,18 +10176,18 @@
           return ["Select_InnerLeft_And_InnerRight"];
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 569, column 13 - line 586, column 98): " + [state3.style.constructor.name]);
-      }()])), onMouseDown(function($486) {
-        return PointInteraction_PointAction.create(StartDrag_PointInteraction.create($486));
-      }), onMouseEnter(function($487) {
-        return PointInteraction_PointAction.create(MidDrag_PointInteraction.create($487));
+        throw new Error("Failed pattern match at Ui.Editor (line 566, column 13 - line 581, column 98): " + [state3.style.constructor.name]);
+      }()])), onMouseDown(function($437) {
+        return PointInteraction_PointAction.create(StartDrag_PointInteraction.create($437));
+      }), onMouseEnter(function($438) {
+        return PointInteraction_PointAction.create(MidDrag_PointInteraction.create($438));
       })])([text6(" ")]);
     };
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(InitializePoint.value),
-      receive: function($488) {
-        return pure17(ReceivePoint.create($488));
+      receive: function($439) {
+        return pure17(ReceivePoint.create($439));
       },
       handleQuery: function(query32) {
         return bind15(get1)(function(state3) {
@@ -10308,7 +10203,7 @@
                     return tracePointM("Editor . Point . Error")(v1.value0.value0);
                   }
                   ;
-                  throw new Error("Failed pattern match at Ui.Editor (line 549, column 13 - line 551, column 67): " + [v1.value0.constructor.name]);
+                  throw new Error("Failed pattern match at Ui.Editor (line 546, column 13 - line 548, column 67): " + [v1.value0.constructor.name]);
                 }())(function() {
                   return pure24(none3);
                 });
@@ -10319,7 +10214,7 @@
               return pure24(pure17(v1.value0));
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 546, column 49 - line 553, column 35): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 543, column 49 - line 550, column 35): " + [v1.constructor.name]);
           });
         });
       },
@@ -10336,7 +10231,7 @@
                   return tracePointM("Editor . Point . Error")(v1.value0.value0);
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.Editor (line 559, column 13 - line 561, column 67): " + [v1.value0.constructor.name]);
+                throw new Error("Failed pattern match at Ui.Editor (line 556, column 13 - line 558, column 67): " + [v1.value0.constructor.name]);
               });
             }
             ;
@@ -10344,7 +10239,7 @@
               return pure24(v1.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 556, column 51 - line 562, column 30): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 553, column 51 - line 559, column 30): " + [v1.constructor.name]);
           });
         });
       }
@@ -10366,7 +10261,7 @@
           return pure16(v1.value0);
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 439, column 120 - line 441, column 19): " + [v1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 438, column 120 - line 440, column 19): " + [v1.constructor.name]);
       });
     }
     ;
@@ -10387,14 +10282,14 @@
             return pure16(v1.value0);
           }
           ;
-          throw new Error("Failed pattern match at Ui.Editor (line 447, column 46 - line 449, column 23): " + [v1.constructor.name]);
+          throw new Error("Failed pattern match at Ui.Editor (line 446, column 46 - line 448, column 23): " + [v1.constructor.name]);
         });
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 442, column 49 - line 449, column 23): " + [v.value1.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 441, column 49 - line 448, column 23): " + [v.value1.constructor.name]);
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 438, column 1 - line 438, column 53): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 437, column 1 - line 437, column 53): " + [v.constructor.name]);
   };
   var handleExprAction = function(v) {
     if (v instanceof InitializeExpr) {
@@ -10436,13 +10331,13 @@
           return liftEffect7(stopPropagation(toEvent(v.value1.value0.value0)));
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 471, column 3 - line 473, column 102): " + [v.value1.value0.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 470, column 3 - line 472, column 102): " + [v.value1.value0.constructor.name]);
       }())(function() {
         return lift5(raise(new Tuple(Nil.value, new PointInteraction_ExprOutput(v.value0, v.value1.value0))));
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 451, column 1 - line 451, column 46): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 450, column 1 - line 450, column 46): " + [v.constructor.name]);
   };
   var handleEngineQuery = function(v) {
     if (v instanceof ExprInteraction_EngineQuery) {
@@ -10476,16 +10371,16 @@
           }))(function(h) {
             var h$prime = getDragOrigin(h)(v.value0);
             return discard13(modify_5(function(v1) {
-              var $431 = {};
-              for (var $432 in v1) {
-                if ({}.hasOwnProperty.call(v1, $432)) {
-                  $431[$432] = v1[$432];
+              var $382 = {};
+              for (var $383 in v1) {
+                if ({}.hasOwnProperty.call(v1, $383)) {
+                  $382[$383] = v1[$383];
                 }
                 ;
               }
               ;
-              $431.drag_origin_handle = new Just(h$prime);
-              return $431;
+              $382.drag_origin_handle = new Just(h$prime);
+              return $382;
             }))(function() {
               return discard13(setHandle(h$prime))(function() {
                 return pure16(v.value2);
@@ -10509,16 +10404,16 @@
     if (v instanceof EndDrag_EngineQuery) {
       return discard13(lift5(traceEngineM("Drag")(text6("got EndDrag"))))(function() {
         return discard13(modify_5(function(v1) {
-          var $439 = {};
-          for (var $440 in v1) {
-            if ({}.hasOwnProperty.call(v1, $440)) {
-              $439[$440] = v1[$440];
+          var $390 = {};
+          for (var $391 in v1) {
+            if ({}.hasOwnProperty.call(v1, $391)) {
+              $390[$391] = v1[$391];
             }
             ;
           }
           ;
-          $439.drag_origin_handle = Nothing.value;
-          return $439;
+          $390.drag_origin_handle = Nothing.value;
+          return $390;
         }))(function() {
           return pure16(v.value0);
         });
@@ -10604,14 +10499,14 @@
           return text6("root");
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 407, column 19 - line 409, column 45): " + [v.expr.value0.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 406, column 19 - line 408, column 45): " + [v.expr.value0.constructor.name]);
       }()])], function() {
         var renderPoint = function(i2) {
           return slot1($$Proxy.value)(i2)(point_component)({})(PointOutput_ExprAction.create(i2));
         };
         var renderKid = function(i2) {
           return function(e) {
-            return slot3($$Proxy.value)(i2)($lazy_expr_component(418))({
+            return slot3($$Proxy.value)(i2)($lazy_expr_component(417))({
               expr: e
             })(ExprOutput_ExprAction.create(i2));
           };
@@ -10626,8 +10521,8 @@
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(InitializeExpr.value),
-      receive: function($489) {
-        return pure17(ReceiveExpr.create($489));
+      receive: function($440) {
+        return pure17(ReceiveExpr.create($440));
       },
       handleQuery: function(query32) {
         return bind15(get1)(function(state3) {
@@ -10643,7 +10538,7 @@
                     return traceExprM("Editor . Expr . Error")(v1.value0.value0);
                   }
                   ;
-                  throw new Error("Failed pattern match at Ui.Editor (line 381, column 13 - line 383, column 65): " + [v1.value0.constructor.name]);
+                  throw new Error("Failed pattern match at Ui.Editor (line 380, column 13 - line 382, column 65): " + [v1.value0.constructor.name]);
                 }())(function() {
                   return pure24(none3);
                 });
@@ -10654,7 +10549,7 @@
               return pure24(pure17(v1.value0));
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 378, column 48 - line 385, column 35): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 377, column 48 - line 384, column 35): " + [v1.constructor.name]);
           });
         });
       },
@@ -10671,7 +10566,7 @@
                   return traceExprM("Editor . Expr . Error")(v1.value0.value0);
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.Editor (line 390, column 13 - line 392, column 65): " + [v1.value0.constructor.name]);
+                throw new Error("Failed pattern match at Ui.Editor (line 389, column 13 - line 391, column 65): " + [v1.value0.constructor.name]);
               }())(function() {
                 return put1(state3);
               });
@@ -10681,7 +10576,7 @@
               return pure24(v1.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 388, column 50 - line 394, column 30): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 387, column 50 - line 393, column 30): " + [v1.constructor.name]);
           });
         });
       }
@@ -10692,14 +10587,14 @@
       render
     });
   });
-  var expr_component = /* @__PURE__ */ $lazy_expr_component(370);
+  var expr_component = /* @__PURE__ */ $lazy_expr_component(369);
   var engine_component = /* @__PURE__ */ function() {
     var render = $$const(div2([style3(tell32(["display: hidden"]))])([]));
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(InitializeEngine.value),
-      receive: function($490) {
-        return pure17(ReceiveEngine.create($490));
+      receive: function($441) {
+        return pure17(ReceiveEngine.create($441));
       },
       handleQuery: function(query32) {
         return bind15(get1)(function(state3) {

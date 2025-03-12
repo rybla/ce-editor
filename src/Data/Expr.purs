@@ -170,7 +170,7 @@ validHandle (Handle _is_O j_OL j_OR is_I j_IL j_IR _) =
     Nil ->
       (j_OL <= j_IL && j_IL <= j_IR && j_IR <= j_OR)
     i : _ ->
-      (j_OL < j_IL && j_OL .<=| i && i |<=. j_IL) &&
+      (j_OL .<=| i && i |<=. j_OR) &&
         (j_IL <= j_IR)
 
 mkHandle :: Path -> Index -> Index -> Path -> Index -> Index -> HandleFocus -> Handle
@@ -188,8 +188,8 @@ mkPointHandle :: Point -> Handle
 mkPointHandle (Point is j) = mkHandle is j j (Path Nil) j j InnerLeft_HandleFocus
 
 mkCursorHandle :: Cursor -> Handle
-mkCursorHandle (Cursor is l r Left_CursorFocus) = mkHandle is l r (Path Nil) l r InnerLeft_HandleFocus
-mkCursorHandle (Cursor is l r Right_CursorFocus) = mkHandle is l r (Path Nil) l r InnerRight_HandleFocus
+mkCursorHandle (Cursor is l r Left_CursorFocus) = mkHandle is l r (Path Nil) l l InnerLeft_HandleFocus
+mkCursorHandle (Cursor is l r Right_CursorFocus) = mkHandle is l r (Path Nil) r r InnerRight_HandleFocus
 
 getHandleFocus ∷ Handle → HandleFocus
 getHandleFocus (Handle _ _ _ _ _ _ f) = f
@@ -233,9 +233,33 @@ instance Show Cursor where
 instance Eq Cursor where
   eq x = genericEq x
 
-getPointsOfCursor (Cursor is l r _) = Point is l /\ Point is r
+getCursorPoints ∷ Cursor → Point /\ Point
+getCursorPoints (Cursor is l r _) = Point is l /\ Point is r
+
+getLeftPoint ∷ Cursor → Point
 getLeftPoint (Cursor is l _ _) = Point is l
+
+getRightPoint ∷ Cursor → Point
 getRightPoint (Cursor is _ r _) = Point is r
+
+getCursorFocus :: Cursor -> CursorFocus
+getCursorFocus (Cursor _ _ _ f) = f
+
+getCursorAnchorPoint :: Cursor -> Point
+getCursorAnchorPoint c = case f of
+  Left_CursorFocus -> r
+  Right_CursorFocus -> l
+  where
+  l /\ r = getCursorPoints c
+  f = getCursorFocus c
+
+getCursorFocusPoint :: Cursor -> Point
+getCursorFocusPoint c = case f of
+  Left_CursorFocus -> l
+  Right_CursorFocus -> r
+  where
+  l /\ r = getCursorPoints c
+  f = getCursorFocus c
 
 data CursorFocus = Left_CursorFocus | Right_CursorFocus
 
@@ -267,15 +291,14 @@ toPointHandle (Handle is_O j_OL j_OR is_I j_IL j_IR _) = do
   pure $ Point is_O j_OL
 
 toCursorHandle :: Handle -> Maybe Cursor
-toCursorHandle h@(Handle is_O j_OL j_OR is_I j_IL j_IR f) = do
-  guard $ is_I == Path Nil && j_IL == j_IR
-  let j_I = j_IL -- == j_IR
+toCursorHandle h@(Handle is_O j_OL j_OR is_I j_IL_IR _j_IR f) = do
+  guard $ is_I == Path Nil && j_IL_IR == _j_IR
   pure $ Cursor is_O j_OL j_OR
-    if j_OL == j_I then
+    if j_OL == j_IL_IR then
       case f of
         OuterRight_HandleFocus -> Right_CursorFocus
         _ -> Left_CursorFocus
-    else if j_OR == j_I then
+    else if j_OR == j_IL_IR then
       case f of
         OuterLeft_HandleFocus -> Left_CursorFocus
         _ -> Right_CursorFocus
@@ -285,8 +308,8 @@ toCursorHandle h@(Handle is_O j_OL j_OR is_I j_IL j_IR f) = do
 getDragOrigin :: Handle -> Point -> Handle
 getDragOrigin h p | Just _ <- toPointHandle h = mkPointHandle p
 -- starting from a point of existing Cursor Handle
-getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, p == l = mkCursorHandle $ Cursor (getPath p) (getIndex p) (getIndex r) Left_CursorFocus
-getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, p == r = mkCursorHandle $ Cursor (getPath p) (getIndex l) (getIndex p) Right_CursorFocus
+getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, p == l = mkCursorHandle $ Cursor (getPath p) (getIndex p) (getIndex r) Left_CursorFocus
+getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, p == r = mkCursorHandle $ Cursor (getPath p) (getIndex l) (getIndex p) Right_CursorFocus
 getDragOrigin h p | Just c <- toCursorHandle h = mkPointHandle p
 -- starting from a point of existing Handle
 -- TODO: choose prioritization for this in cases when two points of Handle are equal
@@ -321,14 +344,19 @@ getHandleFromTo h p_OR | Just p_IL <- toPointHandle h, Just (i_L /\ is_I_mid) <-
     pure $ mkHandle (getPath p_OR) j_OL (getIndex p_OR) (i_L |: is_I_mid) (getIndex p_IL) (getIndex p_IL) OuterRight_HandleFocus
 
 -- drag from a Cursor
--- adjust left point of Cursor
-getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, l == p' = pure $ mkPointHandle p'
-getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, areOrderedSiblings l p' = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex l) (getIndex p') Right_CursorFocus
-getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex p') (getIndex r) Left_CursorFocus
--- adjust right point of Cursor
-getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, r == p' = pure $ mkPointHandle p'
-getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex p') (getIndex r) Left_CursorFocus
-getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getPointsOfCursor c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex l) (getIndex p') Right_CursorFocus
+getHandleFromTo h p_R | Just c <- toCursorHandle h, p_L <- getCursorAnchorPoint c, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_R) (getIndex p_L) (getIndex p_R) Right_CursorFocus
+getHandleFromTo h p_L | Just c <- toCursorHandle h, p_R <- getCursorAnchorPoint c, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_L) (getIndex p_L) (getIndex p_R) Left_CursorFocus
+
+-- -- drag from a Cursor
+-- -- adjust left point of Cursor
+-- -- getHandleFromTo h p_L | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, l == p_L = pure $ mkPointHandle p'
+-- getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, areOrderedSiblings l p' = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex l) (getIndex p') Right_CursorFocus
+-- getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex p') (getIndex r) Left_CursorFocus
+-- -- adjust right point of Cursor
+-- -- getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, r == p' = pure $ mkPointHandle p'
+-- getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex p') (getIndex r) Left_CursorFocus
+-- getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex l) (getIndex p') Right_CursorFocus
+
 -- TODO
 getHandleFromTo _ _ = empty
 

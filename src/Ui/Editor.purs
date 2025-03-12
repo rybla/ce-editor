@@ -294,12 +294,11 @@ toggleHandlePointStyles_helper :: Boolean -> Boolean -> Expr.Point -> Expr.Point
 toggleHandlePointStyles_helper active _inline p_OL_IL_IR_OR _p_IL _p_IR _p_OR | allEqual [ p_OL_IL_IR_OR, _p_IL, _p_IR, _p_OR ] = togglePointStyles active [ p_OL_IL_IR_OR /\ Cursor_Point_PointStyle ]
 -- 
 -- Cursor
-toggleHandlePointStyles_helper active _inline p_OL_IL _p_IL p_IR_OR _p_OR | allEqual [ p_OL_IL, _p_IL ], allEqual [ p_IR_OR, _p_OR ] = togglePointStyles active [ p_OL_IL /\ Cursor_Left_PointStyle, p_IR_OR /\ Cursor_Right_PointStyle ]
+toggleHandlePointStyles_helper active _inline@true p_OL_IL_IR p_IL p_IR _p_OR | allEqual [ p_OL_IL_IR, p_IL, p_IR ] = togglePointStyles active [ p_OL_IL_IR /\ Cursor_Left_PointStyle, _p_OR /\ Cursor_Right_PointStyle ]
+toggleHandlePointStyles_helper active _inline@true p_OL p_IL_IR_OR _p_IR _p_OR | allEqual [ p_IL_IR_OR, _p_IR, _p_OR ] = togglePointStyles active [ p_OL /\ Cursor_Left_PointStyle, p_IL_IR_OR /\ Cursor_Right_PointStyle ]
 -- 
 -- Select
 --   - Select inline
-toggleHandlePointStyles_helper active _inline@true p_OL_IL_IR _p_IL _p_IR p_OR | allEqual [ p_OL_IL_IR, _p_IL, _p_IR ] = togglePointStyles active [ p_OL_IL_IR /\ Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
-toggleHandlePointStyles_helper active _inline@true p_OL p_IL_IR_OR _p_IR _p_OR | allEqual [ p_IL_IR_OR, _p_IR, _p_OR ] = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL_IR_OR /\ Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle ]
 toggleHandlePointStyles_helper active _inline@true p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL_IR /\ Select_Inline_InnerLeft_And_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
 toggleHandlePointStyles_helper active _inline@true p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = togglePointStyles active [ p_OL_IL /\ Select_Inline_OuterLeft_And_InnerLeft_PointStyle, p_IR /\ Select_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
 toggleHandlePointStyles_helper active _inline@true p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL /\ Select_InnerLeft_PointStyle, p_IR_OR /\ Select_Inline_InnerRight_And_OuterRight_PointStyle ]
@@ -500,8 +499,6 @@ data PointStyle
   | Select_InnerLeft_PointStyle
   | Select_InnerRight_PointStyle
   | Select_OuterRight_PointStyle
-  | Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle
-  | Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle
   | Select_Inline_InnerLeft_And_InnerRight_PointStyle
   | Select_Inline_OuterLeft_And_InnerLeft_PointStyle
   | Select_Inline_InnerRight_And_OuterRight_PointStyle
@@ -576,8 +573,6 @@ point_component = H.mkComponent { initialState, eval, render }
               Select_InnerRight_PointStyle -> [ "Select_InnerRight" ]
               Select_OuterLeft_PointStyle -> [ "Select_OuterLeft" ]
               Select_OuterLeft_PointStyle -> [ "Select_OuterLeft" ]
-              Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle -> [ "Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight" ]
-              Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle -> [ "Select_Inline_InnerLeft_And_InnerRight_And_OuterRight" ]
               Select_Inline_InnerLeft_And_InnerRight_PointStyle -> [ "Select_Inline_InnerLeft_And_InnerRight" ]
               Select_Inline_OuterLeft_And_InnerLeft_PointStyle -> [ "Select_Inline_OuterLeft_And_InnerLeft" ]
               Select_Inline_InnerRight_And_OuterRight_PointStyle -> [ "Select_Inline_InnerRight_And_OuterRight" ]
