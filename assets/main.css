@@ -3,6 +3,9 @@
 :root {
   /* --background-color: rgb(146, 146, 146); */
   --background-color: rgb(214, 214, 214);
+
+  --handle-point-background-color: color-mix(in hsl, blue, transparent 30%);
+  --handle-inner-background-color: color-mix(in hsl, blue, transparent 80%);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -56,6 +59,8 @@ body {
   Point
 ----------------------------------------------------------------------------- */
 
+/* Point */
+
 .Point {
   white-space: pre;
   width: 1em;
@@ -66,25 +71,97 @@ body {
   transition-duration: 0.2s;
 }
 
-.Point.PointCursor {
-  background-color: color-mix(in hsl, blue, transparent 50%);
+/* Cursor_Point PointStyle */
+
+.Point.Cursor_Point {
+  background-color: var(--handle-point-background-color);
 }
 
-.Point.CursorLeft {
-  background-color: color-mix(in hsl, blue, transparent 50%);
+/* Cursor PointStyle */
+
+.Point.Cursor_Left {
+  background-color: var(--handle-point-background-color);
 }
 
-.Point.CursorLeft~* {
-  background-color: color-mix(in hsl, blue, transparent 80%);
+.Point.Cursor_Left~* {
+  background-color: var(--handle-inner-background-color);
 }
 
-.Point.CursorRight {
-  background-color: color-mix(in hsl, blue, transparent 50%);
+.Point.Cursor_Right {
+  background-color: var(--handle-point-background-color);
 }
 
-.Point.CursorRight~* {
+.Point.Cursor_Right~* {
   background-color: transparent;
 }
+
+/* Select PointStyle */
+
+.Select_OuterLeft {
+  background-color: var(--handle-point-background-color);
+}
+
+.Select_OuterLeft~* {
+  background-color: var(--handle-inner-background-color);
+}
+
+.Select_InnerLeft {
+  background-color: var(--handle-point-background-color);
+}
+
+.Select_InnerLeft~* {
+  background-color: transparent;
+}
+
+.Select_InnerRight {
+  background-color: var(--handle-point-background-color);
+}
+
+.Select_InnerRight~* {
+  background-color: var(--handle-inner-background-color);
+}
+
+.Select_OuterRight {
+  background-color: var(--handle-point-background-color);
+}
+
+.Select_OuterRight~* {
+  background-color: var(--handle-inner-background-color);
+}
+
+.Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight {
+  background-color: var(--handle-point-background-color);
+}
+
+.Select_Inline_InnerLeft_And_InnerRight_And_OuterRight {
+  background-color: var(--handle-point-background-color);
+}
+
+.Select_Inline_InnerLeft_And_InnerRight {
+  background-color: var(--handle-point-background-color);
+}
+
+.Select_Inline_OuterLeft_And_InnerLeft {
+  background-color: var(--handle-point-background-color);
+}
+
+.Select_Inline_InnerRight_And_OuterRight {
+  background-color: var(--handle-point-background-color);
+}
+
+.Select_OuterLeft_And_InnerLeft {
+  background-color: var(--handle-point-background-color);
+}
+
+.Select_InnerRight_And_OuterRight {
+  background-color: var(--handle-point-background-color);
+}
+
+.Select_InnerLeft_And_InnerRight {
+  background-color: var(--handle-point-background-color);
+}
+
+/* Select Inline PointStyle */
 
 /* -----------------------------------------------------------------------------
   Console

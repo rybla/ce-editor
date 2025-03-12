@@ -13,6 +13,7 @@ import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Expr (Expr(..), (%), (|:))
 import Data.Expr as Expr
+import Data.Foldable (traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
@@ -269,42 +270,116 @@ updateDragToPoint p = do
 
 setHandle :: Expr.Handle -> EngineM' Unit
 setHandle h = do
-  deactivateHandle =<< gets _.handle
+  toggleHandlePointStyles false =<< gets _.handle
   modify_ _ { handle = h }
-  activateHandle h
+  let p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
+  lift $ traceEngineM "Drag" $ list
+    [ text $ "p_OL = " <> show p_OL
+    , text $ "p_IL = " <> show p_IL
+    , text $ "p_IR = " <> show p_IR
+    , text $ "p_OR = " <> show p_OR
+    ]
+  toggleHandlePointStyles true h
+
+toggleHandlePointStyles :: Boolean -> Expr.Handle -> EngineM' Unit
+toggleHandlePointStyles active h@(Expr.Handle _ _ _ is_I _ _ _f) =
+  toggleHandlePointStyles_helper active (is_I == Expr.Path Nil) p_OL p_IL p_IR p_OR
+  where
+  p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
+
+toggleHandlePointStyles_helper :: Boolean -> Boolean -> Expr.Point -> Expr.Point -> Expr.Point -> Expr.Point -> EngineM' Unit
+-- 
+-- Point
+toggleHandlePointStyles_helper active _inline p_OL_IL_IR_OR _p_IL _p_IR _p_OR | allEqual [ p_OL_IL_IR_OR, _p_IL, _p_IR, _p_OR ] = togglePointStyles active [ p_OL_IL_IR_OR /\ Cursor_Point_PointStyle ]
+-- 
+-- Cursor
+toggleHandlePointStyles_helper active _inline p_OL_IL _p_IL p_IR_OR _p_OR | allEqual [ p_OL_IL, _p_IL ], allEqual [ p_IR_OR, _p_OR ] = togglePointStyles active [ p_OL_IL /\ Cursor_Left_PointStyle, p_IR_OR /\ Cursor_Right_PointStyle ]
+-- 
+-- Select
+--   - Select inline
+toggleHandlePointStyles_helper active _inline@true p_OL_IL_IR _p_IL _p_IR p_OR | allEqual [ p_OL_IL_IR, _p_IL, _p_IR ] = togglePointStyles active [ p_OL_IL_IR /\ Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline@true p_OL p_IL_IR_OR _p_IR _p_OR | allEqual [ p_IL_IR_OR, _p_IR, _p_OR ] = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL_IR_OR /\ Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline@true p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL_IR /\ Select_Inline_InnerLeft_And_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline@true p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = togglePointStyles active [ p_OL_IL /\ Select_Inline_OuterLeft_And_InnerLeft_PointStyle, p_IR /\ Select_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline@true p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL /\ Select_InnerLeft_PointStyle, p_IR_OR /\ Select_Inline_InnerRight_And_OuterRight_PointStyle ]
+-- TODO: this is not a special case, right?
+-- toggleHandlePointStyles_helper active inline p_OL p_IL p_IR p_OR | inline = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL /\ Select_InnerLeft_PointStyle, p_IR /\ Select_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
+--   - Select not inline
+toggleHandlePointStyles_helper active _inline p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = togglePointStyles active [ p_OL_IL /\ Select_OuterLeft_And_InnerLeft_PointStyle, p_IR /\ Select_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL /\ Select_InnerLeft_PointStyle, p_IR_OR /\ Select_InnerRight_And_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL_IR /\ Select_InnerLeft_And_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
+--   - Select normal
+toggleHandlePointStyles_helper active _inline p_OL p_IL p_IR p_OR = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL /\ Select_InnerLeft_PointStyle, p_IR /\ Select_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
+
+-- toggleHandlePointStyles_old :: Boolean -> Expr.Handle -> EngineM' Unit
+-- toggleHandlePointStyles_old active h | Just p <- Expr.toPointHandle h = do
+--   setPointStyle p $ togglePointStyle active Cursor_Point_PointStyle
+-- toggleHandlePointStyles_old active h | Just c <- Expr.toCursorHandle h = do
+--   setPointStyle (Expr.getLeftPoint c) $ togglePointStyle active Cursor_Left_PointStyle
+--   setPointStyle (Expr.getRightPoint c) $ togglePointStyle active Cursor_Right_PointStyle
+-- -- TODO: I probably need some more Select$ togglePointStyle active *_PointStyles to cover some of these cases
+-- toggleHandlePointStyles_old active h@(Expr.Handle _is_O j_OL _j_OR is_I j_IL j_IR _f) | is_I == Expr.Path Nil, allEqual [ j_OL, j_IL, j_IR ] = do
+--   let p_OL_IL_IR /\ _p_IL /\ _p_IR /\ p_OR = Expr.getHandlePoints h
+--   setPointStyle p_OL_IL_IR $ togglePointStyle active Select_Inline_OuterLeft_And_InnerLeft_And_InnerRight_PointStyle
+--   setPointStyle p_OR $ togglePointStyle active Select_OuterRight_PointStyle
+-- toggleHandlePointStyles_old active h@(Expr.Handle _is_O _j_OL j_OR is_I j_IL j_IR _f) | is_I == Expr.Path Nil, allEqual [ j_IL, j_IR, j_OR ] = do
+--   let p_OL /\ p_IL_IR_OR /\ _p_IR /\ _p_OR = Expr.getHandlePoints h
+--   setPointStyle p_OL $ togglePointStyle active Select_OuterLeft_PointStyle
+--   setPointStyle p_IL_IR_OR $ togglePointStyle active Select_Inline_InnerLeft_And_InnerRight_And_OuterRight_PointStyle
+-- toggleHandlePointStyles_old active h@(Expr.Handle _is_O _j_OL _j_OR is_I j_IL j_IR _f) | is_I == Expr.Path Nil, allEqual [ j_IL, j_IR ] = do
+--   let p_OL /\ p_IL_IR /\ _p_IR /\ p_OR = Expr.getHandlePoints h
+--   setPointStyle p_OL $ togglePointStyle active Select_OuterLeft_PointStyle
+--   setPointStyle p_IL_IR $ togglePointStyle active Select_Inline_InnerLeft_And_InnerRight_PointStyle
+--   setPointStyle p_OR $ togglePointStyle active Select_OuterRight_PointStyle
+-- toggleHandlePointStyles_old active h@(Expr.Handle _is_O j_OL _j_OR is_I j_IL _j_IR _f) | is_I == Expr.Path Nil, allEqual [ j_OL, j_IL ] = do
+--   let p_OL_IL /\ _p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
+--   setPointStyle p_OL_IL $ togglePointStyle active Select_Inline_OuterLeft_And_InnerLeft_PointStyle
+--   setPointStyle p_IR $ togglePointStyle active Select_InnerRight_PointStyle
+--   setPointStyle p_OR $ togglePointStyle active Select_OuterRight_PointStyle
+-- toggleHandlePointStyles_old active h@(Expr.Handle _is_O _j_OL j_OR is_I _j_IL j_IR _f) | is_I == Expr.Path Nil, allEqual [ j_IR, j_OR ] = do
+--   let p_OL /\ p_IL /\ p_IR_OR /\ _p_OR = Expr.getHandlePoints h
+--   setPointStyle p_OL $ togglePointStyle active Select_OuterLeft_PointStyle
+--   setPointStyle p_IL $ togglePointStyle active Select_InnerLeft_PointStyle
+--   setPointStyle p_IR_OR $ togglePointStyle active Select_Inline_InnerRight_And_OuterRight_PointStyle
+-- -- TODO: I'm pretty sure that this doesn't need to be a special case, right?
+-- -- toggleHandlePointStyles_old active h@(Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil = do
+-- --   let p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
+-- --   setPointStyle p_OL $ togglePointStyle active Select_OuterLeft_PointStyle
+-- --   setPointStyle p_IL $ togglePointStyle active Select_InnerLeft_PointStyle
+-- --   setPointStyle p_IR $ togglePointStyle active Select_InnerRight_PointStyle
+-- --   setPointStyle p_OR $ togglePointStyle active Select_OuterRight_PointStyle
+-- toggleHandlePointStyles_old active h@(Expr.Handle _is_O j_OL _j_OR _is_I j_IL _j_IR _f) | allEqual [ j_OL, j_IL ] = do
+--   let p_OL_IL /\ _p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
+--   setPointStyle p_OL_IL $ togglePointStyle active Select_OuterLeft_And_InnerLeft_PointStyle
+--   setPointStyle p_IR $ togglePointStyle active Select_InnerRight_PointStyle
+--   setPointStyle p_OR $ togglePointStyle active Select_OuterRight_PointStyle
+-- toggleHandlePointStyles_old active h@(Expr.Handle _is_O _j_OL j_OR _is_I _j_IL j_IR _f) | allEqual [ j_IR, j_OR ] = do
+--   let p_OL /\ p_IL /\ p_IR_OR /\ _p_OR = Expr.getHandlePoints h
+--   setPointStyle p_OL $ togglePointStyle active Select_OuterLeft_PointStyle
+--   setPointStyle p_IL $ togglePointStyle active Select_InnerLeft_PointStyle
+--   setPointStyle p_IR_OR $ togglePointStyle active Select_InnerRight_And_OuterRight_PointStyle
+-- toggleHandlePointStyles_old active h@(Expr.Handle _is_O _j_OL _j_OR _is_I j_IL j_IR _f) | allEqual [ j_IL, j_IR ] = do
+--   lift $ traceEngineM "gothere" $ text "gothere"
+--   let p_OL /\ p_IL_IR /\ _p_IR /\ p_OR = Expr.getHandlePoints h
+--   setPointStyle p_OL $ togglePointStyle active Select_OuterLeft_PointStyle
+--   setPointStyle p_IL_IR $ togglePointStyle active Select_InnerLeft_And_InnerRight_PointStyle
+--   setPointStyle p_OR $ togglePointStyle active Select_OuterRight_PointStyle
+-- toggleHandlePointStyles_old active h = do
+--   let p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
+--   setPointStyle p_OL $ togglePointStyle active Select_OuterLeft_PointStyle
+--   setPointStyle p_IL $ togglePointStyle active Select_InnerLeft_PointStyle
+--   setPointStyle p_IR $ togglePointStyle active Select_InnerRight_PointStyle
+--   setPointStyle p_OR $ togglePointStyle active Select_OuterRight_PointStyle
+
+togglePointStyles :: Boolean -> Array (Expr.Point /\ PointStyle) -> EngineM' Unit
+togglePointStyles active = traverse_ \(p /\ ps) -> setPointStyle p $ togglePointStyle active ps
 
 setPointStyle :: Expr.Point -> PointStyle -> EngineM' Unit
 setPointStyle (Expr.Point is i) style = H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is $ PointQuery_ExprQuery i $ ModifyPointState (_ { style = style }) a') # lift
 
-activateHandle :: Expr.Handle -> EngineM' Unit
-activateHandle h | Just p <- Expr.toPointHandle h = do
-  setPointStyle p Cursor_Point_PointStyle
-activateHandle h | Just c <- Expr.toCursorHandle h = do
-  setPointStyle (Expr.getLeftPoint c) Cursor_Left_PointStyle
-  setPointStyle (Expr.getRightPoint c) Cursor_Right_PointStyle
--- TODO: I probably need some more Select*_PointStyles to cover some of these cases
-activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil, allEqual [ j_OL, j_IL, j_IR ] = todo "activateHandle"
-activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil, allEqual [ j_IL, j_IR, j_OR ] = todo "activateHandle"
-activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil, allEqual [ j_IL, j_IR ] = todo "activateHandle"
-activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil, allEqual [ j_OL, j_IL ] = todo "activateHandle"
-activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil, allEqual [ j_IR, j_OR ] = todo "activateHandle"
-activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil = todo "activateHandle"
-activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | allEqual [ j_OL, j_IL ] = todo "activateHandle"
-activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | allEqual [ j_IR, j_OR ] = todo "activateHandle"
-activateHandle h@(Expr.Handle _is_O _j_OL _j_OR _is_I _j_IL _j_IR _f) = do
-  let p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getPointsOfHandle h
-  setPointStyle p_OL Select_OuterLeft_PointStyle
-  setPointStyle p_IL Select_InnerLeft_PointStyle
-  setPointStyle p_IR Select_InnerRight_PointStyle
-  setPointStyle p_OR Select_OuterRight_PointStyle
-
-deactivateHandle :: Expr.Handle -> EngineM' Unit
-deactivateHandle h | Just p <- Expr.toPointHandle h = do
-  setPointStyle p Normal_PointStyle
-deactivateHandle h | Just c <- Expr.toCursorHandle h = do
-  setPointStyle (Expr.getLeftPoint c) Normal_PointStyle
-  setPointStyle (Expr.getRightPoint c) Normal_PointStyle
-deactivateHandle _h = todo "deactivateHandle"
+togglePointStyle :: Boolean -> PointStyle -> PointStyle
+togglePointStyle false = const Plain_PointStyle
+togglePointStyle true = identity
 
 --------------------------------------------------------------------------------
 -- Expr
@@ -476,7 +551,7 @@ type PointState =
   }
 
 data PointStyle
-  = Normal_PointStyle
+  = Plain_PointStyle
   | Cursor_Point_PointStyle
   | Cursor_Left_PointStyle
   | Cursor_Right_PointStyle
@@ -491,6 +566,7 @@ data PointStyle
   | Select_Inline_InnerRight_And_OuterRight_PointStyle
   | Select_OuterLeft_And_InnerLeft_PointStyle
   | Select_InnerRight_And_OuterRight_PointStyle
+  | Select_InnerLeft_And_InnerRight_PointStyle
 
 derive instance Generic PointStyle _
 
@@ -550,7 +626,7 @@ point_component = H.mkComponent { initialState, eval, render }
       [ classes $ fold
           [ [ "Point" ]
           , case state.style of
-              Normal_PointStyle -> []
+              Plain_PointStyle -> []
               Cursor_Point_PointStyle -> [ "Cursor_Point" ]
               Cursor_Left_PointStyle -> [ "Cursor_Left" ]
               Cursor_Right_PointStyle -> [ "Cursor_Right" ]
@@ -566,6 +642,7 @@ point_component = H.mkComponent { initialState, eval, render }
               Select_Inline_InnerRight_And_OuterRight_PointStyle -> [ "Select_Inline_InnerRight_And_OuterRight" ]
               Select_OuterLeft_And_InnerLeft_PointStyle -> [ "Select_OuterLeft_And_InnerLeft" ]
               Select_InnerRight_And_OuterRight_PointStyle -> [ "Select_InnerRight_And_OuterRight" ]
+              Select_InnerLeft_And_InnerRight_PointStyle -> [ "Select_InnerLeft_And_InnerRight" ]
           ]
       , HE.onMouseDown (StartDrag_PointInteraction >>> PointInteraction_PointAction)
       , HE.onMouseEnter (MidDrag_PointInteraction >>> PointInteraction_PointAction)
@@ -574,7 +651,7 @@ point_component = H.mkComponent { initialState, eval, render }
 
 initialPointStyle :: PointInput -> PointState
 initialPointStyle _input =
-  { style: Normal_PointStyle
+  { style: Plain_PointStyle
   }
 
 handlePointQuery :: forall a. PointQuery a -> PointM' a
