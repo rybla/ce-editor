@@ -12,7 +12,7 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, parens)
+import Utility (brackets, bug, parens, spaces)
 
 --------------------------------------------------------------------------------
 
@@ -117,8 +117,8 @@ orderedIndexAndStep (Index j) (Step i) = i <= j
 -- the `|` corresponds to a step and the `.` corresponds to an index
 infixl 4 orderedIndexAndStep as .<=|
 
-indicesAroundStep :: Step -> Index /\ Index
-indicesAroundStep (Step i) = Index i /\ Index (i + 1)
+getIndicesAroundStep :: Step -> Index /\ Index
+getIndicesAroundStep (Step i) = Index i /\ Index (i + 1)
 
 --------------------------------------------------------------------------------
 -- Point
@@ -152,11 +152,11 @@ data Handle = Handle Path Index Index Path Index Index HandleFocus
 derive instance Generic Handle _
 
 instance Show Handle where
-  show x = genericShow x
-
--- show (Point_Handle p) = "[[ " <> show p <> " ]]"
--- show (Cursor_Handle c) = "[[ " <> show c <> " ]]"
--- show (Select_Handle s) = "[[ " <> show s <> " ]]"
+  -- show x = genericShow x
+  show h | Just p <- toPointHandle h = "[[" <> show p <> "]]"
+  show h | Just c <- toCursorHandle h = "[[" <> show c <> "]]"
+  show (Handle is_O j_OL j_OR is_I j_IL j_IR f) =
+    "[[" <> spaces [ show is_O, "|" <> show j_OL, "..", show j_OR, "|", show is_I, "|", show j_IL, "..", show j_IR, "@", show f ] <> "]]"
 
 instance Eq Handle where
   eq x = genericEq x
@@ -222,8 +222,8 @@ data Cursor = Cursor Path Index Index CursorFocus
 derive instance Generic Cursor _
 
 instance Show Cursor where
-  -- show (Cursor l r f) = show l <> " ... " <> show r <> " @ " <> show f
-  show x = genericShow x
+  -- show x = genericShow x
+  show (Cursor is l r f) = show is <> " - " <> show l <> " .. " <> show r <> " @ " <> show f
 
 instance Eq Cursor where
   eq x = genericEq x
@@ -304,7 +304,11 @@ getHandleFromTo h p_R | Just p_L <- toPointHandle h, areOrderedSiblings p_L p_R 
 getHandleFromTo h p_L | Just p_R <- toPointHandle h, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_R) (getIndex p_L) (getIndex p_R) Left_CursorFocus
 --   - drag from an inner Point to an outer Point
 --     - drag from a inner left Point to an outer right Point
-getHandleFromTo h p_IL | Just p_OR <- toPointHandle h, Just (j_R /\ Path (i_L : is)) <- isAncestorSibling p_OR p_IL, i_L <= j_R = pure $ mkHandle (getPath p_OR) (getIndex p_OR + Index (-1)) (getIndex p_OR) (Path (i_L : is)) (getIndex p_IL) (getIndex p_IL) OuterRight_HandleFocus
+getHandleFromTo h p_OR | Just p_IL <- toPointHandle h, Just (i_L /\ is_I_mid) <- isAncestorSibling p_OR p_IL, i_L |<=. getIndex p_OR =
+  let
+    j_OL /\ _ = getIndicesAroundStep i_L
+  in
+    pure $ mkHandle (getPath p_OR) j_OL (getIndex p_OR) (i_L |: is_I_mid) (getIndex p_IL) (getIndex p_IL) OuterRight_HandleFocus
 -- TODO: not done
 -- --     - drag from a inner left Point to an outer left Point
 -- getHandleFromTo h p_IL | Just p_OL <- toPointHandle h, Just (j_L /\ (i_L : is)) <- isAncestorSibling p_OL p_IL, j_L <= i_L = pure $ mkHandle (getPath p_OL) (getIndex p_OL - 1) (getIndex p_OL) (i_L : is) (getIndex p_IL) (getIndex p_IL) OuterRight_HandleFocus

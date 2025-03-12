@@ -35,7 +35,7 @@ import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
 import Ui.Common (column, list, style, text)
 import Ui.Console as Console
-import Utility (todo)
+import Utility (allEqual, todo)
 import Web.Event.Event as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -210,7 +210,7 @@ handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
     case List.unsnoc (unwrap is) of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
-        let l /\ r = Expr.indicesAroundStep last
+        let l /\ r = Expr.getIndicesAroundStep last
         let h = Expr.mkCursorHandle (Expr.Cursor (Expr.Path init) l r Expr.Left_CursorFocus)
         setHandle h
         pure unit
@@ -278,18 +278,32 @@ setPointStyle (Expr.Point is i) style = H.raise (ExprQuery_EngineOutput \a' -> E
 
 activateHandle :: Expr.Handle -> EngineM' Unit
 activateHandle h | Just p <- Expr.toPointHandle h = do
-  setPointStyle p PointCursorPointStyle
+  setPointStyle p PointCursor_PointStyle
 activateHandle h | Just c <- Expr.toCursorHandle h = do
-  setPointStyle (Expr.getLeftPoint c) CursorLeftPointStyle
-  setPointStyle (Expr.getRightPoint c) CursorRightPointStyle
-activateHandle _h = todo "activateHandle"
+  setPointStyle (Expr.getLeftPoint c) CursorLeft_PointStyle
+  setPointStyle (Expr.getRightPoint c) CursorRight_PointStyle
+-- TODO: I probably need some more Select*_PointStyles to cover some of these cases
+activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil, allEqual [ j_OL, j_IL, j_IR ] = todo "activateHandle"
+activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil, allEqual [ j_IL, j_IR, j_OR ] = todo "activateHandle"
+activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil, allEqual [ j_IL, j_IR ] = todo "activateHandle"
+activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil, allEqual [ j_OL, j_IL ] = todo "activateHandle"
+activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil, allEqual [ j_IR, j_OR ] = todo "activateHandle"
+activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | is_I == Expr.Path Nil = todo "activateHandle"
+activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | allEqual [ j_OL, j_IL ] = todo "activateHandle"
+activateHandle (Expr.Handle is_O j_OL j_OR is_I j_IL j_IR f) | allEqual [ j_IR, j_OR ] = todo "activateHandle"
+activateHandle h@(Expr.Handle _is_O _j_OL _j_OR _is_I _j_IL _j_IR _f) = do
+  let p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getPointsOfHandle h
+  setPointStyle p_OL SelectOuterLeft_PointStyle
+  setPointStyle p_IL SelectInnerLeft_PointStyle
+  setPointStyle p_IR SelectInnerRight_PointStyle
+  setPointStyle p_OR SelectOuterRight_PointStyle
 
 deactivateHandle :: Expr.Handle -> EngineM' Unit
 deactivateHandle h | Just p <- Expr.toPointHandle h = do
-  setPointStyle p NormalPointStyle
+  setPointStyle p Normal_PointStyle
 deactivateHandle h | Just c <- Expr.toCursorHandle h = do
-  setPointStyle (Expr.getLeftPoint c) NormalPointStyle
-  setPointStyle (Expr.getRightPoint c) NormalPointStyle
+  setPointStyle (Expr.getLeftPoint c) Normal_PointStyle
+  setPointStyle (Expr.getRightPoint c) Normal_PointStyle
 deactivateHandle _h = todo "deactivateHandle"
 
 --------------------------------------------------------------------------------
@@ -462,10 +476,14 @@ type PointState =
   }
 
 data PointStyle
-  = NormalPointStyle
-  | PointCursorPointStyle
-  | CursorLeftPointStyle
-  | CursorRightPointStyle
+  = Normal_PointStyle
+  | PointCursor_PointStyle
+  | CursorLeft_PointStyle
+  | CursorRight_PointStyle
+  | SelectOuterLeft_PointStyle
+  | SelectInnerLeft_PointStyle
+  | SelectInnerRight_PointStyle
+  | SelectOuterRight_PointStyle
 
 derive instance Generic PointStyle _
 
@@ -525,10 +543,14 @@ point_component = H.mkComponent { initialState, eval, render }
       [ HP.classes $ fold
           [ [ HH.ClassName "Point" ]
           , case state.style of
-              NormalPointStyle -> []
-              PointCursorPointStyle -> [ HH.ClassName "PointCursor" ]
-              CursorLeftPointStyle -> [ HH.ClassName "CursorLeft" ]
-              CursorRightPointStyle -> [ HH.ClassName "CursorRight" ]
+              Normal_PointStyle -> []
+              PointCursor_PointStyle -> [ HH.ClassName "PointCursor" ]
+              CursorLeft_PointStyle -> [ HH.ClassName "CursorLeft" ]
+              CursorRight_PointStyle -> [ HH.ClassName "CursorRight" ]
+              SelectOuterRight_PointStyle -> [ HH.ClassName "SelectOuterRight" ]
+              SelectInnerLeft_PointStyle -> [ HH.ClassName "SelectInnerLeft" ]
+              SelectInnerRight_PointStyle -> [ HH.ClassName "SelectInnerRight" ]
+              SelectOuterLeft_PointStyle -> [ HH.ClassName "SelectOuterLeft" ]
           ]
       , HE.onMouseDown (StartDrag_PointInteraction >>> PointInteraction_PointAction)
       , HE.onMouseEnter (MidDrag_PointInteraction >>> PointInteraction_PointAction)
@@ -537,7 +559,7 @@ point_component = H.mkComponent { initialState, eval, render }
 
 initialPointStyle :: PointInput -> PointState
 initialPointStyle _input =
-  { style: NormalPointStyle
+  { style: Normal_PointStyle
   }
 
 handlePointQuery :: forall a. PointQuery a -> PointM' a

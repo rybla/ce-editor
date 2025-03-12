@@ -2,9 +2,11 @@ module Utility where
 
 import Prelude
 
+import Data.Array as Array
 import Data.List (List(..), (:))
 import Data.Map (Map)
 import Data.Map as Map
+import Data.Maybe (fromMaybe)
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Foreign.Object as Object
@@ -41,3 +43,10 @@ fromHomogeneousToMap r = r
 parens s = "(" <> s <> ")"
 brackets s = "[" <> s <> "]"
 braces s = "{" <> s <> "}"
+
+spaces = Array.intercalate " "
+
+allEqual xs = fromMaybe true do
+  { head: x, tail: xs' } <- Array.uncons xs
+  pure $ Array.all (_ == x) xs'
+

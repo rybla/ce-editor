@@ -20,6 +20,8 @@ package:
     - profunctor-lenses
     - random
     - record
+    - spec
+    - spec-node
     - transformers
     - variant
   test:
