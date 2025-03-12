@@ -2,14 +2,21 @@
   [
     "Expr drag drag from an inner left Point to an outer Right point to make a selection Handle",
     {
-      "timestamp": "1741755257355.0",
+      "timestamp": "1741792891881.0",
       "success": true
+    }
+  ],
+  [
+    "Expr drag drag from cursor Right Point to a rightward sibling Point to adjust the cursor Handle",
+    {
+      "timestamp": "1741792891881.0",
+      "success": false
     }
   ],
   [
     "Expr isAncestorSibling simple",
     {
-      "timestamp": "1741755257355.0",
+      "timestamp": "1741792891881.0",
       "success": true
     }
   ]
