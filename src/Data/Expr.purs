@@ -188,8 +188,8 @@ mkPointHandle :: Point -> Handle
 mkPointHandle (Point is j) = mkHandle is j j (Path Nil) j j InnerLeft_HandleFocus
 
 mkCursorHandle :: Cursor -> Handle
-mkCursorHandle (Cursor is l r Left_CursorFocus) = mkHandle is l r (Path Nil) l l InnerLeft_HandleFocus
-mkCursorHandle (Cursor is l r Right_CursorFocus) = mkHandle is l r (Path Nil) r r InnerRight_HandleFocus
+mkCursorHandle (Cursor is l r Left_CursorFocus) = mkHandle is l r (Path Nil) l r InnerLeft_HandleFocus
+mkCursorHandle (Cursor is l r Right_CursorFocus) = mkHandle is l r (Path Nil) l r InnerRight_HandleFocus
 
 getHandleFocus ∷ Handle → HandleFocus
 getHandleFocus (Handle _ _ _ _ _ _ f) = f
