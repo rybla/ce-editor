@@ -229,6 +229,7 @@ handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
     updateDragToPoint p
     pure a
 handleEngineQuery (EndDrag_EngineQuery a) = do
+  lift $ traceEngineM "Drag" $ text $ "got EndDrag"
   modify_ _ { drag_origin_handle = Nothing }
   pure a
 
