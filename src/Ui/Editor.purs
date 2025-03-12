@@ -11,13 +11,14 @@ import Data.Array (fold)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
-import Data.Expr (Expr(..), (%))
+import Data.Expr (Expr(..), (%), (|:))
 import Data.Expr as Expr
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe(..))
+import Data.Newtype (unwrap)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
@@ -137,7 +138,7 @@ handleAction (ExprOutput_Action (is /\ eo)) = case eo of
 --------------------------------------------------------------------------------
 
 data EngineQuery a
-  = ExprInteraction_EngineQuery (List Int) ExprInteraction a
+  = ExprInteraction_EngineQuery Expr.Path ExprInteraction a
   | PointInteraction_EngineQuery Expr.Point PointInteraction a
   | EndDrag_EngineQuery a
 
@@ -205,11 +206,12 @@ initialEngineState input =
 handleEngineQuery :: forall a. EngineQuery a -> EngineM' a
 handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
   ClickExpr _event -> do
-    lift $ traceEngineM "Engine" $ text $ "got Click from Expr at " <> show (Array.fromFoldable is)
-    case List.unsnoc is of
+    lift $ traceEngineM "Engine" $ text $ "got Click from Expr at " <> show "TODO: (Array.fromFoldable is)"
+    case List.unsnoc (unwrap is) of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
-        let h = Expr.mkCursorHandle (Expr.Cursor init last (last + 1) Expr.Left_CursorFocus)
+        let l /\ r = Expr.indicesAroundStep last
+        let h = Expr.mkCursorHandle (Expr.Cursor (Expr.Path init) l r Expr.Left_CursorFocus)
         setHandle h
         pure unit
     pure a
@@ -280,7 +282,7 @@ activateHandle h | Just p <- Expr.toPointHandle h = do
 activateHandle h | Just c <- Expr.toCursorHandle h = do
   setPointStyle (Expr.getLeftPoint c) CursorLeftPointStyle
   setPointStyle (Expr.getRightPoint c) CursorRightPointStyle
-activateHandle h = todo "activateHandle"
+activateHandle _h = todo "activateHandle"
 
 deactivateHandle :: Expr.Handle -> EngineM' Unit
 deactivateHandle h | Just p <- Expr.toPointHandle h = do
@@ -288,16 +290,16 @@ deactivateHandle h | Just p <- Expr.toPointHandle h = do
 deactivateHandle h | Just c <- Expr.toCursorHandle h = do
   setPointStyle (Expr.getLeftPoint c) NormalPointStyle
   setPointStyle (Expr.getRightPoint c) NormalPointStyle
-deactivateHandle h = todo "deactivateHandle"
+deactivateHandle _h = todo "deactivateHandle"
 
 --------------------------------------------------------------------------------
 -- Expr
 --------------------------------------------------------------------------------
 
-data ExprQuery a = ExprQuery (List Int) (ExprQuery' a)
+data ExprQuery a = ExprQuery Expr.Path (ExprQuery' a)
 data ExprQuery' a
   = ModifyExprState (ExprState -> ExprState) a
-  | PointQuery_ExprQuery Int (PointQuery a)
+  | PointQuery_ExprQuery Expr.Index (PointQuery a)
 
 type ExprInput =
   { expr :: Expr
@@ -311,23 +313,23 @@ type ExprState =
 data ExprAction
   = InitializeExpr
   | ReceiveExpr ExprInput
-  | ExprOutput_ExprAction Int ExprOutput
+  | ExprOutput_ExprAction Expr.Step ExprOutput
   | ExprInteraction_ExprAction ExprInteraction
-  | PointOutput_ExprAction Int PointOutput
+  | PointOutput_ExprAction Expr.Index PointOutput
 
 -- | ClickExpr MouseEvent
 
 type ExprSlots =
-  ( "Expr" :: H.Slot ExprQuery ExprOutput Int
-  , "Point" :: H.Slot PointQuery PointOutput Int
+  ( "Expr" :: H.Slot ExprQuery ExprOutput Expr.Step
+  , "Point" :: H.Slot PointQuery PointOutput Expr.Index
   )
 
-type ExprOutput = List Int /\ ExprOutput'
+type ExprOutput = Expr.Path /\ ExprOutput'
 
 data ExprOutput'
   = Output_ExprOutput Output
   | ExprInteraction ExprInteraction
-  | PointInteraction_ExprOutput Int PointInteraction
+  | PointInteraction_ExprOutput Expr.Index PointInteraction
 
 data ExprInteraction = ClickExpr MouseEvent
 
@@ -389,10 +391,10 @@ expr_component = H.mkComponent { initialState: initialExprState, eval, render }
             in
               fold
                 [ es # foldMapWithIndex \i e ->
-                    [ renderPoint i
-                    , renderKid i e
+                    [ renderPoint (Expr.Index i)
+                    , renderKid (Expr.Step i) e
                     ]
-                , [ renderPoint (Array.length es) ]
+                , [ renderPoint (Expr.Index (Array.length es)) ]
                 ]
           ]
       )
@@ -404,10 +406,10 @@ initialExprState { expr } =
   }
 
 handleExprQuery :: forall a. ExprQuery a -> ExprM' a
-handleExprQuery (ExprQuery (i : is) q) = H.query (Proxy @"Expr") i (ExprQuery is q) # lift >>= case _ of
+handleExprQuery (ExprQuery (Expr.Path (i : is)) q) = H.query (Proxy @"Expr") i (ExprQuery (Expr.Path is) q) # lift >>= case _ of
   Nothing -> throwError none
   Just a -> pure a
-handleExprQuery (ExprQuery Nil q) = case q of
+handleExprQuery (ExprQuery (Expr.Path Nil) q) = case q of
   ModifyExprState f a -> do
     modify_ f
     pure a
@@ -426,20 +428,20 @@ handleExprAction (ReceiveExpr input) = do
     pingExpr
 -- kid Expr stuff
 handleExprAction (ExprOutput_ExprAction i (is /\ o)) = do
-  H.raise ((i : is) /\ o) # lift
+  H.raise ((i |: is) /\ o) # lift
 handleExprAction (ExprInteraction_ExprAction ei) = do
   case ei of
     ClickExpr event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-  H.raise (none /\ ExprInteraction ei) # lift
+  H.raise (Expr.Path Nil /\ ExprInteraction ei) # lift
   pingExpr
 -- Point stuff
 handleExprAction (PointOutput_ExprAction _i (Output_PointOutput o)) =
-  H.raise (none /\ Output_ExprOutput o) # lift
+  H.raise (Expr.Path Nil /\ Output_ExprOutput o) # lift
 handleExprAction (PointOutput_ExprAction i (PointInteraction pi)) = do
   case pi of
     StartDrag_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     MidDrag_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-  H.raise (none /\ PointInteraction_ExprOutput i pi) # lift
+  H.raise (Expr.Path Nil /\ PointInteraction_ExprOutput i pi) # lift
 
 pingExpr :: ExprM' Unit
 pingExpr = do
@@ -534,7 +536,7 @@ point_component = H.mkComponent { initialState, eval, render }
       [ text " " ]
 
 initialPointStyle :: PointInput -> PointState
-initialPointStyle input =
+initialPointStyle _input =
   { style: NormalPointStyle
   }
 
@@ -563,7 +565,7 @@ traceEngineM :: String -> PlainHTML -> EngineM Unit
 traceEngineM label content = H.raise $ Output_EngineOutput $ TellConsole \a -> Console.AddMessage { label, content } a
 
 traceExprM :: String -> PlainHTML -> ExprM Unit
-traceExprM label content = H.raise $ Tuple none $ Output_ExprOutput $ TellConsole \a -> Console.AddMessage { label, content } a
+traceExprM label content = H.raise $ Tuple (Expr.Path Nil) $ Output_ExprOutput $ TellConsole \a -> Console.AddMessage { label, content } a
 
 tracePointM :: String -> PlainHTML -> PointM Unit
 tracePointM label content = H.raise $ Output_PointOutput $ TellConsole \a -> Console.AddMessage { label, content } a
