@@ -58,7 +58,7 @@ component = H.mkComponent { initialState, eval, render }
       [ classes [ "Console" ]
       , style do
           tell [ "flex-grow: 0", "flex-shrink: 0" ]
-          tell [ "height: 40em" ]
+          tell [ "height: 30em" ]
           tell [ "display: flex", "flex-direction: column" ]
       ]
       [ HH.div

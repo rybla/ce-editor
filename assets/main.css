@@ -126,9 +126,8 @@ body {
 }
 
 .Select_OuterRight~* {
-  background-color: var(--handle-inner-background-color);
+  background-color: transparent;
 }
-
 
 .Select_Inline_InnerLeft_And_InnerRight {
   background-color: var(--handle-point-background-color);

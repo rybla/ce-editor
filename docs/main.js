@@ -3704,7 +3704,7 @@
   var editor = /* @__PURE__ */ function() {
     return {
       name: "Editor1",
-      initial_exprs: [example_expr(1)(1)],
+      initial_exprs: [example_expr(2)(2)],
       initial_handle: mkCursorHandle(new Cursor(Nil.value, 0, 0, Left_CursorFocus.value))
     };
   }();
@@ -9115,7 +9115,7 @@
   var component = /* @__PURE__ */ function() {
     var render = function(state3) {
       return div2([classes2(["Console"]), style3(discard12(tell3(["flex-grow: 0", "flex-shrink: 0"]))(function() {
-        return discard12(tell3(["height: 40em"]))(function() {
+        return discard12(tell3(["height: 30em"]))(function() {
           return tell3(["display: flex", "flex-direction: column"]);
         });
       }))])([div2([classes2(["Header"]), style3(discard12(tell3(["padding: 0.5em"]))(function() {
