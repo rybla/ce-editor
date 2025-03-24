@@ -9,6 +9,8 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (tell)
 import Data.Array (fold)
 import Data.Array as Array
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as NEArray
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Expr (Expr(..), (%), (|:))
@@ -36,7 +38,7 @@ import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
 import Ui.Common (classes, column, list, style, text)
 import Ui.Console as Console
-import Utility (allEqual, todo)
+import Utility (allEqual, sortEquivalenceClasses, todo)
 import Web.Event.Event as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -325,7 +327,7 @@ togglePointStyle true = identity
 -- Expr
 --------------------------------------------------------------------------------
 
-data ExprQuery a = ManyExprQuery (Array SingleExprQuery) a
+data ExprQuery a = ManyExprQuery (NonEmptyArray SingleExprQuery) a
 
 data SingleExprQuery = SingleExprQuery Expr.Path ExprQuery'
 
@@ -438,21 +440,24 @@ initialExprState { expr } =
   }
 
 handleExprQuery :: forall a. ExprQuery a -> ExprM' a
-handleExprQuery (ManyExprQuery xs a) = do
-  traverse_ (todo "handleSingleExprQuery") xs
+handleExprQuery (ManyExprQuery qs_ a) = do
+  let qss = qs_ # NEArray.toArray # sortEquivalenceClasses \(SingleExprQuery p1 q1) (SingleExprQuery p2 q2) -> p1 == p2
+  qss # traverse_ \qs -> do
+    let SingleExprQuery p _ = qs # NEArray.head
+    case p of
+      Expr.Path Nil -> do
+        qs # traverse_ case _ of
+          SingleExprQuery _ (Modify_ExprQuery f) ->
+            modify_ f
+          SingleExprQuery _ (PointQuery_ExprQuery i pq) -> do
+            H.query (Proxy @"Point") i pq # lift >>= case _ of
+              Nothing -> throwError none
+              Just it -> pure it
+      Expr.Path (i : is) ->
+        H.query (Proxy @"Expr") i (ManyExprQuery (qs <#> \(SingleExprQuery _ q') -> (SingleExprQuery (Expr.Path is) q')) unit) # lift >>= case _ of
+          Nothing -> throwError none
+          Just it -> pure it
   pure a
-
--- handleSingleExprQuery :: SingleExprQuery -> ExprM' Unit
--- handleSingleExprQuery (SingleExprQuery (Expr.Path (i : is)) q) = H.query (Proxy @"Expr") i (ExprQuery (Expr.Path is) q unit) # lift >>= case _ of
---   Nothing -> throwError none
---   Just a -> pure a
--- handleSingleExprQuery (SingleExprQuery (Expr.Path Nil) q) = case q of
---   Modify_ExprQuery f -> do
---     modify_ f
---   PointQuery_ExprQuery i pq -> do
---     H.query (Proxy @"Point") i pq # lift >>= case _ of
---       Nothing -> throwError none
---       Just a -> pure a
 
 handleExprAction :: ExprAction -> ExprM' Unit
 handleExprAction InitializeExpr = pure unit
