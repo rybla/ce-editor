@@ -2,12 +2,20 @@ module Utility where
 
 import Prelude
 
+import Control.Monad.ST.Internal as STRef
 import Data.Array as Array
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as NEArray
+import Data.Array.ST as STArray
+import Data.Foldable (foldl, foldr, or)
+import Data.FoldableWithIndex (traverseWithIndex_)
 import Data.List (List(..), (:))
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (fromMaybe)
 import Data.String as String
+import Data.Traversable (traverse_)
+import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested ((/\))
 import Foreign.Object as Object
 import Partial.Unsafe (unsafeCrashWith)
@@ -49,4 +57,19 @@ spaces = Array.intercalate " "
 allEqual xs = fromMaybe true do
   { head: x, tail: xs' } <- Array.uncons xs
   pure $ Array.all (_ == x) xs'
+
+sortEquivalenceClasses :: forall a. (a -> a -> Boolean) -> Array a -> Array (NonEmptyArray a)
+sortEquivalenceClasses f xs = STArray.run do
+  cs_ref <- STArray.new
+  xs # traverse_ \x -> do
+    added_ref <- STRef.new false
+    cs <- cs_ref # STArray.freeze
+    cs # traverseWithIndex_ \i c -> do
+      let y = c # NEArray.head
+      when (f x y) do
+        cs_ref # STArray.modify i (NEArray.cons x) # void
+        added_ref # STRef.modify (\_ -> true) # void
+    whenM (not <$> (added_ref # STRef.read)) do
+      cs_ref # STArray.push (NEArray.singleton x) # void
+  pure cs_ref
 
