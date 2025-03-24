@@ -315,7 +315,7 @@ togglePointStyles :: Boolean -> Array (Expr.Point /\ PointStyle) -> EngineM' Uni
 togglePointStyles active = traverse_ \(p /\ ps) -> setPointStyle p $ togglePointStyle active ps
 
 setPointStyle :: Expr.Point -> PointStyle -> EngineM' Unit
-setPointStyle (Expr.Point is i) style = H.raise (ExprQuery_EngineOutput \a' -> ExprQuery is $ PointQuery_ExprQuery i $ ModifyPointState (_ { style = style }) a') # lift
+setPointStyle (Expr.Point is i) style = H.raise (ExprQuery_EngineOutput (ExprQuery is (PointQuery_ExprQuery i $ ModifyPointState (_ { style = style }) unit))) # lift
 
 togglePointStyle :: Boolean -> PointStyle -> PointStyle
 togglePointStyle false = const Plain_PointStyle
@@ -325,10 +325,15 @@ togglePointStyle true = identity
 -- Expr
 --------------------------------------------------------------------------------
 
-data ExprQuery a = ExprQuery Expr.Path (ExprQuery' a)
-data ExprQuery' a
-  = ModifyExprState (ExprState -> ExprState) a
-  | PointQuery_ExprQuery Expr.Index (PointQuery a)
+data ExprQuery a
+  = ExprQuery Expr.Path ExprQuery' a
+  | ManyExprQuery (Array SingleExprQuery) a
+
+data SingleExprQuery = SingleExprQuery Expr.Path ExprQuery'
+
+data ExprQuery'
+  = Modify_ExprQuery (ExprState -> ExprState)
+  | PointQuery_ExprQuery Expr.Index (PointQuery Unit)
 
 type ExprInput =
   { expr :: Expr
@@ -435,13 +440,20 @@ initialExprState { expr } =
   }
 
 handleExprQuery :: forall a. ExprQuery a -> ExprM' a
-handleExprQuery (ExprQuery (Expr.Path (i : is)) q) = H.query (Proxy @"Expr") i (ExprQuery (Expr.Path is) q) # lift >>= case _ of
+handleExprQuery (ExprQuery p q a) = do
+  handleSingleExprQuery (SingleExprQuery p q)
+  pure a
+handleExprQuery (ManyExprQuery xs a) = do
+  traverse_ handleSingleExprQuery xs
+  pure a
+
+handleSingleExprQuery :: SingleExprQuery -> ExprM' Unit
+handleSingleExprQuery (SingleExprQuery (Expr.Path (i : is)) q) = H.query (Proxy @"Expr") i (ExprQuery (Expr.Path is) q unit) # lift >>= case _ of
   Nothing -> throwError none
   Just a -> pure a
-handleExprQuery (ExprQuery (Expr.Path Nil) q) = case q of
-  ModifyExprState f a -> do
+handleSingleExprQuery (SingleExprQuery (Expr.Path Nil) q) = case q of
+  Modify_ExprQuery f -> do
     modify_ f
-    pure a
   PointQuery_ExprQuery i pq -> do
     H.query (Proxy @"Point") i pq # lift >>= case _ of
       Nothing -> throwError none
