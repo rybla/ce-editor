@@ -12,6 +12,7 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
+import Data.Tuple (fst, snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Utility (brackets, bug, parens, spaces)
 
@@ -233,6 +234,9 @@ instance Eq HandleFocus where
 
 data Cursor = Cursor Path Index Index CursorFocus
 
+mkCursor' :: { f :: CursorFocus, j_L :: Index, j_R :: Index, path :: Path } -> Cursor
+mkCursor' { path, j_L, j_R, f } = Cursor path j_L j_R f
+
 derive instance Generic Cursor _
 
 instance Show Cursor where
@@ -317,8 +321,8 @@ toCursorHandle h@(Handle path_O j_OL j_OR path_I j_IL_IR _j_IR f) = do
 getDragOrigin :: Handle -> Point -> Handle
 getDragOrigin h p | Just _ <- toPointHandle h = mkPointHandle p
 -- starting from a point of existing Cursor Handle
-getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, p == l = mkCursorHandle $ Cursor (getPath p) (getIndex p) (getIndex r) Left_CursorFocus
-getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, p == r = mkCursorHandle $ Cursor (getPath p) (getIndex l) (getIndex p) Right_CursorFocus
+getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, p == l = mkCursorHandle $ mkCursor' { path: getPath p, j_L: getIndex p, j_R: getIndex r, f: Left_CursorFocus }
+getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, p == r = mkCursorHandle $ mkCursor' { path: getPath p, j_L: getIndex l, j_R: getIndex p, f: Right_CursorFocus }
 getDragOrigin h p | Just c <- toCursorHandle h = mkPointHandle p
 -- starting from a point of existing Handle
 -- TODO: choose prioritization for this in cases when two points of Handle are equal
@@ -326,7 +330,7 @@ getDragOrigin h@(Handle path_O j_OL j_OR path_I j_IL j_IR _) p | p_OL /\ p_IL /\
 getDragOrigin h@(Handle path_O j_OL j_OR path_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getHandlePoints h, p == p_IL = mkHandle' { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f: InnerLeft_HandleFocus }
 getDragOrigin h@(Handle path_O j_OL j_OR path_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getHandlePoints h, p == p_IR = mkHandle' { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f: InnerRight_HandleFocus }
 getDragOrigin h@(Handle path_O j_OL j_OR path_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getHandlePoints h, p == p_OR = mkHandle' { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f: OuterRight_HandleFocus }
--- by default, if can't use h just make a PointHandle
+-- by default, if can't use h, just make a PointHandle
 getDragOrigin _ p = mkPointHandle p
 
 getHandleFromTo :: Handle -> Point -> Maybe Handle
@@ -344,19 +348,28 @@ getHandleFromTo h p_L | Just p_R <- toPointHandle h, areOrderedSiblings p_L p_R 
 --   - drag from an inner Point to an outer Point
 --     - drag from a inner left Point to an outer left Point
 getHandleFromTo h p_OL | Just p_IL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_IL, getIndex p_OL .<=| i =
-  pure $ mkHandle path_O j_OL j_OR path_I j_IL j_IR OuterLeft_HandleFocus
-  where
-  path_O = getPath p_OL
-  j_OL = getIndex p_OL
-  _j_OL /\ j_OR = getIndicesAroundStep i
-  path_I = i |: path_I'
-  j_IL = getIndex p_IL
-  j_IR = getIndex p_IL
+  pure $ mkHandle'
+    { path_O: getPath p_OL
+    , j_OL: getIndex p_OL
+    , j_OR: getIndicesAroundStep i # snd
+    , path_I: i |: path_I'
+    , j_IL: getIndex p_IL
+    , j_IR: getIndex p_IL
+    , f: OuterLeft_HandleFocus
+    }
 --     - drag from a inner right Point to an outer right Point
 getHandleFromTo h p_OR | Just p_IR <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_IR, i |<=. getIndex p_OR =
-  pure $ mkHandle (getPath p_OR) j_OL (getIndex p_OR) (i |: path_I') (getIndex p_IR) (getIndex p_IR) OuterRight_HandleFocus
-  where
-  j_OL /\ _j_OR = getIndicesAroundStep i
+  -- pure $ mkHandle (getPath p_OR) j_OL (getIndex p_OR) (i |: path_I') (getIndex p_IR) (getIndex p_IR) OuterRight_HandleFocus
+  pure $ mkHandle'
+    { path_O: getPath p_OR
+    , j_OL: getIndicesAroundStep i # fst
+    , j_OR: getIndex p_OR
+    , path_I: i |: path_I'
+    , j_IL: getIndex p_IR
+    , j_IR: getIndex p_IR
+    , f: OuterRight_HandleFocus
+    }
+
 {- TODO
 --   - drag from an outer Point to an inner Point
 --     - drag from an outer left Point to an inner left Point
