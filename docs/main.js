@@ -3823,8 +3823,8 @@
   var toCursorHandle = function(v) {
     return discard2(guard2(eq3(v.value3)(Nil.value) && eq4(v.value4)(v.value5)))(function() {
       return pure2(new Cursor(v.value0, v.value1, v.value2, function() {
-        var $376 = eq4(v.value1)(v.value4);
-        if ($376) {
+        var $379 = eq4(v.value1)(v.value4);
+        if ($379) {
           if (v.value6 instanceof OuterRight_HandleFocus) {
             return Right_CursorFocus.value;
           }
@@ -3832,8 +3832,8 @@
           return Left_CursorFocus.value;
         }
         ;
-        var $378 = eq4(v.value2)(v.value4);
-        if ($378) {
+        var $381 = eq4(v.value2)(v.value4);
+        if ($381) {
           if (v.value6 instanceof OuterLeft_HandleFocus) {
             return Left_CursorFocus.value;
           }
@@ -3851,16 +3851,16 @@
         var v3 = function(v4) {
           return spaces(["[[", show22(v.value0), "|", show3(v.value1), "..", show3(v.value2), "|", show22(v.value3), "|", show3(v.value4), "..", show3(v.value5), "@", show7(v.value6), "]]"]);
         };
-        var $396 = toCursorHandle(v);
-        if ($396 instanceof Just) {
-          return spaces(["[[", show6($396.value0), "]]"]);
+        var $399 = toCursorHandle(v);
+        if ($399 instanceof Just) {
+          return spaces(["[[", show6($399.value0), "]]"]);
         }
         ;
         return v3(true);
       };
-      var $399 = toPointHandle(v);
-      if ($399 instanceof Just) {
-        return spaces(["[[", show4($399.value0), "]]"]);
+      var $402 = toPointHandle(v);
+      if ($402 instanceof Just) {
+        return spaces(["[[", show4($402.value0), "]]"]);
       }
       ;
       return v1(true);
@@ -3897,8 +3897,8 @@
             return function(j_IR) {
               return function(f) {
                 var h = new Handle(is_O, j_OL, j_OR, is_I, j_IL, j_IR, f);
-                var $422 = !validHandle(h);
-                if ($422) {
+                var $425 = !validHandle(h);
+                if ($425) {
                   return bug("invalid Handle: " + show8(h));
                 }
                 ;
@@ -3988,51 +3988,51 @@
                     var v16 = function(v17) {
                       return mkPointHandle(v1);
                     };
-                    var $485 = getHandlePoints(v);
-                    var $486 = eq5(v1)($485.value1.value1.value1);
-                    if ($486) {
+                    var $488 = getHandlePoints(v);
+                    var $489 = eq5(v1)($488.value1.value1.value1);
+                    if ($489) {
                       return new Handle(v.value0, v.value1, v.value2, v.value3, v.value4, v.value5, OuterRight_HandleFocus.value);
                     }
                     ;
                     return v16(true);
                   };
-                  var $502 = getHandlePoints(v);
-                  var $503 = eq5(v1)($502.value1.value1.value0);
-                  if ($503) {
+                  var $505 = getHandlePoints(v);
+                  var $506 = eq5(v1)($505.value1.value1.value0);
+                  if ($506) {
                     return new Handle(v.value0, v.value1, v.value2, v.value3, v.value4, v.value5, InnerRight_HandleFocus.value);
                   }
                   ;
                   return v14(true);
                 };
-                var $519 = getHandlePoints(v);
-                var $520 = eq5(v1)($519.value1.value0);
-                if ($520) {
+                var $522 = getHandlePoints(v);
+                var $523 = eq5(v1)($522.value1.value0);
+                if ($523) {
                   return new Handle(v.value0, v.value1, v.value2, v.value3, v.value4, v.value5, InnerLeft_HandleFocus.value);
                 }
                 ;
                 return v12(true);
               };
-              var $536 = getHandlePoints(v);
-              var $537 = eq5(v1)($536.value0);
-              if ($537) {
+              var $539 = getHandlePoints(v);
+              var $540 = eq5(v1)($539.value0);
+              if ($540) {
                 return new Handle(v.value0, v.value1, v.value2, v.value3, v.value4, v.value5, OuterLeft_HandleFocus.value);
               }
               ;
               return v10(true);
             };
-            var $553 = toCursorHandle(v);
-            if ($553 instanceof Just) {
+            var $556 = toCursorHandle(v);
+            if ($556 instanceof Just) {
               return mkPointHandle(v1);
             }
             ;
             return v8(true);
           };
-          var $557 = toCursorHandle(v);
-          if ($557 instanceof Just) {
-            var $558 = getCursorPoints($557.value0);
-            var $559 = eq5(v1)($558.value1);
-            if ($559) {
-              return mkCursorHandle(new Cursor(getPath(v1), getIndex($558.value0), getIndex(v1), Right_CursorFocus.value));
+          var $560 = toCursorHandle(v);
+          if ($560 instanceof Just) {
+            var $561 = getCursorPoints($560.value0);
+            var $562 = eq5(v1)($561.value1);
+            if ($562) {
+              return mkCursorHandle(new Cursor(getPath(v1), getIndex($561.value0), getIndex(v1), Right_CursorFocus.value));
             }
             ;
             return v6(true);
@@ -4040,12 +4040,12 @@
           ;
           return v6(true);
         };
-        var $565 = toCursorHandle(v);
-        if ($565 instanceof Just) {
-          var $566 = getCursorPoints($565.value0);
-          var $567 = eq5(v1)($566.value0);
-          if ($567) {
-            return mkCursorHandle(new Cursor(getPath(v1), getIndex(v1), getIndex($566.value1), Left_CursorFocus.value));
+        var $568 = toCursorHandle(v);
+        if ($568 instanceof Just) {
+          var $569 = getCursorPoints($568.value0);
+          var $570 = eq5(v1)($569.value0);
+          if ($570) {
+            return mkCursorHandle(new Cursor(getPath(v1), getIndex(v1), getIndex($569.value1), Left_CursorFocus.value));
           }
           ;
           return v4(true);
@@ -4053,8 +4053,8 @@
         ;
         return v4(true);
       };
-      var $573 = toPointHandle(v);
-      if ($573 instanceof Just) {
+      var $576 = toPointHandle(v);
+      if ($576 instanceof Just) {
         return mkPointHandle(v1);
       }
       ;
@@ -4093,16 +4093,30 @@
         var v4 = function(v5) {
           var v6 = function(v7) {
             var v8 = function(v92) {
-              var v10 = function(v11) {
+              var v10 = function(v112) {
                 var v12 = function(v13) {
-                  return empty4;
+                  var v14 = function(v15) {
+                    return empty4;
+                  };
+                  var $614 = toCursorHandle(v);
+                  if ($614 instanceof Just) {
+                    var $615 = getCursorAnchorPoint($614.value0);
+                    var $616 = areOrderedSiblings(v1)($615);
+                    if ($616) {
+                      return pure2(mkCursorHandle(new Cursor(getPath(v1), getIndex(v1), getIndex($615), Left_CursorFocus.value)));
+                    }
+                    ;
+                    return v14(true);
+                  }
+                  ;
+                  return v14(true);
                 };
-                var $611 = toCursorHandle(v);
-                if ($611 instanceof Just) {
-                  var $612 = getCursorAnchorPoint($611.value0);
-                  var $613 = areOrderedSiblings(v1)($612);
-                  if ($613) {
-                    return pure2(mkCursorHandle(new Cursor(getPath(v1), getIndex(v1), getIndex($612), Left_CursorFocus.value)));
+                var $620 = toCursorHandle(v);
+                if ($620 instanceof Just) {
+                  var $621 = getCursorAnchorPoint($620.value0);
+                  var $622 = areOrderedSiblings($621)(v1);
+                  if ($622) {
+                    return pure2(mkCursorHandle(new Cursor(getPath(v1), getIndex($621), getIndex(v1), Right_CursorFocus.value)));
                   }
                   ;
                   return v12(true);
@@ -4110,12 +4124,17 @@
                 ;
                 return v12(true);
               };
-              var $617 = toCursorHandle(v);
-              if ($617 instanceof Just) {
-                var $618 = getCursorAnchorPoint($617.value0);
-                var $619 = areOrderedSiblings($618)(v1);
-                if ($619) {
-                  return pure2(mkCursorHandle(new Cursor(getPath(v1), getIndex($618), getIndex(v1), Right_CursorFocus.value)));
+              var $626 = toPointHandle(v);
+              if ($626 instanceof Just) {
+                var $627 = isAncestorSibling(v1)($626.value0);
+                if ($627 instanceof Just) {
+                  var $628 = orderedIndexAndStep(getIndex(v1))($627.value0.value0);
+                  if ($628) {
+                    var v11 = getIndicesAroundStep($627.value0.value0);
+                    return pure2(mkHandle(getPath(v1))(getIndex(v1))(v11.value1)(consPath($627.value0.value0)($627.value0.value1))(getIndex($626.value0))(getIndex($626.value0))(OuterLeft_HandleFocus.value));
+                  }
+                  ;
+                  return v10(true);
                 }
                 ;
                 return v10(true);
@@ -4123,14 +4142,14 @@
               ;
               return v10(true);
             };
-            var $623 = toPointHandle(v);
-            if ($623 instanceof Just) {
-              var $624 = isAncestorSibling(v1)($623.value0);
-              if ($624 instanceof Just) {
-                var $625 = orderedStepAndIndex($624.value0.value0)(getIndex(v1));
-                if ($625) {
-                  var v9 = getIndicesAroundStep($624.value0.value0);
-                  return pure2(mkHandle(getPath(v1))(v9.value0)(getIndex(v1))(consPath($624.value0.value0)($624.value0.value1))(getIndex($623.value0))(getIndex($623.value0))(OuterRight_HandleFocus.value));
+            var $638 = toPointHandle(v);
+            if ($638 instanceof Just) {
+              var $639 = isAncestorSibling(v1)($638.value0);
+              if ($639 instanceof Just) {
+                var $640 = orderedStepAndIndex($639.value0.value0)(getIndex(v1));
+                if ($640) {
+                  var v9 = getIndicesAroundStep($639.value0.value0);
+                  return pure2(mkHandle(getPath(v1))(v9.value0)(getIndex(v1))(consPath($639.value0.value0)($639.value0.value1))(getIndex($638.value0))(getIndex($638.value0))(OuterRight_HandleFocus.value));
                 }
                 ;
                 return v8(true);
@@ -4141,11 +4160,11 @@
             ;
             return v8(true);
           };
-          var $635 = toPointHandle(v);
-          if ($635 instanceof Just) {
-            var $636 = areOrderedSiblings(v1)($635.value0);
-            if ($636) {
-              return pure2(mkCursorHandle(new Cursor(getPath($635.value0), getIndex(v1), getIndex($635.value0), Left_CursorFocus.value)));
+          var $650 = toPointHandle(v);
+          if ($650 instanceof Just) {
+            var $651 = areOrderedSiblings(v1)($650.value0);
+            if ($651) {
+              return pure2(mkCursorHandle(new Cursor(getPath($650.value0), getIndex(v1), getIndex($650.value0), Left_CursorFocus.value)));
             }
             ;
             return v6(true);
@@ -4153,11 +4172,11 @@
           ;
           return v6(true);
         };
-        var $640 = toPointHandle(v);
-        if ($640 instanceof Just) {
-          var $641 = areOrderedSiblings($640.value0)(v1);
-          if ($641) {
-            return pure2(mkCursorHandle(new Cursor(getPath($640.value0), getIndex($640.value0), getIndex(v1), Right_CursorFocus.value)));
+        var $655 = toPointHandle(v);
+        if ($655 instanceof Just) {
+          var $656 = areOrderedSiblings($655.value0)(v1);
+          if ($656) {
+            return pure2(mkCursorHandle(new Cursor(getPath($655.value0), getIndex($655.value0), getIndex(v1), Right_CursorFocus.value)));
           }
           ;
           return v4(true);
@@ -4165,10 +4184,10 @@
         ;
         return v4(true);
       };
-      var $645 = toPointHandle(v);
-      if ($645 instanceof Just) {
-        var $646 = eq5($645.value0)(v1);
-        if ($646) {
+      var $660 = toPointHandle(v);
+      if ($660 instanceof Just) {
+        var $661 = eq5($660.value0)(v1);
+        if ($661) {
           return pure2(mkPointHandle(v1));
         }
         ;

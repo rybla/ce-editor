@@ -66,7 +66,7 @@ derive newtype instance Semigroup Path
 
 derive newtype instance Monoid Path
 
-consPath ∷ Step → Path → Path
+consPath :: Step -> Path -> Path
 consPath i (Path is) = Path (i : is)
 
 infixr 6 consPath as |:
@@ -163,16 +163,16 @@ instance Show Handle where
     spaces [ "[[", show p, "]]" ]
   show h | Just c <- toCursorHandle h =
     spaces [ "[[", show c, "]]" ]
-  show (Handle is_O j_OL j_OR is_I j_IL j_IR f) =
-    spaces [ "[[", show is_O, "|", show j_OL, "..", show j_OR, "|", show is_I, "|", show j_IL, "..", show j_IR, "@", show f, "]]" ]
+  show (Handle path_O j_OL j_OR path_I j_IL j_IR f) =
+    spaces [ "[[", show path_O, "|", show j_OL, "..", show j_OR, "|", show path_I, "|", show j_IL, "..", show j_IR, "@", show f, "]]" ]
 
 instance Eq Handle where
   eq x = genericEq x
 
--- Handle is_O j_OL j_OR is_I j_IL j_IR f
+-- Handle path_O j_OL j_OR path_I j_IL j_IR f
 validHandle :: Handle -> Boolean
-validHandle (Handle _is_O j_OL j_OR is_I j_IL j_IR _) =
-  case unwrap is_I of
+validHandle (Handle _path_O j_OL j_OR path_I j_IL j_IR _) =
+  case unwrap path_I of
     Nil ->
       (j_OL <= j_IL && j_IL <= j_IR && j_IR <= j_OR)
     i : _ ->
@@ -180,15 +180,18 @@ validHandle (Handle _is_O j_OL j_OR is_I j_IL j_IR _) =
         (j_IL <= j_IR)
 
 mkHandle :: Path -> Index -> Index -> Path -> Index -> Index -> HandleFocus -> Handle
-mkHandle is_O j_OL j_OR is_I j_IL j_IR f =
+mkHandle path_O j_OL j_OR path_I j_IL j_IR f =
   let
-    h = Handle is_O j_OL j_OR is_I j_IL j_IR f
+    h = Handle path_O j_OL j_OR path_I j_IL j_IR f
   in
     if
       not $ validHandle h then
       bug $ "invalid Handle: " <> show h
     else
       h
+
+mkHandle' :: { path_O :: Path, j_OL :: Index, j_OR :: Index, path_I :: Path, j_IL :: Index, j_IR :: Index, f :: HandleFocus } -> Handle
+mkHandle' { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f } = mkHandle path_O j_OL j_OR path_I j_IL j_IR f
 
 mkPointHandle :: Point -> Handle
 mkPointHandle (Point is j) = mkHandle is j j (Path Nil) j j InnerLeft_HandleFocus
@@ -197,16 +200,16 @@ mkCursorHandle :: Cursor -> Handle
 mkCursorHandle (Cursor is l r Left_CursorFocus) = mkHandle is l r (Path Nil) l l InnerLeft_HandleFocus
 mkCursorHandle (Cursor is l r Right_CursorFocus) = mkHandle is l r (Path Nil) r r InnerRight_HandleFocus
 
-getHandleFocus ∷ Handle → HandleFocus
+getHandleFocus :: Handle -> HandleFocus
 getHandleFocus (Handle _ _ _ _ _ _ f) = f
 
 getHandlePoints :: Handle -> Point /\ Point /\ Point /\ Point
-getHandlePoints (Handle is_O j_OL j_OR is_I j_IL j_IR _) =
+getHandlePoints (Handle path_O j_OL j_OR path_I j_IL j_IR _) =
   let
-    p_OL = Point is_O j_OL
-    p_IL = Point (is_O <> is_I) j_IL
-    p_IR = Point (is_O <> is_I) j_IR
-    p_OR = Point is_O j_OR
+    p_OL = Point path_O j_OL
+    p_IL = Point (path_O <> path_I) j_IL
+    p_IR = Point (path_O <> path_I) j_IR
+    p_OR = Point path_O j_OR
   in
     p_OL /\ p_IL /\ p_IR /\ p_OR
 
@@ -239,13 +242,13 @@ instance Show Cursor where
 instance Eq Cursor where
   eq x = genericEq x
 
-getCursorPoints ∷ Cursor → Point /\ Point
+getCursorPoints :: Cursor -> Point /\ Point
 getCursorPoints (Cursor is l r _) = Point is l /\ Point is r
 
-getLeftPoint ∷ Cursor → Point
+getLeftPoint :: Cursor -> Point
 getLeftPoint (Cursor is l _ _) = Point is l
 
-getRightPoint ∷ Cursor → Point
+getRightPoint :: Cursor -> Point
 getRightPoint (Cursor is _ r _) = Point is r
 
 getCursorFocus :: Cursor -> CursorFocus
@@ -292,14 +295,14 @@ instance Eq CursorFocus where
 -- getSelectFromPointToPoint _ _ = empty
 
 toPointHandle :: Handle -> Maybe Point
-toPointHandle (Handle is_O j_OL j_OR is_I j_IL j_IR _) = do
-  guard $ j_OL == j_OR && is_I == Path Nil && j_IL == j_IR
-  pure $ Point is_O j_OL
+toPointHandle (Handle path_O j_OL j_OR path_I j_IL j_IR _) = do
+  guard $ j_OL == j_OR && path_I == Path Nil && j_IL == j_IR
+  pure $ Point path_O j_OL
 
 toCursorHandle :: Handle -> Maybe Cursor
-toCursorHandle h@(Handle is_O j_OL j_OR is_I j_IL_IR _j_IR f) = do
-  guard $ is_I == Path Nil && j_IL_IR == _j_IR
-  pure $ Cursor is_O j_OL j_OR
+toCursorHandle h@(Handle path_O j_OL j_OR path_I j_IL_IR _j_IR f) = do
+  guard $ path_I == Path Nil && j_IL_IR == _j_IR
+  pure $ Cursor path_O j_OL j_OR
     if j_OL == j_IL_IR then
       case f of
         OuterRight_HandleFocus -> Right_CursorFocus
@@ -319,10 +322,11 @@ getDragOrigin h p | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, p =
 getDragOrigin h p | Just c <- toCursorHandle h = mkPointHandle p
 -- starting from a point of existing Handle
 -- TODO: choose prioritization for this in cases when two points of Handle are equal
-getDragOrigin h@(Handle is_O j_OL j_OR is_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getHandlePoints h, p == p_OL = Handle is_O j_OL j_OR is_I j_IL j_IR OuterLeft_HandleFocus
-getDragOrigin h@(Handle is_O j_OL j_OR is_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getHandlePoints h, p == p_IL = Handle is_O j_OL j_OR is_I j_IL j_IR InnerLeft_HandleFocus
-getDragOrigin h@(Handle is_O j_OL j_OR is_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getHandlePoints h, p == p_IR = Handle is_O j_OL j_OR is_I j_IL j_IR InnerRight_HandleFocus
-getDragOrigin h@(Handle is_O j_OL j_OR is_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getHandlePoints h, p == p_OR = Handle is_O j_OL j_OR is_I j_IL j_IR OuterRight_HandleFocus
+getDragOrigin h@(Handle path_O j_OL j_OR path_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getHandlePoints h, p == p_OL = mkHandle' { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f: OuterLeft_HandleFocus }
+getDragOrigin h@(Handle path_O j_OL j_OR path_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getHandlePoints h, p == p_IL = mkHandle' { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f: InnerLeft_HandleFocus }
+getDragOrigin h@(Handle path_O j_OL j_OR path_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getHandlePoints h, p == p_IR = mkHandle' { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f: InnerRight_HandleFocus }
+getDragOrigin h@(Handle path_O j_OL j_OR path_I j_IL j_IR _) p | p_OL /\ p_IL /\ p_IR /\ p_OR <- getHandlePoints h, p == p_OR = mkHandle' { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f: OuterRight_HandleFocus }
+-- by default, if can't use h just make a PointHandle
 getDragOrigin _ p = mkPointHandle p
 
 getHandleFromTo :: Handle -> Point -> Maybe Handle
@@ -338,16 +342,30 @@ getHandleFromTo h p_R | Just p_L <- toPointHandle h, areOrderedSiblings p_L p_R 
 getHandleFromTo h p_L | Just p_R <- toPointHandle h, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_R) (getIndex p_L) (getIndex p_R) Left_CursorFocus
 
 --   - drag from an inner Point to an outer Point
---     - drag from a inner left Point to an outer right Point
-getHandleFromTo h p_OR | Just p_IL <- toPointHandle h, Just (i_L /\ is_I_mid) <- isAncestorSibling p_OR p_IL, i_L |<=. getIndex p_OR =
-  -- let
-  --   j_OL /\ _ = getIndicesAroundStep i_L
-  -- in
-  --   pure $ mkHandle (getPath p_OR) j_OL (getIndex p_OR) (i_L |: is_I_mid) (getIndex p_IL) (getIndex p_IL) OuterRight_HandleFocus
-  let
-    j_OL /\ _ = getIndicesAroundStep i_L
-  in
-    pure $ mkHandle (getPath p_OR) j_OL (getIndex p_OR) (i_L |: is_I_mid) (getIndex p_IL) (getIndex p_IL) OuterRight_HandleFocus
+--     - drag from a inner left Point to an outer left Point
+getHandleFromTo h p_OL | Just p_IL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_IL, getIndex p_OL .<=| i =
+  pure $ mkHandle path_O j_OL j_OR path_I j_IL j_IR OuterLeft_HandleFocus
+  where
+  path_O = getPath p_OL
+  j_OL = getIndex p_OL
+  _j_OL /\ j_OR = getIndicesAroundStep i
+  path_I = i |: path_I'
+  j_IL = getIndex p_IL
+  j_IR = getIndex p_IL
+--     - drag from a inner right Point to an outer right Point
+getHandleFromTo h p_OR | Just p_IR <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_IR, i |<=. getIndex p_OR =
+  pure $ mkHandle (getPath p_OR) j_OL (getIndex p_OR) (i |: path_I') (getIndex p_IR) (getIndex p_IR) OuterRight_HandleFocus
+  where
+  j_OL /\ _j_OR = getIndicesAroundStep i
+{- TODO
+--   - drag from an outer Point to an inner Point
+--     - drag from an outer left Point to an inner left Point
+getHandleFromTo h p_IL | Just p_OL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_IL, getIndex p_OL .<=| i =
+  pure $ mkHandle ?a ?a ?a ?a ?a ?a InnerLeft_HandleFocus
+  where 
+  j_OL /\ j_IR
+--     - drag from an outer right Point to an inner right Point
+-}
 
 -- drag from a Cursor
 getHandleFromTo h p_R | Just c <- toCursorHandle h, p_L <- getCursorAnchorPoint c, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_R) (getIndex p_L) (getIndex p_R) Right_CursorFocus
