@@ -73,3 +73,7 @@ sortEquivalenceClasses f xs = STArray.run do
       cs_ref # STArray.push (NEArray.singleton x) # void
   pure cs_ref
 
+-- const :: forall a b. a -> b -> a
+
+forget :: forall a b. a -> b -> b
+forget _ b = b

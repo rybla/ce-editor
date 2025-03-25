@@ -11,6 +11,7 @@ import Data.Array (fold)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEArray
+import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Expr (Expr(..), (%), (|:))
@@ -20,7 +21,9 @@ import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
-import Data.Maybe (Maybe(..))
+import Data.Map (Map)
+import Data.Map as Map
+import Data.Maybe (Maybe(..), fromMaybe', maybe')
 import Data.Newtype (unwrap)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested (type (/\), (/\))
@@ -38,7 +41,7 @@ import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
 import Ui.Common (classes, column, list, style, text)
 import Ui.Console as Console
-import Utility (allEqual, sortEquivalenceClasses, todo)
+import Utility (allEqual, forget, impossible, sortEquivalenceClasses, todo)
 import Web.Event.Event as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -273,7 +276,7 @@ updateDragToPoint p = do
 
 setHandle :: Expr.Handle -> EngineM' Unit
 setHandle h = do
-  toggleHandlePointStyles false =<< gets _.handle
+  ps1 <- toggleHandlePointStyles false <$> gets _.handle
   modify_ _ { handle = h }
   let p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
   lift $ traceEngineM "Drag" $ list
@@ -282,42 +285,48 @@ setHandle h = do
     , text $ "p_IR = " <> show p_IR
     , text $ "p_OR = " <> show p_OR
     ]
-  toggleHandlePointStyles true h
+  let ps2 = toggleHandlePointStyles true h
+  togglePointStyles $ Map.unionWith forget ps1 ps2
+  pure unit
 
-toggleHandlePointStyles :: Boolean -> Expr.Handle -> EngineM' Unit
-toggleHandlePointStyles active h@(Expr.Handle _ _ _ is_I _ _ _f) =
-  toggleHandlePointStyles_helper active (is_I == Expr.Path Nil) p_OL p_IL p_IR p_OR
+toggleHandlePointStyles :: Boolean -> Expr.Handle -> Map Expr.Point PointStyle
+toggleHandlePointStyles active h@(Expr.Handle _ _ _ is_I _ _ _f) = toggleHandlePointStyles_helper active (is_I == Expr.Path Nil) p_OL p_IL p_IR p_OR
   where
   p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
 
-toggleHandlePointStyles_helper :: Boolean -> Boolean -> Expr.Point -> Expr.Point -> Expr.Point -> Expr.Point -> EngineM' Unit
+toggleHandlePointStyles_helper :: Boolean -> Boolean -> Expr.Point -> Expr.Point -> Expr.Point -> Expr.Point -> Map Expr.Point PointStyle
 -- 
 -- Point
-toggleHandlePointStyles_helper active _inline p_OL_IL_IR_OR _p_IL _p_IR _p_OR | allEqual [ p_OL_IL_IR_OR, _p_IL, _p_IR, _p_OR ] = togglePointStyles active [ p_OL_IL_IR_OR /\ Cursor_Point_PointStyle ]
+toggleHandlePointStyles_helper active _inline p_OL_IL_IR_OR _p_IL _p_IR _p_OR | allEqual [ p_OL_IL_IR_OR, _p_IL, _p_IR, _p_OR ] = Map.fromFoldable [ p_OL_IL_IR_OR /\ togglePointStyle active Cursor_Point_PointStyle ]
 -- 
 -- Cursor
-toggleHandlePointStyles_helper active _inline@true p_OL_IL_IR p_IL p_IR _p_OR | allEqual [ p_OL_IL_IR, p_IL, p_IR ] = togglePointStyles active [ p_OL_IL_IR /\ Cursor_Left_PointStyle, _p_OR /\ Cursor_Right_PointStyle ]
-toggleHandlePointStyles_helper active _inline@true p_OL p_IL_IR_OR _p_IR _p_OR | allEqual [ p_IL_IR_OR, _p_IR, _p_OR ] = togglePointStyles active [ p_OL /\ Cursor_Left_PointStyle, p_IL_IR_OR /\ Cursor_Right_PointStyle ]
+toggleHandlePointStyles_helper active _inline@true p_OL_IL_IR p_IL p_IR _p_OR | allEqual [ p_OL_IL_IR, p_IL, p_IR ] = Map.fromFoldable [ p_OL_IL_IR /\ togglePointStyle active Cursor_Left_PointStyle, _p_OR /\ togglePointStyle active Cursor_Right_PointStyle ]
+toggleHandlePointStyles_helper active _inline@true p_OL p_IL_IR_OR _p_IR _p_OR | allEqual [ p_IL_IR_OR, _p_IR, _p_OR ] = Map.fromFoldable [ p_OL /\ togglePointStyle active Cursor_Left_PointStyle, p_IL_IR_OR /\ togglePointStyle active Cursor_Right_PointStyle ]
 -- 
 -- Select
 --   - Select inline
-toggleHandlePointStyles_helper active _inline@true p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL_IR /\ Select_Inline_InnerLeft_And_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
-toggleHandlePointStyles_helper active _inline@true p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = togglePointStyles active [ p_OL_IL /\ Select_Inline_OuterLeft_And_InnerLeft_PointStyle, p_IR /\ Select_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
-toggleHandlePointStyles_helper active _inline@true p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL /\ Select_InnerLeft_PointStyle, p_IR_OR /\ Select_Inline_InnerRight_And_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline@true p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = Map.fromFoldable [ p_OL /\ togglePointStyle active Select_OuterLeft_PointStyle, p_IL_IR /\ togglePointStyle active Select_Inline_InnerLeft_And_InnerRight_PointStyle, p_OR /\ togglePointStyle active Select_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline@true p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = Map.fromFoldable [ p_OL_IL /\ togglePointStyle active Select_Inline_OuterLeft_And_InnerLeft_PointStyle, p_IR /\ togglePointStyle active Select_InnerRight_PointStyle, p_OR /\ togglePointStyle active Select_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline@true p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = Map.fromFoldable [ p_OL /\ togglePointStyle active Select_OuterLeft_PointStyle, p_IL /\ togglePointStyle active Select_InnerLeft_PointStyle, p_IR_OR /\ togglePointStyle active Select_Inline_InnerRight_And_OuterRight_PointStyle ]
 -- TODO: this is not a special case, right?
--- toggleHandlePointStyles_helper active inline p_OL p_IL p_IR p_OR | inline = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL /\ Select_InnerLeft_PointStyle, p_IR /\ Select_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
+-- toggleHandlePointStyles_helper active inline p_OL p_IL p_IR p_OR | inline =  [ p_OL /\ togglePointStyle active Select_OuterLeft_PointStyle, p_IL /\ togglePointStyle active Select_InnerLeft_PointStyle, p_IR /\ togglePointStyle active Select_InnerRight_PointStyle, p_OR /\ togglePointStyle active Select_OuterRight_PointStyle ]
 --   - Select not inline
-toggleHandlePointStyles_helper active _inline p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = togglePointStyles active [ p_OL_IL /\ Select_OuterLeft_And_InnerLeft_PointStyle, p_IR /\ Select_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
-toggleHandlePointStyles_helper active _inline p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL /\ Select_InnerLeft_PointStyle, p_IR_OR /\ Select_InnerRight_And_OuterRight_PointStyle ]
-toggleHandlePointStyles_helper active _inline p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL_IR /\ Select_InnerLeft_And_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = Map.fromFoldable [ p_OL_IL /\ togglePointStyle active Select_OuterLeft_And_InnerLeft_PointStyle, p_IR /\ togglePointStyle active Select_InnerRight_PointStyle, p_OR /\ togglePointStyle active Select_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = Map.fromFoldable [ p_OL /\ togglePointStyle active Select_OuterLeft_PointStyle, p_IL /\ togglePointStyle active Select_InnerLeft_PointStyle, p_IR_OR /\ togglePointStyle active Select_InnerRight_And_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = Map.fromFoldable [ p_OL /\ togglePointStyle active Select_OuterLeft_PointStyle, p_IL_IR /\ togglePointStyle active Select_InnerLeft_And_InnerRight_PointStyle, p_OR /\ togglePointStyle active Select_OuterRight_PointStyle ]
 --   - Select normal
-toggleHandlePointStyles_helper active _inline p_OL p_IL p_IR p_OR = togglePointStyles active [ p_OL /\ Select_OuterLeft_PointStyle, p_IL /\ Select_InnerLeft_PointStyle, p_IR /\ Select_InnerRight_PointStyle, p_OR /\ Select_OuterRight_PointStyle ]
+toggleHandlePointStyles_helper active _inline p_OL p_IL p_IR p_OR = Map.fromFoldable [ p_OL /\ togglePointStyle active Select_OuterLeft_PointStyle, p_IL /\ togglePointStyle active Select_InnerLeft_PointStyle, p_IR /\ togglePointStyle active Select_InnerRight_PointStyle, p_OR /\ togglePointStyle active Select_OuterRight_PointStyle ]
 
-togglePointStyles :: Boolean -> Array (Expr.Point /\ PointStyle) -> EngineM' Unit
-togglePointStyles active = traverse_ \(p /\ ps) -> setPointStyle p $ togglePointStyle active ps
-
-setPointStyle :: Expr.Point -> PointStyle -> EngineM' Unit
-setPointStyle (Expr.Point is i) style = H.raise (ExprQuery_EngineOutput (ManyExprQuery $ pure $ SingleExprQuery is (PointQuery_ExprQuery i $ ModifyPointState (_ { style = style }) unit))) # lift
+togglePointStyles :: Map Expr.Point PointStyle -> EngineM' Unit
+togglePointStyles xs =
+  lift $ H.raise $
+    ExprQuery_EngineOutput do
+      ExprQuery $
+        xs
+          # Map.toUnfoldable
+          # NonEmptyArray.fromArray
+          # fromMaybe' impossible
+          # map (\((Expr.Point is i) /\ s) -> SingleExprQuery is $ PointQuery_ExprQuery i $ ModifyPointState (_ { style = s }) unit)
 
 togglePointStyle :: Boolean -> PointStyle -> PointStyle
 togglePointStyle false = const Plain_PointStyle
@@ -327,7 +336,7 @@ togglePointStyle true = identity
 -- Expr
 --------------------------------------------------------------------------------
 
-data ExprQuery a = ManyExprQuery (NonEmptyArray SingleExprQuery) a
+data ExprQuery a = ExprQuery (NonEmptyArray SingleExprQuery) a
 
 data SingleExprQuery = SingleExprQuery Expr.Path ExprQuery'
 
@@ -398,10 +407,7 @@ expr_component = H.mkComponent { initialState: initialExprState, eval, render }
           Right it -> pure it
     }
 
-  render
-    { expr: Expr l es
-    , ping
-    } =
+  render { expr: Expr l es, ping } =
     HH.div
       [ HP.classes $ [ [ HH.ClassName "Expr" ], if ping then [ H.ClassName "ping" ] else [] ] # fold
       -- , HE.onClick (ClickExpr >>> ExprInteraction_ExprAction)
@@ -440,24 +446,26 @@ initialExprState { expr } =
   }
 
 handleExprQuery :: forall a. ExprQuery a -> ExprM' a
-handleExprQuery (ManyExprQuery qs_ a) = do
-  let qss = qs_ # NEArray.toArray # sortEquivalenceClasses \(SingleExprQuery p1 q1) (SingleExprQuery p2 q2) -> p1 == p2
+handleExprQuery (ExprQuery qs_ a) = do
+  let qss = qs_ # NEArray.toArray # sortEquivalenceClasses \(SingleExprQuery p1 _) (SingleExprQuery p2 _) -> p1 == p2
   qss # traverse_ \qs -> do
     let SingleExprQuery p _ = qs # NEArray.head
     case p of
-      Expr.Path Nil -> do
-        qs # traverse_ case _ of
-          SingleExprQuery _ (Modify_ExprQuery f) ->
-            modify_ f
-          SingleExprQuery _ (PointQuery_ExprQuery i pq) -> do
-            H.query (Proxy @"Point") i pq # lift >>= case _ of
-              Nothing -> throwError none
-              Just it -> pure it
-      Expr.Path (i : is) ->
-        H.query (Proxy @"Expr") i (ManyExprQuery (qs <#> \(SingleExprQuery _ q') -> (SingleExprQuery (Expr.Path is) q')) unit) # lift >>= case _ of
+      Expr.Path Nil -> qs # traverse_ handleSingleExprQuery
+      Expr.Path (i : is) -> do
+        let qs' = ExprQuery (qs <#> \(SingleExprQuery _ q') -> (SingleExprQuery (Expr.Path is) q')) unit
+        H.query (Proxy @"Expr") i qs' # lift >>= case _ of
           Nothing -> throwError none
           Just it -> pure it
   pure a
+
+handleSingleExprQuery :: SingleExprQuery -> ExprM' Unit
+handleSingleExprQuery (SingleExprQuery _ (Modify_ExprQuery f)) = do
+  modify_ f
+handleSingleExprQuery (SingleExprQuery _ (PointQuery_ExprQuery i pq)) = do
+  H.query (Proxy @"Point") i pq # lift >>= case _ of
+    Nothing -> throwError none
+    Just it -> pure it
 
 handleExprAction :: ExprAction -> ExprM' Unit
 handleExprAction InitializeExpr = pure unit

@@ -10,6 +10,7 @@ import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
+import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
 import Utility (brackets, bug, parens, spaces)
@@ -58,6 +59,8 @@ instance Show Path where
     # brackets
 
 derive instance Eq Path
+
+derive instance Ord Path
 
 derive newtype instance Semigroup Path
 
@@ -136,6 +139,9 @@ instance Show Point where
 
 instance Eq Point where
   eq x = genericEq x
+
+instance Ord Point where
+  compare x = genericCompare x
 
 getPath :: Point -> Path
 getPath (Point is _) = is
