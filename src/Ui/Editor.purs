@@ -216,7 +216,7 @@ handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
     case List.unsnoc (unwrap is) of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
-        let l /\ r = Expr.getIndicesAroundStep last
+        let { left: l, right: r } = Expr.getIndicesAroundStep last
         let h = Expr.mkCursorHandle (Expr.Cursor (Expr.Path init) l r Expr.Left_CursorFocus)
         setHandle h
         pure unit

@@ -12,9 +12,8 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
-import Data.Tuple (fst, snd)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, parens, spaces, todo)
+import Utility (brackets, bug, parens, spaces)
 
 --------------------------------------------------------------------------------
 
@@ -121,8 +120,8 @@ orderedIndexAndStep (Index j) (Step i) = j <= i
 -- the `|` corresponds to a step and the `.` corresponds to an index
 infixl 4 orderedIndexAndStep as .<|
 
-getIndicesAroundStep :: Step -> Index /\ Index
-getIndicesAroundStep (Step i) = Index i /\ Index (i + 1)
+getIndicesAroundStep :: Step -> { left :: Index, right :: Index }
+getIndicesAroundStep (Step i) = { left: Index i, right: Index (i + 1) }
 
 --------------------------------------------------------------------------------
 -- Point
@@ -351,41 +350,51 @@ getHandleFromTo h p_L | Just p_R <- toPointHandle h, areOrderedSiblings p_L p_R 
 
 --   - drag from an inner Point to an outer Point
 --     - drag from a inner left Point to an outer left Point
-getHandleFromTo h p_OL | Just p_IL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_IL, getIndex p_OL .<| i =
+getHandleFromTo h p_OL | Just p_I <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_I, getIndex p_OL .<| i =
   pure $ mkHandle'
     { path_O: getPath p_OL
     , j_OL: getIndex p_OL
-    , j_OR: getIndicesAroundStep i # snd
+    , j_OR: (getIndicesAroundStep i).right
     , path_I: i |: path_I'
-    , j_IL: getIndex p_IL
-    , j_IR: getIndex p_IL
+    , j_IL: getIndex p_I
+    , j_IR: getIndex p_I
     , f: OuterLeft_HandleFocus
     }
 --     - drag from a inner right Point to an outer right Point
-getHandleFromTo h p_OR | Just p_IR <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_IR, i |<. getIndex p_OR = do
+getHandleFromTo h p_OR | Just p_I <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_I, i |<. getIndex p_OR = do
   pure $ mkHandle'
     { path_O: getPath p_OR
-    , j_OL: getIndicesAroundStep i # fst
+    , j_OL: (getIndicesAroundStep i).left
     , j_OR: getIndex p_OR
     , path_I: i |: path_I'
-    , j_IL: getIndex p_IR
-    , j_IR: getIndex p_IR
+    , j_IL: getIndex p_I
+    , j_IR: getIndex p_I
     , f: OuterRight_HandleFocus
     }
 
 --   - drag from an outer Point to an inner Point
 --     - drag from an outer left Point to an inner left Point
-getHandleFromTo h p_IL | Just p_OL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_IL, getIndex p_OL .<| i =
+getHandleFromTo h p_I | Just p_OL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_I, getIndex p_OL .<| i =
   pure $ mkHandle'
-    { path_O: todo ""
-    , j_OL: todo ""
-    , j_OR: todo ""
-    , path_I: todo ""
-    , j_IL: todo ""
-    , j_IR: todo ""
-    , f: todo ""
+    { path_O: getPath p_OL
+    , j_OL: getIndex p_OL
+    , j_OR: (getIndicesAroundStep i).right
+    , path_I: i |: path_I'
+    , j_IL: getIndex p_I
+    , j_IR: getIndex p_I
+    , f: InnerLeft_HandleFocus
     }
---     - TODO: drag from an outer right Point to an inner right Point
+--     - drag from an outer right Point to an inner right Point
+getHandleFromTo h p_I | Just p_OR <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_I, i |<. getIndex p_OR =
+  pure $ mkHandle'
+    { path_O: getPath p_OR
+    , j_OL: (getIndicesAroundStep i).left
+    , j_OR: getIndex p_OR
+    , path_I: i |: path_I'
+    , j_IL: getIndex p_I
+    , j_IR: getIndex p_I
+    , f: InnerRight_HandleFocus
+    }
 
 -- drag from a Cursor
 getHandleFromTo h p_R | Just c <- toCursorHandle h, p_L <- getCursorAnchorPoint c, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_R) (getIndex p_L) (getIndex p_R) Right_CursorFocus
