@@ -6,7 +6,6 @@ package:
     - argonaut-generic
     - arrays
     - console
-    - debug
     - effect
     - either
     - fetch

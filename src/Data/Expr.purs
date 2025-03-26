@@ -113,13 +113,13 @@ orderedStepAndIndex :: Step -> Index -> Boolean
 orderedStepAndIndex (Step i) (Index j) = i < j
 
 -- the `|` corresponds to a step and the `.` corresponds to an index
-infixl 4 orderedStepAndIndex as |<=.
+infixl 4 orderedStepAndIndex as |<.
 
 orderedIndexAndStep :: Index -> Step -> Boolean
 orderedIndexAndStep (Index j) (Step i) = j <= i
 
 -- the `|` corresponds to a step and the `.` corresponds to an index
-infixl 4 orderedIndexAndStep as .<=|
+infixl 4 orderedIndexAndStep as .<|
 
 getIndicesAroundStep :: Step -> Index /\ Index
 getIndicesAroundStep (Step i) = Index i /\ Index (i + 1)
@@ -136,7 +136,7 @@ derive instance Generic Point _
 
 instance Show Point where
   -- show x = genericShow x
-  show (Point is j) = parens $ show is <> " - " <> show j
+  show (Point is j) = parens $ show is <> " △ " <> show j
 
 instance Eq Point where
   eq x = genericEq x
@@ -165,7 +165,7 @@ instance Show Handle where
   show h | Just c <- toCursorHandle h =
     spaces [ "[[", show c, "]]" ]
   show (Handle path_O j_OL j_OR path_I j_IL j_IR f) =
-    spaces [ "[[", show path_O, "|", show j_OL, "..", show j_OR, "|", show path_I, "|", show j_IL, "..", show j_IR, "@", show f, "]]" ]
+    spaces [ "[[", show path_O, "|", show j_OL, "…", show j_OR, "|", show path_I, "|", show j_IL, "…", show j_IR, "@", show f, "]]" ]
 
 instance Eq Handle where
   eq x = genericEq x
@@ -177,7 +177,7 @@ validHandle (Handle _path_O j_OL j_OR path_I j_IL j_IR _) =
     Nil ->
       (j_OL <= j_IL && j_IL <= j_IR && j_IR <= j_OR)
     i : _ ->
-      (j_OL .<=| i && i |<=. j_OR) &&
+      (j_OL .<| i && i |<. j_OR) &&
         (j_IL <= j_IR)
 
 mkHandle :: Path -> Index -> Index -> Path -> Index -> Index -> HandleFocus -> Handle
@@ -223,7 +223,11 @@ data HandleFocus
 derive instance Generic HandleFocus _
 
 instance Show HandleFocus where
-  show x = genericShow x
+  -- show x = genericShow x
+  show OuterLeft_HandleFocus = "OL"
+  show InnerLeft_HandleFocus = "IL"
+  show InnerRight_HandleFocus = "IR"
+  show OuterRight_HandleFocus = "OR"
 
 instance Eq HandleFocus where
   eq x = genericEq x
@@ -241,7 +245,7 @@ derive instance Generic Cursor _
 
 instance Show Cursor where
   -- show x = genericShow x
-  show (Cursor is l r f) = show is <> " - " <> show l <> " .. " <> show r <> " @ " <> show f
+  show (Cursor is l r f) = show is <> " △ " <> show l <> " … " <> show r <> " @ " <> show f
 
 instance Eq Cursor where
   eq x = genericEq x
@@ -347,7 +351,7 @@ getHandleFromTo h p_L | Just p_R <- toPointHandle h, areOrderedSiblings p_L p_R 
 
 --   - drag from an inner Point to an outer Point
 --     - drag from a inner left Point to an outer left Point
-getHandleFromTo h p_OL | Just p_IL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_IL, getIndex p_OL .<=| i =
+getHandleFromTo h p_OL | Just p_IL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_IL, getIndex p_OL .<| i =
   pure $ mkHandle'
     { path_O: getPath p_OL
     , j_OL: getIndex p_OL
@@ -358,8 +362,8 @@ getHandleFromTo h p_OL | Just p_IL <- toPointHandle h, Just (i /\ path_I') <- is
     , f: OuterLeft_HandleFocus
     }
 --     - drag from a inner right Point to an outer right Point
-getHandleFromTo h p_OR | Just p_IR <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_IR, i |<=. getIndex p_OR =
-  -- pure $ mkHandle (getPath p_OR) j_OL (getIndex p_OR) (i |: path_I') (getIndex p_IR) (getIndex p_IR) OuterRight_HandleFocus
+getHandleFromTo h p_OR | Just p_IR <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_IR, i |<. getIndex p_OR = do
+  -- Debug.traceM $ "[getHandleFromTo] " <> show (getIndicesAroundStep i)
   pure $ mkHandle'
     { path_O: getPath p_OR
     , j_OL: getIndicesAroundStep i # fst
@@ -373,7 +377,7 @@ getHandleFromTo h p_OR | Just p_IR <- toPointHandle h, Just (i /\ path_I') <- is
 {- TODO
 --   - drag from an outer Point to an inner Point
 --     - drag from an outer left Point to an inner left Point
-getHandleFromTo h p_IL | Just p_OL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_IL, getIndex p_OL .<=| i =
+getHandleFromTo h p_IL | Just p_OL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_IL, getIndex p_OL .<| i =
   pure $ mkHandle ?a ?a ?a ?a ?a ?a InnerLeft_HandleFocus
   where 
   j_OL /\ j_IR

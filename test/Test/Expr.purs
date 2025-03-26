@@ -7,7 +7,8 @@ import Data.List as List
 import Data.Maybe (maybe, maybe')
 import Data.Tuple.Nested ((/\))
 import Effect.Class.Console as Console
-import Test.Spec (Spec, before_, describe, it)
+import Test.Spec (Spec, before_, describe, it, itOnly)
+import Test.Spec as Spec
 import Test.Spec.Console (tellLns)
 import Test.Utilities (shouldEqual, throw)
 import Utility (bug)
@@ -34,7 +35,7 @@ test_isAncestorSibling = describe "isAncestorSibling" do
 
 test_drag :: Spec Unit
 test_drag = describe "drag" do
-  it "drag from cursor Right Point to a rightward sibling Point to adjust the cursor Handle" do
+  Spec.it "drag from a Cursor Handle's Right Point to a rightward sibling Point to adjust the Cursor Handle" do
     let h = cursor [ 0 ] 0 1 Right_CursorFocus
     let p_R = point [ 0 ] 2
     let h' = cursor [ 0 ] 0 2 Right_CursorFocus
@@ -42,10 +43,11 @@ test_drag = describe "drag" do
     let p_L = getCursorAnchorPoint c
     areOrderedSiblings p_L p_R `shouldEqual` true
     getHandleFromTo h p_R `shouldEqual` pure h'
+    pure unit
 
-  it "drag from an inner left Point to an outer Right point to make a selection Handle" do
+  it "drag from an Inner Right Point to an Outer Right Point to make a Select Handle" do
     let
-      h = handle [ 0 ] 2 2 [] 2 2 InnerLeft_HandleFocus
+      h = handle [ 0 ] 2 2 [] 2 2 InnerRight_HandleFocus
       p_OR = point [] 1
       h' = handle [] 0 1 [ 0 ] 2 2 OuterRight_HandleFocus
     getHandleFromTo h p_OR `shouldEqual` pure h'

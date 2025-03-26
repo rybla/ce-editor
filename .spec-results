@@ -14,23 +14,44 @@
     }
   ],
   [
+    "Expr drag drag from a Cursor Handle's Right Point to a rightward sibling Point to adjust the Cursor Handle",
+    {
+      "timestamp": "1743009370723.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr drag drag from an Inner Right Point to an Outer Right Point to make a Select Handle",
+    {
+      "timestamp": "1743009370723.0",
+      "success": true
+    }
+  ],
+  [
     "Expr drag drag from an inner left Point to an outer Right point to make a selection Handle",
     {
-      "timestamp": "1741795682291.0",
-      "success": true
+      "timestamp": "1743007611824.0",
+      "success": false
     }
   ],
   [
     "Expr drag drag from cursor Right Point to a rightward sibling Point to adjust the cursor Handle",
     {
-      "timestamp": "1741795682291.0",
+      "timestamp": "1743007611824.0",
       "success": true
+    }
+  ],
+  [
+    "Expr drag tmp",
+    {
+      "timestamp": "1743009133867.0",
+      "success": false
     }
   ],
   [
     "Expr isAncestorSibling simple",
     {
-      "timestamp": "1741795682291.0",
+      "timestamp": "1743009370723.0",
       "success": true
     }
   ]
