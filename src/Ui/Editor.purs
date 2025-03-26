@@ -211,15 +211,19 @@ initialEngineState input =
 
 handleEngineQuery :: forall a. EngineQuery a -> EngineM' a
 handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
-  ClickExpr _event -> do
-    lift $ traceEngineM "Engine" $ text $ "got Click from Expr at " <> show "TODO: (Array.fromFoldable is)"
-    case List.unsnoc (unwrap is) of
-      Nothing -> pure unit -- this really shouldnt happen though...
-      Just { init, last } -> do
-        let { left: l, right: r } = Expr.getIndicesAroundStep last
-        let h = Expr.mkCursorHandle (Expr.Cursor (Expr.Path init) l r Expr.Left_CursorFocus)
-        setHandle h
-        pure unit
+  -- ClickExpr _event -> do
+  --   lift $ traceEngineM "Engine" $ text $ "got Click from Expr at " <> show "TODO: (Array.fromFoldable is)"
+  --   case List.unsnoc (unwrap is) of
+  --     Nothing -> pure unit -- this really shouldnt happen though...
+  --     Just { init, last } -> do
+  --       let { left: l, right: r } = Expr.getIndicesAroundStep last
+  --       let h = Expr.mkCursorHandle (Expr.Cursor (Expr.Path init) l r Expr.Left_CursorFocus)
+  --       setHandle h
+  --       pure unit
+  --   pure a
+  StartDrag_ExprAction _event -> do
+    pure a
+  MidDrag_ExprAction _event -> do
     pure a
 handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
   StartDrag_PointInteraction _event -> do
@@ -374,7 +378,9 @@ data ExprOutput'
   | ExprInteraction ExprInteraction
   | PointInteraction_ExprOutput Expr.Index PointInteraction
 
-data ExprInteraction = ClickExpr MouseEvent
+data ExprInteraction
+  = StartDrag_ExprAction MouseEvent
+  | MidDrag_ExprAction MouseEvent
 
 type ExprHTML = H.ComponentHTML ExprAction ExprSlots ExprM
 type ExprM' = ExceptT (Maybe PlainHTML) ExprM
@@ -410,7 +416,8 @@ expr_component = H.mkComponent { initialState: initialExprState, eval, render }
   render { expr: Expr l es, ping } =
     HH.div
       [ HP.classes $ [ [ HH.ClassName "Expr" ], if ping then [ H.ClassName "ping" ] else [] ] # fold
-      -- , HE.onClick (ClickExpr >>> ExprInteraction_ExprAction)
+      , HE.onMouseDown (StartDrag_ExprAction >>> ExprInteraction_ExprAction)
+      , HE.onMouseEnter (MidDrag_ExprAction >>> ExprInteraction_ExprAction)
       ]
       ( fold
           [ [ HH.div [ HP.classes [ HH.ClassName "ExprLabel" ] ]
@@ -480,7 +487,9 @@ handleExprAction (ExprOutput_ExprAction i (is /\ o)) = do
   H.raise ((i |: is) /\ o) # lift
 handleExprAction (ExprInteraction_ExprAction ei) = do
   case ei of
-    ClickExpr event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+    -- ClickExpr event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+    StartDrag_ExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+    MidDrag_ExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
   H.raise (Expr.Path Nil /\ ExprInteraction ei) # lift
   pingExpr
 -- Point stuff
