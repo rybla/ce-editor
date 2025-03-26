@@ -14,7 +14,7 @@ import Data.Array.NonEmpty as NEArray
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
-import Data.Expr (Expr(..), (%), (|:))
+import Data.Expr (Expr(..), unsnocPath, (%), (|:))
 import Data.Expr as Expr
 import Data.Foldable (traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
@@ -210,20 +210,36 @@ initialEngineState input =
   }
 
 handleEngineQuery :: forall a. EngineQuery a -> EngineM' a
-handleEngineQuery (ExprInteraction_EngineQuery is ei a) = case ei of
-  -- ClickExpr _event -> do
-  --   lift $ traceEngineM "Engine" $ text $ "got Click from Expr at " <> show "TODO: (Array.fromFoldable is)"
-  --   case List.unsnoc (unwrap is) of
-  --     Nothing -> pure unit -- this really shouldnt happen though...
-  --     Just { init, last } -> do
-  --       let { left: l, right: r } = Expr.getIndicesAroundStep last
-  --       let h = Expr.mkCursorHandle (Expr.Cursor (Expr.Path init) l r Expr.Left_CursorFocus)
-  --       setHandle h
-  --       pure unit
-  --   pure a
+handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
+  Click_ExprAction _event -> do
+    lift $ traceEngineM "Engine" $ text $ "got Click from Expr at " <> show "TODO: (Array.fromFoldable is)"
+    case unsnocPath path of
+      Nothing -> pure unit -- this really shouldnt happen though...
+      Just { init, last } -> do
+        let { left: l, right: r } = Expr.getIndicesAroundStep last
+        let h = Expr.mkCursorHandle (Expr.Cursor init l r Expr.Left_CursorFocus)
+        setHandle h
+    pure a
   StartDrag_ExprAction _event -> do
+    case unsnocPath path of
+      Nothing -> pure unit -- this really shouldnt happen though...
+      Just { init, last } -> do
+        -- the point right before the expr
+        let p = Expr.Point init (Expr.getIndicesAroundStep last).left
+        lift $ traceEngineM "Drag" $ text $ "got StartDrag from Expr at " <> show p
+        h <- gets _.handle
+        let h' = Expr.getDragOrigin h p
+        modify_ _ { drag_origin_handle = Just h' }
+        setHandle h'
     pure a
   MidDrag_ExprAction _event -> do
+    case unsnocPath path of
+      Nothing -> pure unit -- this really shouldnt happen though...
+      Just { init, last } -> do
+        -- the point right before the expr
+        let p = Expr.Point init (Expr.getIndicesAroundStep last).left
+        lift $ traceEngineM "Drag" $ text $ "got MidDrag from Point at " <> show p
+        updateDragToPoint p
     pure a
 handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
   StartDrag_PointInteraction _event -> do
@@ -364,8 +380,6 @@ data ExprAction
   | ExprInteraction_ExprAction ExprInteraction
   | PointOutput_ExprAction Expr.Index PointOutput
 
--- | ClickExpr MouseEvent
-
 type ExprSlots =
   ( "Expr" :: H.Slot ExprQuery ExprOutput Expr.Step
   , "Point" :: H.Slot PointQuery PointOutput Expr.Index
@@ -379,7 +393,8 @@ data ExprOutput'
   | PointInteraction_ExprOutput Expr.Index PointInteraction
 
 data ExprInteraction
-  = StartDrag_ExprAction MouseEvent
+  = Click_ExprAction MouseEvent
+  | StartDrag_ExprAction MouseEvent
   | MidDrag_ExprAction MouseEvent
 
 type ExprHTML = H.ComponentHTML ExprAction ExprSlots ExprM
@@ -487,11 +502,12 @@ handleExprAction (ExprOutput_ExprAction i (is /\ o)) = do
   H.raise ((i |: is) /\ o) # lift
 handleExprAction (ExprInteraction_ExprAction ei) = do
   case ei of
-    -- ClickExpr event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+    Click_ExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     StartDrag_ExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     MidDrag_ExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
   H.raise (Expr.Path Nil /\ ExprInteraction ei) # lift
-  pingExpr
+  -- pingExpr
+  pure unit
 -- Point stuff
 handleExprAction (PointOutput_ExprAction _i (Output_PointOutput o)) =
   H.raise (Expr.Path Nil /\ Output_ExprOutput o) # lift

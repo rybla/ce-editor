@@ -8,6 +8,7 @@ import Data.Array as Array
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
+import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
 import Data.Ord.Generic (genericCompare)
@@ -70,6 +71,9 @@ consPath :: Step -> Path -> Path
 consPath i (Path is) = Path (i : is)
 
 infixr 6 consPath as |:
+
+unsnocPath ∷ Path → Maybe { init ∷ Path, last ∷ Step }
+unsnocPath (Path is) = List.unsnoc is <#> \{ init, last } -> { init: Path init, last }
 
 stripPrefixOfPath :: Path -> Path -> Path
 stripPrefixOfPath (Path Nil) is' = is'
