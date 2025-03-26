@@ -116,7 +116,7 @@ orderedStepAndIndex (Step i) (Index j) = i < j
 infixl 4 orderedStepAndIndex as |<=.
 
 orderedIndexAndStep :: Index -> Step -> Boolean
-orderedIndexAndStep (Index j) (Step i) = i <= j
+orderedIndexAndStep (Index j) (Step i) = j <= i
 
 -- the `|` corresponds to a step and the `.` corresponds to an index
 infixl 4 orderedIndexAndStep as .<=|
