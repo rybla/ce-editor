@@ -9453,6 +9453,7 @@
 
   // output/Web.UIEvent.MouseEvent.EventTypes/index.js
   var mouseup = "mouseup";
+  var mousemove = "mousemove";
   var mouseenter = "mouseenter";
   var mousedown = "mousedown";
   var click2 = "click";
@@ -9482,6 +9483,12 @@
     var $29 = handler2(mouseenter);
     return function($30) {
       return $29(mouseHandler($30));
+    };
+  }();
+  var onMouseMove = /* @__PURE__ */ function() {
+    var $33 = handler2(mousemove);
+    return function($34) {
+      return $33(mouseHandler($34));
     };
   }();
 
@@ -11003,7 +11010,7 @@
           ;
           if (v1 instanceof Just) {
             var p2 = new Point(v1.value0.init, getIndicesAroundStep(v1.value0.last).left);
-            return discard13(lift5(traceEngineM("Drag")(text6("got MidDrag from Point at " + show10(p2)))))(function() {
+            return discard13(lift5(traceEngineM("Drag")(text6("got MidDrag from Expr at " + show10(p2)))))(function() {
               return updateDragToPoint(p2);
             });
           }
@@ -11146,7 +11153,7 @@
         return [];
       }()])), onMouseDown(function($482) {
         return ExprInteraction_ExprAction.create(StartDrag_ExprAction.create($482));
-      }), onMouseEnter(function($483) {
+      }), onMouseMove(function($483) {
         return ExprInteraction_ExprAction.create(MidDrag_ExprAction.create($483));
       })])(fold4([[div2([classes(["ExprLabel"])])([function() {
         if (v.expr.value0 instanceof $$String) {

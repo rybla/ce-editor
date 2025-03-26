@@ -238,7 +238,7 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
       Just { init, last } -> do
         -- the point right before the expr
         let p = Expr.Point init (Expr.getIndicesAroundStep last).left
-        lift $ traceEngineM "Drag" $ text $ "got MidDrag from Point at " <> show p
+        lift $ traceEngineM "Drag" $ text $ "got MidDrag from Expr at " <> show p
         updateDragToPoint p
     pure a
 handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
@@ -431,8 +431,8 @@ expr_component = H.mkComponent { initialState: initialExprState, eval, render }
   render { expr: Expr l es, ping } =
     HH.div
       [ HP.classes $ [ [ HH.ClassName "Expr" ], if ping then [ H.ClassName "ping" ] else [] ] # fold
-      , HE.onMouseDown (StartDrag_ExprAction >>> ExprInteraction_ExprAction)
-      , HE.onMouseEnter (MidDrag_ExprAction >>> ExprInteraction_ExprAction)
+      -- , HE.onMouseDown (StartDrag_ExprAction >>> ExprInteraction_ExprAction)
+      -- , HE.onMouseMove (MidDrag_ExprAction >>> ExprInteraction_ExprAction)
       ]
       ( fold
           [ [ HH.div [ HP.classes [ HH.ClassName "ExprLabel" ] ]
