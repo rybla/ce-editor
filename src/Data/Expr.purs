@@ -14,7 +14,7 @@ import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, parens, spaces)
+import Utility (brackets, bug, parens, spaces, todo)
 
 --------------------------------------------------------------------------------
 
@@ -363,7 +363,6 @@ getHandleFromTo h p_OL | Just p_IL <- toPointHandle h, Just (i /\ path_I') <- is
     }
 --     - drag from a inner right Point to an outer right Point
 getHandleFromTo h p_OR | Just p_IR <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_IR, i |<. getIndex p_OR = do
-  -- Debug.traceM $ "[getHandleFromTo] " <> show (getIndicesAroundStep i)
   pure $ mkHandle'
     { path_O: getPath p_OR
     , j_OL: getIndicesAroundStep i # fst
@@ -374,15 +373,19 @@ getHandleFromTo h p_OR | Just p_IR <- toPointHandle h, Just (i /\ path_I') <- is
     , f: OuterRight_HandleFocus
     }
 
-{- TODO
 --   - drag from an outer Point to an inner Point
 --     - drag from an outer left Point to an inner left Point
 getHandleFromTo h p_IL | Just p_OL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_IL, getIndex p_OL .<| i =
-  pure $ mkHandle ?a ?a ?a ?a ?a ?a InnerLeft_HandleFocus
-  where 
-  j_OL /\ j_IR
---     - drag from an outer right Point to an inner right Point
--}
+  pure $ mkHandle'
+    { path_O: todo ""
+    , j_OL: todo ""
+    , j_OR: todo ""
+    , path_I: todo ""
+    , j_IL: todo ""
+    , j_IR: todo ""
+    , f: todo ""
+    }
+--     - TODO: drag from an outer right Point to an inner right Point
 
 -- drag from a Cursor
 getHandleFromTo h p_R | Just c <- toCursorHandle h, p_L <- getCursorAnchorPoint c, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_R) (getIndex p_L) (getIndex p_R) Right_CursorFocus
