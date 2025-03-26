@@ -23,7 +23,7 @@ import Data.List (List(..), (:))
 import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe', maybe')
+import Data.Maybe (Maybe(..), fromMaybe')
 import Data.Newtype (unwrap)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested (type (/\), (/\))
@@ -41,7 +41,7 @@ import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
 import Ui.Common (classes, column, list, style, text)
 import Ui.Console as Console
-import Utility (allEqual, forget, impossible, sortEquivalenceClasses, todo)
+import Utility (allEqual, forget, impossible, sortEquivalenceClasses)
 import Web.Event.Event as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -591,7 +591,6 @@ point_component = H.mkComponent { initialState, eval, render }
               Select_OuterRight_PointStyle -> [ "Select_OuterRight" ]
               Select_InnerLeft_PointStyle -> [ "Select_InnerLeft" ]
               Select_InnerRight_PointStyle -> [ "Select_InnerRight" ]
-              Select_OuterLeft_PointStyle -> [ "Select_OuterLeft" ]
               Select_OuterLeft_PointStyle -> [ "Select_OuterLeft" ]
               Select_Inline_InnerLeft_And_InnerRight_PointStyle -> [ "Select_Inline_InnerLeft_And_InnerRight" ]
               Select_Inline_OuterLeft_And_InnerLeft_PointStyle -> [ "Select_Inline_OuterLeft_And_InnerLeft" ]
