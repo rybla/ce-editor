@@ -119,10 +119,10 @@
   };
   var applySecond = function(dictApply) {
     var apply1 = apply(dictApply);
-    var map26 = map(dictApply.Functor0());
+    var map27 = map(dictApply.Functor0());
     return function(a2) {
       return function(b2) {
-        return apply1(map26($$const(identity2))(a2))(b2);
+        return apply1(map27($$const(identity2))(a2))(b2);
       };
     };
   };
@@ -473,8 +473,8 @@
               return function(ra) {
                 return function(rb) {
                   var tail2 = eqRecord1($$Proxy.value)(ra)(rb);
-                  var key = reflectSymbol2($$Proxy.value);
-                  var get5 = unsafeGet(key);
+                  var key2 = reflectSymbol2($$Proxy.value);
+                  var get5 = unsafeGet(key2);
                   return eq32(get5(ra))(get5(rb)) && tail2;
                 };
               };
@@ -5263,10 +5263,10 @@
   var $$try = function(dictMonadError) {
     var catchError1 = catchError(dictMonadError);
     var Monad0 = dictMonadError.MonadThrow0().Monad0();
-    var map26 = map(Monad0.Bind1().Apply0().Functor0());
+    var map27 = map(Monad0.Bind1().Apply0().Functor0());
     var pure20 = pure(Monad0.Applicative0());
     return function(a2) {
-      return catchError1(map26(Right.create)(a2))(function($52) {
+      return catchError1(map27(Right.create)(a2))(function($52) {
         return pure20(Left.create($52));
       });
     };
@@ -5469,10 +5469,10 @@
     };
   };
   var functorWriterT = function(dictFunctor) {
-    var map26 = map(dictFunctor);
+    var map27 = map(dictFunctor);
     return {
       map: function(f) {
-        return mapWriterT(map26(function(v) {
+        return mapWriterT(map27(function(v) {
           return new Tuple(f(v.value0), v.value1);
         }));
       }
@@ -5483,7 +5483,7 @@
     return function(dictApply) {
       var apply2 = apply(dictApply);
       var Functor0 = dictApply.Functor0();
-      var map26 = map(Functor0);
+      var map27 = map(Functor0);
       var functorWriterT1 = functorWriterT(Functor0);
       return {
         apply: function(v) {
@@ -5493,7 +5493,7 @@
                 return new Tuple(v3.value0(v4.value0), append6(v3.value1)(v4.value1));
               };
             };
-            return apply2(map26(k)(v))(v1);
+            return apply2(map27(k)(v))(v1);
           };
         },
         Functor0: function() {
@@ -5508,14 +5508,14 @@
     return function(dictBind) {
       var bind9 = bind(dictBind);
       var Apply0 = dictBind.Apply0();
-      var map26 = map(Apply0.Functor0());
+      var map27 = map(Apply0.Functor0());
       var applyWriterT2 = applyWriterT1(Apply0);
       return {
         bind: function(v) {
           return function(k) {
             return bind9(v)(function(v1) {
               var v2 = k(v1.value0);
-              return map26(function(v3) {
+              return map27(function(v3) {
                 return new Tuple(v3.value0, append6(v1.value1)(v3.value1));
               })(v2);
             });
@@ -6225,9 +6225,9 @@
       return function(dictOrd) {
         var mkOrdBox2 = mkOrdBox(dictOrd);
         return function(sym) {
-          return function(key) {
+          return function(key2) {
             return function(v) {
-              return pop1(new Tuple(reflectSymbol2(sym), mkOrdBox2(key)))(v);
+              return pop1(new Tuple(reflectSymbol2(sym), mkOrdBox2(key2)))(v);
             };
           };
         };
@@ -6240,9 +6240,9 @@
       return function(dictOrd) {
         var mkOrdBox2 = mkOrdBox(dictOrd);
         return function(sym) {
-          return function(key) {
+          return function(key2) {
             return function(v) {
-              return lookup1(new Tuple(reflectSymbol2(sym), mkOrdBox2(key)))(v);
+              return lookup1(new Tuple(reflectSymbol2(sym), mkOrdBox2(key2)))(v);
             };
           };
         };
@@ -6255,10 +6255,10 @@
       return function(dictOrd) {
         var mkOrdBox2 = mkOrdBox(dictOrd);
         return function(sym) {
-          return function(key) {
+          return function(key2) {
             return function(val) {
               return function(v) {
-                return insert1(new Tuple(reflectSymbol2(sym), mkOrdBox2(key)))(val)(v);
+                return insert1(new Tuple(reflectSymbol2(sym), mkOrdBox2(key2)))(val)(v);
               };
             };
           };
@@ -6470,14 +6470,14 @@
   });
 
   // output/Halogen.VDom.Util/foreign.js
-  function unsafeGetAny(key, obj) {
-    return obj[key];
+  function unsafeGetAny(key2, obj) {
+    return obj[key2];
   }
-  function unsafeHasAny(key, obj) {
-    return obj.hasOwnProperty(key);
+  function unsafeHasAny(key2, obj) {
+    return obj.hasOwnProperty(key2);
   }
-  function unsafeSetAny(key, val, obj) {
-    obj[key] = val;
+  function unsafeSetAny(key2, val, obj) {
+    obj[key2] = val;
   }
   function forE2(a2, f) {
     var b2 = [];
@@ -7054,26 +7054,26 @@
   }();
   var unsafeGetProperty = unsafeGetAny;
   var setProperty = unsafeSetAny;
-  var removeProperty = function(key, el) {
-    var v = hasAttribute(nullImpl, key, el);
+  var removeProperty = function(key2, el) {
+    var v = hasAttribute(nullImpl, key2, el);
     if (v) {
-      return removeAttribute(nullImpl, key, el);
+      return removeAttribute(nullImpl, key2, el);
     }
     ;
-    var v1 = typeOf(unsafeGetAny(key, el));
+    var v1 = typeOf(unsafeGetAny(key2, el));
     if (v1 === "string") {
-      return unsafeSetAny(key, "", el);
+      return unsafeSetAny(key2, "", el);
     }
     ;
-    if (key === "rowSpan") {
-      return unsafeSetAny(key, 1, el);
+    if (key2 === "rowSpan") {
+      return unsafeSetAny(key2, 1, el);
     }
     ;
-    if (key === "colSpan") {
-      return unsafeSetAny(key, 1, el);
+    if (key2 === "colSpan") {
+      return unsafeSetAny(key2, 1, el);
     }
     ;
-    return unsafeSetAny(key, jsUndefined, el);
+    return unsafeSetAny(key2, jsUndefined, el);
   };
   var propToStrKey = function(v) {
     if (v instanceof Attribute && v.value0 instanceof Just) {
@@ -9451,9 +9451,11 @@
     };
   }
 
+  // output/Web.UIEvent.KeyboardEvent.EventTypes/index.js
+  var keydown = "keydown";
+
   // output/Web.UIEvent.MouseEvent.EventTypes/index.js
   var mouseup = "mouseup";
-  var mousemove = "mousemove";
   var mouseenter = "mouseenter";
   var mousedown = "mousedown";
   var click2 = "click";
@@ -9483,12 +9485,6 @@
     var $29 = handler2(mouseenter);
     return function($30) {
       return $29(mouseHandler($30));
-    };
-  }();
-  var onMouseMove = /* @__PURE__ */ function() {
-    var $33 = handler2(mousemove);
-    return function($34) {
-      return $33(mouseHandler($34));
     };
   }();
 
@@ -9751,9 +9747,17 @@
     };
   };
 
+  // output/Web.UIEvent.KeyboardEvent/foreign.js
+  function key(e) {
+    return e.key;
+  }
+
+  // output/Web.UIEvent.KeyboardEvent/index.js
+  var fromEvent = /* @__PURE__ */ unsafeReadProtoTagged("KeyboardEvent");
+
   // output/Web.UIEvent.MouseEvent/index.js
   var toEvent = unsafeCoerce2;
-  var fromEvent = /* @__PURE__ */ unsafeReadProtoTagged("MouseEvent");
+  var fromEvent2 = /* @__PURE__ */ unsafeReadProtoTagged("MouseEvent");
 
   // output/Ui.Editor/index.js
   var $runtime_lazy10 = function(name15, moduleName, init3) {
@@ -9834,6 +9838,7 @@
   var liftEffect7 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectExceptT(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff)));
   var show23 = /* @__PURE__ */ show(showString);
   var bindFlipped9 = /* @__PURE__ */ bindFlipped(bindEffect);
+  var map26 = /* @__PURE__ */ map(functorMaybe);
   var composeKleisli2 = /* @__PURE__ */ composeKleisli(bindMaybe);
   var tell4 = /* @__PURE__ */ tell2();
   var EngineIsSymbol = {
@@ -10284,6 +10289,16 @@
     };
     return ReceiveEngine2;
   }();
+  var Keyboard_EngineAction = /* @__PURE__ */ function() {
+    function Keyboard_EngineAction2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    Keyboard_EngineAction2.create = function(value0) {
+      return new Keyboard_EngineAction2(value0);
+    };
+    return Keyboard_EngineAction2;
+  }();
   var Initialize2 = /* @__PURE__ */ function() {
     function Initialize4() {
     }
@@ -10379,7 +10394,7 @@
         return Select_InnerLeft_And_InnerRight_PointStyle.value;
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 554, column 1 - line 554, column 37): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 569, column 1 - line 569, column 37): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof Plain_PointStyle) {
@@ -10438,7 +10453,7 @@
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(NoArguments.value)))))))))))));
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 554, column 1 - line 554, column 37): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 569, column 1 - line 569, column 37): " + [x.constructor.name]);
     }
   };
   var genericEq3 = /* @__PURE__ */ genericEq(genericPointStyle_)(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(genericEqConstructor3))))))))))))));
@@ -10510,7 +10525,7 @@
       return identity9;
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 351, column 1 - line 351, column 56): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 366, column 1 - line 366, column 56): " + [v.constructor.name]);
   };
   var toggleHandlePointStyles_helper = function(v) {
     return function(v1) {
@@ -10572,16 +10587,16 @@
       return v.handle;
     })))(function(ps1) {
       return discard13(modify_5(function(v) {
-        var $308 = {};
-        for (var $309 in v) {
-          if ({}.hasOwnProperty.call(v, $309)) {
-            $308[$309] = v[$309];
+        var $309 = {};
+        for (var $310 in v) {
+          if ({}.hasOwnProperty.call(v, $310)) {
+            $309[$310] = v[$310];
           }
           ;
         }
         ;
-        $308.handle = h;
-        return $308;
+        $309.handle = h;
+        return $309;
       }))(function() {
         var v = getHandlePoints(h);
         return discard13(lift5(traceEngineM("Drag")(list([text6("p_OL = " + show10(v.value0)), text6("p_IL = " + show10(v.value1.value0)), text6("p_IR = " + show10(v.value1.value1.value0)), text6("p_OR = " + show10(v.value1.value1.value1))]))))(function() {
@@ -10615,36 +10630,36 @@
           });
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 274, column 32 - line 295, column 21): " + [v1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 289, column 32 - line 310, column 21): " + [v1.constructor.name]);
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 272, column 33 - line 295, column 21): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 287, column 33 - line 310, column 21): " + [v.constructor.name]);
     });
   };
   var pingExpr = /* @__PURE__ */ discard13(/* @__PURE__ */ modify_5(function(v) {
-    var $322 = {};
-    for (var $323 in v) {
-      if ({}.hasOwnProperty.call(v, $323)) {
-        $322[$323] = v[$323];
+    var $323 = {};
+    for (var $324 in v) {
+      if ({}.hasOwnProperty.call(v, $324)) {
+        $323[$324] = v[$324];
       }
       ;
     }
     ;
-    $322.ping = true;
-    return $322;
+    $323.ping = true;
+    return $323;
   }))(function() {
     return discard13(liftAff2(delay(500)))(function() {
       return modify_5(function(v) {
-        var $325 = {};
-        for (var $326 in v) {
-          if ({}.hasOwnProperty.call(v, $326)) {
-            $325[$326] = v[$326];
+        var $326 = {};
+        for (var $327 in v) {
+          if ({}.hasOwnProperty.call(v, $327)) {
+            $326[$327] = v[$327];
           }
           ;
         }
         ;
-        $325.ping = false;
-        return $325;
+        $326.ping = false;
+        return $326;
       });
     });
   });
@@ -10682,11 +10697,11 @@
           return pure16(v1.value0);
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 488, column 44 - line 490, column 23): " + [v1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 503, column 44 - line 505, column 23): " + [v1.constructor.name]);
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 484, column 1 - line 484, column 56): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 499, column 1 - line 499, column 56): " + [v.constructor.name]);
   };
   var handlePointQuery = function(v) {
     return discard13(modify_5(v.value0))(function() {
@@ -10709,7 +10724,7 @@
       return lift5(raise(new PointInteraction(v.value0)));
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 642, column 1 - line 642, column 49): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 657, column 1 - line 657, column 49): " + [v.constructor.name]);
   };
   var point_component = /* @__PURE__ */ function() {
     var render = function(state3) {
@@ -10770,18 +10785,18 @@
           return ["Select_InnerLeft_And_InnerRight"];
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 611, column 13 - line 625, column 98): " + [state3.style.constructor.name]);
-      }()])), onMouseDown(function($479) {
-        return PointInteraction_PointAction.create(StartDrag_PointInteraction.create($479));
-      }), onMouseEnter(function($480) {
-        return PointInteraction_PointAction.create(MidDrag_PointInteraction.create($480));
+        throw new Error("Failed pattern match at Ui.Editor (line 626, column 13 - line 640, column 98): " + [state3.style.constructor.name]);
+      }()])), onMouseDown(function($481) {
+        return PointInteraction_PointAction.create(StartDrag_PointInteraction.create($481));
+      }), onMouseEnter(function($482) {
+        return PointInteraction_PointAction.create(MidDrag_PointInteraction.create($482));
       })])([text6(" ")]);
     };
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(InitializePoint.value),
-      receive: function($481) {
-        return pure17(ReceivePoint.create($481));
+      receive: function($483) {
+        return pure17(ReceivePoint.create($483));
       },
       handleQuery: function(query32) {
         return bind16(get1)(function(state3) {
@@ -10797,7 +10812,7 @@
                     return tracePointM("Editor . Point . Error")(v1.value0.value0);
                   }
                   ;
-                  throw new Error("Failed pattern match at Ui.Editor (line 591, column 13 - line 593, column 67): " + [v1.value0.constructor.name]);
+                  throw new Error("Failed pattern match at Ui.Editor (line 606, column 13 - line 608, column 67): " + [v1.value0.constructor.name]);
                 }())(function() {
                   return pure24(none3);
                 });
@@ -10808,7 +10823,7 @@
               return pure24(pure17(v1.value0));
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 588, column 49 - line 595, column 35): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 603, column 49 - line 610, column 35): " + [v1.constructor.name]);
           });
         });
       },
@@ -10825,7 +10840,7 @@
                   return tracePointM("Editor . Point . Error")(v1.value0.value0);
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.Editor (line 601, column 13 - line 603, column 67): " + [v1.value0.constructor.name]);
+                throw new Error("Failed pattern match at Ui.Editor (line 616, column 13 - line 618, column 67): " + [v1.value0.constructor.name]);
               });
             }
             ;
@@ -10833,7 +10848,7 @@
               return pure24(v1.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 598, column 51 - line 604, column 30): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 613, column 51 - line 619, column 30): " + [v1.constructor.name]);
           });
         });
       }
@@ -10869,11 +10884,11 @@
             return pure16(v2.value0);
           }
           ;
-          throw new Error("Failed pattern match at Ui.Editor (line 479, column 50 - line 481, column 29): " + [v2.constructor.name]);
+          throw new Error("Failed pattern match at Ui.Editor (line 494, column 50 - line 496, column 29): " + [v2.constructor.name]);
         });
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 475, column 5 - line 481, column 29): " + [v1.value0.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 490, column 5 - line 496, column 29): " + [v1.value0.constructor.name]);
     })(qss))(function() {
       return pure16(v.value1);
     });
@@ -10910,7 +10925,7 @@
           return liftEffect7(stopPropagation(toEvent(v.value0.value0)));
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 504, column 3 - line 507, column 96): " + [v.value0.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 519, column 3 - line 522, column 96): " + [v.value0.constructor.name]);
       }())(function() {
         return discard13(lift5(raise(new Tuple(Nil.value, new ExprInteraction(v.value0)))))(function() {
           return pure16(unit);
@@ -10932,13 +10947,13 @@
           return liftEffect7(stopPropagation(toEvent(v.value1.value0.value0)));
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 515, column 3 - line 517, column 102): " + [v.value1.value0.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 530, column 3 - line 532, column 102): " + [v.value1.value0.constructor.name]);
       }())(function() {
         return lift5(raise(new Tuple(Nil.value, new PointInteraction_ExprOutput(v.value0, v.value1.value0))));
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 492, column 1 - line 492, column 46): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 507, column 1 - line 507, column 46): " + [v.constructor.name]);
   };
   var handleEngineQuery = function(v) {
     if (v instanceof ExprInteraction_EngineQuery) {
@@ -10956,7 +10971,7 @@
               return setHandle(h);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 216, column 5 - line 221, column 20): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 221, column 5 - line 226, column 20): " + [v1.constructor.name]);
           }())(function() {
             return pure16(v.value2);
           });
@@ -10978,16 +10993,16 @@
               }))(function(h) {
                 var h$prime = getDragOrigin(h)(p2);
                 return discard13(modify_5(function(v2) {
-                  var $408 = {};
-                  for (var $409 in v2) {
-                    if ({}.hasOwnProperty.call(v2, $409)) {
-                      $408[$409] = v2[$409];
+                  var $409 = {};
+                  for (var $410 in v2) {
+                    if ({}.hasOwnProperty.call(v2, $410)) {
+                      $409[$410] = v2[$410];
                     }
                     ;
                   }
                   ;
-                  $408.drag_origin_handle = new Just(h$prime);
-                  return $408;
+                  $409.drag_origin_handle = new Just(h$prime);
+                  return $409;
                 }))(function() {
                   return setHandle(h$prime);
                 });
@@ -10995,7 +11010,7 @@
             });
           }
           ;
-          throw new Error("Failed pattern match at Ui.Editor (line 224, column 5 - line 233, column 21): " + [v1.constructor.name]);
+          throw new Error("Failed pattern match at Ui.Editor (line 229, column 5 - line 238, column 21): " + [v1.constructor.name]);
         }())(function() {
           return pure16(v.value2);
         });
@@ -11015,13 +11030,13 @@
             });
           }
           ;
-          throw new Error("Failed pattern match at Ui.Editor (line 236, column 5 - line 242, column 28): " + [v1.constructor.name]);
+          throw new Error("Failed pattern match at Ui.Editor (line 241, column 5 - line 247, column 28): " + [v1.constructor.name]);
         }())(function() {
           return pure16(v.value2);
         });
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 213, column 61 - line 243, column 11): " + [v.value1.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 218, column 61 - line 248, column 11): " + [v.value1.constructor.name]);
     }
     ;
     if (v instanceof PointInteraction_EngineQuery) {
@@ -11032,16 +11047,16 @@
           }))(function(h) {
             var h$prime = getDragOrigin(h)(v.value0);
             return discard13(modify_5(function(v1) {
-              var $424 = {};
-              for (var $425 in v1) {
-                if ({}.hasOwnProperty.call(v1, $425)) {
-                  $424[$425] = v1[$425];
+              var $425 = {};
+              for (var $426 in v1) {
+                if ({}.hasOwnProperty.call(v1, $426)) {
+                  $425[$426] = v1[$426];
                 }
                 ;
               }
               ;
-              $424.drag_origin_handle = new Just(h$prime);
-              return $424;
+              $425.drag_origin_handle = new Just(h$prime);
+              return $425;
             }))(function() {
               return discard13(setHandle(h$prime))(function() {
                 return pure16(v.value2);
@@ -11059,33 +11074,46 @@
         });
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 244, column 59 - line 255, column 11): " + [v.value1.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 249, column 59 - line 260, column 11): " + [v.value1.constructor.name]);
     }
     ;
     if (v instanceof EndDrag_EngineQuery) {
       return discard13(lift5(traceEngineM("Drag")(text6("got EndDrag"))))(function() {
         return discard13(modify_5(function(v1) {
-          var $432 = {};
-          for (var $433 in v1) {
-            if ({}.hasOwnProperty.call(v1, $433)) {
-              $432[$433] = v1[$433];
+          var $433 = {};
+          for (var $434 in v1) {
+            if ({}.hasOwnProperty.call(v1, $434)) {
+              $433[$434] = v1[$434];
             }
             ;
           }
           ;
-          $432.drag_origin_handle = Nothing.value;
-          return $432;
+          $433.drag_origin_handle = Nothing.value;
+          return $433;
         }))(function() {
           return pure16(v.value0);
         });
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 212, column 1 - line 212, column 59): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 217, column 1 - line 217, column 59): " + [v.constructor.name]);
   };
   var handleEngineAction = function(v) {
     if (v instanceof InitializeEngine) {
-      return lift5(traceEngineM("Editor . Engine")(text6("initialized")));
+      return discard13(lift5(traceEngineM("Editor . Engine")(text6("initialized"))))(function() {
+        return bind7(liftEffect7(bindFlipped9(document)(windowImpl)))(function(doc) {
+          return discard13(lift5(subscribe$prime(function(_subId) {
+            return eventListener2(keydown)(toEventTarget(doc))(function() {
+              var $484 = map26(Keyboard_EngineAction.create);
+              return function($485) {
+                return $484(fromEvent($485));
+              };
+            }());
+          })))(function() {
+            return pure16(unit);
+          });
+        });
+      });
     }
     ;
     if (v instanceof ReceiveEngine) {
@@ -11094,14 +11122,20 @@
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 261, column 1 - line 261, column 52): " + [v.constructor.name]);
+    if (v instanceof Keyboard_EngineAction) {
+      return discard13(lift5(traceEngineM("Keyboard")(text6(key(v.value0)))))(function() {
+        return pure16(unit);
+      });
+    }
+    ;
+    throw new Error("Failed pattern match at Ui.Editor (line 266, column 1 - line 266, column 52): " + [v.constructor.name]);
   };
   var handleAction = function(v) {
     if (v instanceof Initialize2) {
       return discard13(lift5(trace("Editor")(text6("initialized"))))(function() {
         return bind7(liftEffect7(bindFlipped9(document)(windowImpl)))(function(doc) {
           return lift5(subscribe$prime(function(_sub_id) {
-            return eventListener2(mouseup)(toEventTarget(doc))(composeKleisli2(fromEvent)(function(_e) {
+            return eventListener2(mouseup)(toEventTarget(doc))(composeKleisli2(fromEvent2)(function(_e) {
               return pure17(new EngineQuery_Action(EndDrag_EngineQuery.create));
             }));
           }));
@@ -11122,7 +11156,7 @@
         return lift5(tell22($$Proxy.value)(unit)(v.value0.value0));
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 131, column 41 - line 133, column 67): " + [v.value0.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 135, column 41 - line 137, column 67): " + [v.value0.constructor.name]);
     }
     ;
     if (v instanceof ExprOutput_Action) {
@@ -11138,10 +11172,10 @@
         return lift5(tell1($$Proxy.value)(unit)(PointInteraction_EngineQuery.create(new Point(v.value0.value0, v.value0.value1.value0))(v.value0.value1.value1)));
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 134, column 47 - line 140, column 93): " + [v.value0.value1.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 138, column 47 - line 144, column 93): " + [v.value0.value1.constructor.name]);
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 123, column 1 - line 123, column 34): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 127, column 1 - line 127, column 34): " + [v.constructor.name]);
   };
   var $lazy_expr_component = /* @__PURE__ */ $runtime_lazy10("expr_component", "Ui.Editor", function() {
     var render = function(v) {
@@ -11151,11 +11185,7 @@
         }
         ;
         return [];
-      }()])), onMouseDown(function($482) {
-        return ExprInteraction_ExprAction.create(StartDrag_ExprAction.create($482));
-      }), onMouseMove(function($483) {
-        return ExprInteraction_ExprAction.create(MidDrag_ExprAction.create($483));
-      })])(fold4([[div2([classes(["ExprLabel"])])([function() {
+      }()]))])(fold4([[div2([classes(["ExprLabel"])])([function() {
         if (v.expr.value0 instanceof $$String) {
           return text6(v.expr.value0.value0);
         }
@@ -11164,14 +11194,14 @@
           return text6("root");
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 439, column 19 - line 441, column 45): " + [v.expr.value0.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 454, column 19 - line 456, column 45): " + [v.expr.value0.constructor.name]);
       }()])], function() {
         var renderPoint = function(i2) {
           return slot1($$Proxy.value)(i2)(point_component)({})(PointOutput_ExprAction.create(i2));
         };
         var renderKid = function(i2) {
           return function(e) {
-            return slot3($$Proxy.value)(i2)($lazy_expr_component(450))({
+            return slot3($$Proxy.value)(i2)($lazy_expr_component(465))({
               expr: e
             })(ExprOutput_ExprAction.create(i2));
           };
@@ -11186,8 +11216,8 @@
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(InitializeExpr.value),
-      receive: function($484) {
-        return pure17(ReceiveExpr.create($484));
+      receive: function($486) {
+        return pure17(ReceiveExpr.create($486));
       },
       handleQuery: function(query32) {
         return bind16(get1)(function(state3) {
@@ -11203,7 +11233,7 @@
                     return traceExprM("Editor . Expr . Error")(v1.value0.value0);
                   }
                   ;
-                  throw new Error("Failed pattern match at Ui.Editor (line 415, column 13 - line 417, column 65): " + [v1.value0.constructor.name]);
+                  throw new Error("Failed pattern match at Ui.Editor (line 430, column 13 - line 432, column 65): " + [v1.value0.constructor.name]);
                 }())(function() {
                   return pure24(none3);
                 });
@@ -11214,7 +11244,7 @@
               return pure24(pure17(v1.value0));
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 412, column 48 - line 419, column 35): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 427, column 48 - line 434, column 35): " + [v1.constructor.name]);
           });
         });
       },
@@ -11231,7 +11261,7 @@
                   return traceExprM("Editor . Expr . Error")(v1.value0.value0);
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.Editor (line 424, column 13 - line 426, column 65): " + [v1.value0.constructor.name]);
+                throw new Error("Failed pattern match at Ui.Editor (line 439, column 13 - line 441, column 65): " + [v1.value0.constructor.name]);
               }())(function() {
                 return put1(state3);
               });
@@ -11241,7 +11271,7 @@
               return pure24(v1.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 422, column 50 - line 428, column 30): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 437, column 50 - line 443, column 30): " + [v1.constructor.name]);
           });
         });
       }
@@ -11252,14 +11282,14 @@
       render
     });
   });
-  var expr_component = /* @__PURE__ */ $lazy_expr_component(404);
+  var expr_component = /* @__PURE__ */ $lazy_expr_component(419);
   var engine_component = /* @__PURE__ */ function() {
     var render = $$const(div2([style3(tell32(["display: hidden"]))])([]));
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(InitializeEngine.value),
-      receive: function($485) {
-        return pure17(ReceiveEngine.create($485));
+      receive: function($487) {
+        return pure17(ReceiveEngine.create($487));
       },
       handleQuery: function(query32) {
         return bind16(get1)(function(state3) {
@@ -11276,7 +11306,7 @@
               return pure24(pure17(v1.value0));
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 187, column 50 - line 192, column 35): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 192, column 50 - line 197, column 35): " + [v1.constructor.name]);
           });
         });
       },
@@ -11293,7 +11323,7 @@
               return pure24(v1.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 195, column 52 - line 199, column 30): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 200, column 52 - line 204, column 30): " + [v1.constructor.name]);
           });
         });
       }
@@ -11342,7 +11372,7 @@
               return pure24(v1.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 94, column 46 - line 98, column 30): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 98, column 46 - line 102, column 30): " + [v1.constructor.name]);
           });
         });
       }

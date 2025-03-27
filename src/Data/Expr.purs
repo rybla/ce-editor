@@ -6,15 +6,16 @@ import Control.Alternative (guard)
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Eq.Generic (genericEq)
+import Data.Foldable (foldr)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe')
 import Data.Newtype (class Newtype, unwrap)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, parens, spaces)
+import Utility (assert, brackets, bug, impossible, parens, spaces, todo)
 
 --------------------------------------------------------------------------------
 
@@ -67,24 +68,46 @@ derive newtype instance Semigroup Path
 
 derive newtype instance Monoid Path
 
-consPath :: Step -> Path -> Path
-consPath i (Path is) = Path (i : is)
+cons_Path :: Step -> Path -> Path
+cons_Path i (Path is) = Path (i : is)
 
-infixr 6 consPath as |:
+infixr 6 cons_Path as |:
 
-unsnocPath ∷ Path → Maybe { init ∷ Path, last ∷ Step }
-unsnocPath (Path is) = List.unsnoc is <#> \{ init, last } -> { init: Path init, last }
+uncons_Path ∷ Path → Maybe { head ∷ Step, tail ∷ Path }
+uncons_Path (Path is) = List.uncons is <#> \{ head, tail } -> { head, tail: Path tail }
 
-stripPrefixOfPath :: Path -> Path -> Path
-stripPrefixOfPath (Path Nil) is' = is'
-stripPrefixOfPath (Path (i : is)) (Path (i' : is')) | i == i' = stripPrefixOfPath (Path is) (Path is')
-stripPrefixOfPath is is' = bug $ "stripPrefixOfPath " <> show is <> " " <> show is'
+unsnoc_Path ∷ Path → Maybe { init ∷ Path, last ∷ Step }
+unsnoc_Path (Path is) = List.unsnoc is <#> \{ init, last } -> { init: Path init, last }
+
+stripPrefix_Path :: Path -> Path -> Path
+stripPrefix_Path (Path Nil) is' = is'
+stripPrefix_Path (Path (i : is)) (Path (i' : is')) | i == i' = stripPrefix_Path (Path is) (Path is')
+stripPrefix_Path is is' = bug $ "stripPrefix_Path " <> show is <> " " <> show is'
+
+modifyDescendant_Expr :: Path -> (Expr -> Expr) -> Expr -> Expr
+modifyDescendant_Expr path0 f e0 = go identity path0 e0
+  where
+  go wrap path e = case uncons_Path path of
+    Nothing -> wrap $ f e
+    Just { head: i, tail } ->
+      go
+        (\e' -> wrap $ modifyKid_Expr i (const e') e)
+        tail
+        (getKid_Expr i e)
+
+getKid_Expr :: Step -> Expr -> Expr
+getKid_Expr i (Expr _ es) = es Array.!! unwrap i # fromMaybe' impossible
+
+modifyKid_Expr :: Step -> (Expr -> Expr) -> Expr -> Expr
+modifyKid_Expr i f (Expr l es) = Expr l $ Array.modifyAt (unwrap i) f es # fromMaybe' impossible
 
 --------------------------------------------------------------------------------
 -- Step
 --------------------------------------------------------------------------------
 
 newtype Step = Step Int
+
+derive instance Newtype Step _
 
 instance Show Step where
   show (Step i) = show i
@@ -98,6 +121,8 @@ derive instance Ord Step
 --------------------------------------------------------------------------------
 
 newtype Index = Index Int
+
+derive instance Newtype Index _
 
 instance Show Index where
   show (Index i) = show i
@@ -416,6 +441,42 @@ getHandleFromTo h p_L | Just c <- toCursorHandle h, p_R <- getCursorAnchorPoint 
 
 -- TODO
 getHandleFromTo _ _ = empty
+
+--------------------------------------------------------------------------------
+-- Tooth
+--------------------------------------------------------------------------------
+
+data Tooth = Tooth Label (Array Expr) Int
+
+mkTooth :: Label -> Array Expr -> Int -> Tooth
+mkTooth l es i = Tooth l es i
+  where
+  _ = assert "Tooth index is in range" (0 <= i && i < Array.length es)
+
+unTooth :: Tooth -> Expr -> Expr
+unTooth (Tooth l es i) e = Expr l $ Array.insertAt i e es # fromMaybe' impossible
+
+--------------------------------------------------------------------------------
+-- Zipper
+--------------------------------------------------------------------------------
+
+data Zipper = Zipper (List Tooth)
+
+unZipper :: Zipper -> Expr -> Expr
+unZipper (Zipper ts) e = foldr unTooth e ts
+
+--------------------------------------------------------------------------------
+-- Fragment
+--------------------------------------------------------------------------------
+
+data Fragment
+  = Exprs_Fragment (Array Expr)
+  | Zipper_Fragment Zipper
+
+getFragment :: Handle -> Expr -> Fragment
+getFragment h e | Just p <- toPointHandle h = Exprs_Fragment []
+getFragment h e | Just c <- toCursorHandle h = Exprs_Fragment (todo "")
+getFragment h e = todo "getFragment"
 
 --------------------------------------------------------------------------------
 -- Utilities

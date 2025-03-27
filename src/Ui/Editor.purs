@@ -14,7 +14,7 @@ import Data.Array.NonEmpty as NEArray
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
-import Data.Expr (Expr(..), unsnocPath, (%), (|:))
+import Data.Expr (Expr(..), unsnoc_Path, (%), (|:))
 import Data.Expr as Expr
 import Data.Foldable (traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
@@ -39,13 +39,17 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
-import Ui.Common (classes, column, list, style, text)
+import Ui.Common (KeyInfo, classes, column, fromKeyboardEventToKeyInfo, list, style, text)
 import Ui.Console as Console
 import Utility (allEqual, forget, impossible, sortEquivalenceClasses)
 import Web.Event.Event as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
 import Web.HTML.Window as HTML.Window
+import Web.HTML.Window as Window
+import Web.UIEvent.KeyboardEvent (KeyboardEvent)
+import Web.UIEvent.KeyboardEvent as KeyboardEvent
+import Web.UIEvent.KeyboardEvent.EventTypes as KeyboardEvent.EventType
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
 import Web.UIEvent.MouseEvent.EventTypes as MouseEventType
@@ -160,11 +164,17 @@ type EngineState =
   , handle :: Expr.Handle
   , -- when dragging, this is the handle where the drag originated from
     drag_origin_handle :: Maybe Expr.Handle
+  , clipboard :: Maybe Clipboard
   }
+
+data Clipboard
+  = Expr_Clipboard Expr
+  | Zipper_Clipboard Expr.Zipper
 
 data EngineAction
   = InitializeEngine
   | ReceiveEngine EngineInput
+  | Keyboard_EngineAction KeyInfo
 
 type EngineSlots = () :: Row Type
 
@@ -207,13 +217,14 @@ initialEngineState input =
   , expr: input.expr
   , handle: input.handle
   , drag_origin_handle: Nothing
+  , clipboard: Nothing
   }
 
 handleEngineQuery :: forall a. EngineQuery a -> EngineM' a
 handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
   Click_ExprAction _event -> do
     lift $ traceEngineM "Engine" $ text $ "got Click from Expr at " <> show "TODO: (Array.fromFoldable is)"
-    case unsnocPath path of
+    case unsnoc_Path path of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
         let { left: l, right: r } = Expr.getIndicesAroundStep last
@@ -221,7 +232,7 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
         setHandle h
     pure a
   StartDrag_ExprAction _event -> do
-    case unsnocPath path of
+    case unsnoc_Path path of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
         -- the point right before the expr
@@ -233,7 +244,7 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
         setHandle h'
     pure a
   MidDrag_ExprAction _event -> do
-    case unsnocPath path of
+    case unsnoc_Path path of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
         -- the point right before the expr
@@ -261,9 +272,28 @@ handleEngineQuery (EndDrag_EngineQuery a) = do
 handleEngineAction :: EngineAction -> EngineM' Unit
 handleEngineAction InitializeEngine = do
   lift $ traceEngineM "Editor . Engine" $ text "initialized"
+  doc <- liftEffect $ Window.document =<< HTML.window
+  lift $ H.subscribe' \_subId ->
+    HQE.eventListener
+      KeyboardEvent.EventType.keydown
+      (HTMLDocument.toEventTarget doc)
+      (KeyboardEvent.fromEvent >>> map (fromKeyboardEventToKeyInfo >>> Keyboard_EngineAction))
+  pure unit
 handleEngineAction (ReceiveEngine input) = do
   lift $ traceEngineM "Editor . Engine" $ text "received"
   put $ initialEngineState input
+handleEngineAction (Keyboard_EngineAction ki) = do
+  lift $ traceEngineM "Keyboard" $ text $ show ki
+  case unit of
+    -- TODO: copy
+    _ | ki.cmd && ki.key == "c" -> do
+      pure unit
+    -- TODO: cut
+    _ | ki.cmd && ki.key == "x" -> pure unit
+    -- TODO: paste
+    _ | ki.cmd && ki.key == "v" -> pure unit
+    _ -> pure unit
+  pure unit
 
 --------------------------------------------------------------------------------
 

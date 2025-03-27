@@ -10,9 +10,10 @@ import Data.Array.ST as STArray
 import Data.Foldable (foldl, foldr, or)
 import Data.FoldableWithIndex (traverseWithIndex_)
 import Data.List (List(..), (:))
+import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String as String
 import Data.Traversable (traverse_)
 import Data.TraversableWithIndex (traverseWithIndex)
@@ -27,6 +28,9 @@ todo msg = unsafeCrashWith $ "[[TODO]]\n" <> msg
 
 bug :: forall a. String -> a
 bug msg = unsafeCrashWith $ "[[BUG]]\n" <> msg
+
+assert :: String -> Boolean -> Unit
+assert msg b = if b then unit else bug $ "failed assertion: " <> msg
 
 impossible :: forall @a. Unit -> a
 impossible _ = bug "impossible"
@@ -77,3 +81,14 @@ sortEquivalenceClasses f xs = STArray.run do
 
 forget :: forall a b. a -> b -> b
 forget _ b = b
+
+extractAt :: forall a. Int -> List a -> Maybe { before :: List a, at :: a, after :: List a }
+extractAt i xs = do
+  { before, after: after_ } <- splitAt i xs
+  { head: at, tail: after } <- List.uncons after_
+  pure { before, at, after }
+
+splitAt :: forall a. Int -> List a -> Maybe { before :: List a, after :: List a }
+splitAt i xs | 0 <= i && i < List.length xs = Just { before: List.take i xs, after: List.drop i xs }
+splitAt _ _ = Nothing
+

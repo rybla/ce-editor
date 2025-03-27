@@ -9,7 +9,10 @@ import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Properties (IProp)
 import Halogen.HTML.Properties as HP
+import Utility (todo)
 import Web.DOM (Element)
+import Web.UIEvent.KeyboardEvent (KeyboardEvent)
+import Web.UIEvent.KeyboardEvent as KeyboardEvent
 
 --------------------------------------------------------------------------------
 
@@ -34,4 +37,17 @@ style w = HP.style $ intercalate "; " $ execWriter w
 --------------------------------------------------------------------------------
 
 foreign import scrollIntoView :: Element -> Effect Unit
+
+type KeyInfo =
+  { key :: String
+  , cmd :: Boolean
+  , shift :: Boolean
+  }
+
+fromKeyboardEventToKeyInfo :: KeyboardEvent -> KeyInfo
+fromKeyboardEventToKeyInfo ke =
+  { key: KeyboardEvent.key ke
+  , cmd: KeyboardEvent.ctrlKey ke || KeyboardEvent.metaKey ke
+  , shift: KeyboardEvent.shiftKey ke
+  }
 
