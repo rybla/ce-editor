@@ -137,6 +137,9 @@ derive instance Ord Index
 
 derive newtype instance Semiring Index
 
+getExtremeIndices :: Expr -> { left :: Index, right :: Index }
+getExtremeIndices (Expr _ es) = { left: Index 0, right: Index (Array.length es) }
+
 --------------------------------------------------------------------------------
 -- Step and Index Utilities
 --------------------------------------------------------------------------------
@@ -390,48 +393,56 @@ getHandleFromTo h p_L e | Just p_R <- toPointHandle h, areOrderedSiblings p_L p_
 
 --   - drag from an inner Point to an outer Point
 --     - drag from a inner left Point to an outer left Point
-getHandleFromTo h p_OL e | Just p_I <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_I, getIndex p_OL .<| i =
+getHandleFromTo h p_OL e | Just p_I <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_I, getIndex p_OL .<| i = do
+  let path_O = getPath p_OL
+  let path_I = i |: path_I'
   pure $ mkHandle'
-    { path_O: getPath p_OL
+    { path_O
     , j_OL: getIndex p_OL
     , j_OR: (getIndicesAroundStep i).right
-    , path_I: i |: path_I'
+    , path_I
     , j_IL: getIndex p_I
-    , j_IR: getIndex p_I
+    , j_IR: getDescendant (path_O <> path_I) e # getExtremeIndices # _.right
     , f: OuterLeft_HandleFocus
     }
 --     - drag from a inner right Point to an outer right Point
 getHandleFromTo h p_OR e | Just p_I <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_I, i |<. getIndex p_OR = do
+  let path_O = getPath p_OR
+  let path_I = i |: path_I'
   pure $ mkHandle'
-    { path_O: getPath p_OR
+    { path_O
     , j_OL: (getIndicesAroundStep i).left
     , j_OR: getIndex p_OR
-    , path_I: i |: path_I'
-    , j_IL: getIndex p_I
+    , path_I
+    , j_IL: getDescendant (path_O <> path_I) e # getExtremeIndices # _.left
     , j_IR: getIndex p_I
     , f: OuterRight_HandleFocus
     }
 
 --   - drag from an outer Point to an inner Point
 --     - drag from an outer left Point to an inner left Point
-getHandleFromTo h p_I e | Just p_OL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_I, getIndex p_OL .<| i =
+getHandleFromTo h p_I e | Just p_OL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_I, getIndex p_OL .<| i = do
+  let path_O = getPath p_OL
+  let path_I = i |: path_I'
   pure $ mkHandle'
-    { path_O: getPath p_OL
+    { path_O
     , j_OL: getIndex p_OL
     , j_OR: (getIndicesAroundStep i).right
-    , path_I: i |: path_I'
+    , path_I
     , j_IL: getIndex p_I
-    , j_IR: getIndex p_I
+    , j_IR: getDescendant (path_O <> path_I) e # getExtremeIndices # _.right
     , f: InnerLeft_HandleFocus
     }
 --     - drag from an outer right Point to an inner right Point
-getHandleFromTo h p_I e | Just p_OR <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_I, i |<. getIndex p_OR =
+getHandleFromTo h p_I e | Just p_OR <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_I, i |<. getIndex p_OR = do
+  let path_O = getPath p_OR
+  let path_I = i |: path_I'
   pure $ mkHandle'
     { path_O: getPath p_OR
     , j_OL: (getIndicesAroundStep i).left
     , j_OR: getIndex p_OR
     , path_I: i |: path_I'
-    , j_IL: getIndex p_I
+    , j_IL: getDescendant (path_O <> path_I) e # getExtremeIndices # _.left
     , j_IR: getIndex p_I
     , f: InnerRight_HandleFocus
     }
@@ -488,6 +499,11 @@ getFragment :: Handle -> Expr -> Fragment
 getFragment h e | Just p <- toPointHandle h = Span_Fragment $ Span []
 getFragment h e | Just c <- toCursorHandle h = Span_Fragment $ getSpan c e
 getFragment h e = Zipper_Fragment $ getZipper h e
+
+getDescendant :: Path -> Expr -> Expr
+getDescendant p e = case uncons_Path p of
+  Nothing -> e
+  Just { head, tail } -> getDescendant tail (e # getKid_Expr head)
 
 getSpan :: Cursor -> Expr -> Span
 getSpan (Cursor p j_L j_R f) e@(Expr _ es) = case uncons_Path p of

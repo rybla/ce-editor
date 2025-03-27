@@ -37,13 +37,13 @@ body {
   user-select: none;
   cursor: pointer;
 
-  background-color: transparent;
+  /* background-color: var(--background-color); */
   transition-property: background-color;
   transition-duration: 0.2s;
 }
 
 .Expr.ping {
-  background-color: color-mix(in hsl, blue, transparent 50%);
+  background-color: color-mix(in hsl, blue, var(--background-color) 50%);
   transition-duration: 0;
 }
 
@@ -92,7 +92,7 @@ body {
 }
 
 .Point.Cursor_Right~* {
-  background-color: transparent;
+  background-color: var(--background-color);
 }
 
 /* Select PointStyle */
@@ -110,7 +110,7 @@ body {
 }
 
 .Select_InnerLeft~* {
-  background-color: transparent;
+  background-color: var(--background-color);
 }
 
 .Select_InnerRight {
@@ -118,7 +118,7 @@ body {
 }
 
 .Select_InnerRight~* {
-  background-color: var(--handle-inner-background-color);
+  background-color: transparent;
 }
 
 .Select_OuterRight {
@@ -126,7 +126,7 @@ body {
 }
 
 .Select_OuterRight~* {
-  background-color: transparent;
+  background-color: var(--background-color);
 }
 
 .Select_Inline_InnerLeft_And_InnerRight {

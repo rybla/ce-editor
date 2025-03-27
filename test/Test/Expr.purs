@@ -47,7 +47,7 @@ test_drag = describe "drag" do
     let
       h = handle [ 0 ] 2 2 [] 2 2 InnerRight_HandleFocus
       p_OR = point [] 1
-      h' = handle [] 0 1 [ 0 ] 2 2 OuterRight_HandleFocus
+      h' = handle [] 0 1 [ 0 ] 0 2 OuterRight_HandleFocus
     getHandleFromTo h p_OR (example_expr 2 2) `shouldEqual` pure h'
 
 index = Index
