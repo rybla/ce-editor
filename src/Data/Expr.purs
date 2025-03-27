@@ -138,23 +138,6 @@ derive instance Ord Index
 derive newtype instance Semiring Index
 
 --------------------------------------------------------------------------------
--- Index
---------------------------------------------------------------------------------
-
-newtype IndexR = IndexR Int
-
-derive instance Newtype IndexR _
-
-instance Show IndexR where
-  show (IndexR i) = show i
-
-derive instance Eq IndexR
-
-derive instance Ord IndexR
-
-derive newtype instance Semiring IndexR
-
---------------------------------------------------------------------------------
 -- Step and Index Utilities
 --------------------------------------------------------------------------------
 
@@ -393,21 +376,21 @@ getDragOrigin h@(Handle path_O j_OL j_OR path_I j_IL j_IR _) p | p_OL /\ p_IL /\
 -- by default, if can't use h, just make a PointHandle
 getDragOrigin _ p = mkPointHandle p
 
-getHandleFromTo :: Handle -> Point -> Maybe Handle
+getHandleFromTo :: Handle -> Point -> Expr -> Maybe Handle
 
 -- drag from a Point to a Point
 --   - drag from a Point to the same Point
-getHandleFromTo h p' | Just p <- toPointHandle h, p == p' = pure $ mkPointHandle p'
+getHandleFromTo h p' e | Just p <- toPointHandle h, p == p' = pure $ mkPointHandle p'
 
 --   - drag from a Point to a sibling Point
 --     - drag from a Point to a Left sibling Point
-getHandleFromTo h p_R | Just p_L <- toPointHandle h, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_L) (getIndex p_L) (getIndex p_R) Right_CursorFocus
+getHandleFromTo h p_R e | Just p_L <- toPointHandle h, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_L) (getIndex p_L) (getIndex p_R) Right_CursorFocus
 --     - drag from a Point to a Right sibling Point
-getHandleFromTo h p_L | Just p_R <- toPointHandle h, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_R) (getIndex p_L) (getIndex p_R) Left_CursorFocus
+getHandleFromTo h p_L e | Just p_R <- toPointHandle h, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_R) (getIndex p_L) (getIndex p_R) Left_CursorFocus
 
 --   - drag from an inner Point to an outer Point
 --     - drag from a inner left Point to an outer left Point
-getHandleFromTo h p_OL | Just p_I <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_I, getIndex p_OL .<| i =
+getHandleFromTo h p_OL e | Just p_I <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_I, getIndex p_OL .<| i =
   pure $ mkHandle'
     { path_O: getPath p_OL
     , j_OL: getIndex p_OL
@@ -418,7 +401,7 @@ getHandleFromTo h p_OL | Just p_I <- toPointHandle h, Just (i /\ path_I') <- isA
     , f: OuterLeft_HandleFocus
     }
 --     - drag from a inner right Point to an outer right Point
-getHandleFromTo h p_OR | Just p_I <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_I, i |<. getIndex p_OR = do
+getHandleFromTo h p_OR e | Just p_I <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_I, i |<. getIndex p_OR = do
   pure $ mkHandle'
     { path_O: getPath p_OR
     , j_OL: (getIndicesAroundStep i).left
@@ -431,7 +414,7 @@ getHandleFromTo h p_OR | Just p_I <- toPointHandle h, Just (i /\ path_I') <- isA
 
 --   - drag from an outer Point to an inner Point
 --     - drag from an outer left Point to an inner left Point
-getHandleFromTo h p_I | Just p_OL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_I, getIndex p_OL .<| i =
+getHandleFromTo h p_I e | Just p_OL <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OL p_I, getIndex p_OL .<| i =
   pure $ mkHandle'
     { path_O: getPath p_OL
     , j_OL: getIndex p_OL
@@ -442,7 +425,7 @@ getHandleFromTo h p_I | Just p_OL <- toPointHandle h, Just (i /\ path_I') <- isA
     , f: InnerLeft_HandleFocus
     }
 --     - drag from an outer right Point to an inner right Point
-getHandleFromTo h p_I | Just p_OR <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_I, i |<. getIndex p_OR =
+getHandleFromTo h p_I e | Just p_OR <- toPointHandle h, Just (i /\ path_I') <- isAncestorSibling p_OR p_I, i |<. getIndex p_OR =
   pure $ mkHandle'
     { path_O: getPath p_OR
     , j_OL: (getIndicesAroundStep i).left
@@ -454,8 +437,8 @@ getHandleFromTo h p_I | Just p_OR <- toPointHandle h, Just (i /\ path_I') <- isA
     }
 
 -- drag from a Cursor
-getHandleFromTo h p_R | Just c <- toCursorHandle h, p_L <- getCursorAnchorPoint c, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_R) (getIndex p_L) (getIndex p_R) Right_CursorFocus
-getHandleFromTo h p_L | Just c <- toCursorHandle h, p_R <- getCursorAnchorPoint c, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_L) (getIndex p_L) (getIndex p_R) Left_CursorFocus
+getHandleFromTo h p_R e | Just c <- toCursorHandle h, p_L <- getCursorAnchorPoint c, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_R) (getIndex p_L) (getIndex p_R) Right_CursorFocus
+getHandleFromTo h p_L e | Just c <- toCursorHandle h, p_R <- getCursorAnchorPoint c, areOrderedSiblings p_L p_R = pure $ mkCursorHandle $ Cursor (getPath p_L) (getIndex p_L) (getIndex p_R) Left_CursorFocus
 
 -- -- drag from a Cursor
 -- -- adjust left point of Cursor
@@ -468,7 +451,7 @@ getHandleFromTo h p_L | Just c <- toCursorHandle h, p_R <- getCursorAnchorPoint 
 -- getHandleFromTo h p' | Just c <- toCursorHandle h, l /\ r <- getCursorPoints c, areOrderedSiblings p' r = pure $ mkCursorHandle $ Cursor (getPath p') (getIndex l) (getIndex p') Right_CursorFocus
 
 -- TODO
-getHandleFromTo _ _ = empty
+getHandleFromTo _ _ _ = empty
 
 --------------------------------------------------------------------------------
 -- Tooth
@@ -515,7 +498,7 @@ getZipper :: Handle -> Expr -> Zipper
 getZipper (Handle p_O j_OL j_OR p_I j_IL j_IR f) e = todo ""
 
 getZipper_helper :: Path -> Point -> Point -> Span -> Zipper
-getZipper_helper = todo ""
+getZipper_helper _ _ _ _ = todo ""
 
 --------------------------------------------------------------------------------
 -- Utilities

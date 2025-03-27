@@ -299,9 +299,10 @@ handleEngineAction (Keyboard_EngineAction ki) = do
 
 updateDragToPoint :: Expr.Point -> EngineM' Unit
 updateDragToPoint p = do
+  e <- gets _.expr
   gets _.drag_origin_handle >>= case _ of
     Nothing -> pure unit
-    Just drag_origin_handle -> case Expr.getHandleFromTo drag_origin_handle p of
+    Just drag_origin_handle -> case Expr.getHandleFromTo drag_origin_handle p e of
       Nothing -> do
         lift $ traceEngineM "Drag" $
           column

@@ -3,15 +3,13 @@ module Test.Expr where
 import Data.Expr
 import Prelude
 
+import Data.Array as Array
 import Data.List as List
-import Data.Maybe (maybe, maybe')
+import Data.Maybe (maybe)
 import Data.Tuple.Nested ((/\))
-import Effect.Class.Console as Console
-import Test.Spec (Spec, before_, describe, it, itOnly)
+import Test.Spec (Spec, describe, it)
 import Test.Spec as Spec
-import Test.Spec.Console (tellLns)
 import Test.Utilities (shouldEqual, throw)
-import Utility (bug)
 
 test :: Spec Unit
 test = describe "Expr" do
@@ -42,7 +40,7 @@ test_drag = describe "drag" do
     c <- toCursorHandle h # maybe (throw "h should be a Cursor Handle") pure
     let p_L = getCursorAnchorPoint c
     areOrderedSiblings p_L p_R `shouldEqual` true
-    getHandleFromTo h p_R `shouldEqual` pure h'
+    getHandleFromTo h p_R (example_expr 2 2) `shouldEqual` pure h'
     pure unit
 
   it "drag from an Inner Right Point to an Outer Right Point to make a Select Handle" do
@@ -50,7 +48,7 @@ test_drag = describe "drag" do
       h = handle [ 0 ] 2 2 [] 2 2 InnerRight_HandleFocus
       p_OR = point [] 1
       h' = handle [] 0 1 [ 0 ] 2 2 OuterRight_HandleFocus
-    getHandleFromTo h p_OR `shouldEqual` pure h'
+    getHandleFromTo h p_OR (example_expr 2 2) `shouldEqual` pure h'
 
 index = Index
 step = Step
@@ -58,4 +56,11 @@ path is = Path (is # List.fromFoldable # map step)
 point is j = Point (path is) (index j)
 cursor is j_L j_R f = mkCursorHandle $ Cursor (path is) (index j_L) (index j_R) f
 handle is_O j_OL j_OR is_I j_IL j_IR f = mkHandle (path is_O) (index j_OL) (index j_OR) (path is_I) (index j_IL) (index j_IR) f
+
+example_expr :: Int -> Int -> Expr
+example_expr _ 0 = String "L" % []
+example_expr n_branching n_height =
+  String "B" %
+    Array.range 0 n_branching
+    <#> \_ -> example_expr n_branching (n_height - 1)
 
