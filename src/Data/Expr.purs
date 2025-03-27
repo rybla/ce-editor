@@ -33,6 +33,10 @@ instance Eq Expr where
 
 --------------------------------------------------------------------------------
 
+data Span = Span (Array Expr)
+
+--------------------------------------------------------------------------------
+
 data Label
   = Root
   | String String
@@ -134,6 +138,23 @@ derive instance Ord Index
 derive newtype instance Semiring Index
 
 --------------------------------------------------------------------------------
+-- Index
+--------------------------------------------------------------------------------
+
+newtype IndexR = IndexR Int
+
+derive instance Newtype IndexR _
+
+instance Show IndexR where
+  show (IndexR i) = show i
+
+derive instance Eq IndexR
+
+derive instance Ord IndexR
+
+derive newtype instance Semiring IndexR
+
+--------------------------------------------------------------------------------
 -- Step and Index Utilities
 --------------------------------------------------------------------------------
 
@@ -182,6 +203,13 @@ getIndex (Point _ j) = j
 -- Handle
 --------------------------------------------------------------------------------
 
+-- | The values are:
+-- |   - path_O: outer path
+-- |   - j_OL: outer left point
+-- |   - j_OR: outer right point
+-- |   - path_I: inner path
+-- |   - j_IL: inner left point
+-- |   - j_IR: inner right point
 data Handle = Handle Path Index Index Path Index Index HandleFocus
 
 derive instance Generic Handle _
@@ -470,13 +498,24 @@ unZipper (Zipper ts) e = foldr unTooth e ts
 --------------------------------------------------------------------------------
 
 data Fragment
-  = Exprs_Fragment (Array Expr)
+  = Span_Fragment Span
   | Zipper_Fragment Zipper
 
 getFragment :: Handle -> Expr -> Fragment
-getFragment h e | Just p <- toPointHandle h = Exprs_Fragment []
-getFragment h e | Just c <- toCursorHandle h = Exprs_Fragment (todo "")
-getFragment h e = todo "getFragment"
+getFragment h e | Just p <- toPointHandle h = Span_Fragment $ Span []
+getFragment h e | Just c <- toCursorHandle h = Span_Fragment $ getSpan c e
+getFragment h e = Zipper_Fragment $ getZipper h e
+
+getSpan :: Cursor -> Expr -> Span
+getSpan (Cursor p j_L j_R f) e@(Expr _ es) = case uncons_Path p of
+  Nothing -> Span $ Array.slice (unwrap j_L) (unwrap j_R) es
+  Just { head, tail } -> getSpan (Cursor tail j_L j_R f) (e # getKid_Expr head)
+
+getZipper :: Handle -> Expr -> Zipper
+getZipper (Handle p_O j_OL j_OR p_I j_IL j_IR f) e = todo ""
+
+getZipper_helper :: Path -> Point -> Point -> Span -> Zipper
+getZipper_helper = todo ""
 
 --------------------------------------------------------------------------------
 -- Utilities
