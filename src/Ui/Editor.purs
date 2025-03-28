@@ -37,7 +37,8 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
-import Ui.Common (KeyInfo, classes, column, fromKeyboardEventToKeyInfo, list, style, text)
+import Ui.Common (KeyInfo, classes, code, column, fromKeyboardEventToKeyInfo, list, style, text)
+import Ui.Common as Ui
 import Ui.Console as Console
 import Utility (allEqual, forget, impossible, sortEquivalenceClasses)
 import Web.Event.Event as Event
@@ -61,6 +62,7 @@ type Input = Editor
 
 type State =
   { editor :: Editor
+  , expr :: Expr
   }
 
 data Action
@@ -86,6 +88,7 @@ component = H.mkComponent { initialState, eval, render }
   initialState :: Input -> State
   initialState editor =
     { editor
+    , expr: Expr.Root % editor.initial_exprs
     }
 
   eval = H.mkEval H.defaultEval
@@ -100,26 +103,23 @@ component = H.mkComponent { initialState, eval, render }
     }
 
   render state =
-    let
-      initial_expr = Expr.Root % state.editor.initial_exprs
-    in
-      HH.div
-        [ style do
-            tell [ "flex-grow: 1", "flex-shrink: 1" ]
-            tell [ "overflow: scroll" ]
-            tell [ "padding: 0.5em" ]
-        ]
-        [ HH.slot (Proxy @"Engine") unit engine_component
-            { editor: state.editor
-            , expr: initial_expr
-            , handle: state.editor.initial_handle
-            }
-            EngineOutput_Action
-        , HH.slot (Proxy @"Expr") unit viewExpr_component
-            { expr: initial_expr
-            }
-            ViewExprOutput_Action
-        ]
+    HH.div
+      [ style do
+          tell [ "flex-grow: 1", "flex-shrink: 1" ]
+          tell [ "overflow: scroll" ]
+          tell [ "padding: 0.5em" ]
+      ]
+      [ HH.slot (Proxy @"Engine") unit engine_component
+          { editor: state.editor
+          , expr: state.expr
+          , handle: state.editor.initial_handle
+          }
+          EngineOutput_Action
+      , HH.slot (Proxy @"Expr") unit viewExpr_component
+          { expr: state.expr
+          }
+          ViewExprOutput_Action
+      ]
 
 handleAction :: Action -> M' Unit
 handleAction Initialize = do
@@ -290,9 +290,14 @@ handleEngineAction (Keyboard_EngineAction ki) = do
     _ | ki.cmd && ki.key == "x" -> pure unit
     -- TODO: paste
     _ | ki.cmd && ki.key == "v", Just (Expr.Span_Fragment span) <- clipboard, Just point <- Expr.toPointHandle handle -> do
-      lift $ traceEngineM "Keyboard" $ text $ "paste: " <> show span
       let expr' = Expr.insertAtPoint point span expr
       modify_ _ { expr = expr' }
+      lift $ traceEngineM "Keyboard" $ list
+        [ text "paste"
+        , Ui.span [ text "expr  : ", code $ show expr ]
+        , Ui.span [ text "span  : ", code $ show span ]
+        , Ui.span [ text "expr' : ", code $ show expr' ]
+        ]
       lift $ H.raise $ SetExpr_EngineOutput expr'
       setHandle $ Expr.mkPointHandle (Expr.Point (Expr.getPath point) (Expr.getIndex point + Expr.Index 1))
     _ -> pure unit
