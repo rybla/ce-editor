@@ -5874,12 +5874,12 @@
   };
   var monadStateExceptT = function(dictMonadState) {
     var Monad0 = dictMonadState.Monad0();
-    var lift12 = lift3(Monad0);
+    var lift1 = lift3(Monad0);
     var state3 = state(dictMonadState);
     var monadExceptT1 = monadExceptT(Monad0);
     return {
       state: function(f) {
-        return lift12(state3(f));
+        return lift1(state3(f));
       },
       Monad0: function() {
         return monadExceptT1;
@@ -8337,34 +8337,6 @@
     };
   };
 
-  // output/Effect.Aff.Class/index.js
-  var lift1 = /* @__PURE__ */ lift(monadTransExceptT);
-  var monadAffAff = {
-    liftAff: /* @__PURE__ */ identity(categoryFn),
-    MonadEffect0: function() {
-      return monadEffectAff;
-    }
-  };
-  var liftAff = function(dict) {
-    return dict.liftAff;
-  };
-  var monadAffExceptT = function(dictMonadAff) {
-    var MonadEffect0 = dictMonadAff.MonadEffect0();
-    var monadEffectExceptT2 = monadEffectExceptT(MonadEffect0);
-    return {
-      liftAff: function() {
-        var $68 = lift1(MonadEffect0.Monad0());
-        var $69 = liftAff(dictMonadAff);
-        return function($70) {
-          return $68($69($70));
-        };
-      }(),
-      MonadEffect0: function() {
-        return monadEffectExceptT2;
-      }
-    };
-  };
-
   // output/Halogen.Query.ChildQuery/index.js
   var ChildQuery = /* @__PURE__ */ function() {
     function ChildQuery3(value0, value1, value22) {
@@ -8638,20 +8610,6 @@
       }(),
       Monad0: function() {
         return monadHalogenM;
-      }
-    };
-  };
-  var monadAffHalogenM = function(dictMonadAff) {
-    var monadEffectHalogenM1 = monadEffectHalogenM(dictMonadAff.MonadEffect0());
-    return {
-      liftAff: function() {
-        var $188 = liftAff(dictMonadAff);
-        return function($189) {
-          return HalogenM(liftF(Lift2.create($188($189))));
-        };
-      }(),
-      MonadEffect0: function() {
-        return monadEffectHalogenM1;
       }
     };
   };
@@ -10033,7 +9991,7 @@
     });
   };
   var initializer = function(dictMonad) {
-    var lift12 = lift4(dictMonad);
+    var lift1 = lift4(dictMonad);
     return mkComponent({
       initialState: function(v) {
         return {
@@ -10048,7 +10006,7 @@
         finalize: defaultEval.finalize,
         initialize: pure10(unit),
         handleAction: $$const(bind6(get2)(function(v1) {
-          return bind6(lift12(v1.initialize))(function(state3) {
+          return bind6(lift1(v1.initialize))(function(state3) {
             return modify_3(function(v2) {
               var $24 = {};
               for (var $25 in v2) {
@@ -10255,11 +10213,19 @@
   var applicativeExceptT2 = /* @__PURE__ */ applicativeExceptT(monadHalogenM);
   var pure16 = /* @__PURE__ */ pure(applicativeExceptT2);
   var show14 = /* @__PURE__ */ show(showHandle);
-  var liftAff2 = /* @__PURE__ */ liftAff(/* @__PURE__ */ monadAffExceptT(/* @__PURE__ */ monadAffHalogenM(monadAffAff)));
   var get3 = /* @__PURE__ */ get(monadStateExceptT2);
   var when5 = /* @__PURE__ */ when(applicativeExceptT2);
   var eqRec2 = /* @__PURE__ */ eqRec();
   var eqRowCons2 = /* @__PURE__ */ eqRowCons(eqRowNil)();
+  var put2 = /* @__PURE__ */ put(monadStateExceptT2);
+  var fold4 = /* @__PURE__ */ fold2(monoidArray);
+  var pure17 = /* @__PURE__ */ pure(applicativeMaybe);
+  var bind16 = /* @__PURE__ */ bind(bindHalogenM);
+  var get1 = /* @__PURE__ */ get(monadStateHalogenM);
+  var discard24 = /* @__PURE__ */ discard7(bindHalogenM);
+  var put1 = /* @__PURE__ */ put(monadStateHalogenM);
+  var pure24 = /* @__PURE__ */ pure(applicativeHalogenM);
+  var none3 = /* @__PURE__ */ none(unfoldableMaybe);
   var notEq2 = /* @__PURE__ */ notEq(/* @__PURE__ */ eqRec2(/* @__PURE__ */ eqRowCons(/* @__PURE__ */ eqRowCons2({
     reflectSymbol: function() {
       return "ping";
@@ -10269,8 +10235,6 @@
       return "expr";
     }
   })(eqExpr)));
-  var show23 = /* @__PURE__ */ show(showExpr);
-  var put2 = /* @__PURE__ */ put(monadStateExceptT2);
   var liftEffect7 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectExceptT(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff)));
   var query3 = /* @__PURE__ */ query();
   var PointIsSymbol = {
@@ -10280,7 +10244,6 @@
   };
   var query1 = /* @__PURE__ */ query3(PointIsSymbol)(ordIndex);
   var throwError3 = /* @__PURE__ */ throwError(/* @__PURE__ */ monadThrowExceptT(monadHalogenM));
-  var none3 = /* @__PURE__ */ none(unfoldableMaybe);
   var traverse_9 = /* @__PURE__ */ traverse_(applicativeExceptT2);
   var traverse_14 = /* @__PURE__ */ traverse_9(foldableArray);
   var traverse_24 = /* @__PURE__ */ traverse_9(foldableNonEmptyArray);
@@ -10291,22 +10254,16 @@
     }
   };
   var query22 = /* @__PURE__ */ query3(ExprIsSymbol)(ordStep);
-  var fold4 = /* @__PURE__ */ fold2(monoidArray);
-  var pure17 = /* @__PURE__ */ pure(applicativeMaybe);
-  var bind16 = /* @__PURE__ */ bind(bindHalogenM);
-  var get1 = /* @__PURE__ */ get(monadStateHalogenM);
-  var discard24 = /* @__PURE__ */ discard7(bindHalogenM);
-  var put1 = /* @__PURE__ */ put(monadStateHalogenM);
-  var pure24 = /* @__PURE__ */ pure(applicativeHalogenM);
   var slot2 = /* @__PURE__ */ slot();
   var slot1 = /* @__PURE__ */ slot2(PointIsSymbol)(ordIndex);
   var slot22 = /* @__PURE__ */ slot2(ExprIsSymbol);
   var slot3 = /* @__PURE__ */ slot22(ordStep);
   var foldMapWithIndex2 = /* @__PURE__ */ foldMapWithIndex(foldableWithIndexArray)(monoidArray);
-  var show32 = /* @__PURE__ */ show(showString);
+  var show23 = /* @__PURE__ */ show(showString);
   var bindFlipped9 = /* @__PURE__ */ bindFlipped(bindEffect);
   var map26 = /* @__PURE__ */ map(functorMaybe);
-  var show42 = /* @__PURE__ */ show(showFragment);
+  var show32 = /* @__PURE__ */ show(showFragment);
+  var show42 = /* @__PURE__ */ show(showExpr);
   var show52 = /* @__PURE__ */ show(showSpan);
   var add2 = /* @__PURE__ */ add(semiringIndex);
   var composeKleisli2 = /* @__PURE__ */ composeKleisli(bindMaybe);
@@ -10322,116 +10279,163 @@
   var discard33 = /* @__PURE__ */ discard7(/* @__PURE__ */ bindWriterT(semigroupArray)(bindIdentity));
   var slot4 = /* @__PURE__ */ slot2(EngineIsSymbol)(ordUnit);
   var slot5 = /* @__PURE__ */ slot22(ordUnit);
-  var Plain_PointStyle = /* @__PURE__ */ function() {
-    function Plain_PointStyle2() {
+  var Plain_ViewPointStyle = /* @__PURE__ */ function() {
+    function Plain_ViewPointStyle2() {
     }
     ;
-    Plain_PointStyle2.value = new Plain_PointStyle2();
-    return Plain_PointStyle2;
+    Plain_ViewPointStyle2.value = new Plain_ViewPointStyle2();
+    return Plain_ViewPointStyle2;
   }();
-  var Cursor_Point_PointStyle = /* @__PURE__ */ function() {
-    function Cursor_Point_PointStyle2() {
+  var Cursor_Point_ViewPointStyle = /* @__PURE__ */ function() {
+    function Cursor_Point_ViewPointStyle2() {
     }
     ;
-    Cursor_Point_PointStyle2.value = new Cursor_Point_PointStyle2();
-    return Cursor_Point_PointStyle2;
+    Cursor_Point_ViewPointStyle2.value = new Cursor_Point_ViewPointStyle2();
+    return Cursor_Point_ViewPointStyle2;
   }();
-  var Cursor_Left_PointStyle = /* @__PURE__ */ function() {
-    function Cursor_Left_PointStyle2() {
+  var Cursor_Left_ViewPointStyle = /* @__PURE__ */ function() {
+    function Cursor_Left_ViewPointStyle2() {
     }
     ;
-    Cursor_Left_PointStyle2.value = new Cursor_Left_PointStyle2();
-    return Cursor_Left_PointStyle2;
+    Cursor_Left_ViewPointStyle2.value = new Cursor_Left_ViewPointStyle2();
+    return Cursor_Left_ViewPointStyle2;
   }();
-  var Cursor_Right_PointStyle = /* @__PURE__ */ function() {
-    function Cursor_Right_PointStyle2() {
+  var Cursor_Right_ViewPointStyle = /* @__PURE__ */ function() {
+    function Cursor_Right_ViewPointStyle2() {
     }
     ;
-    Cursor_Right_PointStyle2.value = new Cursor_Right_PointStyle2();
-    return Cursor_Right_PointStyle2;
+    Cursor_Right_ViewPointStyle2.value = new Cursor_Right_ViewPointStyle2();
+    return Cursor_Right_ViewPointStyle2;
   }();
-  var Select_OuterLeft_PointStyle = /* @__PURE__ */ function() {
-    function Select_OuterLeft_PointStyle2() {
+  var Select_OuterLeft_ViewPointStyle = /* @__PURE__ */ function() {
+    function Select_OuterLeft_ViewPointStyle2() {
     }
     ;
-    Select_OuterLeft_PointStyle2.value = new Select_OuterLeft_PointStyle2();
-    return Select_OuterLeft_PointStyle2;
+    Select_OuterLeft_ViewPointStyle2.value = new Select_OuterLeft_ViewPointStyle2();
+    return Select_OuterLeft_ViewPointStyle2;
   }();
-  var Select_InnerLeft_PointStyle = /* @__PURE__ */ function() {
-    function Select_InnerLeft_PointStyle2() {
+  var Select_InnerLeft_ViewPointStyle = /* @__PURE__ */ function() {
+    function Select_InnerLeft_ViewPointStyle2() {
     }
     ;
-    Select_InnerLeft_PointStyle2.value = new Select_InnerLeft_PointStyle2();
-    return Select_InnerLeft_PointStyle2;
+    Select_InnerLeft_ViewPointStyle2.value = new Select_InnerLeft_ViewPointStyle2();
+    return Select_InnerLeft_ViewPointStyle2;
   }();
-  var Select_InnerRight_PointStyle = /* @__PURE__ */ function() {
-    function Select_InnerRight_PointStyle2() {
+  var Select_InnerRight_ViewPointStyle = /* @__PURE__ */ function() {
+    function Select_InnerRight_ViewPointStyle2() {
     }
     ;
-    Select_InnerRight_PointStyle2.value = new Select_InnerRight_PointStyle2();
-    return Select_InnerRight_PointStyle2;
+    Select_InnerRight_ViewPointStyle2.value = new Select_InnerRight_ViewPointStyle2();
+    return Select_InnerRight_ViewPointStyle2;
   }();
-  var Select_OuterRight_PointStyle = /* @__PURE__ */ function() {
-    function Select_OuterRight_PointStyle2() {
+  var Select_OuterRight_ViewPointStyle = /* @__PURE__ */ function() {
+    function Select_OuterRight_ViewPointStyle2() {
     }
     ;
-    Select_OuterRight_PointStyle2.value = new Select_OuterRight_PointStyle2();
-    return Select_OuterRight_PointStyle2;
+    Select_OuterRight_ViewPointStyle2.value = new Select_OuterRight_ViewPointStyle2();
+    return Select_OuterRight_ViewPointStyle2;
   }();
-  var Select_Inline_InnerLeft_And_InnerRight_PointStyle = /* @__PURE__ */ function() {
-    function Select_Inline_InnerLeft_And_InnerRight_PointStyle2() {
+  var Select_Inline_InnerLeft_And_InnerRight_ViewPointStyle = /* @__PURE__ */ function() {
+    function Select_Inline_InnerLeft_And_InnerRight_ViewPointStyle2() {
     }
     ;
-    Select_Inline_InnerLeft_And_InnerRight_PointStyle2.value = new Select_Inline_InnerLeft_And_InnerRight_PointStyle2();
-    return Select_Inline_InnerLeft_And_InnerRight_PointStyle2;
+    Select_Inline_InnerLeft_And_InnerRight_ViewPointStyle2.value = new Select_Inline_InnerLeft_And_InnerRight_ViewPointStyle2();
+    return Select_Inline_InnerLeft_And_InnerRight_ViewPointStyle2;
   }();
-  var Select_Inline_OuterLeft_And_InnerLeft_PointStyle = /* @__PURE__ */ function() {
-    function Select_Inline_OuterLeft_And_InnerLeft_PointStyle2() {
+  var Select_Inline_OuterLeft_And_InnerLeft_ViewPointStyle = /* @__PURE__ */ function() {
+    function Select_Inline_OuterLeft_And_InnerLeft_ViewPointStyle2() {
     }
     ;
-    Select_Inline_OuterLeft_And_InnerLeft_PointStyle2.value = new Select_Inline_OuterLeft_And_InnerLeft_PointStyle2();
-    return Select_Inline_OuterLeft_And_InnerLeft_PointStyle2;
+    Select_Inline_OuterLeft_And_InnerLeft_ViewPointStyle2.value = new Select_Inline_OuterLeft_And_InnerLeft_ViewPointStyle2();
+    return Select_Inline_OuterLeft_And_InnerLeft_ViewPointStyle2;
   }();
-  var Select_Inline_InnerRight_And_OuterRight_PointStyle = /* @__PURE__ */ function() {
-    function Select_Inline_InnerRight_And_OuterRight_PointStyle2() {
+  var Select_Inline_InnerRight_And_OuterRight_ViewPointStyle = /* @__PURE__ */ function() {
+    function Select_Inline_InnerRight_And_OuterRight_ViewPointStyle2() {
     }
     ;
-    Select_Inline_InnerRight_And_OuterRight_PointStyle2.value = new Select_Inline_InnerRight_And_OuterRight_PointStyle2();
-    return Select_Inline_InnerRight_And_OuterRight_PointStyle2;
+    Select_Inline_InnerRight_And_OuterRight_ViewPointStyle2.value = new Select_Inline_InnerRight_And_OuterRight_ViewPointStyle2();
+    return Select_Inline_InnerRight_And_OuterRight_ViewPointStyle2;
   }();
-  var Select_OuterLeft_And_InnerLeft_PointStyle = /* @__PURE__ */ function() {
-    function Select_OuterLeft_And_InnerLeft_PointStyle2() {
+  var Select_OuterLeft_And_InnerLeft_ViewPointStyle = /* @__PURE__ */ function() {
+    function Select_OuterLeft_And_InnerLeft_ViewPointStyle2() {
     }
     ;
-    Select_OuterLeft_And_InnerLeft_PointStyle2.value = new Select_OuterLeft_And_InnerLeft_PointStyle2();
-    return Select_OuterLeft_And_InnerLeft_PointStyle2;
+    Select_OuterLeft_And_InnerLeft_ViewPointStyle2.value = new Select_OuterLeft_And_InnerLeft_ViewPointStyle2();
+    return Select_OuterLeft_And_InnerLeft_ViewPointStyle2;
   }();
-  var Select_InnerRight_And_OuterRight_PointStyle = /* @__PURE__ */ function() {
-    function Select_InnerRight_And_OuterRight_PointStyle2() {
+  var Select_InnerRight_And_OuterRight_ViewPointStyle = /* @__PURE__ */ function() {
+    function Select_InnerRight_And_OuterRight_ViewPointStyle2() {
     }
     ;
-    Select_InnerRight_And_OuterRight_PointStyle2.value = new Select_InnerRight_And_OuterRight_PointStyle2();
-    return Select_InnerRight_And_OuterRight_PointStyle2;
+    Select_InnerRight_And_OuterRight_ViewPointStyle2.value = new Select_InnerRight_And_OuterRight_ViewPointStyle2();
+    return Select_InnerRight_And_OuterRight_ViewPointStyle2;
   }();
-  var Select_InnerLeft_And_InnerRight_PointStyle = /* @__PURE__ */ function() {
-    function Select_InnerLeft_And_InnerRight_PointStyle2() {
+  var Select_InnerLeft_And_InnerRight_ViewPointStyle = /* @__PURE__ */ function() {
+    function Select_InnerLeft_And_InnerRight_ViewPointStyle2() {
     }
     ;
-    Select_InnerLeft_And_InnerRight_PointStyle2.value = new Select_InnerLeft_And_InnerRight_PointStyle2();
-    return Select_InnerLeft_And_InnerRight_PointStyle2;
+    Select_InnerLeft_And_InnerRight_ViewPointStyle2.value = new Select_InnerLeft_And_InnerRight_ViewPointStyle2();
+    return Select_InnerLeft_And_InnerRight_ViewPointStyle2;
   }();
-  var ModifyPointState = /* @__PURE__ */ function() {
-    function ModifyPointState2(value0, value1) {
+  var ModifyViewPointState = /* @__PURE__ */ function() {
+    function ModifyViewPointState2(value0, value1) {
       this.value0 = value0;
       this.value1 = value1;
     }
     ;
-    ModifyPointState2.create = function(value0) {
+    ModifyViewPointState2.create = function(value0) {
       return function(value1) {
-        return new ModifyPointState2(value0, value1);
+        return new ModifyViewPointState2(value0, value1);
       };
     };
-    return ModifyPointState2;
+    return ModifyViewPointState2;
+  }();
+  var StartDrag_ViewPointInteraction = /* @__PURE__ */ function() {
+    function StartDrag_ViewPointInteraction2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    StartDrag_ViewPointInteraction2.create = function(value0) {
+      return new StartDrag_ViewPointInteraction2(value0);
+    };
+    return StartDrag_ViewPointInteraction2;
+  }();
+  var MidDrag_ViewPointInteraction = /* @__PURE__ */ function() {
+    function MidDrag_ViewPointInteraction2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    MidDrag_ViewPointInteraction2.create = function(value0) {
+      return new MidDrag_ViewPointInteraction2(value0);
+    };
+    return MidDrag_ViewPointInteraction2;
+  }();
+  var Initialize_ViewPointAction = /* @__PURE__ */ function() {
+    function Initialize_ViewPointAction2() {
+    }
+    ;
+    Initialize_ViewPointAction2.value = new Initialize_ViewPointAction2();
+    return Initialize_ViewPointAction2;
+  }();
+  var Receive_ViewPointAction = /* @__PURE__ */ function() {
+    function Receive_ViewPointAction2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    Receive_ViewPointAction2.create = function(value0) {
+      return new Receive_ViewPointAction2(value0);
+    };
+    return Receive_ViewPointAction2;
+  }();
+  var ViewPointInteraction_ViewPointAction = /* @__PURE__ */ function() {
+    function ViewPointInteraction_ViewPointAction2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    ViewPointInteraction_ViewPointAction2.create = function(value0) {
+      return new ViewPointInteraction_ViewPointAction2(value0);
+    };
+    return ViewPointInteraction_ViewPointAction2;
   }();
   var Modify_ViewExprQuery = /* @__PURE__ */ function() {
     function Modify_ViewExprQuery2(value0) {
@@ -10482,53 +10486,6 @@
     };
     return ViewExprQuery2;
   }();
-  var StartDrag_PointInteraction = /* @__PURE__ */ function() {
-    function StartDrag_PointInteraction2(value0) {
-      this.value0 = value0;
-    }
-    ;
-    StartDrag_PointInteraction2.create = function(value0) {
-      return new StartDrag_PointInteraction2(value0);
-    };
-    return StartDrag_PointInteraction2;
-  }();
-  var MidDrag_PointInteraction = /* @__PURE__ */ function() {
-    function MidDrag_PointInteraction2(value0) {
-      this.value0 = value0;
-    }
-    ;
-    MidDrag_PointInteraction2.create = function(value0) {
-      return new MidDrag_PointInteraction2(value0);
-    };
-    return MidDrag_PointInteraction2;
-  }();
-  var Initialize_PointAction = /* @__PURE__ */ function() {
-    function Initialize_PointAction2() {
-    }
-    ;
-    Initialize_PointAction2.value = new Initialize_PointAction2();
-    return Initialize_PointAction2;
-  }();
-  var Receive_PointAction = /* @__PURE__ */ function() {
-    function Receive_PointAction2(value0) {
-      this.value0 = value0;
-    }
-    ;
-    Receive_PointAction2.create = function(value0) {
-      return new Receive_PointAction2(value0);
-    };
-    return Receive_PointAction2;
-  }();
-  var PointInteraction_PointAction = /* @__PURE__ */ function() {
-    function PointInteraction_PointAction2(value0) {
-      this.value0 = value0;
-    }
-    ;
-    PointInteraction_PointAction2.create = function(value0) {
-      return new PointInteraction_PointAction2(value0);
-    };
-    return PointInteraction_PointAction2;
-  }();
   var TellConsole = /* @__PURE__ */ function() {
     function TellConsole2(value0) {
       this.value0 = value0;
@@ -10539,25 +10496,25 @@
     };
     return TellConsole2;
   }();
-  var Output_PointOutput = /* @__PURE__ */ function() {
-    function Output_PointOutput2(value0) {
+  var Output_ViewPointOutput = /* @__PURE__ */ function() {
+    function Output_ViewPointOutput2(value0) {
       this.value0 = value0;
     }
     ;
-    Output_PointOutput2.create = function(value0) {
-      return new Output_PointOutput2(value0);
+    Output_ViewPointOutput2.create = function(value0) {
+      return new Output_ViewPointOutput2(value0);
     };
-    return Output_PointOutput2;
+    return Output_ViewPointOutput2;
   }();
-  var PointInteraction = /* @__PURE__ */ function() {
-    function PointInteraction2(value0) {
+  var ViewPointInteraction = /* @__PURE__ */ function() {
+    function ViewPointInteraction2(value0) {
       this.value0 = value0;
     }
     ;
-    PointInteraction2.create = function(value0) {
-      return new PointInteraction2(value0);
+    ViewPointInteraction2.create = function(value0) {
+      return new ViewPointInteraction2(value0);
     };
-    return PointInteraction2;
+    return ViewPointInteraction2;
   }();
   var Click_ViewExprAction = /* @__PURE__ */ function() {
     function Click_ViewExprAction2(value0) {
@@ -10609,18 +10566,18 @@
     };
     return ExprInteraction2;
   }();
-  var PointInteraction_ViewExprOutput = /* @__PURE__ */ function() {
-    function PointInteraction_ViewExprOutput2(value0, value1) {
+  var ViewPointInteraction_ViewExprOutput = /* @__PURE__ */ function() {
+    function ViewPointInteraction_ViewExprOutput2(value0, value1) {
       this.value0 = value0;
       this.value1 = value1;
     }
     ;
-    PointInteraction_ViewExprOutput2.create = function(value0) {
+    ViewPointInteraction_ViewExprOutput2.create = function(value0) {
       return function(value1) {
-        return new PointInteraction_ViewExprOutput2(value0, value1);
+        return new ViewPointInteraction_ViewExprOutput2(value0, value1);
       };
     };
-    return PointInteraction_ViewExprOutput2;
+    return ViewPointInteraction_ViewExprOutput2;
   }();
   var Initialize_ViewExprAction = /* @__PURE__ */ function() {
     function Initialize_ViewExprAction2() {
@@ -10662,18 +10619,18 @@
     };
     return ExprInteraction_ViewExprAction2;
   }();
-  var PointOutput_ViewExprAction = /* @__PURE__ */ function() {
-    function PointOutput_ViewExprAction2(value0, value1) {
+  var ViewPointOutput_ViewExprAction = /* @__PURE__ */ function() {
+    function ViewPointOutput_ViewExprAction2(value0, value1) {
       this.value0 = value0;
       this.value1 = value1;
     }
     ;
-    PointOutput_ViewExprAction2.create = function(value0) {
+    ViewPointOutput_ViewExprAction2.create = function(value0) {
       return function(value1) {
-        return new PointOutput_ViewExprAction2(value0, value1);
+        return new ViewPointOutput_ViewExprAction2(value0, value1);
       };
     };
-    return PointOutput_ViewExprAction2;
+    return ViewPointOutput_ViewExprAction2;
   }();
   var ExprInteraction_EngineQuery = /* @__PURE__ */ function() {
     function ExprInteraction_EngineQuery2(value0, value1, value22) {
@@ -10691,21 +10648,21 @@
     };
     return ExprInteraction_EngineQuery2;
   }();
-  var PointInteraction_EngineQuery = /* @__PURE__ */ function() {
-    function PointInteraction_EngineQuery2(value0, value1, value22) {
+  var ViewPointInteraction_EngineQuery = /* @__PURE__ */ function() {
+    function ViewPointInteraction_EngineQuery2(value0, value1, value22) {
       this.value0 = value0;
       this.value1 = value1;
       this.value2 = value22;
     }
     ;
-    PointInteraction_EngineQuery2.create = function(value0) {
+    ViewPointInteraction_EngineQuery2.create = function(value0) {
       return function(value1) {
         return function(value22) {
-          return new PointInteraction_EngineQuery2(value0, value1, value22);
+          return new ViewPointInteraction_EngineQuery2(value0, value1, value22);
         };
       };
     };
-    return PointInteraction_EngineQuery2;
+    return ViewPointInteraction_EngineQuery2;
   }();
   var EndDrag_EngineQuery = /* @__PURE__ */ function() {
     function EndDrag_EngineQuery2(value0) {
@@ -10811,128 +10768,128 @@
     };
     return EngineQuery_Action2;
   }();
-  var genericPointStyle_ = {
+  var genericViewPointStyle_ = {
     to: function(x) {
       if (x instanceof Inl) {
-        return Plain_PointStyle.value;
+        return Plain_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && x.value0 instanceof Inl) {
-        return Cursor_Point_PointStyle.value;
+        return Cursor_Point_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && x.value0.value0 instanceof Inl)) {
-        return Cursor_Left_PointStyle.value;
+        return Cursor_Left_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && x.value0.value0.value0 instanceof Inl))) {
-        return Cursor_Right_PointStyle.value;
+        return Cursor_Right_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0 instanceof Inl)))) {
-        return Select_OuterLeft_PointStyle.value;
+        return Select_OuterLeft_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0 instanceof Inl))))) {
-        return Select_InnerLeft_PointStyle.value;
+        return Select_InnerLeft_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0 instanceof Inl)))))) {
-        return Select_InnerRight_PointStyle.value;
+        return Select_InnerRight_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0 instanceof Inl))))))) {
-        return Select_OuterRight_PointStyle.value;
+        return Select_OuterRight_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl)))))))) {
-        return Select_Inline_InnerLeft_And_InnerRight_PointStyle.value;
+        return Select_Inline_InnerLeft_And_InnerRight_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl))))))))) {
-        return Select_Inline_OuterLeft_And_InnerLeft_PointStyle.value;
+        return Select_Inline_OuterLeft_And_InnerLeft_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl)))))))))) {
-        return Select_Inline_InnerRight_And_OuterRight_PointStyle.value;
+        return Select_Inline_InnerRight_And_OuterRight_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl))))))))))) {
-        return Select_OuterLeft_And_InnerLeft_PointStyle.value;
+        return Select_OuterLeft_And_InnerLeft_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl)))))))))))) {
-        return Select_InnerRight_And_OuterRight_PointStyle.value;
+        return Select_InnerRight_And_OuterRight_ViewPointStyle.value;
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr)))))))))))) {
-        return Select_InnerLeft_And_InnerRight_PointStyle.value;
+        return Select_InnerLeft_And_InnerRight_ViewPointStyle.value;
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 600, column 1 - line 600, column 37): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 606, column 1 - line 606, column 41): " + [x.constructor.name]);
     },
     from: function(x) {
-      if (x instanceof Plain_PointStyle) {
+      if (x instanceof Plain_ViewPointStyle) {
         return new Inl(NoArguments.value);
       }
       ;
-      if (x instanceof Cursor_Point_PointStyle) {
+      if (x instanceof Cursor_Point_ViewPointStyle) {
         return new Inr(new Inl(NoArguments.value));
       }
       ;
-      if (x instanceof Cursor_Left_PointStyle) {
+      if (x instanceof Cursor_Left_ViewPointStyle) {
         return new Inr(new Inr(new Inl(NoArguments.value)));
       }
       ;
-      if (x instanceof Cursor_Right_PointStyle) {
+      if (x instanceof Cursor_Right_ViewPointStyle) {
         return new Inr(new Inr(new Inr(new Inl(NoArguments.value))));
       }
       ;
-      if (x instanceof Select_OuterLeft_PointStyle) {
+      if (x instanceof Select_OuterLeft_ViewPointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))));
       }
       ;
-      if (x instanceof Select_InnerLeft_PointStyle) {
+      if (x instanceof Select_InnerLeft_ViewPointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value))))));
       }
       ;
-      if (x instanceof Select_InnerRight_PointStyle) {
+      if (x instanceof Select_InnerRight_ViewPointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))))));
       }
       ;
-      if (x instanceof Select_OuterRight_PointStyle) {
+      if (x instanceof Select_OuterRight_ViewPointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value))))))));
       }
       ;
-      if (x instanceof Select_Inline_InnerLeft_And_InnerRight_PointStyle) {
+      if (x instanceof Select_Inline_InnerLeft_And_InnerRight_ViewPointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))))))));
       }
       ;
-      if (x instanceof Select_Inline_OuterLeft_And_InnerLeft_PointStyle) {
+      if (x instanceof Select_Inline_OuterLeft_And_InnerLeft_ViewPointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value))))))))));
       }
       ;
-      if (x instanceof Select_Inline_InnerRight_And_OuterRight_PointStyle) {
+      if (x instanceof Select_Inline_InnerRight_And_OuterRight_ViewPointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))))))))));
       }
       ;
-      if (x instanceof Select_OuterLeft_And_InnerLeft_PointStyle) {
+      if (x instanceof Select_OuterLeft_And_InnerLeft_ViewPointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value))))))))))));
       }
       ;
-      if (x instanceof Select_InnerRight_And_OuterRight_PointStyle) {
+      if (x instanceof Select_InnerRight_And_OuterRight_ViewPointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))))))))))));
       }
       ;
-      if (x instanceof Select_InnerLeft_And_InnerRight_PointStyle) {
+      if (x instanceof Select_InnerLeft_And_InnerRight_ViewPointStyle) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(NoArguments.value)))))))))))));
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 600, column 1 - line 600, column 37): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 606, column 1 - line 606, column 41): " + [x.constructor.name]);
     }
   };
-  var genericEq3 = /* @__PURE__ */ genericEq(genericPointStyle_)(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(genericEqConstructor3))))))))))))));
-  var eqPointStyle = {
+  var genericEq3 = /* @__PURE__ */ genericEq(genericViewPointStyle_)(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(/* @__PURE__ */ genericEqSum3(genericEqConstructor3))))))))))))));
+  var eqViewPointStyle = {
     eq: function(x) {
       return genericEq3(x);
     }
@@ -10941,7 +10898,17 @@
     reflectSymbol: function() {
       return "style";
     }
-  })(eqPointStyle)));
+  })(eqViewPointStyle)));
+  var traceViewPointM = function(label5) {
+    return function(content3) {
+      return raise(new Output_ViewPointOutput(new TellConsole(function(a2) {
+        return new AddMessage({
+          label: label5,
+          content: content3
+        }, a2);
+      })));
+    };
+  };
   var traceViewExprM = function(label5) {
     return function(content3) {
       return raise(new Tuple(Nil.value, new Output_ViewExprOutput(new TellConsole(function(a2) {
@@ -10950,16 +10917,6 @@
           content: content3
         }, a2);
       }))));
-    };
-  };
-  var tracePointM = function(label5) {
-    return function(content3) {
-      return raise(new Output_PointOutput(new TellConsole(function(a2) {
-        return new AddMessage({
-          label: label5,
-          content: content3
-        }, a2);
-      })));
     };
   };
   var traceEngineM = function(label5) {
@@ -10982,101 +10939,101 @@
       }));
     };
   };
-  var togglePointStyles = function(xs) {
+  var toggleViewPointStyles = function(xs) {
     return lift5(raise(new ViewExprQuery_EngineOutput(ViewExprQuery.create(map25(function(v) {
-      return new SingleViewExprQuery(v.value0.value0, new ViewPointQuery_ViewExprQuery(v.value0.value1, new ModifyPointState(function(v1) {
+      return new SingleViewExprQuery(v.value0.value0, new ViewPointQuery_ViewExprQuery(v.value0.value1, new ModifyViewPointState(function(v1) {
         return {
           style: v.value1
         };
       }, unit)));
     })(fromMaybe$prime(impossible)(fromArray(toUnfoldable5(xs))))))));
   };
-  var togglePointStyle = function(v) {
+  var toggleViewPointStyle = function(v) {
     if (!v) {
-      return $$const(Plain_PointStyle.value);
+      return $$const(Plain_ViewPointStyle.value);
     }
     ;
     if (v) {
       return identity9;
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 391, column 1 - line 391, column 56): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 392, column 1 - line 392, column 68): " + [v.constructor.name]);
   };
-  var toggleHandlePointStyles_helper = function(v) {
+  var toggleHandleViewPointStyles_helper = function(v) {
     return function(v1) {
       return function(v2) {
         return function(v3) {
           return function(v4) {
             return function(v5) {
               if (allEqual2([v2, v3, v4, v5])) {
-                return fromFoldable6([new Tuple(v2, togglePointStyle(v)(Cursor_Point_PointStyle.value))]);
+                return fromFoldable6([new Tuple(v2, toggleViewPointStyle(v)(Cursor_Point_ViewPointStyle.value))]);
               }
               ;
               if (v1 && allEqual2([v2, v3, v4])) {
-                return fromFoldable6([new Tuple(v2, togglePointStyle(v)(Cursor_Left_PointStyle.value)), new Tuple(v5, togglePointStyle(v)(Cursor_Right_PointStyle.value))]);
+                return fromFoldable6([new Tuple(v2, toggleViewPointStyle(v)(Cursor_Left_ViewPointStyle.value)), new Tuple(v5, toggleViewPointStyle(v)(Cursor_Right_ViewPointStyle.value))]);
               }
               ;
               if (v1 && allEqual2([v3, v4, v5])) {
-                return fromFoldable6([new Tuple(v2, togglePointStyle(v)(Cursor_Left_PointStyle.value)), new Tuple(v3, togglePointStyle(v)(Cursor_Right_PointStyle.value))]);
+                return fromFoldable6([new Tuple(v2, toggleViewPointStyle(v)(Cursor_Left_ViewPointStyle.value)), new Tuple(v3, toggleViewPointStyle(v)(Cursor_Right_ViewPointStyle.value))]);
               }
               ;
               if (v1 && allEqual2([v3, v4])) {
-                return fromFoldable6([new Tuple(v2, togglePointStyle(v)(Select_OuterLeft_PointStyle.value)), new Tuple(v3, togglePointStyle(v)(Select_Inline_InnerLeft_And_InnerRight_PointStyle.value)), new Tuple(v5, togglePointStyle(v)(Select_OuterRight_PointStyle.value))]);
+                return fromFoldable6([new Tuple(v2, toggleViewPointStyle(v)(Select_OuterLeft_ViewPointStyle.value)), new Tuple(v3, toggleViewPointStyle(v)(Select_Inline_InnerLeft_And_InnerRight_ViewPointStyle.value)), new Tuple(v5, toggleViewPointStyle(v)(Select_OuterRight_ViewPointStyle.value))]);
               }
               ;
               if (v1 && allEqual2([v2, v3])) {
-                return fromFoldable6([new Tuple(v2, togglePointStyle(v)(Select_Inline_OuterLeft_And_InnerLeft_PointStyle.value)), new Tuple(v4, togglePointStyle(v)(Select_InnerRight_PointStyle.value)), new Tuple(v5, togglePointStyle(v)(Select_OuterRight_PointStyle.value))]);
+                return fromFoldable6([new Tuple(v2, toggleViewPointStyle(v)(Select_Inline_OuterLeft_And_InnerLeft_ViewPointStyle.value)), new Tuple(v4, toggleViewPointStyle(v)(Select_InnerRight_ViewPointStyle.value)), new Tuple(v5, toggleViewPointStyle(v)(Select_OuterRight_ViewPointStyle.value))]);
               }
               ;
               if (v1 && allEqual2([v4, v5])) {
-                return fromFoldable6([new Tuple(v2, togglePointStyle(v)(Select_OuterLeft_PointStyle.value)), new Tuple(v3, togglePointStyle(v)(Select_InnerLeft_PointStyle.value)), new Tuple(v4, togglePointStyle(v)(Select_Inline_InnerRight_And_OuterRight_PointStyle.value))]);
+                return fromFoldable6([new Tuple(v2, toggleViewPointStyle(v)(Select_OuterLeft_ViewPointStyle.value)), new Tuple(v3, toggleViewPointStyle(v)(Select_InnerLeft_ViewPointStyle.value)), new Tuple(v4, toggleViewPointStyle(v)(Select_Inline_InnerRight_And_OuterRight_ViewPointStyle.value))]);
               }
               ;
               if (allEqual2([v2, v3])) {
-                return fromFoldable6([new Tuple(v2, togglePointStyle(v)(Select_OuterLeft_And_InnerLeft_PointStyle.value)), new Tuple(v4, togglePointStyle(v)(Select_InnerRight_PointStyle.value)), new Tuple(v5, togglePointStyle(v)(Select_OuterRight_PointStyle.value))]);
+                return fromFoldable6([new Tuple(v2, toggleViewPointStyle(v)(Select_OuterLeft_And_InnerLeft_ViewPointStyle.value)), new Tuple(v4, toggleViewPointStyle(v)(Select_InnerRight_ViewPointStyle.value)), new Tuple(v5, toggleViewPointStyle(v)(Select_OuterRight_ViewPointStyle.value))]);
               }
               ;
               if (allEqual2([v4, v5])) {
-                return fromFoldable6([new Tuple(v2, togglePointStyle(v)(Select_OuterLeft_PointStyle.value)), new Tuple(v3, togglePointStyle(v)(Select_InnerLeft_PointStyle.value)), new Tuple(v4, togglePointStyle(v)(Select_InnerRight_And_OuterRight_PointStyle.value))]);
+                return fromFoldable6([new Tuple(v2, toggleViewPointStyle(v)(Select_OuterLeft_ViewPointStyle.value)), new Tuple(v3, toggleViewPointStyle(v)(Select_InnerLeft_ViewPointStyle.value)), new Tuple(v4, toggleViewPointStyle(v)(Select_InnerRight_And_OuterRight_ViewPointStyle.value))]);
               }
               ;
               if (allEqual2([v3, v4])) {
-                return fromFoldable6([new Tuple(v2, togglePointStyle(v)(Select_OuterLeft_PointStyle.value)), new Tuple(v3, togglePointStyle(v)(Select_InnerLeft_And_InnerRight_PointStyle.value)), new Tuple(v5, togglePointStyle(v)(Select_OuterRight_PointStyle.value))]);
+                return fromFoldable6([new Tuple(v2, toggleViewPointStyle(v)(Select_OuterLeft_ViewPointStyle.value)), new Tuple(v3, toggleViewPointStyle(v)(Select_InnerLeft_And_InnerRight_ViewPointStyle.value)), new Tuple(v5, toggleViewPointStyle(v)(Select_OuterRight_ViewPointStyle.value))]);
               }
               ;
-              return fromFoldable6([new Tuple(v2, togglePointStyle(v)(Select_OuterLeft_PointStyle.value)), new Tuple(v3, togglePointStyle(v)(Select_InnerLeft_PointStyle.value)), new Tuple(v4, togglePointStyle(v)(Select_InnerRight_PointStyle.value)), new Tuple(v5, togglePointStyle(v)(Select_OuterRight_PointStyle.value))]);
+              return fromFoldable6([new Tuple(v2, toggleViewPointStyle(v)(Select_OuterLeft_ViewPointStyle.value)), new Tuple(v3, toggleViewPointStyle(v)(Select_InnerLeft_ViewPointStyle.value)), new Tuple(v4, toggleViewPointStyle(v)(Select_InnerRight_ViewPointStyle.value)), new Tuple(v5, toggleViewPointStyle(v)(Select_OuterRight_ViewPointStyle.value))]);
             };
           };
         };
       };
     };
   };
-  var toggleHandlePointStyles = function(active) {
+  var toggleHandleViewPointStyles = function(active) {
     return function(v) {
       var v1 = getHandlePoints(v);
-      return toggleHandlePointStyles_helper(active)(eq6(v.value3)(Nil.value))(v1.value0)(v1.value1.value0)(v1.value1.value1.value0)(v1.value1.value1.value1);
+      return toggleHandleViewPointStyles_helper(active)(eq6(v.value3)(Nil.value))(v1.value0)(v1.value1.value0)(v1.value1.value1.value0)(v1.value1.value1.value1);
     };
   };
   var setHandle = function(h) {
-    return bind7(map110(toggleHandlePointStyles(false))(gets2(function(v) {
+    return bind7(map110(toggleHandleViewPointStyles(false))(gets2(function(v) {
       return v.handle;
     })))(function(ps1) {
       return discard13(modify_5(function(v) {
-        var $322 = {};
-        for (var $323 in v) {
-          if ({}.hasOwnProperty.call(v, $323)) {
-            $322[$323] = v[$323];
+        var $321 = {};
+        for (var $322 in v) {
+          if ({}.hasOwnProperty.call(v, $322)) {
+            $321[$322] = v[$322];
           }
           ;
         }
         ;
-        $322.handle = h;
-        return $322;
+        $321.handle = h;
+        return $321;
       }))(function() {
         var v = getHandlePoints(h);
         return discard13(lift5(traceEngineM("Editor . Drag")(list([text6("p_OL = " + show13(v.value0)), text6("p_IL = " + show13(v.value1.value0)), text6("p_IR = " + show13(v.value1.value1.value0)), text6("p_OR = " + show13(v.value1.value1.value1))]))))(function() {
-          var ps2 = toggleHandlePointStyles(true)(h);
-          return discard13(togglePointStyles(unionWith2(forget)(ps1)(ps2)))(function() {
+          var ps2 = toggleHandleViewPointStyles(true)(h);
+          return discard13(toggleViewPointStyles(unionWith2(forget)(ps1)(ps2)))(function() {
             return pure16(unit);
           });
         });
@@ -11108,49 +11065,22 @@
             });
           }
           ;
-          throw new Error("Failed pattern match at Ui.Editor (line 314, column 32 - line 335, column 21): " + [v1.constructor.name]);
+          throw new Error("Failed pattern match at Ui.Editor (line 315, column 32 - line 336, column 21): " + [v1.constructor.name]);
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 312, column 33 - line 335, column 21): " + [v.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 313, column 33 - line 336, column 21): " + [v.constructor.name]);
       });
     });
   };
-  var ping_ViewExpr = /* @__PURE__ */ discard13(/* @__PURE__ */ modify_5(function(v) {
-    var $336 = {};
-    for (var $337 in v) {
-      if ({}.hasOwnProperty.call(v, $337)) {
-        $336[$337] = v[$337];
-      }
-      ;
-    }
-    ;
-    $336.ping = true;
-    return $336;
-  }))(function() {
-    return discard13(liftAff2(delay(500)))(function() {
-      return modify_5(function(v) {
-        var $339 = {};
-        for (var $340 in v) {
-          if ({}.hasOwnProperty.call(v, $340)) {
-            $339[$340] = v[$340];
-          }
-          ;
-        }
-        ;
-        $339.ping = false;
-        return $339;
-      });
-    });
-  });
+  var initialViewPointStyle = function(_input) {
+    return {
+      style: Plain_ViewPointStyle.value
+    };
+  };
   var initialViewExprState = function(v) {
     return {
       expr: v.expr,
       ping: false
-    };
-  };
-  var initialPointStyle = function(_input) {
-    return {
-      style: Plain_PointStyle.value
     };
   };
   var initialEngineState = function(input3) {
@@ -11167,6 +11097,157 @@
       return pure16(v.value1);
     });
   };
+  var handleViewPointAction = function(v) {
+    if (v instanceof Initialize_ViewPointAction) {
+      return pure16(unit);
+    }
+    ;
+    if (v instanceof Receive_ViewPointAction) {
+      return bind7(get3)(function(state3) {
+        var state$prime = initialViewPointStyle(v.value0);
+        return when5(notEq1(state$prime)(state3))(put2(state$prime));
+      });
+    }
+    ;
+    if (v instanceof ViewPointInteraction_ViewPointAction) {
+      return lift5(raise(new ViewPointInteraction(v.value0)));
+    }
+    ;
+    throw new Error("Failed pattern match at Ui.Editor (line 694, column 1 - line 694, column 61): " + [v.constructor.name]);
+  };
+  var point_component = /* @__PURE__ */ function() {
+    var render = function(state3) {
+      return div2([classes2(fold4([["Point"], function() {
+        if (state3.style instanceof Plain_ViewPointStyle) {
+          return [];
+        }
+        ;
+        if (state3.style instanceof Cursor_Point_ViewPointStyle) {
+          return ["Cursor_Point"];
+        }
+        ;
+        if (state3.style instanceof Cursor_Left_ViewPointStyle) {
+          return ["Cursor_Left"];
+        }
+        ;
+        if (state3.style instanceof Cursor_Right_ViewPointStyle) {
+          return ["Cursor_Right"];
+        }
+        ;
+        if (state3.style instanceof Select_OuterRight_ViewPointStyle) {
+          return ["Select_OuterRight"];
+        }
+        ;
+        if (state3.style instanceof Select_InnerLeft_ViewPointStyle) {
+          return ["Select_InnerLeft"];
+        }
+        ;
+        if (state3.style instanceof Select_InnerRight_ViewPointStyle) {
+          return ["Select_InnerRight"];
+        }
+        ;
+        if (state3.style instanceof Select_OuterLeft_ViewPointStyle) {
+          return ["Select_OuterLeft"];
+        }
+        ;
+        if (state3.style instanceof Select_Inline_InnerLeft_And_InnerRight_ViewPointStyle) {
+          return ["Select_Inline_InnerLeft_And_InnerRight"];
+        }
+        ;
+        if (state3.style instanceof Select_Inline_OuterLeft_And_InnerLeft_ViewPointStyle) {
+          return ["Select_Inline_OuterLeft_And_InnerLeft"];
+        }
+        ;
+        if (state3.style instanceof Select_Inline_InnerRight_And_OuterRight_ViewPointStyle) {
+          return ["Select_Inline_InnerRight_And_OuterRight"];
+        }
+        ;
+        if (state3.style instanceof Select_OuterLeft_And_InnerLeft_ViewPointStyle) {
+          return ["Select_OuterLeft_And_InnerLeft"];
+        }
+        ;
+        if (state3.style instanceof Select_InnerRight_And_OuterRight_ViewPointStyle) {
+          return ["Select_InnerRight_And_OuterRight"];
+        }
+        ;
+        if (state3.style instanceof Select_InnerLeft_And_InnerRight_ViewPointStyle) {
+          return ["Select_InnerLeft_And_InnerRight"];
+        }
+        ;
+        throw new Error("Failed pattern match at Ui.Editor (line 663, column 13 - line 677, column 102): " + [state3.style.constructor.name]);
+      }()])), onMouseDown(function($510) {
+        return ViewPointInteraction_ViewPointAction.create(StartDrag_ViewPointInteraction.create($510));
+      }), onMouseEnter(function($511) {
+        return ViewPointInteraction_ViewPointAction.create(MidDrag_ViewPointInteraction.create($511));
+      })])([text6(" ")]);
+    };
+    var $$eval = mkEval({
+      finalize: defaultEval.finalize,
+      initialize: pure17(Initialize_ViewPointAction.value),
+      receive: function($512) {
+        return pure17(Receive_ViewPointAction.create($512));
+      },
+      handleQuery: function(query32) {
+        return bind16(get1)(function(state3) {
+          return bind16(runExceptT(handleViewPointQuery(query32)))(function(v1) {
+            if (v1 instanceof Left) {
+              return discard24(put1(state3))(function() {
+                return discard24(function() {
+                  if (v1.value0 instanceof Nothing) {
+                    return pure24(unit);
+                  }
+                  ;
+                  if (v1.value0 instanceof Just) {
+                    return traceViewPointM("Editor . Point . Error")(v1.value0.value0);
+                  }
+                  ;
+                  throw new Error("Failed pattern match at Ui.Editor (line 643, column 13 - line 645, column 71): " + [v1.value0.constructor.name]);
+                }())(function() {
+                  return pure24(none3);
+                });
+              });
+            }
+            ;
+            if (v1 instanceof Right) {
+              return pure24(pure17(v1.value0));
+            }
+            ;
+            throw new Error("Failed pattern match at Ui.Editor (line 640, column 53 - line 647, column 35): " + [v1.constructor.name]);
+          });
+        });
+      },
+      handleAction: function(action2) {
+        return bind16(get1)(function(state3) {
+          return bind16(runExceptT(handleViewPointAction(action2)))(function(v1) {
+            if (v1 instanceof Left) {
+              return discard24(put1(state3))(function() {
+                if (v1.value0 instanceof Nothing) {
+                  return pure24(unit);
+                }
+                ;
+                if (v1.value0 instanceof Just) {
+                  return traceViewPointM("Editor . Point . Error")(v1.value0.value0);
+                }
+                ;
+                throw new Error("Failed pattern match at Ui.Editor (line 653, column 13 - line 655, column 71): " + [v1.value0.constructor.name]);
+              });
+            }
+            ;
+            if (v1 instanceof Right) {
+              return pure24(v1.value0);
+            }
+            ;
+            throw new Error("Failed pattern match at Ui.Editor (line 650, column 55 - line 656, column 30): " + [v1.constructor.name]);
+          });
+        });
+      }
+    });
+    return mkComponent({
+      initialState: initialViewPointStyle,
+      "eval": $$eval,
+      render
+    });
+  }();
   var handleViewExprAction = function(v) {
     if (v instanceof Initialize_ViewExprAction) {
       return pure16(unit);
@@ -11175,10 +11256,8 @@
     if (v instanceof Receive_ViewExprAction) {
       return bind7(get3)(function(state3) {
         var state$prime = initialViewExprState(v.value0);
-        return when5(notEq2(state3)(state$prime))(discard13(lift5(traceViewExprM("Editor . ViewExpr")(column([text6("receive"), list([span5([text6("expr' = "), code3(show23(state$prime.expr))])])]))))(function() {
-          return discard13(put2(state$prime))(function() {
-            return ping_ViewExpr;
-          });
+        return when5(notEq2(state3)(state$prime))(discard13(put2(state$prime))(function() {
+          return pure16(unit);
         }));
       });
     }
@@ -11201,7 +11280,7 @@
           return liftEffect7(stopPropagation(toEvent(v.value0.value0)));
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 550, column 3 - line 553, column 100): " + [v.value0.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 555, column 3 - line 558, column 100): " + [v.value0.constructor.name]);
       }())(function() {
         return discard13(lift5(raise(new Tuple(Nil.value, new ExprInteraction(v.value0)))))(function() {
           return pure16(unit);
@@ -11209,27 +11288,27 @@
       });
     }
     ;
-    if (v instanceof PointOutput_ViewExprAction && v.value1 instanceof Output_PointOutput) {
+    if (v instanceof ViewPointOutput_ViewExprAction && v.value1 instanceof Output_ViewPointOutput) {
       return lift5(raise(new Tuple(Nil.value, new Output_ViewExprOutput(v.value1.value0))));
     }
     ;
-    if (v instanceof PointOutput_ViewExprAction && v.value1 instanceof PointInteraction) {
+    if (v instanceof ViewPointOutput_ViewExprAction && v.value1 instanceof ViewPointInteraction) {
       return discard13(function() {
-        if (v.value1.value0 instanceof StartDrag_PointInteraction) {
+        if (v.value1.value0 instanceof StartDrag_ViewPointInteraction) {
           return liftEffect7(stopPropagation(toEvent(v.value1.value0.value0)));
         }
         ;
-        if (v.value1.value0 instanceof MidDrag_PointInteraction) {
+        if (v.value1.value0 instanceof MidDrag_ViewPointInteraction) {
           return liftEffect7(stopPropagation(toEvent(v.value1.value0.value0)));
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 561, column 3 - line 563, column 102): " + [v.value1.value0.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 566, column 3 - line 568, column 106): " + [v.value1.value0.constructor.name]);
       }())(function() {
-        return lift5(raise(new Tuple(Nil.value, new PointInteraction_ViewExprOutput(v.value0, v.value1.value0))));
+        return lift5(raise(new Tuple(Nil.value, new ViewPointInteraction_ViewExprOutput(v.value0, v.value1.value0))));
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 532, column 1 - line 532, column 58): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 536, column 1 - line 536, column 58): " + [v.constructor.name]);
   };
   var handleSingleViewExprQuery = function(v) {
     if (v.value1 instanceof Modify_ViewExprQuery) {
@@ -11246,11 +11325,11 @@
           return pure16(v1.value0);
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 528, column 44 - line 530, column 23): " + [v1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 532, column 44 - line 534, column 23): " + [v1.constructor.name]);
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor (line 524, column 1 - line 524, column 68): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor (line 528, column 1 - line 528, column 68): " + [v.constructor.name]);
   };
   var handleViewExprQuery = function(v) {
     var qss = sortEquivalenceClasses(function(v1) {
@@ -11277,191 +11356,40 @@
             return pure16(v2.value0);
           }
           ;
-          throw new Error("Failed pattern match at Ui.Editor (line 519, column 50 - line 521, column 29): " + [v2.constructor.name]);
+          throw new Error("Failed pattern match at Ui.Editor (line 523, column 50 - line 525, column 29): " + [v2.constructor.name]);
         });
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 515, column 5 - line 521, column 29): " + [v1.value0.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 519, column 5 - line 525, column 29): " + [v1.value0.constructor.name]);
     })(qss))(function() {
       return pure16(v.value1);
     });
   };
-  var handlePointAction = function(v) {
-    if (v instanceof Initialize_PointAction) {
-      return pure16(unit);
-    }
-    ;
-    if (v instanceof Receive_PointAction) {
-      return bind7(get3)(function(state3) {
-        var state$prime = initialPointStyle(v.value0);
-        return when5(notEq1(state$prime)(state3))(put2(state$prime));
-      });
-    }
-    ;
-    if (v instanceof PointInteraction_PointAction) {
-      return lift5(raise(new PointInteraction(v.value0)));
-    }
-    ;
-    throw new Error("Failed pattern match at Ui.Editor (line 688, column 1 - line 688, column 49): " + [v.constructor.name]);
-  };
-  var point_component = /* @__PURE__ */ function() {
-    var render = function(state3) {
-      return div2([classes2(fold4([["Point"], function() {
-        if (state3.style instanceof Plain_PointStyle) {
-          return [];
-        }
-        ;
-        if (state3.style instanceof Cursor_Point_PointStyle) {
-          return ["Cursor_Point"];
-        }
-        ;
-        if (state3.style instanceof Cursor_Left_PointStyle) {
-          return ["Cursor_Left"];
-        }
-        ;
-        if (state3.style instanceof Cursor_Right_PointStyle) {
-          return ["Cursor_Right"];
-        }
-        ;
-        if (state3.style instanceof Select_OuterRight_PointStyle) {
-          return ["Select_OuterRight"];
-        }
-        ;
-        if (state3.style instanceof Select_InnerLeft_PointStyle) {
-          return ["Select_InnerLeft"];
-        }
-        ;
-        if (state3.style instanceof Select_InnerRight_PointStyle) {
-          return ["Select_InnerRight"];
-        }
-        ;
-        if (state3.style instanceof Select_OuterLeft_PointStyle) {
-          return ["Select_OuterLeft"];
-        }
-        ;
-        if (state3.style instanceof Select_Inline_InnerLeft_And_InnerRight_PointStyle) {
-          return ["Select_Inline_InnerLeft_And_InnerRight"];
-        }
-        ;
-        if (state3.style instanceof Select_Inline_OuterLeft_And_InnerLeft_PointStyle) {
-          return ["Select_Inline_OuterLeft_And_InnerLeft"];
-        }
-        ;
-        if (state3.style instanceof Select_Inline_InnerRight_And_OuterRight_PointStyle) {
-          return ["Select_Inline_InnerRight_And_OuterRight"];
-        }
-        ;
-        if (state3.style instanceof Select_OuterLeft_And_InnerLeft_PointStyle) {
-          return ["Select_OuterLeft_And_InnerLeft"];
-        }
-        ;
-        if (state3.style instanceof Select_InnerRight_And_OuterRight_PointStyle) {
-          return ["Select_InnerRight_And_OuterRight"];
-        }
-        ;
-        if (state3.style instanceof Select_InnerLeft_And_InnerRight_PointStyle) {
-          return ["Select_InnerLeft_And_InnerRight"];
-        }
-        ;
-        throw new Error("Failed pattern match at Ui.Editor (line 657, column 13 - line 671, column 98): " + [state3.style.constructor.name]);
-      }()])), onMouseDown(function($513) {
-        return PointInteraction_PointAction.create(StartDrag_PointInteraction.create($513));
-      }), onMouseEnter(function($514) {
-        return PointInteraction_PointAction.create(MidDrag_PointInteraction.create($514));
-      })])([text6(" ")]);
-    };
-    var $$eval = mkEval({
-      finalize: defaultEval.finalize,
-      initialize: pure17(Initialize_PointAction.value),
-      receive: function($515) {
-        return pure17(Receive_PointAction.create($515));
-      },
-      handleQuery: function(query32) {
-        return bind16(get1)(function(state3) {
-          return bind16(runExceptT(handleViewPointQuery(query32)))(function(v1) {
-            if (v1 instanceof Left) {
-              return discard24(put1(state3))(function() {
-                return discard24(function() {
-                  if (v1.value0 instanceof Nothing) {
-                    return pure24(unit);
-                  }
-                  ;
-                  if (v1.value0 instanceof Just) {
-                    return tracePointM("Editor . Point . Error")(v1.value0.value0);
-                  }
-                  ;
-                  throw new Error("Failed pattern match at Ui.Editor (line 637, column 13 - line 639, column 67): " + [v1.value0.constructor.name]);
-                }())(function() {
-                  return pure24(none3);
-                });
-              });
-            }
-            ;
-            if (v1 instanceof Right) {
-              return pure24(pure17(v1.value0));
-            }
-            ;
-            throw new Error("Failed pattern match at Ui.Editor (line 634, column 53 - line 641, column 35): " + [v1.constructor.name]);
-          });
-        });
-      },
-      handleAction: function(action2) {
-        return bind16(get1)(function(state3) {
-          return bind16(runExceptT(handlePointAction(action2)))(function(v1) {
-            if (v1 instanceof Left) {
-              return discard24(put1(state3))(function() {
-                if (v1.value0 instanceof Nothing) {
-                  return pure24(unit);
-                }
-                ;
-                if (v1.value0 instanceof Just) {
-                  return tracePointM("Editor . Point . Error")(v1.value0.value0);
-                }
-                ;
-                throw new Error("Failed pattern match at Ui.Editor (line 647, column 13 - line 649, column 67): " + [v1.value0.constructor.name]);
-              });
-            }
-            ;
-            if (v1 instanceof Right) {
-              return pure24(v1.value0);
-            }
-            ;
-            throw new Error("Failed pattern match at Ui.Editor (line 644, column 51 - line 650, column 30): " + [v1.constructor.name]);
-          });
-        });
-      }
-    });
-    return mkComponent({
-      initialState: initialPointStyle,
-      "eval": $$eval,
-      render
-    });
-  }();
   var $lazy_viewExpr_component = /* @__PURE__ */ $runtime_lazy10("viewExpr_component", "Ui.Editor", function() {
-    var render = function(v) {
+    var render = function(state3) {
       return div2([classes(fold4([["Expr"], function() {
-        if (v.ping) {
+        if (state3.ping) {
           return ["ping"];
         }
         ;
         return [];
       }()]))])(fold4([[div2([classes(["ExprLabel"])])([function() {
-        if (v.expr.value0 instanceof $$String) {
-          return text6(v.expr.value0.value0);
+        if (state3.expr.value0 instanceof $$String) {
+          return text6(state3.expr.value0.value0);
         }
         ;
-        if (v.expr.value0 instanceof Root) {
+        if (state3.expr.value0 instanceof Root) {
           return text6("root");
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor (line 479, column 19 - line 481, column 45): " + [v.expr.value0.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor (line 483, column 21 - line 485, column 47): " + [state3.expr.value0.constructor.name]);
       }()])], function() {
         var renderPoint = function(i2) {
-          return slot1($$Proxy.value)(i2)(point_component)({})(PointOutput_ViewExprAction.create(i2));
+          return slot1($$Proxy.value)(i2)(point_component)({})(ViewPointOutput_ViewExprAction.create(i2));
         };
         var renderKid = function(i2) {
           return function(e) {
-            return slot3($$Proxy.value)(i2)($lazy_viewExpr_component(490))({
+            return slot3($$Proxy.value)(i2)($lazy_viewExpr_component(494))({
               expr: e
             })(ViewExprOutput_ViewExprAction.create(i2));
           };
@@ -11470,14 +11398,14 @@
           return function(e) {
             return [renderPoint(i2), renderKid(i2)(e)];
           };
-        })(v.expr.value1), [renderPoint(length(v.expr.value1))]]);
+        })(state3.expr.value1), [renderPoint(length(state3.expr.value1))]]);
       }()]));
     };
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(Initialize_ViewExprAction.value),
-      receive: function($516) {
-        return pure17(Receive_ViewExprAction.create($516));
+      receive: function($513) {
+        return pure17(Receive_ViewExprAction.create($513));
       },
       handleQuery: function(query32) {
         return bind16(get1)(function(state3) {
@@ -11493,7 +11421,7 @@
                     return traceViewExprM("Editor . Expr . Error")(v1.value0.value0);
                   }
                   ;
-                  throw new Error("Failed pattern match at Ui.Editor (line 455, column 13 - line 457, column 69): " + [v1.value0.constructor.name]);
+                  throw new Error("Failed pattern match at Ui.Editor (line 456, column 13 - line 458, column 69): " + [v1.value0.constructor.name]);
                 }())(function() {
                   return pure24(none3);
                 });
@@ -11504,7 +11432,7 @@
               return pure24(pure17(v1.value0));
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 452, column 52 - line 459, column 35): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 453, column 52 - line 460, column 35): " + [v1.constructor.name]);
           });
         });
       },
@@ -11521,7 +11449,7 @@
                   return traceViewExprM("Editor . Expr . Error")(v1.value0.value0);
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.Editor (line 464, column 13 - line 466, column 69): " + [v1.value0.constructor.name]);
+                throw new Error("Failed pattern match at Ui.Editor (line 465, column 13 - line 467, column 69): " + [v1.value0.constructor.name]);
               }())(function() {
                 return put1(state3);
               });
@@ -11531,7 +11459,7 @@
               return pure24(v1.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor (line 462, column 54 - line 468, column 30): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor (line 463, column 54 - line 469, column 30): " + [v1.constructor.name]);
           });
         });
       }
@@ -11542,11 +11470,11 @@
       render
     });
   });
-  var viewExpr_component = /* @__PURE__ */ $lazy_viewExpr_component(444);
+  var viewExpr_component = /* @__PURE__ */ $lazy_viewExpr_component(445);
   var handleEngineQuery = function(v) {
     if (v instanceof ExprInteraction_EngineQuery) {
       if (v.value1 instanceof Click_ViewExprAction) {
-        return discard13(lift5(traceEngineM("Engine")(text6("got Click from Expr at " + show32("TODO: (Array.fromFoldable is)")))))(function() {
+        return discard13(lift5(traceEngineM("Engine")(text6("got Click from Expr at " + show23("TODO: (Array.fromFoldable is)")))))(function() {
           return discard13(function() {
             var v1 = unsnoc_Path(v.value0);
             if (v1 instanceof Nothing) {
@@ -11581,16 +11509,16 @@
               }))(function(h) {
                 var h$prime = getDragOrigin(h)(p2);
                 return discard13(modify_5(function(v2) {
-                  var $440 = {};
-                  for (var $441 in v2) {
-                    if ({}.hasOwnProperty.call(v2, $441)) {
-                      $440[$441] = v2[$441];
+                  var $437 = {};
+                  for (var $438 in v2) {
+                    if ({}.hasOwnProperty.call(v2, $438)) {
+                      $437[$438] = v2[$438];
                     }
                     ;
                   }
                   ;
-                  $440.drag_origin_handle = new Just(h$prime);
-                  return $440;
+                  $437.drag_origin_handle = new Just(h$prime);
+                  return $437;
                 }))(function() {
                   return setHandle(h$prime);
                 });
@@ -11627,24 +11555,24 @@
       throw new Error("Failed pattern match at Ui.Editor (line 219, column 61 - line 249, column 11): " + [v.value1.constructor.name]);
     }
     ;
-    if (v instanceof PointInteraction_EngineQuery) {
-      if (v.value1 instanceof StartDrag_PointInteraction) {
+    if (v instanceof ViewPointInteraction_EngineQuery) {
+      if (v.value1 instanceof StartDrag_ViewPointInteraction) {
         return discard13(lift5(traceEngineM("Editor . Drag")(text6("got StartDrag from Point at " + show13(v.value0)))))(function() {
           return bind7(gets2(function(v1) {
             return v1.handle;
           }))(function(h) {
             var h$prime = getDragOrigin(h)(v.value0);
             return discard13(modify_5(function(v1) {
-              var $456 = {};
-              for (var $457 in v1) {
-                if ({}.hasOwnProperty.call(v1, $457)) {
-                  $456[$457] = v1[$457];
+              var $453 = {};
+              for (var $454 in v1) {
+                if ({}.hasOwnProperty.call(v1, $454)) {
+                  $453[$454] = v1[$454];
                 }
                 ;
               }
               ;
-              $456.drag_origin_handle = new Just(h$prime);
-              return $456;
+              $453.drag_origin_handle = new Just(h$prime);
+              return $453;
             }))(function() {
               return discard13(setHandle(h$prime))(function() {
                 return pure16(v.value2);
@@ -11654,7 +11582,7 @@
         });
       }
       ;
-      if (v.value1 instanceof MidDrag_PointInteraction) {
+      if (v.value1 instanceof MidDrag_ViewPointInteraction) {
         return discard13(lift5(traceEngineM("Editor . Drag")(text6("got MidDrag from Point at " + show13(v.value0)))))(function() {
           return discard13(updateDragToPoint(v.value0))(function() {
             return pure16(v.value2);
@@ -11662,22 +11590,22 @@
         });
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 250, column 59 - line 261, column 11): " + [v.value1.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 250, column 63 - line 261, column 11): " + [v.value1.constructor.name]);
     }
     ;
     if (v instanceof EndDrag_EngineQuery) {
       return discard13(lift5(traceEngineM("Editor . Drag")(text6("got EndDrag"))))(function() {
         return discard13(modify_5(function(v1) {
-          var $464 = {};
-          for (var $465 in v1) {
-            if ({}.hasOwnProperty.call(v1, $465)) {
-              $464[$465] = v1[$465];
+          var $461 = {};
+          for (var $462 in v1) {
+            if ({}.hasOwnProperty.call(v1, $462)) {
+              $461[$462] = v1[$462];
             }
             ;
           }
           ;
-          $464.drag_origin_handle = Nothing.value;
-          return $464;
+          $461.drag_origin_handle = Nothing.value;
+          return $461;
         }))(function() {
           return pure16(v.value0);
         });
@@ -11692,11 +11620,11 @@
         return bind7(liftEffect7(bindFlipped9(document)(windowImpl)))(function(doc) {
           return discard13(lift5(subscribe$prime(function(_subId) {
             return eventListener2(keydown)(toEventTarget(doc))(function() {
-              var $517 = map26(function($519) {
-                return Keyboard_EngineAction.create(fromKeyboardEventToKeyInfo($519));
+              var $514 = map26(function($516) {
+                return Keyboard_EngineAction.create(fromKeyboardEventToKeyInfo($516));
               });
-              return function($518) {
-                return $517(fromEvent($518));
+              return function($515) {
+                return $514(fromEvent($515));
               };
             }());
           })))(function() {
@@ -11707,19 +11635,17 @@
     }
     ;
     if (v instanceof Receive_EngineAction) {
-      return discard13(lift5(traceEngineM("Editor . Engine")(text6("receive"))))(function() {
-        return bind7(get3)(function(state3) {
-          return put2(function() {
-            var v1 = initialEngineState(v.value0);
-            return {
-              drag_origin_handle: v1.drag_origin_handle,
-              editor: v1.editor,
-              expr: v1.expr,
-              handle: v1.handle,
-              clipboard: state3.clipboard
-            };
-          }());
-        });
+      return bind7(get3)(function(state3) {
+        return put2(function() {
+          var v1 = initialEngineState(v.value0);
+          return {
+            drag_origin_handle: v1.drag_origin_handle,
+            editor: v1.editor,
+            expr: v1.expr,
+            handle: v1.handle,
+            clipboard: state3.clipboard
+          };
+        }());
       });
     }
     ;
@@ -11728,18 +11654,18 @@
         return discard13(function() {
           if (v.value0.cmd && v.value0.key === "c") {
             var frag = getFragment(v1.handle)(v1.expr);
-            return discard13(lift5(traceEngineM("Editor . Keyboard")(text6("copy: " + show42(frag)))))(function() {
+            return discard13(lift5(traceEngineM("Editor . Keyboard")(text6("copy: " + show32(frag)))))(function() {
               return discard13(modify_5(function(v22) {
-                var $472 = {};
-                for (var $473 in v22) {
-                  if ({}.hasOwnProperty.call(v22, $473)) {
-                    $472[$473] = v22[$473];
+                var $469 = {};
+                for (var $470 in v22) {
+                  if ({}.hasOwnProperty.call(v22, $470)) {
+                    $469[$470] = v22[$470];
                   }
                   ;
                 }
                 ;
-                $472.clipboard = pure17(frag);
-                return $472;
+                $469.clipboard = pure17(frag);
+                return $469;
               }))(function() {
                 return pure16(unit);
               });
@@ -11753,15 +11679,15 @@
           var v2 = function(v3) {
             return pure16(unit);
           };
-          var $476 = v.value0.cmd && v.value0.key === "v";
-          if ($476) {
+          var $473 = v.value0.cmd && v.value0.key === "v";
+          if ($473) {
             if (v1.clipboard instanceof Just && v1.clipboard.value0 instanceof Span_Fragment) {
-              var $478 = toPointHandle(v1.handle);
-              if ($478 instanceof Just) {
-                var expr$prime = insertAtPoint($478.value0)(v1.clipboard.value0.value0)(v1.expr);
-                return discard13(lift5(traceEngineM("Editor . Keyboard")(list([text6("paste"), span5([text6("expr  : "), code3(show23(v1.expr))]), span5([text6("span  : "), code3(show52(v1.clipboard.value0.value0))]), span5([text6("expr' : "), code3(show23(expr$prime))])]))))(function() {
+              var $475 = toPointHandle(v1.handle);
+              if ($475 instanceof Just) {
+                var expr$prime = insertAtPoint($475.value0)(v1.clipboard.value0.value0)(v1.expr);
+                return discard13(lift5(traceEngineM("Editor . Keyboard")(list([text6("paste"), span5([text6("expr  : "), code3(show42(v1.expr))]), span5([text6("span  : "), code3(show52(v1.clipboard.value0.value0))]), span5([text6("expr' : "), code3(show42(expr$prime))])]))))(function() {
                   return discard13(lift5(raise(new SetExpr_EngineOutput(expr$prime))))(function() {
-                    return setHandle(mkPointHandle(new Point(getPath($478.value0), add2(getIndex($478.value0))(1))));
+                    return setHandle(mkPointHandle(new Point(getPath($475.value0), add2(getIndex($475.value0))(1))));
                   });
                 });
               }
@@ -11809,16 +11735,16 @@
       ;
       if (v.value0 instanceof SetExpr_EngineOutput) {
         return modify_5(function(v1) {
-          var $491 = {};
-          for (var $492 in v1) {
-            if ({}.hasOwnProperty.call(v1, $492)) {
-              $491[$492] = v1[$492];
+          var $488 = {};
+          for (var $489 in v1) {
+            if ({}.hasOwnProperty.call(v1, $489)) {
+              $488[$489] = v1[$489];
             }
             ;
           }
           ;
-          $491.expr = v.value0.value0;
-          return $491;
+          $488.expr = v.value0.value0;
+          return $488;
         });
       }
       ;
@@ -11834,11 +11760,11 @@
         return lift5(tell1($$Proxy.value)(unit)(ExprInteraction_EngineQuery.create(v.value0.value0)(v.value0.value1.value0)));
       }
       ;
-      if (v.value0.value1 instanceof PointInteraction_ViewExprOutput) {
-        return lift5(tell1($$Proxy.value)(unit)(PointInteraction_EngineQuery.create(new Point(v.value0.value0, v.value0.value1.value0))(v.value0.value1.value1)));
+      if (v.value0.value1 instanceof ViewPointInteraction_ViewExprOutput) {
+        return lift5(tell1($$Proxy.value)(unit)(ViewPointInteraction_EngineQuery.create(new Point(v.value0.value0, v.value0.value1.value0))(v.value0.value1.value1)));
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor (line 136, column 51 - line 142, column 93): " + [v.value0.value1.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor (line 136, column 51 - line 142, column 97): " + [v.value0.value1.constructor.name]);
     }
     ;
     throw new Error("Failed pattern match at Ui.Editor (line 124, column 1 - line 124, column 34): " + [v.constructor.name]);
@@ -11848,8 +11774,8 @@
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(Initialize_EngineAction.value),
-      receive: function($520) {
-        return pure17(Receive_EngineAction.create($520));
+      receive: function($517) {
+        return pure17(Receive_EngineAction.create($517));
       },
       handleQuery: function(query32) {
         return bind16(get1)(function(state3) {

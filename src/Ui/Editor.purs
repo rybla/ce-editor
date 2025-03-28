@@ -138,8 +138,8 @@ handleAction (ViewExprOutput_Action (is /\ eo)) = case eo of
     H.raise o # lift
   ExprInteraction pi -> do
     lift $ H.tell (Proxy @"Engine") unit (ExprInteraction_EngineQuery is pi)
-  PointInteraction_ViewExprOutput i pi ->
-    lift $ H.tell (Proxy @"Engine") unit (PointInteraction_EngineQuery (Expr.Point is i) pi)
+  ViewPointInteraction_ViewExprOutput i pi ->
+    lift $ H.tell (Proxy @"Engine") unit (ViewPointInteraction_EngineQuery (Expr.Point is i) pi)
 
 --------------------------------------------------------------------------------
 -- Engine
@@ -147,7 +147,7 @@ handleAction (ViewExprOutput_Action (is /\ eo)) = case eo of
 
 data EngineQuery a
   = ExprInteraction_EngineQuery Expr.Path ExprInteraction a
-  | PointInteraction_EngineQuery Expr.Point PointInteraction a
+  | ViewPointInteraction_EngineQuery Expr.Point ViewPointInteraction a
   | EndDrag_EngineQuery a
 
 type EngineInput =
@@ -247,15 +247,15 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
         lift $ traceEngineM "Editor . Drag" $ text $ "got MidDrag from Expr at " <> show p
         updateDragToPoint p
     pure a
-handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
-  StartDrag_PointInteraction _event -> do
+handleEngineQuery (ViewPointInteraction_EngineQuery p pi a) = case pi of
+  StartDrag_ViewPointInteraction _event -> do
     lift $ traceEngineM "Editor . Drag" $ text $ "got StartDrag from Point at " <> show p
     h <- gets _.handle
     let h' = Expr.getDragOrigin h p
     modify_ _ { drag_origin_handle = Just h' }
     setHandle h'
     pure a
-  MidDrag_PointInteraction _event -> do
+  MidDrag_ViewPointInteraction _event -> do
     lift $ traceEngineM "Editor . Drag" $ text $ "got MidDrag from Point at " <> show p
     updateDragToPoint p
     pure a
@@ -275,9 +275,10 @@ handleEngineAction Initialize_EngineAction = do
       (KeyboardEvent.fromEvent >>> map (fromKeyboardEventToKeyInfo >>> Keyboard_EngineAction))
   pure unit
 handleEngineAction (Receive_EngineAction input) = do
-  lift $ traceEngineM "Editor . Engine" $ text "receive"
+  -- lift $ traceEngineM "Editor . Engine" $ text "receive"
   state <- get
   put $ (initialEngineState input)
+    -- preserve old clipboard
     { clipboard = state.clipboard }
 handleEngineAction (Keyboard_EngineAction ki) = do
   { handle, clipboard, expr } <- get
@@ -336,7 +337,7 @@ updateDragToPoint p = do
 
 setHandle :: Expr.Handle -> EngineM' Unit
 setHandle h = do
-  ps1 <- toggleHandlePointStyles false <$> gets _.handle
+  ps1 <- toggleHandleViewPointStyles false <$> gets _.handle
   modify_ _ { handle = h }
   let p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
   lift $ traceEngineM "Editor . Drag" $ list
@@ -345,40 +346,40 @@ setHandle h = do
     , text $ "p_IR = " <> show p_IR
     , text $ "p_OR = " <> show p_OR
     ]
-  let ps2 = toggleHandlePointStyles true h
-  togglePointStyles $ Map.unionWith forget ps1 ps2
+  let ps2 = toggleHandleViewPointStyles true h
+  toggleViewPointStyles $ Map.unionWith forget ps1 ps2
   pure unit
 
-toggleHandlePointStyles :: Boolean -> Expr.Handle -> Map Expr.Point PointStyle
-toggleHandlePointStyles active h@(Expr.Handle _ _ _ is_I _ _ _f) = toggleHandlePointStyles_helper active (is_I == Expr.Path Nil) p_OL p_IL p_IR p_OR
+toggleHandleViewPointStyles :: Boolean -> Expr.Handle -> Map Expr.Point ViewPointStyle
+toggleHandleViewPointStyles active h@(Expr.Handle _ _ _ is_I _ _ _f) = toggleHandleViewPointStyles_helper active (is_I == Expr.Path Nil) p_OL p_IL p_IR p_OR
   where
   p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
 
-toggleHandlePointStyles_helper :: Boolean -> Boolean -> Expr.Point -> Expr.Point -> Expr.Point -> Expr.Point -> Map Expr.Point PointStyle
+toggleHandleViewPointStyles_helper :: Boolean -> Boolean -> Expr.Point -> Expr.Point -> Expr.Point -> Expr.Point -> Map Expr.Point ViewPointStyle
 -- 
 -- Point
-toggleHandlePointStyles_helper active _inline p_OL_IL_IR_OR _p_IL _p_IR _p_OR | allEqual [ p_OL_IL_IR_OR, _p_IL, _p_IR, _p_OR ] = Map.fromFoldable [ p_OL_IL_IR_OR /\ togglePointStyle active Cursor_Point_PointStyle ]
+toggleHandleViewPointStyles_helper active _inline p_OL_IL_IR_OR _p_IL _p_IR _p_OR | allEqual [ p_OL_IL_IR_OR, _p_IL, _p_IR, _p_OR ] = Map.fromFoldable [ p_OL_IL_IR_OR /\ toggleViewPointStyle active Cursor_Point_ViewPointStyle ]
 -- 
 -- Cursor
-toggleHandlePointStyles_helper active _inline@true p_OL_IL_IR p_IL p_IR _p_OR | allEqual [ p_OL_IL_IR, p_IL, p_IR ] = Map.fromFoldable [ p_OL_IL_IR /\ togglePointStyle active Cursor_Left_PointStyle, _p_OR /\ togglePointStyle active Cursor_Right_PointStyle ]
-toggleHandlePointStyles_helper active _inline@true p_OL p_IL_IR_OR _p_IR _p_OR | allEqual [ p_IL_IR_OR, _p_IR, _p_OR ] = Map.fromFoldable [ p_OL /\ togglePointStyle active Cursor_Left_PointStyle, p_IL_IR_OR /\ togglePointStyle active Cursor_Right_PointStyle ]
+toggleHandleViewPointStyles_helper active _inline@true p_OL_IL_IR p_IL p_IR _p_OR | allEqual [ p_OL_IL_IR, p_IL, p_IR ] = Map.fromFoldable [ p_OL_IL_IR /\ toggleViewPointStyle active Cursor_Left_ViewPointStyle, _p_OR /\ toggleViewPointStyle active Cursor_Right_ViewPointStyle ]
+toggleHandleViewPointStyles_helper active _inline@true p_OL p_IL_IR_OR _p_IR _p_OR | allEqual [ p_IL_IR_OR, _p_IR, _p_OR ] = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Cursor_Left_ViewPointStyle, p_IL_IR_OR /\ toggleViewPointStyle active Cursor_Right_ViewPointStyle ]
 -- 
 -- Select
 --   - Select inline
-toggleHandlePointStyles_helper active _inline@true p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = Map.fromFoldable [ p_OL /\ togglePointStyle active Select_OuterLeft_PointStyle, p_IL_IR /\ togglePointStyle active Select_Inline_InnerLeft_And_InnerRight_PointStyle, p_OR /\ togglePointStyle active Select_OuterRight_PointStyle ]
-toggleHandlePointStyles_helper active _inline@true p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = Map.fromFoldable [ p_OL_IL /\ togglePointStyle active Select_Inline_OuterLeft_And_InnerLeft_PointStyle, p_IR /\ togglePointStyle active Select_InnerRight_PointStyle, p_OR /\ togglePointStyle active Select_OuterRight_PointStyle ]
-toggleHandlePointStyles_helper active _inline@true p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = Map.fromFoldable [ p_OL /\ togglePointStyle active Select_OuterLeft_PointStyle, p_IL /\ togglePointStyle active Select_InnerLeft_PointStyle, p_IR_OR /\ togglePointStyle active Select_Inline_InnerRight_And_OuterRight_PointStyle ]
+toggleHandleViewPointStyles_helper active _inline@true p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Select_OuterLeft_ViewPointStyle, p_IL_IR /\ toggleViewPointStyle active Select_Inline_InnerLeft_And_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Select_OuterRight_ViewPointStyle ]
+toggleHandleViewPointStyles_helper active _inline@true p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = Map.fromFoldable [ p_OL_IL /\ toggleViewPointStyle active Select_Inline_OuterLeft_And_InnerLeft_ViewPointStyle, p_IR /\ toggleViewPointStyle active Select_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Select_OuterRight_ViewPointStyle ]
+toggleHandleViewPointStyles_helper active _inline@true p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Select_OuterLeft_ViewPointStyle, p_IL /\ toggleViewPointStyle active Select_InnerLeft_ViewPointStyle, p_IR_OR /\ toggleViewPointStyle active Select_Inline_InnerRight_And_OuterRight_ViewPointStyle ]
 -- TODO: this is not a special case, right?
--- toggleHandlePointStyles_helper active inline p_OL p_IL p_IR p_OR | inline =  [ p_OL /\ togglePointStyle active Select_OuterLeft_PointStyle, p_IL /\ togglePointStyle active Select_InnerLeft_PointStyle, p_IR /\ togglePointStyle active Select_InnerRight_PointStyle, p_OR /\ togglePointStyle active Select_OuterRight_PointStyle ]
+-- toggleHandleViewPointStyles_helper active inline p_OL p_IL p_IR p_OR | inline =  [ p_OL /\ toggleViewPointStyle active Select_OuterLeft_ViewPointStyle, p_IL /\ toggleViewPointStyle active Select_InnerLeft_ViewPointStyle, p_IR /\ toggleViewPointStyle active Select_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Select_OuterRight_ViewPointStyle ]
 --   - Select not inline
-toggleHandlePointStyles_helper active _inline p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = Map.fromFoldable [ p_OL_IL /\ togglePointStyle active Select_OuterLeft_And_InnerLeft_PointStyle, p_IR /\ togglePointStyle active Select_InnerRight_PointStyle, p_OR /\ togglePointStyle active Select_OuterRight_PointStyle ]
-toggleHandlePointStyles_helper active _inline p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = Map.fromFoldable [ p_OL /\ togglePointStyle active Select_OuterLeft_PointStyle, p_IL /\ togglePointStyle active Select_InnerLeft_PointStyle, p_IR_OR /\ togglePointStyle active Select_InnerRight_And_OuterRight_PointStyle ]
-toggleHandlePointStyles_helper active _inline p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = Map.fromFoldable [ p_OL /\ togglePointStyle active Select_OuterLeft_PointStyle, p_IL_IR /\ togglePointStyle active Select_InnerLeft_And_InnerRight_PointStyle, p_OR /\ togglePointStyle active Select_OuterRight_PointStyle ]
+toggleHandleViewPointStyles_helper active _inline p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = Map.fromFoldable [ p_OL_IL /\ toggleViewPointStyle active Select_OuterLeft_And_InnerLeft_ViewPointStyle, p_IR /\ toggleViewPointStyle active Select_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Select_OuterRight_ViewPointStyle ]
+toggleHandleViewPointStyles_helper active _inline p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Select_OuterLeft_ViewPointStyle, p_IL /\ toggleViewPointStyle active Select_InnerLeft_ViewPointStyle, p_IR_OR /\ toggleViewPointStyle active Select_InnerRight_And_OuterRight_ViewPointStyle ]
+toggleHandleViewPointStyles_helper active _inline p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Select_OuterLeft_ViewPointStyle, p_IL_IR /\ toggleViewPointStyle active Select_InnerLeft_And_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Select_OuterRight_ViewPointStyle ]
 --   - Select normal
-toggleHandlePointStyles_helper active _inline p_OL p_IL p_IR p_OR = Map.fromFoldable [ p_OL /\ togglePointStyle active Select_OuterLeft_PointStyle, p_IL /\ togglePointStyle active Select_InnerLeft_PointStyle, p_IR /\ togglePointStyle active Select_InnerRight_PointStyle, p_OR /\ togglePointStyle active Select_OuterRight_PointStyle ]
+toggleHandleViewPointStyles_helper active _inline p_OL p_IL p_IR p_OR = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Select_OuterLeft_ViewPointStyle, p_IL /\ toggleViewPointStyle active Select_InnerLeft_ViewPointStyle, p_IR /\ toggleViewPointStyle active Select_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Select_OuterRight_ViewPointStyle ]
 
-togglePointStyles :: Map Expr.Point PointStyle -> EngineM' Unit
-togglePointStyles xs =
+toggleViewPointStyles :: Map Expr.Point ViewPointStyle -> EngineM' Unit
+toggleViewPointStyles xs =
   lift $ H.raise $
     ViewExprQuery_EngineOutput do
       ViewExprQuery $
@@ -386,11 +387,11 @@ togglePointStyles xs =
           # Map.toUnfoldable
           # NonEmptyArray.fromArray
           # fromMaybe' impossible
-          # map (\((Expr.Point is i) /\ s) -> SingleViewExprQuery is $ ViewPointQuery_ViewExprQuery i $ ModifyPointState (_ { style = s }) unit)
+          # map (\((Expr.Point is i) /\ s) -> SingleViewExprQuery is $ ViewPointQuery_ViewExprQuery i $ ModifyViewPointState (_ { style = s }) unit)
 
-togglePointStyle :: Boolean -> PointStyle -> PointStyle
-togglePointStyle false = const Plain_PointStyle
-togglePointStyle true = identity
+toggleViewPointStyle :: Boolean -> ViewPointStyle -> ViewPointStyle
+toggleViewPointStyle false = const Plain_ViewPointStyle
+toggleViewPointStyle true = identity
 
 --------------------------------------------------------------------------------
 -- Expr
@@ -418,11 +419,11 @@ data ViewExprAction
   | Receive_ViewExprAction ViewExprInput
   | ViewExprOutput_ViewExprAction Expr.Step ViewExprOutput
   | ExprInteraction_ViewExprAction ExprInteraction
-  | PointOutput_ViewExprAction Expr.Index PointOutput
+  | ViewPointOutput_ViewExprAction Expr.Index ViewPointOutput
 
 type ViewExprSlots =
   ( "Expr" :: H.Slot ViewExprQuery ViewExprOutput Expr.Step
-  , "Point" :: H.Slot ViewPointQuery PointOutput Expr.Index
+  , "Point" :: H.Slot ViewPointQuery ViewPointOutput Expr.Index
   )
 
 type ViewExprOutput = Expr.Path /\ ViewExprOutput'
@@ -430,7 +431,7 @@ type ViewExprOutput = Expr.Path /\ ViewExprOutput'
 data ViewExprOutput'
   = Output_ViewExprOutput Output
   | ExprInteraction ExprInteraction
-  | PointInteraction_ViewExprOutput Expr.Index PointInteraction
+  | ViewPointInteraction_ViewExprOutput Expr.Index ViewPointInteraction
 
 data ExprInteraction
   = Click_ViewExprAction MouseEvent
@@ -468,38 +469,41 @@ viewExpr_component = H.mkComponent { initialState: initialViewExprState, eval, r
           Right it -> pure it
     }
 
-  render { expr: Expr l es, ping } =
-    HH.div
-      [ HP.classes $ [ [ HH.ClassName "Expr" ], if ping then [ H.ClassName "ping" ] else [] ] # fold
-      -- , HE.onMouseDown (StartDrag_ViewExprAction >>> ExprInteraction_ViewExprAction)
-      -- , HE.onMouseMove (MidDrag_ViewExprAction >>> ExprInteraction_ViewExprAction)
-      ]
-      ( fold
-          [ [ HH.div [ HP.classes [ HH.ClassName "ExprLabel" ] ]
-                [ case l of
-                    Expr.String s -> text s
-                    Expr.Root -> text "root"
-                ]
+  render state =
+    let
+      Expr l es = state.expr
+    in
+      HH.div
+        [ HP.classes $ [ [ HH.ClassName "Expr" ], if state.ping then [ H.ClassName "ping" ] else [] ] # fold
+        -- , HE.onMouseDown (StartDrag_ViewExprAction >>> ExprInteraction_ViewExprAction)
+        -- , HE.onMouseMove (MidDrag_ViewExprAction >>> ExprInteraction_ViewExprAction)
+        ]
+        ( fold
+            [ [ HH.div [ HP.classes [ HH.ClassName "ExprLabel" ] ]
+                  [ case l of
+                      Expr.String s -> text s
+                      Expr.Root -> text "root"
+                  ]
+              ]
+            , let
+                renderPoint i =
+                  HH.slot (Proxy @"Point") i point_component
+                    {}
+                    (ViewPointOutput_ViewExprAction i)
+                renderKid i e =
+                  HH.slot (Proxy @"Expr") i viewExpr_component
+                    { expr: e }
+                    (ViewExprOutput_ViewExprAction i)
+              in
+                fold
+                  [ es # foldMapWithIndex \i e ->
+                      [ renderPoint (Expr.Index i)
+                      , renderKid (Expr.Step i) e
+                      ]
+                  , [ renderPoint (Expr.Index (Array.length es)) ]
+                  ]
             ]
-          , let
-              renderPoint i =
-                HH.slot (Proxy @"Point") i point_component
-                  {}
-                  (PointOutput_ViewExprAction i)
-              renderKid i e =
-                HH.slot (Proxy @"Expr") i viewExpr_component
-                  { expr: e }
-                  (ViewExprOutput_ViewExprAction i)
-            in
-              fold
-                [ es # foldMapWithIndex \i e ->
-                    [ renderPoint (Expr.Index i)
-                    , renderKid (Expr.Step i) e
-                    ]
-                , [ renderPoint (Expr.Index (Array.length es)) ]
-                ]
-          ]
-      )
+        )
 
 initialViewExprState :: ViewExprInput -> ViewExprState
 initialViewExprState { expr } =
@@ -535,14 +539,15 @@ handleViewExprAction (Receive_ViewExprAction input) = do
   state <- get
   let state' = initialViewExprState input
   when (state /= state') do
-    lift $ traceViewExprM "Editor . ViewExpr" $ Ui.column
-      [ Ui.text "receive"
-      , Ui.list
-          [ Ui.span [ text "expr' = ", code $ show state'.expr ]
-          ]
-      ]
+    -- lift $ traceViewExprM "Editor . ViewExpr" $ Ui.column
+    --   [ Ui.text "receive"
+    --   , Ui.list
+    --       [ Ui.span [ text "expr' = ", code $ show state'.expr ]
+    --       ]
+    --   ]
     put state'
-    ping_ViewExpr
+    -- ping_ViewExpr
+    pure unit
 -- kid Expr stuff
 handleViewExprAction (ViewExprOutput_ViewExprAction i (is /\ o)) = do
   H.raise ((i |: is) /\ o) # lift
@@ -555,13 +560,13 @@ handleViewExprAction (ExprInteraction_ViewExprAction ei) = do
   -- ping_ViewExpr
   pure unit
 -- Point stuff
-handleViewExprAction (PointOutput_ViewExprAction _i (Output_PointOutput o)) =
+handleViewExprAction (ViewPointOutput_ViewExprAction _i (Output_ViewPointOutput o)) =
   H.raise (Expr.Path Nil /\ Output_ViewExprOutput o) # lift
-handleViewExprAction (PointOutput_ViewExprAction i (PointInteraction pi)) = do
+handleViewExprAction (ViewPointOutput_ViewExprAction i (ViewPointInteraction pi)) = do
   case pi of
-    StartDrag_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-    MidDrag_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-  H.raise (Expr.Path Nil /\ PointInteraction_ViewExprOutput i pi) # lift
+    StartDrag_ViewPointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+    MidDrag_ViewPointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
+  H.raise (Expr.Path Nil /\ ViewPointInteraction_ViewExprOutput i pi) # lift
 
 ping_ViewExpr :: ViewExprM' Unit
 ping_ViewExpr = do
@@ -573,62 +578,63 @@ ping_ViewExpr = do
 -- Point
 --------------------------------------------------------------------------------
 
-data ViewPointQuery a = ModifyPointState (PointState -> PointState) a
+data ViewPointQuery a = ModifyViewPointState (ViewPointState -> ViewPointState) a
 
-type PointInput = {}
+type ViewPointInput =
+  {}
 
-type PointState =
-  { style :: PointStyle
+type ViewPointState =
+  { style :: ViewPointStyle
   }
 
-data PointStyle
-  = Plain_PointStyle
-  | Cursor_Point_PointStyle
-  | Cursor_Left_PointStyle
-  | Cursor_Right_PointStyle
-  | Select_OuterLeft_PointStyle
-  | Select_InnerLeft_PointStyle
-  | Select_InnerRight_PointStyle
-  | Select_OuterRight_PointStyle
-  | Select_Inline_InnerLeft_And_InnerRight_PointStyle
-  | Select_Inline_OuterLeft_And_InnerLeft_PointStyle
-  | Select_Inline_InnerRight_And_OuterRight_PointStyle
-  | Select_OuterLeft_And_InnerLeft_PointStyle
-  | Select_InnerRight_And_OuterRight_PointStyle
-  | Select_InnerLeft_And_InnerRight_PointStyle
+data ViewPointStyle
+  = Plain_ViewPointStyle
+  | Cursor_Point_ViewPointStyle
+  | Cursor_Left_ViewPointStyle
+  | Cursor_Right_ViewPointStyle
+  | Select_OuterLeft_ViewPointStyle
+  | Select_InnerLeft_ViewPointStyle
+  | Select_InnerRight_ViewPointStyle
+  | Select_OuterRight_ViewPointStyle
+  | Select_Inline_InnerLeft_And_InnerRight_ViewPointStyle
+  | Select_Inline_OuterLeft_And_InnerLeft_ViewPointStyle
+  | Select_Inline_InnerRight_And_OuterRight_ViewPointStyle
+  | Select_OuterLeft_And_InnerLeft_ViewPointStyle
+  | Select_InnerRight_And_OuterRight_ViewPointStyle
+  | Select_InnerLeft_And_InnerRight_ViewPointStyle
 
-derive instance Generic PointStyle _
+derive instance Generic ViewPointStyle _
 
-instance Eq PointStyle where
+instance Eq ViewPointStyle where
   eq x = genericEq x
 
-data PointAction
-  = Initialize_PointAction
-  | Receive_PointAction PointInput
-  | PointInteraction_PointAction PointInteraction
+data ViewPointAction
+  = Initialize_ViewPointAction
+  | Receive_ViewPointAction ViewPointInput
+  | ViewPointInteraction_ViewPointAction ViewPointInteraction
 
-type PointSlots = () :: Row Type
+type ViewPointSlots = () :: Row Type
 
-data PointOutput
-  = Output_PointOutput Output
-  | PointInteraction PointInteraction
+data ViewPointOutput
+  = Output_ViewPointOutput Output
+  | ViewPointInteraction ViewPointInteraction
 
-data PointInteraction
-  = StartDrag_PointInteraction MouseEvent
-  | MidDrag_PointInteraction MouseEvent
+data ViewPointInteraction
+  = StartDrag_ViewPointInteraction MouseEvent
+  | MidDrag_ViewPointInteraction MouseEvent
 
-type PointHTML = H.ComponentHTML PointAction PointSlots PointM
-type PointM' = ExceptT (Maybe PlainHTML) PointM
-type PointM = H.HalogenM PointState PointAction PointSlots PointOutput Aff
+type ViewPointHTML = H.ComponentHTML ViewPointAction ViewPointSlots ViewPointM
+type ViewPointM' = ExceptT (Maybe PlainHTML) ViewPointM
+type ViewPointM = H.HalogenM ViewPointState ViewPointAction ViewPointSlots ViewPointOutput Aff
 
-point_component :: H.Component ViewPointQuery PointInput PointOutput Aff
+point_component :: H.Component ViewPointQuery ViewPointInput ViewPointOutput Aff
 point_component = H.mkComponent { initialState, eval, render }
   where
-  initialState = initialPointStyle
+  initialState = initialViewPointStyle
 
   eval = H.mkEval H.defaultEval
-    { initialize = pure Initialize_PointAction
-    , receive = pure <<< Receive_PointAction
+    { initialize = pure Initialize_ViewPointAction
+    , receive = pure <<< Receive_ViewPointAction
     , handleQuery = \query -> do
         state <- get
         handleViewPointQuery query # runExceptT >>= case _ of
@@ -636,17 +642,17 @@ point_component = H.mkComponent { initialState, eval, render }
             put state
             case mb_err of
               Nothing -> pure unit
-              Just err -> tracePointM "Editor . Point . Error" err
+              Just err -> traceViewPointM "Editor . Point . Error" err
             pure none
           Right a -> pure $ pure a
     , handleAction = \action -> do
         state <- get
-        handlePointAction action # runExceptT >>= case _ of
+        handleViewPointAction action # runExceptT >>= case _ of
           Left mb_err -> do
             put state
             case mb_err of
               Nothing -> pure unit
-              Just err -> tracePointM "Editor . Point . Error" err
+              Just err -> traceViewPointM "Editor . Point . Error" err
           Right it -> pure it
     }
 
@@ -655,46 +661,46 @@ point_component = H.mkComponent { initialState, eval, render }
       [ classes $ fold
           [ [ "Point" ]
           , case state.style of
-              Plain_PointStyle -> []
-              Cursor_Point_PointStyle -> [ "Cursor_Point" ]
-              Cursor_Left_PointStyle -> [ "Cursor_Left" ]
-              Cursor_Right_PointStyle -> [ "Cursor_Right" ]
-              Select_OuterRight_PointStyle -> [ "Select_OuterRight" ]
-              Select_InnerLeft_PointStyle -> [ "Select_InnerLeft" ]
-              Select_InnerRight_PointStyle -> [ "Select_InnerRight" ]
-              Select_OuterLeft_PointStyle -> [ "Select_OuterLeft" ]
-              Select_Inline_InnerLeft_And_InnerRight_PointStyle -> [ "Select_Inline_InnerLeft_And_InnerRight" ]
-              Select_Inline_OuterLeft_And_InnerLeft_PointStyle -> [ "Select_Inline_OuterLeft_And_InnerLeft" ]
-              Select_Inline_InnerRight_And_OuterRight_PointStyle -> [ "Select_Inline_InnerRight_And_OuterRight" ]
-              Select_OuterLeft_And_InnerLeft_PointStyle -> [ "Select_OuterLeft_And_InnerLeft" ]
-              Select_InnerRight_And_OuterRight_PointStyle -> [ "Select_InnerRight_And_OuterRight" ]
-              Select_InnerLeft_And_InnerRight_PointStyle -> [ "Select_InnerLeft_And_InnerRight" ]
+              Plain_ViewPointStyle -> []
+              Cursor_Point_ViewPointStyle -> [ "Cursor_Point" ]
+              Cursor_Left_ViewPointStyle -> [ "Cursor_Left" ]
+              Cursor_Right_ViewPointStyle -> [ "Cursor_Right" ]
+              Select_OuterRight_ViewPointStyle -> [ "Select_OuterRight" ]
+              Select_InnerLeft_ViewPointStyle -> [ "Select_InnerLeft" ]
+              Select_InnerRight_ViewPointStyle -> [ "Select_InnerRight" ]
+              Select_OuterLeft_ViewPointStyle -> [ "Select_OuterLeft" ]
+              Select_Inline_InnerLeft_And_InnerRight_ViewPointStyle -> [ "Select_Inline_InnerLeft_And_InnerRight" ]
+              Select_Inline_OuterLeft_And_InnerLeft_ViewPointStyle -> [ "Select_Inline_OuterLeft_And_InnerLeft" ]
+              Select_Inline_InnerRight_And_OuterRight_ViewPointStyle -> [ "Select_Inline_InnerRight_And_OuterRight" ]
+              Select_OuterLeft_And_InnerLeft_ViewPointStyle -> [ "Select_OuterLeft_And_InnerLeft" ]
+              Select_InnerRight_And_OuterRight_ViewPointStyle -> [ "Select_InnerRight_And_OuterRight" ]
+              Select_InnerLeft_And_InnerRight_ViewPointStyle -> [ "Select_InnerLeft_And_InnerRight" ]
           ]
-      , HE.onMouseDown (StartDrag_PointInteraction >>> PointInteraction_PointAction)
-      , HE.onMouseEnter (MidDrag_PointInteraction >>> PointInteraction_PointAction)
+      , HE.onMouseDown (StartDrag_ViewPointInteraction >>> ViewPointInteraction_ViewPointAction)
+      , HE.onMouseEnter (MidDrag_ViewPointInteraction >>> ViewPointInteraction_ViewPointAction)
       ]
       [ text " " ]
 
-initialPointStyle :: PointInput -> PointState
-initialPointStyle _input =
-  { style: Plain_PointStyle
+initialViewPointStyle :: ViewPointInput -> ViewPointState
+initialViewPointStyle _input =
+  { style: Plain_ViewPointStyle
   }
 
-handleViewPointQuery :: forall a. ViewPointQuery a -> PointM' a
-handleViewPointQuery (ModifyPointState f a) = do
+handleViewPointQuery :: forall a. ViewPointQuery a -> ViewPointM' a
+handleViewPointQuery (ModifyViewPointState f a) = do
   modify_ f
   pure a
 
-handlePointAction :: PointAction -> PointM' Unit
-handlePointAction Initialize_PointAction = do
+handleViewPointAction :: ViewPointAction -> ViewPointM' Unit
+handleViewPointAction Initialize_ViewPointAction = do
   pure unit
-handlePointAction (Receive_PointAction input) = do
+handleViewPointAction (Receive_ViewPointAction input) = do
   state <- get
-  let state' = initialPointStyle input
+  let state' = initialViewPointStyle input
   when (state' /= state) do
     put state'
-handlePointAction (PointInteraction_PointAction pi) = do
-  H.raise (PointInteraction pi) # lift
+handleViewPointAction (ViewPointInteraction_ViewPointAction pi) = do
+  H.raise (ViewPointInteraction pi) # lift
 
 --------------------------------------------------------------------------------
 
@@ -707,6 +713,6 @@ traceEngineM label content = H.raise $ Output_EngineOutput $ TellConsole \a -> C
 traceViewExprM :: String -> PlainHTML -> ViewExprM Unit
 traceViewExprM label content = H.raise $ Tuple (Expr.Path Nil) $ Output_ViewExprOutput $ TellConsole \a -> Console.AddMessage { label, content } a
 
-tracePointM :: String -> PlainHTML -> PointM Unit
-tracePointM label content = H.raise $ Output_PointOutput $ TellConsole \a -> Console.AddMessage { label, content } a
+traceViewPointM :: String -> PlainHTML -> ViewPointM Unit
+traceViewPointM label content = H.raise $ Output_ViewPointOutput $ TellConsole \a -> Console.AddMessage { label, content } a
 
