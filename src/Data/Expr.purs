@@ -26,7 +26,8 @@ infix 0 Expr as %
 derive instance Generic Expr _
 
 instance Show Expr where
-  show x = genericShow x
+  show (l % []) = show l
+  show (l % es) = parens $ Array.intercalate " " ([ show l, "%" ] <> (es # map show))
 
 instance Eq Expr where
   eq x = genericEq x
@@ -34,6 +35,11 @@ instance Eq Expr where
 --------------------------------------------------------------------------------
 
 data Span = Span (Array Expr)
+
+derive instance Generic Span _
+
+instance Show Span where
+  show x = genericShow x
 
 --------------------------------------------------------------------------------
 
@@ -44,7 +50,8 @@ data Label
 derive instance Generic Label _
 
 instance Show Label where
-  show x = genericShow x
+  show Root = "Root"
+  show (String s) = show s
 
 instance Eq Label where
   eq x = genericEq x
@@ -184,6 +191,16 @@ getPath (Point is _) = is
 
 getIndex :: Point -> Index
 getIndex (Point _ j) = j
+
+insertAtIndex :: Index -> Span -> Expr -> Expr
+insertAtIndex j (Span es') (Expr l es) = Expr l (before <> es' <> after)
+  where
+  { before, after } = Array.splitAt (unwrap j) es
+
+insertAtPoint :: Point -> Span -> Expr -> Expr
+insertAtPoint (Point path j) span e@(Expr l es) = case uncons_Path path of
+  Nothing -> insertAtIndex j span e
+  Just { head, tail } -> Expr l (es # Array.modifyAt (unwrap head) (insertAtPoint (Point tail j) span) # fromMaybe' impossible)
 
 --------------------------------------------------------------------------------
 -- Handle
@@ -470,6 +487,16 @@ getHandleFromTo _ _ _ = empty
 
 data Tooth = Tooth Label (Array Expr) Int
 
+instance Show Tooth where
+  show t = showTooth' t "{{}}"
+
+showTooth' :: Tooth -> String -> String
+showTooth' (Tooth l es i) s =
+  parens $ "Tooth " <> show l <>
+    brackets (((es_L # map show) <> [ s ] <> (es_R # map show)) # Array.intercalate " ")
+  where
+  { before: es_L, after: es_R } = Array.splitAt i es
+
 mkTooth :: Label -> Array Expr -> Int -> Tooth
 mkTooth l es i = Tooth l es i
   where
@@ -484,6 +511,9 @@ unTooth (Tooth l es i) e = Expr l $ Array.insertAt i e es # fromMaybe' impossibl
 
 data Zipper = Zipper (List Tooth)
 
+instance Show Zipper where
+  show (Zipper ts) = "{{ " <> foldr showTooth' "{{}}" ts <> " }}"
+
 unZipper :: Zipper -> Expr -> Expr
 unZipper (Zipper ts) e = foldr unTooth e ts
 
@@ -494,6 +524,11 @@ unZipper (Zipper ts) e = foldr unTooth e ts
 data Fragment
   = Span_Fragment Span
   | Zipper_Fragment Zipper
+
+derive instance Generic Fragment _
+
+instance Show Fragment where
+  show x = genericShow x
 
 getFragment :: Handle -> Expr -> Fragment
 getFragment h e | Just p <- toPointHandle h = Span_Fragment $ Span []

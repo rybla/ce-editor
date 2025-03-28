@@ -92,3 +92,7 @@ splitAt :: forall a. Int -> List a -> Maybe { before :: List a, after :: List a 
 splitAt i xs | 0 <= i && i < List.length xs = Just { before: List.take i xs, after: List.drop i xs }
 splitAt _ _ = Nothing
 
+fromMaybeM ∷ ∀ f a. Applicative f ⇒ f a → Maybe a → f a
+fromMaybeM ma Nothing = ma
+fromMaybeM _ (Just a) = pure a
+
