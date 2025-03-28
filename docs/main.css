@@ -36,15 +36,17 @@ body {
 
   user-select: none;
   cursor: pointer;
+  font-family: monospace;
 
-  /* background-color: var(--background-color); */
-  transition-property: background-color;
+  transition-property: outline-color, outline-width;
+  outline: 0 solid transparent;
   transition-duration: 0.2s;
 }
 
 .Expr.ping {
-  background-color: color-mix(in hsl, blue, var(--background-color) 50%);
-  transition-duration: 0;
+  outline-width: 0.1em;
+  outline-color: blue;
+  transition-duration: 0.2s;
 }
 
 .ExprLabel {

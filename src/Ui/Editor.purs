@@ -123,7 +123,7 @@ component = H.mkComponent { initialState, eval, render }
 
 handleAction :: Action -> M' Unit
 handleAction Initialize = do
-  lift $ trace "Editor" $ text "initialized"
+  lift $ trace "Editor" $ text "initialize"
   doc <- liftEffect $ HTML.Window.document =<< HTML.window
   lift $ H.subscribe' \_sub_id -> HQE.eventListener MouseEventType.mouseup (HTMLDocument.toEventTarget doc) $ MouseEvent.fromEvent >=> \_e -> do
     pure $ EngineQuery_Action EndDrag_EngineQuery
@@ -132,7 +132,7 @@ handleAction (EngineQuery_Action q) = do
 handleAction (EngineOutput_Action eo) = case eo of
   Output_EngineOutput output -> H.raise output # lift
   ViewExprQuery_EngineOutput query -> H.tell (Proxy @"Expr") unit query # lift
-  SetExpr_EngineOutput expr' -> H.tell (Proxy @"Expr") unit (SetExpr_ViewExprQuery expr') # lift
+  SetExpr_EngineOutput expr' -> modify_ _ { expr = expr' }
 handleAction (ViewExprOutput_Action (is /\ eo)) = case eo of
   Output_ViewExprOutput o ->
     H.raise o # lift
@@ -166,8 +166,8 @@ type EngineState =
   }
 
 data EngineAction
-  = InitializeEngine
-  | ReceiveEngine EngineInput
+  = Initialize_EngineAction
+  | Receive_EngineAction EngineInput
   | Keyboard_EngineAction KeyInfo
 
 type EngineSlots = () :: Row Type
@@ -185,8 +185,8 @@ engine_component :: H.Component EngineQuery EngineInput EngineOutput Aff
 engine_component = H.mkComponent { initialState: initialEngineState, eval, render }
   where
   eval = H.mkEval H.defaultEval
-    { initialize = pure InitializeEngine
-    , receive = pure <<< ReceiveEngine
+    { initialize = pure Initialize_EngineAction
+    , receive = pure <<< Receive_EngineAction
     , handleQuery = \query -> do
         state <- get
         handleEngineQuery query # runExceptT >>= case _ of
@@ -232,7 +232,7 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
       Just { init, last } -> do
         -- the point right before the expr
         let p = Expr.Point init (Expr.getIndicesAroundStep last).left
-        lift $ traceEngineM "Drag" $ text $ "got StartDrag from Expr at " <> show p
+        lift $ traceEngineM "Editor . Drag" $ text $ "got StartDrag from Expr at " <> show p
         h <- gets _.handle
         let h' = Expr.getDragOrigin h p
         modify_ _ { drag_origin_handle = Just h' }
@@ -244,29 +244,29 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
       Just { init, last } -> do
         -- the point right before the expr
         let p = Expr.Point init (Expr.getIndicesAroundStep last).left
-        lift $ traceEngineM "Drag" $ text $ "got MidDrag from Expr at " <> show p
+        lift $ traceEngineM "Editor . Drag" $ text $ "got MidDrag from Expr at " <> show p
         updateDragToPoint p
     pure a
 handleEngineQuery (PointInteraction_EngineQuery p pi a) = case pi of
   StartDrag_PointInteraction _event -> do
-    lift $ traceEngineM "Drag" $ text $ "got StartDrag from Point at " <> show p
+    lift $ traceEngineM "Editor . Drag" $ text $ "got StartDrag from Point at " <> show p
     h <- gets _.handle
     let h' = Expr.getDragOrigin h p
     modify_ _ { drag_origin_handle = Just h' }
     setHandle h'
     pure a
   MidDrag_PointInteraction _event -> do
-    lift $ traceEngineM "Drag" $ text $ "got MidDrag from Point at " <> show p
+    lift $ traceEngineM "Editor . Drag" $ text $ "got MidDrag from Point at " <> show p
     updateDragToPoint p
     pure a
 handleEngineQuery (EndDrag_EngineQuery a) = do
-  lift $ traceEngineM "Drag" $ text $ "got EndDrag"
+  lift $ traceEngineM "Editor . Drag" $ text $ "got EndDrag"
   modify_ _ { drag_origin_handle = Nothing }
   pure a
 
 handleEngineAction :: EngineAction -> EngineM' Unit
-handleEngineAction InitializeEngine = do
-  lift $ traceEngineM "Editor . Engine" $ text "initialized"
+handleEngineAction Initialize_EngineAction = do
+  lift $ traceEngineM "Editor . Engine" $ text "initialize"
   doc <- liftEffect $ Window.document =<< HTML.window
   lift $ H.subscribe' \_subId ->
     HQE.eventListener
@@ -274,16 +274,18 @@ handleEngineAction InitializeEngine = do
       (HTMLDocument.toEventTarget doc)
       (KeyboardEvent.fromEvent >>> map (fromKeyboardEventToKeyInfo >>> Keyboard_EngineAction))
   pure unit
-handleEngineAction (ReceiveEngine input) = do
-  lift $ traceEngineM "Editor . Engine" $ text "received"
-  put $ initialEngineState input
+handleEngineAction (Receive_EngineAction input) = do
+  lift $ traceEngineM "Editor . Engine" $ text "receive"
+  state <- get
+  put $ (initialEngineState input)
+    { clipboard = state.clipboard }
 handleEngineAction (Keyboard_EngineAction ki) = do
   { handle, clipboard, expr } <- get
   case unit of
     -- TODO: copy
     _ | ki.cmd && ki.key == "c" -> do
       let frag = Expr.getFragment handle expr
-      lift $ traceEngineM "Keyboard" $ text $ "copy: " <> show frag
+      lift $ traceEngineM "Editor . Keyboard" $ text $ "copy: " <> show frag
       modify_ _ { clipboard = pure $ frag }
       pure unit
     -- TODO: cut
@@ -291,8 +293,7 @@ handleEngineAction (Keyboard_EngineAction ki) = do
     -- TODO: paste
     _ | ki.cmd && ki.key == "v", Just (Expr.Span_Fragment span) <- clipboard, Just point <- Expr.toPointHandle handle -> do
       let expr' = Expr.insertAtPoint point span expr
-      modify_ _ { expr = expr' }
-      lift $ traceEngineM "Keyboard" $ list
+      lift $ traceEngineM "Editor . Keyboard" $ list
         [ text "paste"
         , Ui.span [ text "expr  : ", code $ show expr ]
         , Ui.span [ text "span  : ", code $ show span ]
@@ -312,7 +313,7 @@ updateDragToPoint p = do
     Nothing -> pure unit
     Just drag_origin_handle -> case Expr.getHandleFromTo drag_origin_handle p e of
       Nothing -> do
-        lift $ traceEngineM "Drag" $
+        lift $ traceEngineM "Editor . Drag" $
           column
             [ text $ "updateDragToPoint (failure)"
             , list
@@ -322,7 +323,7 @@ updateDragToPoint p = do
             ]
         pure unit
       Just h' -> do
-        lift $ traceEngineM "Drag" $
+        lift $ traceEngineM "Editor . Drag" $
           column
             [ text $ "updateDragToPoint (success)"
             , list
@@ -338,7 +339,7 @@ setHandle h = do
   ps1 <- toggleHandlePointStyles false <$> gets _.handle
   modify_ _ { handle = h }
   let p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
-  lift $ traceEngineM "Drag" $ list
+  lift $ traceEngineM "Editor . Drag" $ list
     [ text $ "p_OL = " <> show p_OL
     , text $ "p_IL = " <> show p_IL
     , text $ "p_IR = " <> show p_IR
@@ -395,9 +396,7 @@ togglePointStyle true = identity
 -- Expr
 --------------------------------------------------------------------------------
 
-data ViewExprQuery a
-  = ViewExprQuery (NonEmptyArray SingleViewExprQuery) a
-  | SetExpr_ViewExprQuery Expr a
+data ViewExprQuery a = ViewExprQuery (NonEmptyArray SingleViewExprQuery) a
 
 data SingleViewExprQuery = SingleViewExprQuery Expr.Path ViewExprQuery'
 
@@ -415,8 +414,8 @@ type ViewExprState =
   }
 
 data ViewExprAction
-  = InitializeExpr
-  | ReceiveExpr ViewExprInput
+  = Initialize_ViewExprAction
+  | Receive_ViewExprAction ViewExprInput
   | ViewExprOutput_ViewExprAction Expr.Step ViewExprOutput
   | ExprInteraction_ViewExprAction ExprInteraction
   | PointOutput_ViewExprAction Expr.Index PointOutput
@@ -446,8 +445,8 @@ viewExpr_component :: H.Component ViewExprQuery ViewExprInput ViewExprOutput Aff
 viewExpr_component = H.mkComponent { initialState: initialViewExprState, eval, render }
   where
   eval = H.mkEval H.defaultEval
-    { initialize = pure InitializeExpr
-    , receive = pure <<< ReceiveExpr
+    { initialize = pure Initialize_ViewExprAction
+    , receive = pure <<< Receive_ViewExprAction
     , handleQuery = \query -> do
         state <- get
         handleViewExprQuery query # runExceptT >>= case _ of
@@ -521,9 +520,6 @@ handleViewExprQuery (ViewExprQuery qs_ a) = do
           Nothing -> throwError none
           Just it -> pure it
   pure a
-handleViewExprQuery (SetExpr_ViewExprQuery expr' a) = do
-  modify_ _ { expr = expr' }
-  pure a
 
 handleSingleViewExprQuery :: SingleViewExprQuery -> ViewExprM' Unit
 handleSingleViewExprQuery (SingleViewExprQuery _ (Modify_ViewExprQuery f)) = do
@@ -534,13 +530,19 @@ handleSingleViewExprQuery (SingleViewExprQuery _ (ViewPointQuery_ViewExprQuery i
     Just it -> pure it
 
 handleViewExprAction :: ViewExprAction -> ViewExprM' Unit
-handleViewExprAction InitializeExpr = pure unit
-handleViewExprAction (ReceiveExpr input) = do
+handleViewExprAction Initialize_ViewExprAction = pure unit
+handleViewExprAction (Receive_ViewExprAction input) = do
   state <- get
   let state' = initialViewExprState input
   when (state /= state') do
-    put state
-    pingExpr
+    lift $ traceViewExprM "Editor . ViewExpr" $ Ui.column
+      [ Ui.text "receive"
+      , Ui.list
+          [ Ui.span [ text "expr' = ", code $ show state'.expr ]
+          ]
+      ]
+    put state'
+    ping_ViewExpr
 -- kid Expr stuff
 handleViewExprAction (ViewExprOutput_ViewExprAction i (is /\ o)) = do
   H.raise ((i |: is) /\ o) # lift
@@ -550,7 +552,7 @@ handleViewExprAction (ExprInteraction_ViewExprAction ei) = do
     StartDrag_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     MidDrag_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
   H.raise (Expr.Path Nil /\ ExprInteraction ei) # lift
-  -- pingExpr
+  -- ping_ViewExpr
   pure unit
 -- Point stuff
 handleViewExprAction (PointOutput_ViewExprAction _i (Output_PointOutput o)) =
@@ -561,8 +563,8 @@ handleViewExprAction (PointOutput_ViewExprAction i (PointInteraction pi)) = do
     MidDrag_PointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
   H.raise (Expr.Path Nil /\ PointInteraction_ViewExprOutput i pi) # lift
 
-pingExpr :: ViewExprM' Unit
-pingExpr = do
+ping_ViewExpr :: ViewExprM' Unit
+ping_ViewExpr = do
   modify_ _ { ping = true }
   Aff.delay (Milliseconds 500.0) # liftAff
   modify_ _ { ping = false }
@@ -601,8 +603,8 @@ instance Eq PointStyle where
   eq x = genericEq x
 
 data PointAction
-  = InitializePoint
-  | ReceivePoint PointInput
+  = Initialize_PointAction
+  | Receive_PointAction PointInput
   | PointInteraction_PointAction PointInteraction
 
 type PointSlots = () :: Row Type
@@ -625,8 +627,8 @@ point_component = H.mkComponent { initialState, eval, render }
   initialState = initialPointStyle
 
   eval = H.mkEval H.defaultEval
-    { initialize = pure InitializePoint
-    , receive = pure <<< ReceivePoint
+    { initialize = pure Initialize_PointAction
+    , receive = pure <<< Receive_PointAction
     , handleQuery = \query -> do
         state <- get
         handleViewPointQuery query # runExceptT >>= case _ of
@@ -684,9 +686,9 @@ handleViewPointQuery (ModifyPointState f a) = do
   pure a
 
 handlePointAction :: PointAction -> PointM' Unit
-handlePointAction InitializePoint = do
+handlePointAction Initialize_PointAction = do
   pure unit
-handlePointAction (ReceivePoint input) = do
+handlePointAction (Receive_PointAction input) = do
   state <- get
   let state' = initialPointStyle input
   when (state' /= state) do
