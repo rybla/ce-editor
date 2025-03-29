@@ -77,20 +77,28 @@ sortEquivalenceClasses f xs = STArray.run do
       cs_ref # STArray.push (NEArray.singleton x) # void
   pure cs_ref
 
--- const :: forall a b. a -> b -> a
-
 forget :: forall a b. a -> b -> b
 forget _ b = b
 
-extractAt :: forall a. Int -> List a -> Maybe { before :: List a, at :: a, after :: List a }
-extractAt i xs = do
-  { before, after: after_ } <- splitAt i xs
+extractAt_Array :: forall a. Int -> Array a -> Maybe { before :: Array a, at :: a, after :: Array a }
+extractAt_Array i xs = do
+  { before, after: after_ } <- splitAt_Array i xs
+  { head: at, tail: after } <- Array.uncons after_
+  pure { before, at, after }
+
+splitAt_Array :: forall a. Int -> Array a -> Maybe { before :: Array a, after :: Array a }
+splitAt_Array i xs | 0 <= i && i < Array.length xs = Just { before: Array.take i xs, after: Array.drop i xs }
+splitAt_Array _ _ = Nothing
+
+extractAt_List :: forall a. Int -> List a -> Maybe { before :: List a, at :: a, after :: List a }
+extractAt_List i xs = do
+  { before, after: after_ } <- splitAt_List i xs
   { head: at, tail: after } <- List.uncons after_
   pure { before, at, after }
 
-splitAt :: forall a. Int -> List a -> Maybe { before :: List a, after :: List a }
-splitAt i xs | 0 <= i && i < List.length xs = Just { before: List.take i xs, after: List.drop i xs }
-splitAt _ _ = Nothing
+splitAt_List :: forall a. Int -> List a -> Maybe { before :: List a, after :: List a }
+splitAt_List i xs | 0 <= i && i < List.length xs = Just { before: List.take i xs, after: List.drop i xs }
+splitAt_List _ _ = Nothing
 
 fromMaybeM ∷ ∀ f a. Applicative f ⇒ f a → Maybe a → f a
 fromMaybeM ma Nothing = ma

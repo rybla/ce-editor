@@ -14,8 +14,9 @@ import Data.Maybe (Maybe(..), fromMaybe')
 import Data.Newtype (class Newtype, unwrap)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
+import Data.Tuple (uncurry)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (assert, brackets, bug, impossible, parens, spaces, todo)
+import Utility (assert, brackets, bug, extractAt_Array, impossible, parens, spaces, todo)
 
 --------------------------------------------------------------------------------
 
@@ -106,11 +107,19 @@ modifyDescendant_Expr path0 f e0 = go identity path0 e0
         tail
         (getKid_Expr i e)
 
+getLabel_Expr (Expr l _) = l
+
 getKid_Expr :: Step -> Expr -> Expr
 getKid_Expr i (Expr _ es) = es Array.!! unwrap i # fromMaybe' impossible
 
+getKids_Expr :: Expr -> Array Expr
+getKids_Expr (Expr _ es) = es
+
 modifyKid_Expr :: Step -> (Expr -> Expr) -> Expr -> Expr
 modifyKid_Expr i f (Expr l es) = Expr l $ Array.modifyAt (unwrap i) f es # fromMaybe' impossible
+
+getKidsBetweenIndices :: Index -> Index -> Expr -> Array Expr
+getKidsBetweenIndices (Index j_L) (Index j_R) (Expr l es) = es # Array.take j_R # Array.drop j_L
 
 --------------------------------------------------------------------------------
 -- Step
@@ -143,6 +152,14 @@ derive instance Eq Index
 derive instance Ord Index
 
 derive newtype instance Semiring Index
+
+derive newtype instance Ring Index
+
+getFirstIndex_Expr :: Expr -> Index
+getFirstIndex_Expr _ = Index 0
+
+getLastIndex_Expr :: Expr -> Index
+getLastIndex_Expr e = Index (e # getKids_Expr # Array.length)
 
 getExtremeIndices :: Expr -> { left :: Index, right :: Index }
 getExtremeIndices (Expr _ es) = { left: Index 0, right: Index (Array.length es) }
@@ -300,6 +317,10 @@ data Cursor = Cursor Path Index Index CursorFocus
 mkCursor' :: { f :: CursorFocus, j_L :: Index, j_R :: Index, path :: Path } -> Cursor
 mkCursor' { path, j_L, j_R, f } = Cursor path j_L j_R f
 
+getPath_Cursor (Cursor path _ _ _) = path
+getLeftIndex_Cursor (Cursor _ j_L _ _) = j_L
+getLeftIndex_Cursor (Cursor _ _ j_R _) = j_R
+
 derive instance Generic Cursor _
 
 instance Show Cursor where
@@ -419,7 +440,7 @@ getHandleFromTo h p_OL e | Just p_I <- toPointHandle h, Just (i /\ path_I') <- i
     , j_OR: (getIndicesAroundStep i).right
     , path_I
     , j_IL: getIndex p_I
-    , j_IR: getDescendant (path_O <> path_I) e # getExtremeIndices # _.right
+    , j_IR: (getDescendant (path_O <> path_I) e # getExtremeIndices).right
     , f: OuterLeft_HandleFocus
     }
 --     - drag from a inner right Point to an outer right Point
@@ -431,7 +452,7 @@ getHandleFromTo h p_OR e | Just p_I <- toPointHandle h, Just (i /\ path_I') <- i
     , j_OL: (getIndicesAroundStep i).left
     , j_OR: getIndex p_OR
     , path_I
-    , j_IL: getDescendant (path_O <> path_I) e # getExtremeIndices # _.left
+    , j_IL: (getDescendant (path_O <> path_I) e # getExtremeIndices).left
     , j_IR: getIndex p_I
     , f: OuterRight_HandleFocus
     }
@@ -447,7 +468,7 @@ getHandleFromTo h p_I e | Just p_OL <- toPointHandle h, Just (i /\ path_I') <- i
     , j_OR: (getIndicesAroundStep i).right
     , path_I
     , j_IL: getIndex p_I
-    , j_IR: getDescendant (path_O <> path_I) e # getExtremeIndices # _.right
+    , j_IR: (getDescendant (path_O <> path_I) e # getExtremeIndices).right
     , f: InnerLeft_HandleFocus
     }
 --     - drag from an outer right Point to an inner right Point
@@ -459,7 +480,7 @@ getHandleFromTo h p_I e | Just p_OR <- toPointHandle h, Just (i /\ path_I') <- i
     , j_OL: (getIndicesAroundStep i).left
     , j_OR: getIndex p_OR
     , path_I: i |: path_I'
-    , j_IL: getDescendant (path_O <> path_I) e # getExtremeIndices # _.left
+    , j_IL: (getDescendant (path_O <> path_I) e # getExtremeIndices).left
     , j_IR: getIndex p_I
     , f: InnerRight_HandleFocus
     }
@@ -485,7 +506,7 @@ getHandleFromTo _ _ _ = empty
 -- Tooth
 --------------------------------------------------------------------------------
 
-data Tooth = Tooth Label (Array Expr) Int
+data Tooth = Tooth Label (Array Expr) Index
 
 instance Show Tooth where
   show t = showTooth' t "{{}}"
@@ -495,27 +516,34 @@ showTooth' (Tooth l es i) s =
   parens $ "Tooth " <> show l <>
     brackets (((es_L # map show) <> [ s ] <> (es_R # map show)) # Array.intercalate " ")
   where
-  { before: es_L, after: es_R } = Array.splitAt i es
+  { before: es_L, after: es_R } = Array.splitAt (unwrap i) es
 
-mkTooth :: Label -> Array Expr -> Int -> Tooth
+mkTooth :: Label -> Array Expr -> Index -> Tooth
 mkTooth l es i = Tooth l es i
   where
-  _ = assert "Tooth index is in range" (0 <= i && i < Array.length es)
+  _ = assert "Tooth index is in range" (0 <= unwrap i && unwrap i < Array.length es)
 
 unTooth :: Tooth -> Expr -> Expr
-unTooth (Tooth l es i) e = Expr l $ Array.insertAt i e es # fromMaybe' impossible
+unTooth (Tooth l es i) e = Expr l $ Array.insertAt (unwrap i) e es # fromMaybe' impossible
 
 --------------------------------------------------------------------------------
 -- Zipper
 --------------------------------------------------------------------------------
 
-data Zipper = Zipper (List Tooth)
+data Zipper = Zipper (Array Expr) Index (List Tooth)
 
 instance Show Zipper where
-  show (Zipper ts) = "{{ " <> foldr showTooth' "{{}}" ts <> " }}"
+  show (Zipper es i ts) =
+    "{{ "
+      <> (es_L # map show # Array.intercalate " ")
+      <> foldr showTooth' "{{}}" ts
+      <> (es_R # map show # Array.intercalate " ")
+      <> " }}"
+    where
+    { before: es_L, after: es_R } = Array.splitAt (unwrap i) es
 
 unZipper :: Zipper -> Expr -> Expr
-unZipper (Zipper ts) e = foldr unTooth e ts
+unZipper (Zipper es i ts) e = foldr unTooth e ts
 
 --------------------------------------------------------------------------------
 -- Fragment
@@ -546,7 +574,69 @@ getSpan (Cursor p j_L j_R f) e@(Expr _ es) = case uncons_Path p of
   Just { head, tail } -> getSpan (Cursor tail j_L j_R f) (e # getKid_Expr head)
 
 getZipper :: Handle -> Expr -> Zipper
-getZipper (Handle p_O j_OL j_OR p_I j_IL j_IR f) e = todo ""
+
+getZipper (Handle path_O j_OL j_OR path_I j_IL j_IR f) e | Nothing <- uncons_Path path_O, Nothing <- uncons_Path path_I =
+  Zipper
+    ((e # getKidsBetweenIndices j_OL j_IL) <> (e # getKidsBetweenIndices j_IR j_OR))
+    (j_IL - j_OL)
+    Nil
+
+getZipper (Handle path_O j_OL j_OR path_I j_IL j_IR f) e_ | Nothing <- uncons_Path path_O, Just { head: i_I, tail: path_I' } <- uncons_Path path_I =
+  Zipper
+    (e_ # getKidsBetweenIndicesExcludingStep j_OL j_OR i_I)
+    ((i_I # getIndicesAroundStep).left)
+    (getZipper_go_I j_IL j_IR Nil path_I' (e_ # getKid_Expr i_I))
+
+getZipper (Handle path_O j_OL j_OR path_I j_IL j_IR f) e_ | Just { head: i_O, tail: path_O' } <- uncons_Path path_O, Nothing <- uncons_Path path_I =
+  go path_O'
+  -- TODO: this will be used as the base case of `go` below
+  -- Zipper
+  --   ((e_ # getKidsBetweenIndices j_OL ((getIndicesAroundStep i_O).left)) <> (e_ # getKidsBetweenIndices (getIndicesAroundStep i_O).right j_OR))
+  --   ((i_O # getIndicesAroundStep).left)
+  --   ()
+  where
+  go path = case path # uncons_Path of
+    Nothing -> todo ""
+    Just { head, tail } -> todo ""
+
+getZipper (Handle path_O_ j_OL j_OR path_I j_IL j_IR f) e_ = todo ""
+
+getZipper_go_I j_IL j_IR ths path e = case path # uncons_Path of
+  Just { head: i, tail: path' } ->
+    let
+      { before, at, after } = e # getKids_Expr # extractAt_Array (unwrap i) # fromMaybe' impossible
+    in
+      getZipper_go_I j_IL j_IR (Tooth (e # getLabel_Expr) (before <> after) (i # getIndicesAroundStep).left : ths) path' at
+  Nothing ->
+    Tooth
+      (e # getLabel_Expr)
+      ((e # getKidsBetweenIndices (getFirstIndex_Expr e) j_IL) <> (e # getKidsBetweenIndices j_IR (getLastIndex_Expr e)))
+      j_IL
+      : ths
+
+getKidsBetweenIndicesExcludingStep :: Index -> Index -> Step -> Expr -> Array Expr
+getKidsBetweenIndicesExcludingStep j_L j_R i e =
+  e
+    # getKidsBetweenIndices j_L j_R
+    # Array.deleteAt (unwrap i)
+    # fromMaybe' impossible
+
+-- getZipper (Handle path_O_ j_OL j_OR path_I j_IL j_IR f) e_ = go_O path_O_ e_
+--   where
+--   -- go_O path_O  (Expr l es) = path_O # uncons_Path >>> case _ of
+--   --   Nothing -> go_I (Tooth l ?a ?a : Nil) ?a
+--   --   Just { head, tail } -> go_I (Tooth l ?a ?a : path_O)
+--   go_O path_O e = case path_O # uncons_Path of
+--     Just { head, tail } -> go_O tail (e # getKid_Expr head)
+--     Nothing -> case path_I # uncons_Path of
+--       Nothing -> Zipper (e # getKids_Expr) j_IL ?a
+--       Just _ -> ?a
+
+--   Nothing -> uncurry (Zipper (e # getKidsBetweenIndices j_OL j_OR)) (go_I Nil path_I e)
+
+-- go_I tooths path_I e = case path_I # uncons_Path of
+--   Just { head, tail } -> go_I (?a : tooths) tail (e # getKid_Expr head)
+--   Nothing -> ?a
 
 getZipper_helper :: Path -> Point -> Point -> Span -> Zipper
 getZipper_helper _ _ _ _ = todo ""

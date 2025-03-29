@@ -283,7 +283,7 @@ handleEngineAction (Receive_EngineAction input) = do
 handleEngineAction (Keyboard_EngineAction ki) = do
   { handle, clipboard, expr } <- get
   case unit of
-    -- TODO: copy
+    -- copy fragment
     _ | ki.cmd && ki.key == "c" -> do
       let frag = Expr.getFragment handle expr
       lift $ traceEngineM "Editor . Keyboard" $ text $ "copy: " <> show frag
@@ -291,7 +291,7 @@ handleEngineAction (Keyboard_EngineAction ki) = do
       pure unit
     -- TODO: cut
     _ | ki.cmd && ki.key == "x" -> pure unit
-    -- TODO: paste
+    -- paste span
     _ | ki.cmd && ki.key == "v", Just (Expr.Span_Fragment span) <- clipboard, Just point <- Expr.toPointHandle handle -> do
       let expr' = Expr.insertAtPoint point span expr
       lift $ traceEngineM "Editor . Keyboard" $ list
@@ -302,6 +302,22 @@ handleEngineAction (Keyboard_EngineAction ki) = do
         ]
       lift $ H.raise $ SetExpr_EngineOutput expr'
       setHandle $ Expr.mkPointHandle (Expr.Point (Expr.getPath point) (Expr.getIndex point + Expr.Index 1))
+    _ | ki.cmd && ki.key == "v", Just (Expr.Zipper_Fragment zip) <- clipboard, Just cursor <- Expr.toCursorHandle handle -> do
+      let
+        expr' =
+          Expr.modifyDescendant_Expr
+            (Expr.getPath_Cursor cursor)
+            (Expr.unZipper zip)
+            expr
+      lift $ traceEngineM "Editor . Keyboard" $ list
+        [ text "paste"
+        , Ui.span [ text "expr  : ", code $ show expr ]
+        , Ui.span [ text "zip   : ", code $ show zip ]
+        , Ui.span [ text "expr' : ", code $ show expr' ]
+        ]
+      lift $ H.raise $ SetExpr_EngineOutput expr'
+      setHandle $ Expr.mkPointHandle (Expr.Point (Expr.getPath_Cursor cursor) (Expr.getLeftIndex_Cursor cursor))
+      pure unit
     _ -> pure unit
   pure unit
 
