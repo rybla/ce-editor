@@ -107,6 +107,7 @@ modifyDescendant_Expr path0 f e0 = go identity path0 e0
         tail
         (getKid_Expr i e)
 
+getLabel_Expr ∷ Expr → Label
 getLabel_Expr (Expr l _) = l
 
 getKid_Expr :: Step -> Expr -> Expr
@@ -120,6 +121,13 @@ modifyKid_Expr i f (Expr l es) = Expr l $ Array.modifyAt (unwrap i) f es # fromM
 
 getKidsBetweenIndices :: Index -> Index -> Expr -> Array Expr
 getKidsBetweenIndices (Index j_L) (Index j_R) (Expr l es) = es # Array.take j_R # Array.drop j_L
+
+getKidsBetweenIndicesExcludingStep :: Index -> Index -> Step -> Expr -> Array Expr
+getKidsBetweenIndicesExcludingStep j_L j_R i e =
+  e
+    # getKidsBetweenIndices j_L j_R
+    # Array.deleteAt (unwrap i)
+    # fromMaybe' impossible
 
 --------------------------------------------------------------------------------
 -- Step
@@ -559,7 +567,7 @@ instance Show Fragment where
   show x = genericShow x
 
 getFragment :: Handle -> Expr -> Fragment
-getFragment h e | Just p <- toPointHandle h = Span_Fragment $ Span []
+getFragment h _ | Just p <- toPointHandle h = Span_Fragment $ Span []
 getFragment h e | Just c <- toCursorHandle h = Span_Fragment $ getSpan c e
 getFragment h e = Zipper_Fragment $ getZipper h e
 
@@ -574,72 +582,34 @@ getSpan (Cursor p j_L j_R f) e@(Expr _ es) = case uncons_Path p of
   Just { head, tail } -> getSpan (Cursor tail j_L j_R f) (e # getKid_Expr head)
 
 getZipper :: Handle -> Expr -> Zipper
-
-getZipper (Handle path_O j_OL j_OR path_I j_IL j_IR f) e | Nothing <- uncons_Path path_O, Nothing <- uncons_Path path_I =
-  Zipper
-    ((e # getKidsBetweenIndices j_OL j_IL) <> (e # getKidsBetweenIndices j_IR j_OR))
-    (j_IL - j_OL)
-    Nil
-
-getZipper (Handle path_O j_OL j_OR path_I j_IL j_IR f) e_ | Nothing <- uncons_Path path_O, Just { head: i_I, tail: path_I' } <- uncons_Path path_I =
-  Zipper
-    (e_ # getKidsBetweenIndicesExcludingStep j_OL j_OR i_I)
-    ((i_I # getIndicesAroundStep).left)
-    (getZipper_go_I j_IL j_IR Nil path_I' (e_ # getKid_Expr i_I))
-
-getZipper (Handle path_O j_OL j_OR path_I j_IL j_IR f) e_ | Just { head: i_O, tail: path_O' } <- uncons_Path path_O, Nothing <- uncons_Path path_I =
-  go path_O'
-  -- TODO: this will be used as the base case of `go` below
-  -- Zipper
-  --   ((e_ # getKidsBetweenIndices j_OL ((getIndicesAroundStep i_O).left)) <> (e_ # getKidsBetweenIndices (getIndicesAroundStep i_O).right j_OR))
-  --   ((i_O # getIndicesAroundStep).left)
-  --   ()
-  where
-  go path = case path # uncons_Path of
-    Nothing -> todo ""
-    Just { head, tail } -> todo ""
-
-getZipper (Handle path_O_ j_OL j_OR path_I j_IL j_IR f) e_ = todo ""
-
-getZipper_go_I j_IL j_IR ths path e = case path # uncons_Path of
-  Just { head: i, tail: path' } ->
-    let
-      { before, at, after } = e # getKids_Expr # extractAt_Array (unwrap i) # fromMaybe' impossible
-    in
-      getZipper_go_I j_IL j_IR (Tooth (e # getLabel_Expr) (before <> after) (i # getIndicesAroundStep).left : ths) path' at
-  Nothing ->
-    Tooth
-      (e # getLabel_Expr)
-      ((e # getKidsBetweenIndices (getFirstIndex_Expr e) j_IL) <> (e # getKidsBetweenIndices j_IR (getLastIndex_Expr e)))
-      j_IL
-      : ths
-
-getKidsBetweenIndicesExcludingStep :: Index -> Index -> Step -> Expr -> Array Expr
-getKidsBetweenIndicesExcludingStep j_L j_R i e =
-  e
-    # getKidsBetweenIndices j_L j_R
-    # Array.deleteAt (unwrap i)
-    # fromMaybe' impossible
-
--- getZipper (Handle path_O_ j_OL j_OR path_I j_IL j_IR f) e_ = go_O path_O_ e_
---   where
---   -- go_O path_O  (Expr l es) = path_O # uncons_Path >>> case _ of
---   --   Nothing -> go_I (Tooth l ?a ?a : Nil) ?a
---   --   Just { head, tail } -> go_I (Tooth l ?a ?a : path_O)
---   go_O path_O e = case path_O # uncons_Path of
---     Just { head, tail } -> go_O tail (e # getKid_Expr head)
---     Nothing -> case path_I # uncons_Path of
---       Nothing -> Zipper (e # getKids_Expr) j_IL ?a
---       Just _ -> ?a
-
---   Nothing -> uncurry (Zipper (e # getKidsBetweenIndices j_OL j_OR)) (go_I Nil path_I e)
-
--- go_I tooths path_I e = case path_I # uncons_Path of
---   Just { head, tail } -> go_I (?a : tooths) tail (e # getKid_Expr head)
---   Nothing -> ?a
-
-getZipper_helper :: Path -> Point -> Point -> Span -> Zipper
-getZipper_helper _ _ _ _ = todo ""
+getZipper (Handle path_O j_OL j_OR path_I j_IL j_IR _f) e0 =
+  let
+    e1 = e0 # getDescendant path_O
+  in
+    case path_I # uncons_Path of
+      -- path_I is empty
+      Nothing ->
+        Zipper
+          ((e1 # getKidsBetweenIndices j_OL j_IL) <> (e1 # getKidsBetweenIndices j_IR j_OR))
+          (j_IL - j_OL)
+          Nil
+      -- path_I is non-empty
+      Just { head: i_I, tail: path_I' } ->
+        Zipper
+          (e1 # getKidsBetweenIndicesExcludingStep j_OL j_OR i_I)
+          ((i_I # getIndicesAroundStep).left)
+          (go Nil path_I' (e1 # getKid_Expr i_I))
+        where
+        go ths path e = case path # uncons_Path of
+          Just { head: i, tail: path' } -> go (Tooth (e # getLabel_Expr) (es_L <> es_R) (i # getIndicesAroundStep).left : ths) path' e''
+            where
+            { before: es_L, at: e'', after: es_R } = e # getKids_Expr # extractAt_Array (unwrap i) # fromMaybe' impossible
+          Nothing ->
+            Tooth
+              (e # getLabel_Expr)
+              ((e # getKidsBetweenIndices (getFirstIndex_Expr e) j_IL) <> (e # getKidsBetweenIndices j_IR (getLastIndex_Expr e)))
+              j_IL
+              : ths
 
 --------------------------------------------------------------------------------
 -- Utilities
