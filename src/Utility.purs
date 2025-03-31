@@ -104,3 +104,16 @@ fromMaybeM ∷ ∀ f a. Applicative f ⇒ f a → Maybe a → f a
 fromMaybeM ma Nothing = ma
 fromMaybeM _ (Just a) = pure a
 
+insertSpanAt_Array :: forall a. Int -> Array a -> Array a -> Array a
+insertSpanAt_Array i xs ys = split.before <> xs <> split.after
+  where
+  split = Array.splitAt i ys
+
+extractSpan_Array :: forall a. Int -> Int -> Array a -> { before :: Array a, at :: Array a, after :: Array a }
+extractSpan_Array i_L i_R xs =
+  let
+    { before: before_, after } = Array.splitAt i_R xs
+    { before, after: at } = Array.splitAt i_L before_
+  in
+    { before, at, after }
+

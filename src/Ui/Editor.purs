@@ -302,18 +302,15 @@ handleEngineAction (Keyboard_EngineAction ki) = do
         ]
       lift $ H.raise $ SetExpr_EngineOutput expr'
       setHandle $ Expr.mkPointHandle (Expr.Point (Expr.getPath point) (Expr.getIndex point + Expr.Index 1))
+    -- paste zipper
     _ | ki.cmd && ki.key == "v", Just (Expr.Zipper_Fragment zip) <- clipboard, Just cursor <- Expr.toCursorHandle handle -> do
-      let
-        expr' =
-          Expr.modifyDescendant_Expr
-            (Expr.getPath_Cursor cursor)
-            (Expr.unZipper zip)
-            expr
+      let expr' = Expr.modifyDescendant_Span cursor (Expr.unZipper zip) expr
       lift $ traceEngineM "Editor . Keyboard" $ list
         [ text "paste"
-        , Ui.span [ text "expr  : ", code $ show expr ]
-        , Ui.span [ text "zip   : ", code $ show zip ]
-        , Ui.span [ text "expr' : ", code $ show expr' ]
+        , Ui.span [ text "expr   : ", code $ show expr ]
+        , Ui.span [ text "cursor : ", code $ show cursor ]
+        , Ui.span [ text "zip    : ", code $ show zip ]
+        , Ui.span [ text "expr'  : ", code $ show expr' ]
         ]
       lift $ H.raise $ SetExpr_EngineOutput expr'
       setHandle $ Expr.mkPointHandle (Expr.Point (Expr.getPath_Cursor cursor) (Expr.getLeftIndex_Cursor cursor))

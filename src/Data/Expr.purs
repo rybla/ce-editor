@@ -6,17 +6,17 @@ import Control.Alternative (guard)
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Eq.Generic (genericEq)
-import Data.Foldable (foldr)
+import Data.Foldable (fold, foldr)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe')
-import Data.Newtype (class Newtype, unwrap)
+import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple (uncurry)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (assert, brackets, bug, extractAt_Array, impossible, parens, spaces, todo)
+import Utility (assert, brackets, bug, extractAt_Array, extractSpan_Array, impossible, insertSpanAt_Array, parens, spaces, todo)
 
 --------------------------------------------------------------------------------
 
@@ -35,9 +35,11 @@ instance Eq Expr where
 
 --------------------------------------------------------------------------------
 
-data Span = Span (Array Expr)
+newtype Span = Span (Array Expr)
 
 derive instance Generic Span _
+
+derive instance Newtype Span _
 
 instance Show Span where
   show x = genericShow x
@@ -101,11 +103,29 @@ modifyDescendant_Expr path0 f e0 = go identity path0 e0
   where
   go wrap path e = case uncons_Path path of
     Nothing -> wrap $ f e
-    Just { head: i, tail } ->
+    Just { head: i, tail: path' } ->
       go
-        (\e' -> wrap $ modifyKid_Expr i (const e') e)
-        tail
-        (getKid_Expr i e)
+        (\e' -> wrap $ e # modifyKid_Expr i (const e'))
+        path'
+        (e # getKid_Expr i)
+
+modifyDescendant_Span :: Cursor -> (Span -> Span) -> Expr -> Expr
+modifyDescendant_Span cursor f e0 = go identity (getPath_Cursor cursor) e0
+  where
+  go :: (Expr -> Expr) -> Path -> Expr -> Expr
+  go wrap path e = case uncons_Path path of
+    Nothing ->
+      wrap
+        $ (\es -> Expr (getLabel_Expr e) (unwrap es))
+        $ Span (extract.before <> unwrap (f (Span extract.at)) <> extract.after)
+      where
+      indices = cursor # getIndices_Cursor
+      extract = e # getKids_Expr # extractSpan_Array (unwrap indices.left) (unwrap indices.right)
+    Just { head: i, tail: path' } ->
+      go
+        (\e' -> wrap $ e # modifyKid_Expr i (const e'))
+        path'
+        (e # getKid_Expr i)
 
 getLabel_Expr ∷ Expr → Label
 getLabel_Expr (Expr l _) = l
@@ -327,7 +347,8 @@ mkCursor' { path, j_L, j_R, f } = Cursor path j_L j_R f
 
 getPath_Cursor (Cursor path _ _ _) = path
 getLeftIndex_Cursor (Cursor _ j_L _ _) = j_L
-getLeftIndex_Cursor (Cursor _ _ j_R _) = j_R
+getRightIndex_Cursor (Cursor _ _ j_R _) = j_R
+getIndices_Cursor (Cursor _ j_L j_R _) = { left: j_L, right: j_R }
 
 derive instance Generic Cursor _
 
@@ -521,7 +542,7 @@ instance Show Tooth where
 
 showTooth' :: Tooth -> String -> String
 showTooth' (Tooth l es i) s =
-  parens $ "Tooth " <> show l <>
+  parens $ "Tooth " <> show l <> " " <>
     brackets (((es_L # map show) <> [ s ] <> (es_R # map show)) # Array.intercalate " ")
   where
   { before: es_L, after: es_R } = Array.splitAt (unwrap i) es
@@ -531,8 +552,9 @@ mkTooth l es i = Tooth l es i
   where
   _ = assert "Tooth index is in range" (0 <= unwrap i && unwrap i < Array.length es)
 
-unTooth :: Tooth -> Expr -> Expr
-unTooth (Tooth l es i) e = Expr l $ Array.insertAt (unwrap i) e es # fromMaybe' impossible
+unTooth :: Tooth -> Span -> Expr
+-- unTooth (Tooth l es i) span = Expr l $ Array.insertAt (unwrap i) e es # fromMaybe' impossible
+unTooth (Tooth l es i) span = Expr l $ insertSpanAt_Array (unwrap i) (unwrap span) es
 
 --------------------------------------------------------------------------------
 -- Zipper
@@ -550,8 +572,11 @@ instance Show Zipper where
     where
     { before: es_L, after: es_R } = Array.splitAt (unwrap i) es
 
-unZipper :: Zipper -> Expr -> Expr
-unZipper (Zipper es i ts) e = foldr unTooth e ts
+unZipper :: Zipper -> Span -> Span
+unZipper (Zipper es i ts) span = Span $ es_L <> es' <> es_R
+  where
+  { before: es_L, after: es_R } = Array.splitAt (unwrap i) es
+  es' = foldr (\t span' -> pure $ unTooth t (wrap span')) (unwrap span) ts
 
 --------------------------------------------------------------------------------
 -- Fragment
