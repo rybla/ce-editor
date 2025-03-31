@@ -288,7 +288,6 @@ handleEngineAction (Keyboard_EngineAction ki) = do
       let frag = Expr.getFragment handle expr
       lift $ traceEngineM "Editor . Keyboard" $ text $ "copy: " <> show frag
       modify_ _ { clipboard = pure $ frag }
-      pure unit
     -- TODO: cut
     _ | ki.cmd && ki.key == "x" -> pure unit
     -- paste span
@@ -313,8 +312,7 @@ handleEngineAction (Keyboard_EngineAction ki) = do
         , Ui.span [ text "expr'  : ", code $ show expr' ]
         ]
       lift $ H.raise $ SetExpr_EngineOutput expr'
-      setHandle $ Expr.mkPointHandle (Expr.Point (Expr.getPath_Cursor cursor) (Expr.getLeftIndex_Cursor cursor))
-      pure unit
+      setHandle $ Expr.mkCursorHandle $ cursor
     _ -> pure unit
   pure unit
 
