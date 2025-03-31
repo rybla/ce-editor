@@ -140,7 +140,7 @@ modifyKid_Expr :: Step -> (Expr -> Expr) -> Expr -> Expr
 modifyKid_Expr i f (Expr l es) = Expr l $ Array.modifyAt (unwrap i) f es # fromMaybe' impossible
 
 getKidsBetweenIndices :: Index -> Index -> Expr -> Array Expr
-getKidsBetweenIndices (Index j_L) (Index j_R) (Expr l es) = es # Array.take j_R # Array.drop j_L
+getKidsBetweenIndices (Index j_L) (Index j_R) es = es # getKids_Expr # Array.take j_R # Array.drop j_L
 
 getKidsBetweenIndicesExcludingStep :: Index -> Index -> Step -> Expr -> Array Expr
 getKidsBetweenIndicesExcludingStep j_L j_R i e =
