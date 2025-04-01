@@ -2,21 +2,19 @@ module Data.ExprNew where
 
 import Prelude
 
-import Control.Alternative (guard)
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Eq.Generic (genericEq)
-import Data.Foldable (fold, foldr)
+import Data.Foldable (foldr)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
-import Data.Maybe (Maybe(..), fromMaybe')
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
-import Data.Tuple (uncurry)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (assert, brackets, bug, extractAt_Array, extractSpan_Array, impossible, insertSpanAt_Array, parens, spaces, todo)
+import Utility (brackets, bug, parens, spaces)
 
 --------------------------------------------------------------------------------
 
@@ -52,10 +50,10 @@ getFirstIndex_Expr :: Expr -> Index
 getFirstIndex_Expr _ = Index 0
 
 getLastIndex_Expr :: Expr -> Index
-getLastIndex_Expr e = Index (e # getKids_Expr # Array.length)
+getLastIndex_Expr e = Index ((unwrap e).es # Array.length)
 
 getExtremeIndices :: Expr -> { left :: Index, right :: Index }
-getExtremeIndices (Expr _ es) = { left: Index 0, right: Index (Array.length es) }
+getExtremeIndices (Expr e) = { left: Index 0, right: Index (Array.length e.es) }
 
 --------------------------------------------------------------------------------
 -- Step and Index Utilities
@@ -93,27 +91,18 @@ instance Eq Label where
 
 --------------------------------------------------------------------------------
 
-data Expr = Expr Label (Array Expr)
-
-infix 0 Expr as %
+newtype Expr = Expr { l :: Label, es :: Array Expr }
 
 derive instance Generic Expr _
 
+derive instance Newtype Expr _
+
 instance Show Expr where
-  show (l % []) = show l
-  show (l % es) = parens $ Array.intercalate " " ([ show l, "%" ] <> (es # map show))
+  show (Expr e) | Array.null e.es = show e.l
+  show (Expr e) = parens $ Array.intercalate " " ([ show e.l, "%" ] <> (e.es # map show))
 
 instance Eq Expr where
   eq x = genericEq x
-
-getLabel_Expr ∷ Expr → Label
-getLabel_Expr (Expr l _) = l
-
-getKid_Expr :: Step -> Expr -> Expr
-getKid_Expr i (Expr _ es) = es Array.!! unwrap i # fromMaybe' impossible
-
-getKids_Expr :: Expr -> Array Expr
-getKids_Expr (Expr _ es) = es
 
 --------------------------------------------------------------------------------
 
@@ -184,9 +173,9 @@ instance Ord Point where
 
 --------------------------------------------------------------------------------
 
-newtype Tooth = Tooth { label :: Label, kids_L :: Array Expr, kids_R :: Array Expr }
+newtype Tooth = Tooth { l :: Label, es_L :: Array Expr, es_R :: Array Expr }
 
-mkTooth label kids_L kids_R = Tooth { label, kids_L, kids_R }
+mkTooth l es_L es_R = Tooth { l, es_L, es_R }
 
 derive instance Generic Tooth _
 
@@ -197,11 +186,11 @@ instance Show Tooth where
 
 showTooth' :: Tooth -> String -> String
 showTooth' (Tooth t) s =
-  parens $ "Tooth " <> show t.label <> " " <>
-    brackets (((t.kids_L # map show) <> [ s ] <> (t.kids_R # map show)) # Array.intercalate " ")
+  parens $ show t.l <> " " <>
+    brackets (((t.es_L # map show) <> [ s ] <> (t.es_R # map show)) # Array.intercalate " ")
 
 unTooth :: Tooth -> Span -> Expr
-unTooth (Tooth t) span = Expr t.label $ t.kids_L <> unwrap span <> t.kids_R
+unTooth (Tooth t) span = Expr { l: t.l, es: t.es_L <> unwrap span <> t.es_R }
 
 --------------------------------------------------------------------------------
 
