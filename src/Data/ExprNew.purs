@@ -23,11 +23,15 @@ newtype Step = Step Int
 derive instance Newtype Step _
 
 instance Show Step where
-  show (Step i) = show i
+  show (Step i) = "|" <> show i
 
 derive instance Eq Step
 
 derive instance Ord Step
+
+derive newtype instance Semiring Step
+
+derive newtype instance Ring Step
 
 --------------------------------------------------------------------------------
 
@@ -36,7 +40,7 @@ newtype Index = Index Int
 derive instance Newtype Index _
 
 instance Show Index where
-  show (Index i) = show i
+  show (Index i) = "." <> show i
 
 derive instance Eq Index
 
@@ -47,10 +51,10 @@ derive newtype instance Semiring Index
 derive newtype instance Ring Index
 
 getFirstIndex_Expr :: Expr -> Index
-getFirstIndex_Expr _ = Index 0
+getFirstIndex_Expr (Expr _) = Index 0
 
 getLastIndex_Expr :: Expr -> Index
-getLastIndex_Expr e = Index ((unwrap e).es # Array.length)
+getLastIndex_Expr (Expr e) = Index (e.es # Array.length)
 
 getExtremeIndices :: Expr -> { left :: Index, right :: Index }
 getExtremeIndices (Expr e) = { left: Index 0, right: Index (Array.length e.es) }
@@ -231,7 +235,7 @@ instance Eq HandleFocus where
 
 --------------------------------------------------------------------------------
 
-data Handle = Handle
+newtype Handle = Handle
   { path_O :: Path
   , j_OL :: Index
   , j_OR :: Index
@@ -243,6 +247,8 @@ data Handle = Handle
 
 derive instance Generic Handle _
 
+derive instance Newtype Handle _
+
 instance Show Handle where
   show (Handle h) =
     spaces [ "[[", show h.path_O, "|", show h.j_OL, "…", show h.j_OR, "|", show h.path_I, "|", show h.j_IL, "…", show h.j_IR, "@", show h.focus, "]]" ]
@@ -250,7 +256,6 @@ instance Show Handle where
 instance Eq Handle where
   eq x = genericEq x
 
--- Handle path_O j_OL j_OR path_I j_IL j_IR f
 validHandle :: Handle -> Boolean
 validHandle (Handle h) =
   case unwrap h.path_I of
@@ -265,8 +270,7 @@ mkHandle path_O j_OL j_OR path_I j_IL j_IR focus =
   let
     h = Handle { path_O, j_OL, j_OR, path_I, j_IL, j_IR, focus }
   in
-    if
-      not $ validHandle h then
+    if not $ validHandle h then
       bug $ "invalid Handle: " <> show h
     else
       h
