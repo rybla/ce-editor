@@ -205,6 +205,23 @@ unTooth (Tooth t) span = Expr t.label $ t.kids_L <> unwrap span <> t.kids_R
 
 --------------------------------------------------------------------------------
 
+newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, tooths :: List Tooth }
+
+instance Show Zipper where
+  show (Zipper z) =
+    "{{ "
+      <> (z.kids_L # map show # Array.intercalate " ")
+      <> foldr showTooth' "{{}}" z.tooths
+      <> (z.kids_R # map show # Array.intercalate " ")
+      <> " }}"
+
+unZipper :: Zipper -> Span -> Span
+unZipper (Zipper z) span = Span $ z.kids_L <> es' <> z.kids_R
+  where
+  es' = foldr (\t span' -> pure $ unTooth t (wrap span')) (unwrap span) z.tooths
+
+--------------------------------------------------------------------------------
+
 data HandleFocus
   = OuterLeft_HandleFocus
   | InnerLeft_HandleFocus
@@ -266,25 +283,6 @@ mkHandle path_O j_OL j_OR path_I j_IL j_IR focus =
       h
 
 mkHandle_namedArgs { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f } = mkHandle path_O j_OL j_OR path_I j_IL j_IR f
-
---------------------------------------------------------------------------------
--- Zipper
---------------------------------------------------------------------------------
-
-newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, tooths :: List Tooth }
-
-instance Show Zipper where
-  show (Zipper z) =
-    "{{ "
-      <> (z.kids_L # map show # Array.intercalate " ")
-      <> foldr showTooth' "{{}}" z.tooths
-      <> (z.kids_R # map show # Array.intercalate " ")
-      <> " }}"
-
-unZipper :: Zipper -> Span -> Span
-unZipper (Zipper z) span = Span $ z.kids_L <> es' <> z.kids_R
-  where
-  es' = foldr (\t span' -> pure $ unTooth t (wrap span')) (unwrap span) z.tooths
 
 --------------------------------------------------------------------------------
 -- Utilities
