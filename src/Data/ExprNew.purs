@@ -14,7 +14,7 @@ import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, parens, spaces)
+import Utility (brackets, bug, parens, spaces, todo)
 
 --------------------------------------------------------------------------------
 
@@ -54,10 +54,10 @@ getFirstIndex_Expr :: Expr -> Index
 getFirstIndex_Expr (Expr _) = Index 0
 
 getLastIndex_Expr :: Expr -> Index
-getLastIndex_Expr (Expr e) = Index (e.es # Array.length)
+getLastIndex_Expr (Expr e) = Index (e.kids # Array.length)
 
 getExtremeIndices :: Expr -> { left :: Index, right :: Index }
-getExtremeIndices (Expr e) = { left: Index 0, right: Index (Array.length e.es) }
+getExtremeIndices (Expr e) = { left: Index 0, right: Index (Array.length e.kids) }
 
 --------------------------------------------------------------------------------
 -- Step and Index Utilities
@@ -95,15 +95,15 @@ instance Eq Label where
 
 --------------------------------------------------------------------------------
 
-newtype Expr = Expr { l :: Label, es :: Array Expr }
+newtype Expr = Expr { l :: Label, kids :: Array Expr }
 
 derive instance Generic Expr _
 
 derive instance Newtype Expr _
 
 instance Show Expr where
-  show (Expr e) | Array.null e.es = show e.l
-  show (Expr e) = parens $ Array.intercalate " " ([ show e.l, "%" ] <> (e.es # map show))
+  show (Expr e) | Array.null e.kids = show e.l
+  show (Expr e) = parens $ Array.intercalate " " ([ show e.l, "%" ] <> (e.kids # map show))
 
 instance Eq Expr where
   eq x = genericEq x
@@ -158,16 +158,16 @@ stripPrefix_Path is is' = bug $ "stripPrefix_Path " <> show is <> " " <> show is
 
 --------------------------------------------------------------------------------
 
-newtype Point = Point { path :: Path, index :: Index }
+newtype Point = Point { path :: Path, j :: Index }
 
-mkPoint path index = Point { path, index }
+mkPoint path j = Point { path, j }
 
 derive instance Generic Point _
 
 derive instance Newtype Point _
 
 instance Show Point where
-  show (Point p) = parens $ show p.path <> " △ " <> show p.index
+  show (Point p) = parens $ show p.path <> " △ " <> show p.j
 
 instance Eq Point where
   eq x = genericEq x
@@ -177,9 +177,9 @@ instance Ord Point where
 
 --------------------------------------------------------------------------------
 
-newtype Tooth = Tooth { l :: Label, es_L :: Array Expr, es_R :: Array Expr }
+newtype Tooth = Tooth { l :: Label, kids_L :: Array Expr, kids_R :: Array Expr }
 
-mkTooth l es_L es_R = Tooth { l, es_L, es_R }
+mkTooth l kids_L kids_R = Tooth { l, kids_L, kids_R }
 
 derive instance Generic Tooth _
 
@@ -189,93 +189,169 @@ instance Show Tooth where
   show t = showTooth' t "{{}}"
 
 showTooth' :: Tooth -> String -> String
-showTooth' (Tooth t) s =
-  parens $ show t.l <> " " <>
-    brackets (((t.es_L # map show) <> [ s ] <> (t.es_R # map show)) # Array.intercalate " ")
+showTooth' (Tooth t) s = parens $ Array.intercalate " " $ [ show t.l, "%" ] <> (t.kids_L # map show) <> [ s ] <> (t.kids_R # map show)
+
+isRoot_Tooth :: Tooth -> Boolean
+isRoot_Tooth (Tooth t) = t.l == Root
 
 unTooth :: Tooth -> Span -> Expr
-unTooth (Tooth t) span = Expr { l: t.l, es: t.es_L <> unwrap span <> t.es_R }
+unTooth (Tooth t) span = Expr { l: t.l, kids: t.kids_L <> unwrap span <> t.kids_R }
 
 --------------------------------------------------------------------------------
 
-newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, tooths :: List Tooth }
+newtype Context = Context (List Tooth)
+
+derive instance Generic Context _
+
+derive instance Newtype Context _
+
+instance Show Context where
+  show (Context ts) =
+    "{{ " <> foldr showTooth' "{{}}" ts <> " }}"
+
+unContext :: Context -> Span -> Expr
+unContext (Context (t : ts)) s | isRoot_Tooth t = unTooth t $ foldr (\t' s' -> Span [ unTooth t' s' ]) s ts
+unContext _ _ = bug "Context should always start with Root tooth"
+
+--------------------------------------------------------------------------------
+
+newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, ts :: List Tooth }
 
 instance Show Zipper where
   show (Zipper z) =
     "{{ "
       <> (z.kids_L # map show # Array.intercalate " ")
-      <> foldr showTooth' "{{}}" z.tooths
+      <> foldr showTooth' "{{}}" z.ts
       <> (z.kids_R # map show # Array.intercalate " ")
       <> " }}"
 
 unZipper :: Zipper -> Span -> Span
-unZipper (Zipper z) span = Span $ z.kids_L <> es' <> z.kids_R
-  where
-  es' = foldr (\t span' -> pure $ unTooth t (wrap span')) (unwrap span) z.tooths
+unZipper (Zipper z) span = Span $ z.kids_L <> foldr (\t span' -> pure $ unTooth t (wrap span')) (unwrap span) z.ts <> z.kids_R
 
 --------------------------------------------------------------------------------
 
-data HandleFocus
-  = OuterLeft_HandleFocus
-  | InnerLeft_HandleFocus
-  | InnerRight_HandleFocus
-  | OuterRight_HandleFocus
+newtype SpanHandle = SpanHandle
+  { path_O :: Path
+  , j_L :: Index
+  , j_R :: Index
+  }
 
-derive instance Generic HandleFocus _
+derive instance Generic SpanHandle _
 
-instance Show HandleFocus where
-  -- show x = genericShow x
-  show OuterLeft_HandleFocus = "OL"
-  show InnerLeft_HandleFocus = "IL"
-  show InnerRight_HandleFocus = "IR"
-  show OuterRight_HandleFocus = "OR"
+derive instance Newtype SpanHandle _
 
-instance Eq HandleFocus where
+instance Show SpanHandle where
+  show (SpanHandle h) =
+    spaces [ "[[", show h.path_O, "|", show h.j_L, "…", show h.j_R, "]]" ]
+
+instance Eq SpanHandle where
   eq x = genericEq x
 
+atSpan :: SpanHandle -> Expr -> { ctx :: Context, at :: Span }
+atSpan = todo "atSpan"
+
 --------------------------------------------------------------------------------
 
-newtype Handle = Handle
+newtype ZipperHandle = ZipperHandle
   { path_O :: Path
   , j_OL :: Index
   , j_OR :: Index
   , path_I :: Path
   , j_IL :: Index
   , j_IR :: Index
-  , focus :: HandleFocus
   }
 
-derive instance Generic Handle _
+derive instance Generic ZipperHandle _
 
-derive instance Newtype Handle _
+derive instance Newtype ZipperHandle _
 
-instance Show Handle where
-  show (Handle h) =
-    spaces [ "[[", show h.path_O, "|", show h.j_OL, "…", show h.j_OR, "|", show h.path_I, "|", show h.j_IL, "…", show h.j_IR, "@", show h.focus, "]]" ]
+instance Show ZipperHandle where
+  show (ZipperHandle h) =
+    spaces [ "[[", show h.path_O, "|", show h.j_OL, "…", show h.j_OR, "|", show h.path_I, "|", show h.j_IL, "…", show h.j_IR, "]]" ]
 
-instance Eq Handle where
+instance Eq ZipperHandle where
   eq x = genericEq x
 
-validHandle :: Handle -> Boolean
-validHandle (Handle h) =
-  case unwrap h.path_I of
-    Nil ->
-      (h.j_OL <= h.j_IL && h.j_IL <= h.j_IR && h.j_IR <= h.j_OR)
-    i : _ ->
-      (h.j_OL .<| i && i |<. h.j_OR) &&
-        (h.j_IL <= h.j_IR)
+atZipper :: ZipperHandle -> Expr -> { ctx :: Context, at :: Zipper, inside :: Span }
+atZipper = todo "atZipper"
 
-mkHandle :: Path -> Index -> Index -> Path -> Index -> Index -> HandleFocus -> Handle
-mkHandle path_O j_OL j_OR path_I j_IL j_IR focus =
-  let
-    h = Handle { path_O, j_OL, j_OR, path_I, j_IL, j_IR, focus }
-  in
-    if not $ validHandle h then
-      bug $ "invalid Handle: " <> show h
-    else
-      h
+--------------------------------------------------------------------------------
 
-mkHandle_namedArgs { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f } = mkHandle path_O j_OL j_OR path_I j_IL j_IR f
+data Handle
+  = SpanHandle_Handle SpanHandle SpanHandleFocus
+  | ZipperHandle_Handle ZipperHandle ZipperHandleFocus
+
+data SpanHandleFocus = Left_SpanHandleFocus | Right_SpanHandleFocus
+
+data ZipperHandleFocus
+  = OuterLeft_ZipperHandleFocus
+  | InnerLeft_ZipperHandleFocus
+  | InnerRight_ZipperHandleFocus
+  | OuterRight_ZipperHandleFocus
+
+-- --------------------------------------------------------------------------------
+
+-- data HandleFocus
+--   = OuterLeft_HandleFocus
+--   | InnerLeft_HandleFocus
+--   | InnerRight_HandleFocus
+--   | OuterRight_HandleFocus
+
+-- derive instance Generic HandleFocus _
+
+-- instance Show HandleFocus where
+--   -- show x = genericShow x
+--   show OuterLeft_HandleFocus = "OL"
+--   show InnerLeft_HandleFocus = "IL"
+--   show InnerRight_HandleFocus = "IR"
+--   show OuterRight_HandleFocus = "OR"
+
+-- instance Eq HandleFocus where
+--   eq x = genericEq x
+
+-- --------------------------------------------------------------------------------
+
+-- newtype Handle = Handle
+--   { path_O :: Path
+--   , j_OL :: Index
+--   , j_OR :: Index
+--   , path_I :: Path
+--   , j_IL :: Index
+--   , j_IR :: Index
+--   , focus :: HandleFocus
+--   }
+
+-- derive instance Generic Handle _
+
+-- derive instance Newtype Handle _
+
+-- instance Show Handle where
+--   show (Handle h) =
+--     spaces [ "[[", show h.path_O, "|", show h.j_OL, "…", show h.j_OR, "|", show h.path_I, "|", show h.j_IL, "…", show h.j_IR, "@", show h.focus, "]]" ]
+
+-- instance Eq Handle where
+--   eq x = genericEq x
+
+-- validHandle :: Handle -> Boolean
+-- validHandle (Handle h) =
+--   case unwrap h.path_I of
+--     Nil ->
+--       (h.j_OL <= h.j_IL && h.j_IL <= h.j_IR && h.j_IR <= h.j_OR)
+--     i : _ ->
+--       (h.j_OL .<| i && i |<. h.j_OR) &&
+--         (h.j_IL <= h.j_IR)
+
+-- mkHandle :: Path -> Index -> Index -> Path -> Index -> Index -> HandleFocus -> Handle
+-- mkHandle path_O j_OL j_OR path_I j_IL j_IR focus =
+--   let
+--     h = Handle { path_O, j_OL, j_OR, path_I, j_IL, j_IR, focus }
+--   in
+--     if not $ validHandle h then
+--       bug $ "invalid Handle: " <> show h
+--     else
+--       h
+
+-- mkHandle_namedArgs { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f } = mkHandle path_O j_OL j_OR path_I j_IL j_IR f
 
 --------------------------------------------------------------------------------
 -- Utilities
@@ -285,11 +361,11 @@ areSiblings_Point :: Point -> Point -> Boolean
 areSiblings_Point (Point p0) (Point p1) = p0.path == p1.path
 
 areOrderedSiblings_Point :: Point -> Point -> Boolean
-areOrderedSiblings_Point (Point p0) (Point p1) = (p0.path == p1.path) && (p0.index <= p1.index)
+areOrderedSiblings_Point (Point p0) (Point p1) = (p0.path == p1.path) && (p0.j <= p1.j)
 
 orderSiblings_Point :: Point -> Point -> Maybe (Point /\ Point)
 orderSiblings_Point (Point p0) (Point p1) | areSiblings_Point (Point p0) (Point p1) =
-  if p0.index <= p1.index then
+  if p0.j <= p1.j then
     Just $ Point p0 /\ Point p1
   else
     Just $ Point p1 /\ Point p0
