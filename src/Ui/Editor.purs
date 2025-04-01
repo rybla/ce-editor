@@ -14,8 +14,7 @@ import Data.Array.NonEmpty as NEArray
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
-import Data.Expr (Expr(..), unsnoc_Path, (%), (|:))
-import Data.Expr as Expr
+import Data.Expr (Cursor(..), CursorFocus(..), Expr(..), Fragment(..), Handle(..), Index(..), Label(..), Path(..), Point(..), Step(..), getDragOrigin, getFragment, getHandleFromTo, getHandlePoints, getIndex, getIndicesAroundStep, getPath, insertAtPoint, mkCursorHandle, mkPointHandle, modifyDescendant_Span, toCursorHandle, toPointHandle, unZipper, unsnoc_Path, (%), (|:))
 import Data.Foldable (traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Generic.Rep (class Generic)
@@ -88,7 +87,7 @@ component = H.mkComponent { initialState, eval, render }
   initialState :: Input -> State
   initialState editor =
     { editor
-    , expr: Expr.Root % editor.initial_exprs
+    , expr: Root % editor.initial_exprs
     }
 
   eval = H.mkEval H.defaultEval
@@ -139,30 +138,30 @@ handleAction (ViewExprOutput_Action (is /\ eo)) = case eo of
   ExprInteraction pi -> do
     lift $ H.tell (Proxy @"Engine") unit (ExprInteraction_EngineQuery is pi)
   ViewPointInteraction_ViewExprOutput i pi ->
-    lift $ H.tell (Proxy @"Engine") unit (ViewPointInteraction_EngineQuery (Expr.Point is i) pi)
+    lift $ H.tell (Proxy @"Engine") unit (ViewPointInteraction_EngineQuery (Point is i) pi)
 
 --------------------------------------------------------------------------------
 -- Engine
 --------------------------------------------------------------------------------
 
 data EngineQuery a
-  = ExprInteraction_EngineQuery Expr.Path ExprInteraction a
-  | ViewPointInteraction_EngineQuery Expr.Point ViewPointInteraction a
+  = ExprInteraction_EngineQuery Path ExprInteraction a
+  | ViewPointInteraction_EngineQuery Point ViewPointInteraction a
   | EndDrag_EngineQuery a
 
 type EngineInput =
   { editor :: Editor
   , expr :: Expr
-  , handle :: Expr.Handle
+  , handle :: Handle
   }
 
 type EngineState =
   { editor :: Editor
   , expr :: Expr
-  , handle :: Expr.Handle
+  , handle :: Handle
   , -- when dragging, this is the handle where the drag originated from
-    drag_origin_handle :: Maybe Expr.Handle
-  , clipboard :: Maybe Expr.Fragment
+    drag_origin_handle :: Maybe Handle
+  , clipboard :: Maybe Fragment
   }
 
 data EngineAction
@@ -222,8 +221,8 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
     case unsnoc_Path path of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
-        let { left: l, right: r } = Expr.getIndicesAroundStep last
-        let h = Expr.mkCursorHandle (Expr.Cursor init l r Expr.Left_CursorFocus)
+        let { left: l, right: r } = getIndicesAroundStep last
+        let h = mkCursorHandle (Cursor init l r Left_CursorFocus)
         setHandle h
     pure a
   StartDrag_ViewExprAction _event -> do
@@ -231,10 +230,10 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
         -- the point right before the expr
-        let p = Expr.Point init (Expr.getIndicesAroundStep last).left
+        let p = Point init (getIndicesAroundStep last).left
         lift $ traceEngineM "Editor . Drag" $ text $ "got StartDrag from Expr at " <> show p
         h <- gets _.handle
-        let h' = Expr.getDragOrigin h p
+        let h' = getDragOrigin h p
         modify_ _ { drag_origin_handle = Just h' }
         setHandle h'
     pure a
@@ -243,7 +242,7 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
         -- the point right before the expr
-        let p = Expr.Point init (Expr.getIndicesAroundStep last).left
+        let p = Point init (getIndicesAroundStep last).left
         lift $ traceEngineM "Editor . Drag" $ text $ "got MidDrag from Expr at " <> show p
         updateDragToPoint p
     pure a
@@ -251,7 +250,7 @@ handleEngineQuery (ViewPointInteraction_EngineQuery p pi a) = case pi of
   StartDrag_ViewPointInteraction _event -> do
     lift $ traceEngineM "Editor . Drag" $ text $ "got StartDrag from Point at " <> show p
     h <- gets _.handle
-    let h' = Expr.getDragOrigin h p
+    let h' = getDragOrigin h p
     modify_ _ { drag_origin_handle = Just h' }
     setHandle h'
     pure a
@@ -285,14 +284,18 @@ handleEngineAction (Keyboard_EngineAction ki) = do
   case unit of
     -- copy fragment
     _ | ki.cmd && ki.key == "c" -> do
-      let frag = Expr.getFragment handle expr
+      let frag = getFragment handle expr
       lift $ traceEngineM "Editor . Keyboard" $ text $ "copy: " <> show frag
       modify_ _ { clipboard = pure $ frag }
     -- TODO: cut
-    _ | ki.cmd && ki.key == "x" -> pure unit
+    _ | ki.cmd && ki.key == "x" -> do
+      let frag = getFragment handle expr
+      lift $ traceEngineM "Editor . Keyboard" $ text $ "cut: " <> show frag
+      -- getDesc
+      modify_ _ { clipboard = pure $ frag }
     -- paste span
-    _ | ki.cmd && ki.key == "v", Just (Expr.Span_Fragment span) <- clipboard, Just point <- Expr.toPointHandle handle -> do
-      let expr' = Expr.insertAtPoint point span expr
+    _ | ki.cmd && ki.key == "v", Just (Span_Fragment span) <- clipboard, Just point <- toPointHandle handle -> do
+      let expr' = insertAtPoint point span expr
       lift $ traceEngineM "Editor . Keyboard" $ list
         [ text "paste"
         , Ui.span [ text "expr  : ", code $ show expr ]
@@ -300,10 +303,10 @@ handleEngineAction (Keyboard_EngineAction ki) = do
         , Ui.span [ text "expr' : ", code $ show expr' ]
         ]
       lift $ H.raise $ SetExpr_EngineOutput expr'
-      setHandle $ Expr.mkPointHandle (Expr.Point (Expr.getPath point) (Expr.getIndex point + Expr.Index 1))
+      setHandle $ mkPointHandle (Point (getPath point) (getIndex point + Index 1))
     -- paste zipper
-    _ | ki.cmd && ki.key == "v", Just (Expr.Zipper_Fragment zip) <- clipboard, Just cursor <- Expr.toCursorHandle handle -> do
-      let expr' = Expr.modifyDescendant_Span cursor (Expr.unZipper zip) expr
+    _ | ki.cmd && ki.key == "v", Just (Zipper_Fragment zip) <- clipboard, Just cursor <- toCursorHandle handle -> do
+      let expr' = modifyDescendant_Span cursor (unZipper zip) expr
       lift $ traceEngineM "Editor . Keyboard" $ list
         [ text "paste"
         , Ui.span [ text "expr   : ", code $ show expr ]
@@ -312,18 +315,18 @@ handleEngineAction (Keyboard_EngineAction ki) = do
         , Ui.span [ text "expr'  : ", code $ show expr' ]
         ]
       lift $ H.raise $ SetExpr_EngineOutput expr'
-      setHandle $ Expr.mkCursorHandle $ cursor
+      setHandle $ mkCursorHandle $ cursor
     _ -> pure unit
   pure unit
 
 --------------------------------------------------------------------------------
 
-updateDragToPoint :: Expr.Point -> EngineM' Unit
+updateDragToPoint :: Point -> EngineM' Unit
 updateDragToPoint p = do
   e <- gets _.expr
   gets _.drag_origin_handle >>= case _ of
     Nothing -> pure unit
-    Just drag_origin_handle -> case Expr.getHandleFromTo drag_origin_handle p e of
+    Just drag_origin_handle -> case getHandleFromTo drag_origin_handle p e of
       Nothing -> do
         lift $ traceEngineM "Editor . Drag" $
           column
@@ -346,11 +349,11 @@ updateDragToPoint p = do
             ]
         setHandle h'
 
-setHandle :: Expr.Handle -> EngineM' Unit
+setHandle :: Handle -> EngineM' Unit
 setHandle h = do
   ps1 <- toggleHandleViewPointStyles false <$> gets _.handle
   modify_ _ { handle = h }
-  let p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
+  let p_OL /\ p_IL /\ p_IR /\ p_OR = getHandlePoints h
   lift $ traceEngineM "Editor . Drag" $ list
     [ text $ "p_OL = " <> show p_OL
     , text $ "p_IL = " <> show p_IL
@@ -361,12 +364,12 @@ setHandle h = do
   toggleViewPointStyles $ Map.unionWith forget ps1 ps2
   pure unit
 
-toggleHandleViewPointStyles :: Boolean -> Expr.Handle -> Map Expr.Point ViewPointStyle
-toggleHandleViewPointStyles active h@(Expr.Handle _ _ _ is_I _ _ _f) = toggleHandleViewPointStyles_helper active (is_I == Expr.Path Nil) p_OL p_IL p_IR p_OR
+toggleHandleViewPointStyles :: Boolean -> Handle -> Map Point ViewPointStyle
+toggleHandleViewPointStyles active h@(Handle _ _ _ is_I _ _ _f) = toggleHandleViewPointStyles_helper active (is_I == Path Nil) p_OL p_IL p_IR p_OR
   where
-  p_OL /\ p_IL /\ p_IR /\ p_OR = Expr.getHandlePoints h
+  p_OL /\ p_IL /\ p_IR /\ p_OR = getHandlePoints h
 
-toggleHandleViewPointStyles_helper :: Boolean -> Boolean -> Expr.Point -> Expr.Point -> Expr.Point -> Expr.Point -> Map Expr.Point ViewPointStyle
+toggleHandleViewPointStyles_helper :: Boolean -> Boolean -> Point -> Point -> Point -> Point -> Map Point ViewPointStyle
 -- 
 -- Point
 toggleHandleViewPointStyles_helper active _inline p_OL_IL_IR_OR _p_IL _p_IR _p_OR | allEqual [ p_OL_IL_IR_OR, _p_IL, _p_IR, _p_OR ] = Map.fromFoldable [ p_OL_IL_IR_OR /\ toggleViewPointStyle active Cursor_Point_ViewPointStyle ]
@@ -389,7 +392,7 @@ toggleHandleViewPointStyles_helper active _inline p_OL p_IL_IR _p_IR p_OR | allE
 --   - Select normal
 toggleHandleViewPointStyles_helper active _inline p_OL p_IL p_IR p_OR = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Select_OuterLeft_ViewPointStyle, p_IL /\ toggleViewPointStyle active Select_InnerLeft_ViewPointStyle, p_IR /\ toggleViewPointStyle active Select_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Select_OuterRight_ViewPointStyle ]
 
-toggleViewPointStyles :: Map Expr.Point ViewPointStyle -> EngineM' Unit
+toggleViewPointStyles :: Map Point ViewPointStyle -> EngineM' Unit
 toggleViewPointStyles xs =
   lift $ H.raise $
     ViewExprQuery_EngineOutput do
@@ -398,7 +401,7 @@ toggleViewPointStyles xs =
           # Map.toUnfoldable
           # NonEmptyArray.fromArray
           # fromMaybe' impossible
-          # map (\((Expr.Point is i) /\ s) -> SingleViewExprQuery is $ ViewPointQuery_ViewExprQuery i $ ModifyViewPointState (_ { style = s }) unit)
+          # map (\((Point is i) /\ s) -> SingleViewExprQuery is $ ViewPointQuery_ViewExprQuery i $ ModifyViewPointState (_ { style = s }) unit)
 
 toggleViewPointStyle :: Boolean -> ViewPointStyle -> ViewPointStyle
 toggleViewPointStyle false = const Plain_ViewPointStyle
@@ -410,11 +413,11 @@ toggleViewPointStyle true = identity
 
 data ViewExprQuery a = ViewExprQuery (NonEmptyArray SingleViewExprQuery) a
 
-data SingleViewExprQuery = SingleViewExprQuery Expr.Path ViewExprQuery'
+data SingleViewExprQuery = SingleViewExprQuery Path ViewExprQuery'
 
 data ViewExprQuery'
   = Modify_ViewExprQuery (ViewExprState -> ViewExprState)
-  | ViewPointQuery_ViewExprQuery Expr.Index (ViewPointQuery Unit)
+  | ViewPointQuery_ViewExprQuery Index (ViewPointQuery Unit)
 
 type ViewExprInput =
   { expr :: Expr
@@ -428,21 +431,21 @@ type ViewExprState =
 data ViewExprAction
   = Initialize_ViewExprAction
   | Receive_ViewExprAction ViewExprInput
-  | ViewExprOutput_ViewExprAction Expr.Step ViewExprOutput
+  | ViewExprOutput_ViewExprAction Step ViewExprOutput
   | ExprInteraction_ViewExprAction ExprInteraction
-  | ViewPointOutput_ViewExprAction Expr.Index ViewPointOutput
+  | ViewPointOutput_ViewExprAction Index ViewPointOutput
 
 type ViewExprSlots =
-  ( "Expr" :: H.Slot ViewExprQuery ViewExprOutput Expr.Step
-  , "Point" :: H.Slot ViewPointQuery ViewPointOutput Expr.Index
+  ( "Expr" :: H.Slot ViewExprQuery ViewExprOutput Step
+  , "Point" :: H.Slot ViewPointQuery ViewPointOutput Index
   )
 
-type ViewExprOutput = Expr.Path /\ ViewExprOutput'
+type ViewExprOutput = Path /\ ViewExprOutput'
 
 data ViewExprOutput'
   = Output_ViewExprOutput Output
   | ExprInteraction ExprInteraction
-  | ViewPointInteraction_ViewExprOutput Expr.Index ViewPointInteraction
+  | ViewPointInteraction_ViewExprOutput Index ViewPointInteraction
 
 data ExprInteraction
   = Click_ViewExprAction MouseEvent
@@ -492,8 +495,8 @@ viewExpr_component = H.mkComponent { initialState: initialViewExprState, eval, r
         ( fold
             [ [ HH.div [ HP.classes [ HH.ClassName "ExprLabel" ] ]
                   [ case l of
-                      Expr.String s -> text s
-                      Expr.Root -> text "root"
+                      String s -> text s
+                      Root -> text "root"
                   ]
               ]
             , let
@@ -508,10 +511,10 @@ viewExpr_component = H.mkComponent { initialState: initialViewExprState, eval, r
               in
                 fold
                   [ es # foldMapWithIndex \i e ->
-                      [ renderPoint (Expr.Index i)
-                      , renderKid (Expr.Step i) e
+                      [ renderPoint (Index i)
+                      , renderKid (Step i) e
                       ]
-                  , [ renderPoint (Expr.Index (Array.length es)) ]
+                  , [ renderPoint (Index (Array.length es)) ]
                   ]
             ]
         )
@@ -528,9 +531,9 @@ handleViewExprQuery (ViewExprQuery qs_ a) = do
   qss # traverse_ \qs -> do
     let SingleViewExprQuery p _ = qs # NEArray.head
     case p of
-      Expr.Path Nil -> qs # traverse_ handleSingleViewExprQuery
-      Expr.Path (i : is) -> do
-        let qs' = ViewExprQuery (qs <#> \(SingleViewExprQuery _ q') -> (SingleViewExprQuery (Expr.Path is) q')) unit
+      Path Nil -> qs # traverse_ handleSingleViewExprQuery
+      Path (i : is) -> do
+        let qs' = ViewExprQuery (qs <#> \(SingleViewExprQuery _ q') -> (SingleViewExprQuery (Path is) q')) unit
         H.query (Proxy @"Expr") i qs' # lift >>= case _ of
           Nothing -> throwError none
           Just it -> pure it
@@ -567,17 +570,17 @@ handleViewExprAction (ExprInteraction_ViewExprAction ei) = do
     Click_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     StartDrag_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     MidDrag_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-  H.raise (Expr.Path Nil /\ ExprInteraction ei) # lift
+  H.raise (Path Nil /\ ExprInteraction ei) # lift
   -- ping_ViewExpr
   pure unit
 -- Point stuff
 handleViewExprAction (ViewPointOutput_ViewExprAction _i (Output_ViewPointOutput o)) =
-  H.raise (Expr.Path Nil /\ Output_ViewExprOutput o) # lift
+  H.raise (Path Nil /\ Output_ViewExprOutput o) # lift
 handleViewExprAction (ViewPointOutput_ViewExprAction i (ViewPointInteraction pi)) = do
   case pi of
     StartDrag_ViewPointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     MidDrag_ViewPointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-  H.raise (Expr.Path Nil /\ ViewPointInteraction_ViewExprOutput i pi) # lift
+  H.raise (Path Nil /\ ViewPointInteraction_ViewExprOutput i pi) # lift
 
 ping_ViewExpr :: ViewExprM' Unit
 ping_ViewExpr = do
@@ -722,7 +725,7 @@ traceEngineM :: String -> PlainHTML -> EngineM Unit
 traceEngineM label content = H.raise $ Output_EngineOutput $ TellConsole \a -> Console.AddMessage { label, content } a
 
 traceViewExprM :: String -> PlainHTML -> ViewExprM Unit
-traceViewExprM label content = H.raise $ Tuple (Expr.Path Nil) $ Output_ViewExprOutput $ TellConsole \a -> Console.AddMessage { label, content } a
+traceViewExprM label content = H.raise $ Tuple (Path Nil) $ Output_ViewExprOutput $ TellConsole \a -> Console.AddMessage { label, content } a
 
 traceViewPointM :: String -> PlainHTML -> ViewPointM Unit
 traceViewPointM label content = H.raise $ Output_ViewPointOutput $ TellConsole \a -> Console.AddMessage { label, content } a

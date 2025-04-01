@@ -114,6 +114,11 @@ modifyDescendant_Span cursor f e0 = go identity (getPath_Cursor cursor) e0
   where
   go :: (Expr -> Expr) -> Path -> Expr -> Expr
   go wrap path e = case uncons_Path path of
+    Just { head: i, tail: path' } ->
+      go
+        (\e' -> wrap $ e # modifyKid_Expr i (const e'))
+        path'
+        (e # getKid_Expr i)
     Nothing ->
       wrap
         $ (\es -> Expr (getLabel_Expr e) (unwrap es))
@@ -121,17 +126,51 @@ modifyDescendant_Span cursor f e0 = go identity (getPath_Cursor cursor) e0
       where
       indices = cursor # getIndices_Cursor
       extract = e # getKids_Expr # extractSpan_Array (unwrap indices.left) (unwrap indices.right)
-    Just { head: i, tail: path' } ->
-      go
-        (\e' -> wrap $ e # modifyKid_Expr i (const e'))
-        path'
-        (e # getKid_Expr i)
+
+-- modifyDescendant_Zipper :: Handle -> (Zipper -> Zipper) -> Expr -> Expr
+-- modifyDescendant_Zipper (Handle path_O j_OL j_OR path_I j_IL j_IR focus) f e =
+--   e # modifyDescendant_Expr path_O \e' ->
+--     let
+--       zip = e # getZipper (mkHandle (Path Nil) j_OL j_OR path_I j_IL j_IR focus)
+--       zip' = f zip
+--       extract = e # getKids_Expr # extractAt_Array ?a
+--     in
+--       Expr (e' # getLabel_Expr) ?a
+
+-- e # modifyDescendant_Span (Cursor path_O j_OL j_OR default_CursorFocus) \span ->
+--   let
+--     zip = getZipper $ Handle (Path Nil) 
+--   in
+--     ?a
+
+-- modifyDescendant_Zipper (Handle path_O j_OL j_OR path_I j_IL j_IR _focus) f e0 = go_O identity path_O e0
+--   where
+--   go_O :: (Expr -> Expr) -> Path -> Expr -> Expr
+--   go_O wrap path e = case path # uncons_Path of
+--     Just { head: i, tail: path' } -> ?a
+--     Nothing ->
+--       case path_I # uncons_Path of
+--         Nothing -> ?a
+--         Just { head: i_I, tail: path_I' } ->
+--           let
+--             { before: es_L, at: es, after: es_R } = e # getKids_Expr # extractSpan_Array (unwrap j_OL) (unwrap j_OR)
+--             -- es' = es_L <> (es # Array.modifyAt (unwrap i_I - unwrap j_OL) ?a # fromMaybe' impossible) <> es_R
+--             es' = es_L <> unwrap (unZipper ?a (?a # getSpan ?a)) <> es_R
+--           in
+--             wrap $ Expr (e # getLabel_Expr) es'
+
+--   go_I = ?a
 
 getLabel_Expr ∷ Expr → Label
 getLabel_Expr (Expr l _) = l
 
 getKid_Expr :: Step -> Expr -> Expr
 getKid_Expr i (Expr _ es) = es Array.!! unwrap i # fromMaybe' impossible
+
+atKid :: Step -> Expr -> { outside :: Expr -> Expr, at :: Expr }
+atKid i (Expr l es) = { outside: \e -> Expr l (extract.before <> [ e ] <> extract.after), at: extract.at }
+  where
+  extract = extractAt_Array (unwrap i) es # fromMaybe' impossible
 
 getKids_Expr :: Expr -> Array Expr
 getKids_Expr (Expr _ es) = es
@@ -400,6 +439,8 @@ instance Show CursorFocus where
 instance Eq CursorFocus where
   eq x = genericEq x
 
+default_CursorFocus = Left_CursorFocus
+
 -- getSelectFromPointToPoint :: Point -> Point -> Maybe Select
 -- getSelectFromPointToPoint p0 p1
 --   | is1 <- getPath p1
@@ -552,6 +593,9 @@ mkTooth l es i = Tooth l es i
   where
   _ = assert "Tooth index is in range" (0 <= unwrap i && unwrap i < Array.length es)
 
+getLabel_Tooth (Tooth l _ _) = l
+getKids_Tooth (Tooth _ es i) = es /\ i
+
 unTooth :: Tooth -> Span -> Expr
 -- unTooth (Tooth l es i) span = Expr l $ Array.insertAt (unwrap i) e es # fromMaybe' impossible
 unTooth (Tooth l es i) span = Expr l $ insertSpanAt_Array (unwrap i) (unwrap span) es
@@ -596,6 +640,25 @@ getFragment h _ | Just p <- toPointHandle h = Span_Fragment $ Span []
 getFragment h e | Just c <- toCursorHandle h = Span_Fragment $ getSpan c e
 getFragment h e = Zipper_Fragment $ getZipper h e
 
+getTooth_Expr :: Step -> Expr -> Tooth /\ Expr
+getTooth_Expr i (Expr l es) = Tooth l (es_L <> es_R) (getIndicesAroundStep i).left /\ e
+  where
+  { before: es_L, at: e, after: es_R } = extractAt_Array (unwrap i) es # fromMaybe' impossible
+
+getTooth_Span :: Index -> Index -> Expr -> Tooth /\ Span
+getTooth_Span j_L j_R (Expr l es) = Tooth l (es_L <> es_R) j_L /\ Span es'
+  where
+  { before: es_L, at: es', after: es_R } = es # extractSpan_Array (unwrap j_L) (unwrap j_R)
+
+atDescendant :: Path -> Expr -> { outside :: Expr -> Expr, at :: Expr }
+atDescendant = go identity
+  where
+  go outside path e = case path # uncons_Path of
+    Just { head: i, tail: path' } -> go (outside <<< unTooth t <<< Span <<< pure) path' e'
+      where
+      t /\ e' = getTooth_Expr i e
+    Nothing -> { outside, at: e }
+
 getDescendant :: Path -> Expr -> Expr
 getDescendant p e = case uncons_Path p of
   Nothing -> e
@@ -605,6 +668,63 @@ getSpan :: Cursor -> Expr -> Span
 getSpan (Cursor p j_L j_R f) e@(Expr _ es) = case uncons_Path p of
   Nothing -> Span $ Array.slice (unwrap j_L) (unwrap j_R) es
   Just { head, tail } -> getSpan (Cursor tail j_L j_R f) (e # getKid_Expr head)
+
+atSpan :: Cursor -> Expr -> { outside :: Zipper, inside :: Span }
+atSpan (Cursor path0 j_L j_R _) e0 = case path0 # uncons_Path of
+  Nothing -> ?a
+  Just { head: i0, tail: path0' } ->
+    let
+      ts /\ inside = go Nil path0 e0
+      -- { before: es_L, at: e', after: es_R } = extractAt_Array (unwrap i0) (e0 # getKids_Expr) # fromMaybe' impossible
+      -- es /\ i = e0 # getTooth_Span j_L j_R
+      -- outside = Zipper (es_L <> es_R) (i0 # getIndicesAroundStep).left ts
+      outside = Zipper ?a ?a (List.reverse ts)
+    in
+      ?a -- { outside, inside }
+    where
+    go ts path e = case path # uncons_Path of
+      Just { head: i, tail: path' } -> go (t : ts) path' e'
+        where
+        t /\ e' = e # getTooth_Expr i
+      Nothing -> (t : ts) /\ es
+        where
+        t /\ es = e # getTooth_Span j_L j_R
+
+atZipper :: Handle -> Expr -> { outside :: Span -> Span, at :: Zipper, inside :: Span }
+atZipper (Handle path_O j_OL j_OR path_I j_IL j_IR _) e =
+  case path_O # uncons_Path of
+    Nothing -> todo ""
+    Just { head: i_O, tail: path_O' } -> todo ""
+
+-- atZipper :: Handle -> Expr -> { outside :: Span -> Span, at :: Zipper, inside :: Span }
+-- atZipper (Handle path_O j_OL j_OR path_I j_IL j_IR _f) e0 =
+--   let
+--     e1 = e0 # getDescendant path_O
+--   in
+--     case path_I # uncons_Path of
+--       -- path_I is empty
+--       Nothing ->
+--         Zipper
+--           ((e1 # getKidsBetweenIndices j_OL j_IL) <> (e1 # getKidsBetweenIndices j_IR j_OR))
+--           (j_IL - j_OL)
+--           Nil
+--       -- path_I is non-empty
+--       Just { head: i_I, tail: path_I' } ->
+--         Zipper
+--           (e1 # getKidsBetweenIndicesExcludingStep j_OL j_OR i_I)
+--           ((i_I # getIndicesAroundStep).left)
+--           (go Nil path_I' (e1 # getKid_Expr i_I))
+--         where
+--         go ths path e = case path # uncons_Path of
+--           Just { head: i, tail: path' } -> go (Tooth (e # getLabel_Expr) (es_L <> es_R) (i # getIndicesAroundStep).left : ths) path' e''
+--             where
+--             { before: es_L, at: e'', after: es_R } = e # getKids_Expr # extractAt_Array (unwrap i) # fromMaybe' impossible
+--           Nothing ->
+--             Tooth
+--               (e # getLabel_Expr)
+--               ((e # getKidsBetweenIndices (getFirstIndex_Expr e) j_IL) <> (e # getKidsBetweenIndices j_IR (getLastIndex_Expr e)))
+--               j_IL
+--               : ths
 
 getZipper :: Handle -> Expr -> Zipper
 getZipper (Handle path_O j_OL j_OR path_I j_IL j_IR _f) e0 =
