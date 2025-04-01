@@ -225,38 +225,39 @@ instance Eq HandleFocus where
 
 --------------------------------------------------------------------------------
 
--- | The values are:
--- |   - path_O: outer path
--- |   - j_OL: outer left point
--- |   - j_OR: outer right point
--- |   - path_I: inner path
--- |   - j_IL: inner left point
--- |   - j_IR: inner right point
-data Handle = Handle Path Index Index Path Index Index HandleFocus
+data Handle = Handle
+  { path_O :: Path
+  , j_OL :: Index
+  , j_OR :: Index
+  , path_I :: Path
+  , j_IL :: Index
+  , j_IR :: Index
+  , focus :: HandleFocus
+  }
 
 derive instance Generic Handle _
 
 instance Show Handle where
-  show (Handle path_O j_OL j_OR path_I j_IL j_IR f) =
-    spaces [ "[[", show path_O, "|", show j_OL, "…", show j_OR, "|", show path_I, "|", show j_IL, "…", show j_IR, "@", show f, "]]" ]
+  show (Handle h) =
+    spaces [ "[[", show h.path_O, "|", show h.j_OL, "…", show h.j_OR, "|", show h.path_I, "|", show h.j_IL, "…", show h.j_IR, "@", show h.focus, "]]" ]
 
 instance Eq Handle where
   eq x = genericEq x
 
 -- Handle path_O j_OL j_OR path_I j_IL j_IR f
 validHandle :: Handle -> Boolean
-validHandle (Handle _path_O j_OL j_OR path_I j_IL j_IR _) =
-  case unwrap path_I of
+validHandle (Handle h) =
+  case unwrap h.path_I of
     Nil ->
-      (j_OL <= j_IL && j_IL <= j_IR && j_IR <= j_OR)
+      (h.j_OL <= h.j_IL && h.j_IL <= h.j_IR && h.j_IR <= h.j_OR)
     i : _ ->
-      (j_OL .<| i && i |<. j_OR) &&
-        (j_IL <= j_IR)
+      (h.j_OL .<| i && i |<. h.j_OR) &&
+        (h.j_IL <= h.j_IR)
 
 mkHandle :: Path -> Index -> Index -> Path -> Index -> Index -> HandleFocus -> Handle
-mkHandle path_O j_OL j_OR path_I j_IL j_IR f =
+mkHandle path_O j_OL j_OR path_I j_IL j_IR focus =
   let
-    h = Handle path_O j_OL j_OR path_I j_IL j_IR f
+    h = Handle { path_O, j_OL, j_OR, path_I, j_IL, j_IR, focus }
   in
     if
       not $ validHandle h then
@@ -264,7 +265,6 @@ mkHandle path_O j_OL j_OR path_I j_IL j_IR f =
     else
       h
 
-mkHandle_namedArgs :: { path_O :: Path, j_OL :: Index, j_OR :: Index, path_I :: Path, j_IL :: Index, j_IR :: Index, f :: HandleFocus } -> Handle
 mkHandle_namedArgs { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f } = mkHandle path_O j_OL j_OR path_I j_IL j_IR f
 
 --------------------------------------------------------------------------------
