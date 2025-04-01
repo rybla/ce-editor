@@ -271,47 +271,44 @@ mkHandle_namedArgs { path_O, j_OL, j_OR, path_I, j_IL, j_IR, f } = mkHandle path
 -- Zipper
 --------------------------------------------------------------------------------
 
-data Zipper = Zipper (Array Expr) Index (List Tooth)
+newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, tooths :: List Tooth }
 
 instance Show Zipper where
-  show (Zipper es i ts) =
+  show (Zipper z) =
     "{{ "
-      <> (es_L # map show # Array.intercalate " ")
-      <> foldr showTooth' "{{}}" ts
-      <> (es_R # map show # Array.intercalate " ")
+      <> (z.kids_L # map show # Array.intercalate " ")
+      <> foldr showTooth' "{{}}" z.tooths
+      <> (z.kids_R # map show # Array.intercalate " ")
       <> " }}"
-    where
-    { before: es_L, after: es_R } = Array.splitAt (unwrap i) es
 
 unZipper :: Zipper -> Span -> Span
-unZipper (Zipper es i ts) span = Span $ es_L <> es' <> es_R
+unZipper (Zipper z) span = Span $ z.kids_L <> es' <> z.kids_R
   where
-  { before: es_L, after: es_R } = Array.splitAt (unwrap i) es
-  es' = foldr (\t span' -> pure $ unTooth t (wrap span')) (unwrap span) ts
+  es' = foldr (\t span' -> pure $ unTooth t (wrap span')) (unwrap span) z.tooths
 
 --------------------------------------------------------------------------------
 -- Utilities
 --------------------------------------------------------------------------------
 
-areSiblings :: Point -> Point -> Boolean
-areSiblings (Point p0) (Point p1) = p0.path == p1.path
+areSiblings_Point :: Point -> Point -> Boolean
+areSiblings_Point (Point p0) (Point p1) = p0.path == p1.path
 
-areOrderedSiblings :: Point -> Point -> Boolean
-areOrderedSiblings (Point p0) (Point p1) = (p0.path == p1.path) && (p0.index <= p1.index)
+areOrderedSiblings_Point :: Point -> Point -> Boolean
+areOrderedSiblings_Point (Point p0) (Point p1) = (p0.path == p1.path) && (p0.index <= p1.index)
 
-orderSiblings :: Point -> Point -> Maybe (Point /\ Point)
-orderSiblings (Point p0) (Point p1) | areSiblings (Point p0) (Point p1) =
+orderSiblings_Point :: Point -> Point -> Maybe (Point /\ Point)
+orderSiblings_Point (Point p0) (Point p1) | areSiblings_Point (Point p0) (Point p1) =
   if p0.index <= p1.index then
     Just $ Point p0 /\ Point p1
   else
     Just $ Point p1 /\ Point p0
-orderSiblings _ _ = Nothing
+orderSiblings_Point _ _ = Nothing
 
 -- | if p0 is a sibling of an ancestor of p1, then computes:
 -- |   - the index into the parent of p0 that goes down towards p1
 -- |   - the path that when appended to the end of p0's path is the path of p1
-isAncestorSibling :: Point -> Point -> Maybe (Step /\ Path)
-isAncestorSibling (Point p0) (Point p1) = go p0.path p1.path
+isAncestorSibling_Point :: Point -> Point -> Maybe (Step /\ Path)
+isAncestorSibling_Point (Point p0) (Point p1) = go p0.path p1.path
   where
   go (Path Nil) (Path (i1 : is1')) = pure $ i1 /\ Path is1'
   go (Path (i0 : is0')) (Path (i1 : is1')) | i0 == i1 = go (Path is0') (Path is1')
