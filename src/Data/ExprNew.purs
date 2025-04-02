@@ -417,10 +417,14 @@ drag (Point_Handle (Point p)) (Point p') _e = case unit of
   _ | otherwise -> Nothing
 
 drag (SpanH_Handle h focus) (Point p') _e = case focus of
+  -- collapse to SpanH's Left Point
+  Right_SpanFocus | hp._L == Point p' -> pure $ Point_Handle (Point p')
   -- adjust SpanH's Right Point
   Right_SpanFocus | areOrderedSiblings_Point hp._L (Point p') -> pure $ SpanH_Handle (SpanH { path: (unwrap hp._L).path, j_L: (unwrap hp._L).j, j_R: p'.j }) Right_SpanFocus
   -- drag focus to the left of SpanH's Left Point, which changes the focus to the Left
   Right_SpanFocus | areOrderedSiblings_Point (Point p') hp._L -> pure $ SpanH_Handle (SpanH { path: (unwrap hp._L).path, j_L: p'.j, j_R: (unwrap hp._L).j }) Left_SpanFocus
+  -- collapse to SpanH's Right Point
+  Left_SpanFocus | hp._R == Point p' -> pure $ Point_Handle (Point p')
   -- adjust SpanH's Left Point
   Left_SpanFocus | areOrderedSiblings_Point (Point p') hp._R -> pure $ SpanH_Handle (SpanH { path: (unwrap hp._R).path, j_L: p'.j, j_R: (unwrap hp._R).j }) Left_SpanFocus
   -- drag focus to right of SpanH's Right Point, which changes the focus to the Right

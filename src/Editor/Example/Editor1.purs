@@ -1,10 +1,11 @@
 module Editor.Example.Editor1 where
 
-import Data.Expr
+import Data.ExprNew
 import Prelude
 
 import Data.Array (range)
 import Data.List (List(..))
+import Data.Newtype (wrap)
 import Editor.Common (Editor)
 
 editor :: Editor
@@ -13,7 +14,8 @@ editor =
   -- , initial_handle: Cursor_Handle (Cursor (Point none 0) (Point none 0) Left_CursorFocus)
   -- , initial_exprs: [ example_expr 2 2 ]
   , initial_exprs: [ example_expr 1 1 ]
-  , initial_handle: mkCursorHandle $ Cursor (Path Nil) (Index 0) (Index 0) Left_CursorFocus
+  -- , initial_handle: mkCursorHandle $ Cursor (Path Nil) (Index 0) (Index 0) Left_CursorFocus
+  , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
   }
 
 example_expr :: Int -> Int -> Expr
