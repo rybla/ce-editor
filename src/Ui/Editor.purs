@@ -38,7 +38,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
-import Ui.Common (KeyInfo, classes, code, column, fromKeyboardEventToKeyInfo, list, style, text)
+import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, style, text)
 import Ui.Common as Ui
 import Ui.Console as Console
 import Utility (allEqual, forget, impossible, sortEquivalenceClasses, todo)
@@ -281,7 +281,8 @@ handleEngineAction (Receive_EngineAction input) = do
   put $ (initialEngineState input)
     -- preserve old clipboard
     { clipboard = state.clipboard }
-handleEngineAction (Keyboard_EngineAction ki) = do
+handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
+  lift $ traceEngineM "Editor . Keyboard" $ text $ "key: " <> show ki
   { handle, clipboard, expr } <- get
   case unit of
     -- copy Fragment
@@ -291,7 +292,7 @@ handleEngineAction (Keyboard_EngineAction ki) = do
           Point_Handle _ -> Span_Fragment (Span [])
           SpanH_Handle h _ -> Span_Fragment (atSpan h expr).at
           ZipperH_Handle h _ -> Zipper_Fragment (atZipper h expr).at
-      lift $ traceEngineM "Editor . Keyboard" $ text $ "copy: " <> show frag
+      lift $ traceEngineM "Editor . Clipboard" $ text $ "copy: " <> show frag
       modify_ _ { clipboard = pure $ frag }
     -- cut Fragment
     _ | ki.cmd && ki.key == "x" -> do
@@ -304,9 +305,10 @@ handleEngineAction (Keyboard_EngineAction ki) = do
           ZipperH_Handle h _ -> Zipper_Fragment at_h.at /\ unContext at_h.outside at_h.inside
             where
             at_h = expr # atZipper h
-      lift $ traceEngineM "Editor . Keyboard" $ text $ "cut: " <> show frag
+      lift $ traceEngineM "Editor . Clipboard" $ text $ "cut: " <> show frag
       modify_ _ { clipboard = pure $ frag }
       lift $ H.raise $ SetExpr_EngineOutput expr'
+    -- paste Fragment
     _ | ki.cmd && ki.key == "v", Just frag <- clipboard -> do
       let
         handle' /\ expr' = case handle of
@@ -325,32 +327,9 @@ handleEngineAction (Keyboard_EngineAction ki) = do
             Zipper_Fragment f -> todo "new handle" /\ unContext at_h.outside (unZipper f at_h.inside)
             where
             at_h = expr # atZipper h
-      lift $ traceEngineM "Editor . Keyboard" $ text $ "paste: " <> show frag
+      lift $ traceEngineM "Editor . Clipboard" $ text $ "paste: " <> show frag
       lift $ H.raise $ SetExpr_EngineOutput expr'
       setHandle handle'
-    -- -- paste span
-    -- _ | ki.cmd && ki.key == "v", Just (Span_Fragment span) <- clipboard, Just point <- toPointHandle handle -> do
-    --   let expr' = insertAtPoint point span expr
-    --   lift $ traceEngineM "Editor . Keyboard" $ list
-    --     [ text "paste"
-    --     , Ui.span [ text "expr  : ", code $ show expr ]
-    --     , Ui.span [ text "span  : ", code $ show span ]
-    --     , Ui.span [ text "expr' : ", code $ show expr' ]
-    --     ]
-    --   lift $ H.raise $ SetExpr_EngineOutput expr'
-    --   setHandle $ mkPointHandle (Point (getPath point) (getIndex point + Index 1))
-    -- -- paste zipper
-    -- _ | ki.cmd && ki.key == "v", Just (Zipper_Fragment zip) <- clipboard, Just cursor <- toCursorHandle handle -> do
-    --   let expr' = modifyDescendant_Span cursor (unZipper zip) expr
-    --   lift $ traceEngineM "Editor . Keyboard" $ list
-    --     [ text "paste"
-    --     , Ui.span [ text "expr   : ", code $ show expr ]
-    --     , Ui.span [ text "cursor : ", code $ show cursor ]
-    --     , Ui.span [ text "zip    : ", code $ show zip ]
-    --     , Ui.span [ text "expr'  : ", code $ show expr' ]
-    --     ]
-    --   lift $ H.raise $ SetExpr_EngineOutput expr'
-    --   setHandle $ mkCursorHandle $ cursor
     _ -> pure unit
   pure unit
 

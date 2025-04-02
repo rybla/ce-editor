@@ -3,7 +3,9 @@ module Ui.Common where
 import Prelude
 
 import Control.Monad.Writer (Writer, execWriter)
+import Data.Array as Array
 import Data.Foldable (intercalate)
+import Data.Newtype (class Newtype)
 import Effect (Effect)
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
@@ -38,16 +40,26 @@ style w = HP.style $ intercalate "; " $ execWriter w
 
 foreign import scrollIntoView :: Element -> Effect Unit
 
-type KeyInfo =
+newtype KeyInfo = KeyInfo
   { key :: String
   , cmd :: Boolean
   , shift :: Boolean
   }
 
+derive instance Newtype KeyInfo _
+
+instance Show KeyInfo where
+  show (KeyInfo ki) = Array.fold
+    [ if ki.shift then "" else "^"
+    , if ki.cmd then "" else "⌘"
+    , case ki.key of
+        -- TODO: special cases
+        key -> key
+    ]
+
 fromKeyboardEventToKeyInfo :: KeyboardEvent -> KeyInfo
-fromKeyboardEventToKeyInfo ke =
+fromKeyboardEventToKeyInfo ke = KeyInfo
   { key: KeyboardEvent.key ke
   , cmd: KeyboardEvent.ctrlKey ke || KeyboardEvent.metaKey ke
   , shift: KeyboardEvent.shiftKey ke
   }
-
