@@ -17,7 +17,7 @@ import Data.NonEmpty ((:|))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces)
+import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces, todo)
 
 --------------------------------------------------------------------------------
 
@@ -343,6 +343,26 @@ data ZipperHandleFocus
   | InnerLeft_ZipperHandleFocus
   | InnerRight_ZipperHandleFocus
   | OuterRight_ZipperHandleFocus
+
+--------------------------------------------------------------------------------
+
+getDragOrigin :: Handle -> Point -> Handle
+getDragOrigin = todo ""
+
+drag :: Handle -> Point -> Expr -> Maybe Handle
+drag (SpanHandle_Handle h focus) p e = todo ""
+drag (ZipperHandle_Handle h focus) p e = todo ""
+
+--------------------------------------------------------------------------------
+
+data Fragment
+  = Span_Fragment Span
+  | Zipper_Fragment Zipper
+
+derive instance Generic Fragment _
+
+instance Show Fragment where
+  show x = genericShow x
 
 -- --------------------------------------------------------------------------------
 
