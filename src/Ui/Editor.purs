@@ -282,7 +282,7 @@ handleEngineAction (Receive_EngineAction input) = do
 handleEngineAction (Keyboard_EngineAction ki) = do
   { handle, clipboard, expr } <- get
   case unit of
-    -- copy fragment
+    -- copy Fragment
     _ | ki.cmd && ki.key == "c" -> do
       let
         frag = case handle of
@@ -291,12 +291,20 @@ handleEngineAction (Keyboard_EngineAction ki) = do
           ZipperH_Handle h _ -> Zipper_Fragment (atZipper h expr).at
       lift $ traceEngineM "Editor . Keyboard" $ text $ "copy: " <> show frag
       modify_ _ { clipboard = pure $ frag }
-    -- TODO: cut
+    -- cut Fragment
     _ | ki.cmd && ki.key == "x" -> do
-      let frag = todo "getFragment handle expr"
+      let
+        frag /\ expr' = case handle of
+          Point_Handle _ -> Span_Fragment (Span []) /\ expr
+          SpanH_Handle h _ -> Span_Fragment at_h.at /\ unContext at_h.ctx (Span [])
+            where
+            at_h = expr # atSpan h
+          ZipperH_Handle h _ -> Zipper_Fragment at_h.at /\ unContext at_h.ctx at_h.inside
+            where
+            at_h = expr # atZipper h
       lift $ traceEngineM "Editor . Keyboard" $ text $ "cut: " <> show frag
-      -- getDesc
       modify_ _ { clipboard = pure $ frag }
+      lift $ H.raise $ SetExpr_EngineOutput expr'
     -- -- paste span
     -- _ | ki.cmd && ki.key == "v", Just (Span_Fragment span) <- clipboard, Just point <- toPointHandle handle -> do
     --   let expr' = insertAtPoint point span expr
