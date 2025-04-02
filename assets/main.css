@@ -73,89 +73,88 @@ body {
   transition-duration: 0.2s;
 }
 
-/* Cursor_Point PointStyle */
+/* Point_ViewPointStyle */
 
-.Point.Cursor_Point {
+.Point.Point_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-/* Cursor PointStyle */
+/* Span_*_ViewPointStyle */
 
-.Point.Cursor_Left {
+.Point.Span_Left_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-.Point.Cursor_Left~* {
+.Point.Span_Left_ViewPointStyle~* {
   background-color: var(--handle-inner-background-color);
 }
 
-.Point.Cursor_Right {
+.Point.Span_Right_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-.Point.Cursor_Right~* {
+.Point.Span_Right_ViewPointStyle~* {
   background-color: var(--background-color);
 }
 
-/* Select PointStyle */
+/* Zipper_*_ViewPointStyle */
 
-.Select_OuterLeft {
+.Point.Zipper_OuterLeft_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-.Select_OuterLeft~* {
+.Point.Zipper_OuterLeft_ViewPointStyle~* {
   background-color: var(--handle-inner-background-color);
 }
 
-.Select_InnerLeft {
+.Point.Zipper_InnerLeft_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-.Select_InnerLeft~* {
+.Point.Zipper_InnerLeft_ViewPointStyle~* {
   background-color: var(--background-color);
 }
 
-.Select_InnerRight {
+.Point.Zipper_InnerRight_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-.Select_InnerRight~* {
+.Point.Zipper_InnerRight_ViewPointStyle~* {
   background-color: transparent;
 }
 
-.Select_OuterRight {
+.Point.Zipper_OuterRight_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-.Select_OuterRight~* {
+.Point.Zipper_OuterRight_ViewPointStyle~* {
   background-color: var(--background-color);
 }
 
-.Select_Inline_InnerLeft_And_InnerRight {
+.Point.Zipper_inline_InnerLeft_And_InnerRight_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-.Select_Inline_OuterLeft_And_InnerLeft {
+.Point.Zipper_Inline_OuterLeft_And_InnerLeft_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-.Select_Inline_InnerRight_And_OuterRight {
+.Point.Zipper_Inline_InnerRight_And_OuterRight_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-.Select_OuterLeft_And_InnerLeft {
+.Point.Zipper_OuterLeft_And_InnerLeft_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-.Select_InnerRight_And_OuterRight {
+.Point.Zipper_InnerRight_And_OuterRight_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-.Select_InnerLeft_And_InnerRight {
+.Point.Zipper_InnerLeft_And_InnerRight_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
-/* Select Inline PointStyle */
 
 /* -----------------------------------------------------------------------------
   Console

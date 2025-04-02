@@ -17,21 +17,24 @@ test = describe "Expr" do
 test_drag :: Spec Unit
 test_drag = describe "drag" do
   Spec.it "drag from a Cursor Handle's Right Point to a rightward sibling Point to adjust the Cursor Handle" $ unsafePartial do
-    let h = spanH { path: [ 0 ], j_L: 0, j_R: 1 } Right_SpanFocus
-    let p = point [ 0 ] 2
-    let h'@(SpanH_Handle sh _) = spanH { path: [ 0 ], j_L: 0, j_R: 2 } Right_SpanFocus
-    let hp = sh # getPoints_SpanH
+    let
+      h = spanH { path: [ 0 ], j_L: 0, j_R: 1 } Right_SpanFocus
+      p = point [ 0 ] 2
+      h'@(SpanH_Handle sh _) = spanH { path: [ 0 ], j_L: 0, j_R: 2 } Right_SpanFocus
+      hp = sh # getPoints_SpanH
     areOrderedSiblings_Point hp._L p `shouldEqual` true
     drag h p (example_expr 2 2) `shouldEqual` pure h'
-    pure unit
 
   it "drag from an Inner Right Point to an Outer Right Point to make a Select Handle" do
-    -- let
-    --   h = handle [ 0 ] 2 2 [] 2 2 InnerRight_HandleFocus
-    --   p_OR = point [] 1
-    --   h' = handle [] 0 1 [ 0 ] 0 2 OuterRight_HandleFocus
-    -- getHandleFromTo h p_OR (example_expr 2 2) `shouldEqual` pure h'
-    pure unit
+    let
+      h = zipperH { path_O: [ 0 ], j_OL: 2, j_OR: 2, path_I: [], j_IL: 2, j_IR: 2 } InnerRight_ZipperFocus
+      p_OR = point [] 1
+      h' = zipperH { path_O: [], j_OL: 0, j_OR: 1, path_I: [ 0 ], j_IL: 0, j_IR: 2 } OuterRight_ZipperFocus
+    drag h p_OR (example_expr 2 2) `shouldEqual` pure h'
+
+--------------------------------------------------------------------------------
+-- Utilities
+--------------------------------------------------------------------------------
 
 point is j = Point { path: path is, j: Index j }
 path is = Path (is # List.fromFoldable # map Step)

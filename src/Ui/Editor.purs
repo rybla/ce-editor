@@ -23,6 +23,7 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe')
 import Data.Newtype (unwrap)
+import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
@@ -634,6 +635,9 @@ data ViewPointStyle
 
 derive instance Generic ViewPointStyle _
 
+instance Show ViewPointStyle where
+  show x = genericShow x
+
 instance Eq ViewPointStyle where
   eq x = genericEq x
 
@@ -689,21 +693,7 @@ point_component = H.mkComponent { initialState, eval, render }
     HH.div
       [ classes $ fold
           [ [ "Point" ]
-          , case state.style of
-              Plain_ViewPointStyle -> []
-              Point_ViewPointStyle -> [ "Span_Point" ]
-              Span_Left_ViewPointStyle -> [ "Span_Left" ]
-              Span_Right_ViewPointStyle -> [ "Span_Right" ]
-              Zipper_OuterRight_ViewPointStyle -> [ "Zipper_OuterRight" ]
-              Zipper_InnerLeft_ViewPointStyle -> [ "Zipper_InnerLeft" ]
-              Zipper_InnerRight_ViewPointStyle -> [ "Zipper_InnerRight" ]
-              Zipper_OuterLeft_ViewPointStyle -> [ "Zipper_OuterLeft" ]
-              Zipper_Inline_InnerLeft_And_InnerRight_ViewPointStyle -> [ "Zipper_Inline_InnerLeft_And_InnerRight" ]
-              Zipper_Inline_OuterLeft_And_InnerLeft_ViewPointStyle -> [ "Zipper_Inline_OuterLeft_And_InnerLeft" ]
-              Zipper_Inline_InnerRight_And_OuterRight_ViewPointStyle -> [ "Zipper_Inline_InnerRight_And_OuterRight" ]
-              Zipper_OuterLeft_And_InnerLeft_ViewPointStyle -> [ "Zipper_OuterLeft_And_InnerLeft" ]
-              Zipper_InnerRight_And_OuterRight_ViewPointStyle -> [ "Zipper_InnerRight_And_OuterRight" ]
-              Zipper_InnerLeft_And_InnerRight_ViewPointStyle -> [ "Zipper_InnerLeft_And_InnerRight" ]
+          , [ state.style # show ]
           ]
       , HE.onMouseDown (StartDrag_ViewPointInteraction >>> ViewPointInteraction_ViewPointAction)
       , HE.onMouseEnter (MidDrag_ViewPointInteraction >>> ViewPointInteraction_ViewPointAction)
