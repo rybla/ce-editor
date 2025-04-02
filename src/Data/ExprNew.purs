@@ -385,6 +385,9 @@ instance Show Handle where
   show (SpanH_Handle h focus) = show h <> " @ " <> show focus
   show (ZipperH_Handle h focus) = show h <> " @ " <> show focus
 
+instance Eq Handle where
+  eq x = genericEq x
+
 data SpanFocus = Left_SpanFocus | Right_SpanFocus
 
 derive instance Generic SpanFocus _

@@ -16,14 +16,14 @@
   [
     "Expr drag drag from a Cursor Handle's Right Point to a rightward sibling Point to adjust the Cursor Handle",
     {
-      "timestamp": "1743112530767.0",
+      "timestamp": "1743612270064.0",
       "success": true
     }
   ],
   [
     "Expr drag drag from an Inner Right Point to an Outer Right Point to make a Select Handle",
     {
-      "timestamp": "1743112530767.0",
+      "timestamp": "1743612270064.0",
       "success": true
     }
   ],
