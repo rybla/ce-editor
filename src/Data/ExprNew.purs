@@ -17,7 +17,7 @@ import Data.NonEmpty ((:|))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces, todo)
+import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces)
 
 --------------------------------------------------------------------------------
 
@@ -58,8 +58,8 @@ derive newtype instance Semiring Index
 
 derive newtype instance Ring Index
 
-atIndexSpan :: Index -> Index -> Expr -> { outside :: Tooth, at :: Span }
-atIndexSpan i_L i_R (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, at: Span es }
+atIndexSpan_Expr :: Index -> Index -> Expr -> { outside :: Tooth, at :: Span }
+atIndexSpan_Expr i_L i_R (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, at: Span es }
   where
   { before: kids_L, at: es, after: kids_R } = extractSpan_Array (unwrap i_L) (unwrap i_R) e.kids
 
@@ -79,8 +79,8 @@ orderedIndexAndStep (Index j) (Step i) = j <= i
 -- the `|` corresponds to a step and the `.` corresponds to an index
 infixl 4 orderedIndexAndStep as .<|
 
-getIndexesAroundStep :: Step -> { left :: Index, right :: Index }
-getIndexesAroundStep (Step i) = { left: Index i, right: Index (i + 1) }
+getIndexesAroundStep :: Step -> { _L :: Index, _R :: Index }
+getIndexesAroundStep (Step i) = { _L: Index i, _R: Index (i + 1) }
 
 --------------------------------------------------------------------------------
 
@@ -118,8 +118,8 @@ getFirstIndex_Expr (Expr _) = Index 0
 getLastIndex_Expr :: Expr -> Index
 getLastIndex_Expr (Expr e) = Index (e.kids # Array.length)
 
-getExtremeIndexes :: Expr -> { left :: Index, right :: Index }
-getExtremeIndexes (Expr e) = { left: Index 0, right: Index (Array.length e.kids) }
+getExtremeIndexes :: Expr -> { _L :: Index, _R :: Index }
+getExtremeIndexes (Expr e) = { _L: Index 0, _R: Index (Array.length e.kids) }
 
 --------------------------------------------------------------------------------
 
@@ -134,6 +134,11 @@ instance Show Span where
 
 getKid_Span :: Step -> Span -> Expr
 getKid_Span i (Span es) = es Array.!! unwrap i # fromMaybe' impossible
+
+atIndexSpan_Span :: Index -> Index -> Span -> { _L :: Span, _R :: Span, at :: Span }
+atIndexSpan_Span i_L i_R (Span es) = { _L: Span left, _R: Span right, at: Span es }
+  where
+  { before: left, at: es, after: right } = extractSpan_Array (unwrap i_L) (unwrap i_R) es
 
 --------------------------------------------------------------------------------
 
@@ -275,7 +280,7 @@ atSpan :: SpanHandle -> Expr -> { ctx :: Context, at :: Span }
 atSpan (SpanHandle h) e = { ctx: Context (NonEmptyList.snoc' at_path.outside at_span.outside), at: at_span.at }
   where
   at_path = e # atPath h.path
-  at_span = at_path.at # atIndexSpan h.j_L h.j_R
+  at_span = at_path.at # atIndexSpan_Expr h.j_L h.j_R
 
 --------------------------------------------------------------------------------
 
@@ -303,17 +308,12 @@ atZipper :: ZipperHandle -> Expr -> { ctx :: Context, at :: Zipper, inside :: Sp
 atZipper (ZipperHandle h) e =
   case h.path_I # uncons_Path of
     Nothing ->
-      -- { ctx: Context (NonEmptyList.snoc' at_path_O.outside at_span_O.outside)
-      -- , at: Zipper
-      --     { kids_L: ?a
-      --     , kids_R: ?a
-      --     , ts: ?a
-      --     }
-      -- , inside: ?a
-      -- }
-      -- where
-      -- at_kid_M = at_span_O.at # ?atIndexSpan ?a ?a
-      todo ""
+      { ctx: Context (NonEmptyList.snoc' at_path_O.outside at_span_O.outside)
+      , at: Zipper { kids_L: unwrap at_kid_M._L, kids_R: unwrap at_kid_M._R, ts: Nil }
+      , inside: at_kid_M.at
+      }
+      where
+      at_kid_M = at_span_O.at # atIndexSpan_Span (h.j_IL - h.j_OL) (h.j_IR - h.j_OL)
     Just { head: i_I, tail: path_I } ->
       { ctx: Context (NonEmptyList.snoc' at_path_O.outside at_span_O.outside)
       , at: Zipper
@@ -328,7 +328,7 @@ atZipper (ZipperHandle h) e =
       at_span_I = at_kid_M.at # atSpan (SpanHandle { j_L: h.j_IL, j_R: h.j_IR, path: path_I })
   where
   at_path_O = e # atPath h.path_O
-  at_span_O = at_path_O.at # atIndexSpan h.j_OL h.j_OR
+  at_span_O = at_path_O.at # atIndexSpan_Expr h.j_OL h.j_OR
 
 --------------------------------------------------------------------------------
 
