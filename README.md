@@ -2,6 +2,5 @@
 
 ```
 bun install
-bun run template
-bun run server
+bun run start
 ```
