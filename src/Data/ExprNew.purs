@@ -145,6 +145,9 @@ atIndexSpan_Span i_L i_R (Span es) = { _L: Span left, _R: Span right, at: Span e
   where
   { before: left, at: es, after: right } = extractSpan_Array (unwrap i_L) (unwrap i_R) es
 
+offset_Span :: Span -> Index
+offset_Span (Span es) = Index $ es # Array.length
+
 --------------------------------------------------------------------------------
 
 newtype Path = Path (List Step)
@@ -232,6 +235,9 @@ isRoot_Tooth (Tooth t) = t.l == Root
 unTooth :: Tooth -> Span -> Expr
 unTooth (Tooth t) span = Expr { l: t.l, kids: t.kids_L <> unwrap span <> t.kids_R }
 
+offset_inner_Tooth :: Tooth -> Index
+offset_inner_Tooth (Tooth t) = Index $ t.kids_L # Array.length
+
 --------------------------------------------------------------------------------
 
 newtype Context = Context (NonEmptyList Tooth)
@@ -261,6 +267,11 @@ instance Show Zipper where
 
 unZipper :: Zipper -> Span -> Span
 unZipper (Zipper z) span = Span $ z.kids_L <> foldr (\t span' -> pure $ unTooth t (wrap span')) (unwrap span) z.ts <> z.kids_R
+
+offset_inner_Zipper :: Zipper -> Index
+offset_inner_Zipper (Zipper z) = case z.ts # List.unsnoc of
+  Just { last } -> last # offset_inner_Tooth
+  Nothing -> Index $ z.kids_L # Array.length
 
 --------------------------------------------------------------------------------
 
@@ -293,8 +304,13 @@ getLeftPoint_SpanH (SpanH h) = Point { path: h.path, j: h.j_L }
 getRightPoint_SpanH :: SpanH -> Point
 getRightPoint_SpanH (SpanH h) = Point { path: h.path, j: h.j_R }
 
-atSpan :: SpanH -> Expr -> { ctx :: Context, at :: Span }
-atSpan (SpanH h) e = { ctx: Context (NonEmptyList.snoc' at_path.outside at_span.outside), at: at_span.at }
+atPoint :: Point -> Expr -> { outside :: Context }
+atPoint (Point p) e = { outside }
+  where
+  { outside } = atSpan (SpanH { path: p.path, j_L: p.j, j_R: p.j }) e
+
+atSpan :: SpanH -> Expr -> { outside :: Context, at :: Span }
+atSpan (SpanH h) e = { outside: Context (NonEmptyList.snoc' at_path.outside at_span.outside), at: at_span.at }
   where
   at_path = e # atPath h.path
   at_span = at_path.at # atIndexSpan_Expr h.j_L h.j_R
@@ -329,22 +345,22 @@ getPoints_ZipperH (ZipperH h) =
   , _OR: Point { path: h.path_O, j: h.j_OR }
   }
 
-atZipper :: ZipperH -> Expr -> { ctx :: Context, at :: Zipper, inside :: Span }
+atZipper :: ZipperH -> Expr -> { outside :: Context, at :: Zipper, inside :: Span }
 atZipper (ZipperH h) e =
   case h.path_I # uncons_Path of
     Nothing ->
-      { ctx: Context (NonEmptyList.snoc' at_path_O.outside at_span_O.outside)
+      { outside: Context (NonEmptyList.snoc' at_path_O.outside at_span_O.outside)
       , at: Zipper { kids_L: unwrap at_kid_M._L, kids_R: unwrap at_kid_M._R, ts: Nil }
       , inside: at_kid_M.at
       }
       where
       at_kid_M = at_span_O.at # atIndexSpan_Span (h.j_IL - h.j_OL) (h.j_IR - h.j_OL)
     Just { head: i_I, tail: path_I } ->
-      { ctx: Context (NonEmptyList.snoc' at_path_O.outside at_span_O.outside)
+      { outside: Context (NonEmptyList.snoc' at_path_O.outside at_span_O.outside)
       , at: Zipper
           { kids_L: (unwrap at_kid_M.outside).kids_L
           , kids_R: (unwrap at_kid_M.outside).kids_R
-          , ts: at_span_I.ctx # unwrap # NonEmptyList.toList
+          , ts: at_span_I.outside # unwrap # NonEmptyList.toList
           }
       , inside: at_span_I.at
       }

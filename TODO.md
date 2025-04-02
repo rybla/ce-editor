@@ -5,13 +5,18 @@
   - [x] if points are siblings, then make cursor
   - [x] if points make a selection, then make selection
   - [x] otherwise, put cursor around nearest common ancestor node
-- [ ] adjust ends of handle with mouse
-- [ ] two kinds of handles: ones with foci and ones without
-  
-
-- how to deal with top level being a span or not? it makes a lot of sense for the logic in Expr for the top level to be a span. but does it always?
+- [x] two kinds of handles: ones with foci and ones without
+  - there are `SpanH` and `ZipperH` which do not have foci, and `Handle` which does have a foci
+- [x] how to deal with top level being a span or not? it makes a lot of sense for the logic in Expr for the top level to be a span. but does it always?
   - useful cases:
     - `atSpan`
     - `atZipper`
   - not useful cases:
     - rendering (since then I need to manufactor a Root Expr component)
+  - **answer**: top level is still Root, but now we also have a Context type for encoding a Zipper that is from a top Expr (often, the Root Expr) specifically
+- [ ] adjust ends of handle with mouse
+  - [ ] adjust ends of span with mouse
+    - [ ] test if this works
+  - [ ] adjust ends of zipper with mouse
+- [ ] what happens when paste a span on a zipper handle? 
+  - [x] currently, just replaces the entire zipper+inside with the pasted span

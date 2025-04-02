@@ -22,6 +22,7 @@ import Data.List (List(..), (:))
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe')
+import Data.Newtype (unwrap)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
@@ -296,15 +297,36 @@ handleEngineAction (Keyboard_EngineAction ki) = do
       let
         frag /\ expr' = case handle of
           Point_Handle _ -> Span_Fragment (Span []) /\ expr
-          SpanH_Handle h _ -> Span_Fragment at_h.at /\ unContext at_h.ctx (Span [])
+          SpanH_Handle h _ -> Span_Fragment at_h.at /\ unContext at_h.outside (Span [])
             where
             at_h = expr # atSpan h
-          ZipperH_Handle h _ -> Zipper_Fragment at_h.at /\ unContext at_h.ctx at_h.inside
+          ZipperH_Handle h _ -> Zipper_Fragment at_h.at /\ unContext at_h.outside at_h.inside
             where
             at_h = expr # atZipper h
       lift $ traceEngineM "Editor . Keyboard" $ text $ "cut: " <> show frag
       modify_ _ { clipboard = pure $ frag }
       lift $ H.raise $ SetExpr_EngineOutput expr'
+    _ | ki.cmd && ki.key == "v", Just frag <- clipboard -> do
+      let
+        handle' /\ expr' = case handle of
+          Point_Handle p -> case frag of
+            Span_Fragment f -> Point_Handle (Point { path: (unwrap p).path, j: (unwrap p).j + (f # offset_Span) }) /\ unContext at_h.outside f
+            Zipper_Fragment f -> Point_Handle (Point { path: (unwrap p).path, j: (f # offset_inner_Zipper) }) /\ unContext at_h.outside (unZipper f (Span []))
+            where
+            at_h = expr # atPoint p
+          SpanH_Handle h focus -> case frag of
+            Span_Fragment f -> todo "new handle" /\ unContext at_h.outside f
+            Zipper_Fragment f -> todo "new handle" /\ unContext at_h.outside (unZipper f at_h.at)
+            where
+            at_h = expr # atSpan h
+          ZipperH_Handle h focus -> case frag of
+            Span_Fragment f -> todo "new handle" /\ unContext at_h.outside f
+            Zipper_Fragment f -> todo "new handle" /\ unContext at_h.outside (unZipper f at_h.inside)
+            where
+            at_h = expr # atZipper h
+      lift $ traceEngineM "Editor . Keyboard" $ text $ "paste: " <> show frag
+      lift $ H.raise $ SetExpr_EngineOutput expr'
+      setHandle handle'
     -- -- paste span
     -- _ | ki.cmd && ki.key == "v", Just (Span_Fragment span) <- clipboard, Just point <- toPointHandle handle -> do
     --   let expr' = insertAtPoint point span expr
