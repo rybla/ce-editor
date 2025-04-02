@@ -441,7 +441,6 @@ type ViewExprInput =
 
 type ViewExprState =
   { expr :: Expr
-  , ping :: Boolean
   }
 
 data ViewExprAction
@@ -504,7 +503,7 @@ viewExpr_component = H.mkComponent { initialState: initialViewExprState, eval, r
       Expr e0 = state.expr
     in
       HH.div
-        [ HP.classes $ [ [ HH.ClassName "Expr" ], if state.ping then [ H.ClassName "ping" ] else [] ] # fold
+        [ Ui.classes [ "Expr" ]
         -- , HE.onMouseDown (StartDrag_ViewExprAction >>> ExprInteraction_ViewExprAction)
         -- , HE.onMouseMove (MidDrag_ViewExprAction >>> ExprInteraction_ViewExprAction)
         ]
@@ -538,7 +537,6 @@ viewExpr_component = H.mkComponent { initialState: initialViewExprState, eval, r
 initialViewExprState :: ViewExprInput -> ViewExprState
 initialViewExprState { expr } =
   { expr
-  , ping: false
   }
 
 handleViewExprQuery :: forall a. ViewExprQuery a -> ViewExprM' a
@@ -576,7 +574,6 @@ handleViewExprAction (Receive_ViewExprAction input) = do
           ]
       ]
     put state'
-    -- ping_ViewExpr
     pure unit
 -- kid Expr stuff
 handleViewExprAction (ViewExprOutput_ViewExprAction i (is /\ o)) = do
@@ -587,7 +584,6 @@ handleViewExprAction (ExprInteraction_ViewExprAction ei) = do
     StartDrag_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     MidDrag_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
   H.raise (Path Nil /\ ExprInteraction ei) # lift
-  -- ping_ViewExpr
   pure unit
 -- Point stuff
 handleViewExprAction (ViewPointOutput_ViewExprAction _i (Output_ViewPointOutput o)) =
@@ -597,12 +593,6 @@ handleViewExprAction (ViewPointOutput_ViewExprAction i (ViewPointInteraction pi)
     StartDrag_ViewPointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     MidDrag_ViewPointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
   H.raise (Path Nil /\ ViewPointInteraction_ViewExprOutput i pi) # lift
-
-ping_ViewExpr :: ViewExprM' Unit
-ping_ViewExpr = do
-  modify_ _ { ping = true }
-  Aff.delay (Milliseconds 500.0) # liftAff
-  modify_ _ { ping = false }
 
 --------------------------------------------------------------------------------
 -- Point
