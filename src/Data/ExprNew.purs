@@ -17,7 +17,7 @@ import Data.NonEmpty ((:|))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces, todo)
+import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces)
 
 --------------------------------------------------------------------------------
 
@@ -111,6 +111,11 @@ instance Show Expr where
 
 instance Eq Expr where
   eq x = genericEq x
+
+mkExpr ∷ Label → Array Expr → Expr
+mkExpr l kids = Expr { l, kids }
+
+infix 0 mkExpr as %
 
 getFirstIndex_Expr :: Expr -> Index
 getFirstIndex_Expr (Expr _) = Index 0
@@ -357,13 +362,40 @@ data Handle
   | SpanH_Handle SpanH SpanFocus
   | ZipperH_Handle ZipperH ZipperFocus
 
+derive instance Generic Handle _
+
+instance Show Handle where
+  show (Point_Handle p) = "[[ " <> show p <> " ]]"
+  show (SpanH_Handle h focus) = show h <> " @ " <> show focus
+  show (ZipperH_Handle h focus) = show h <> " @ " <> show focus
+
 data SpanFocus = Left_SpanFocus | Right_SpanFocus
+
+derive instance Generic SpanFocus _
+
+instance Eq SpanFocus where
+  eq x = genericEq x
+
+instance Show SpanFocus where
+  show Left_SpanFocus = "L"
+  show Right_SpanFocus = "R"
 
 data ZipperFocus
   = OuterLeft_ZipperFocus
   | InnerLeft_ZipperFocus
   | InnerRight_ZipperFocus
   | OuterRight_ZipperFocus
+
+derive instance Generic ZipperFocus _
+
+instance Eq ZipperFocus where
+  eq x = genericEq x
+
+instance Show ZipperFocus where
+  show OuterLeft_ZipperFocus = "OL"
+  show InnerLeft_ZipperFocus = "IL"
+  show InnerRight_ZipperFocus = "IR"
+  show OuterRight_ZipperFocus = "OR"
 
 --------------------------------------------------------------------------------
 
@@ -397,7 +429,7 @@ drag (SpanH_Handle h focus) (Point p') _e = case focus of
   where
   hp = getPoints_SpanH h
 
-drag (ZipperH_Handle h focus) p' e = Nothing -- TODO
+drag (ZipperH_Handle _h _focus) _p' _e = Nothing -- TODO
 
 --------------------------------------------------------------------------------
 
