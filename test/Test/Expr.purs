@@ -25,9 +25,9 @@ test_drag = describe "drag" do
     areOrderedSiblings_Point hp._L p `shouldEqual` true
     drag h p (example_expr 2 2) `shouldEqual` pure h'
 
-  it "drag from an Inner Right Point to an Outer Right Point to make a Select Handle" do
+  it "drag from an Inner Right Point to an Outer Right Point to make a Zipper Handle" do
     let
-      h = zipperH { path_O: [ 0 ], j_OL: 2, j_OR: 2, path_I: [], j_IL: 2, j_IR: 2 } InnerRight_ZipperFocus
+      h = Point_Handle $ point [ 0 ] 2
       p_OR = point [] 1
       h' = zipperH { path_O: [], j_OL: 0, j_OR: 1, path_I: [ 0 ], j_IL: 0, j_IR: 2 } OuterRight_ZipperFocus
     drag h p_OR (example_expr 2 2) `shouldEqual` pure h'
