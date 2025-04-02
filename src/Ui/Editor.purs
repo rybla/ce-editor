@@ -1,6 +1,6 @@
 module Ui.Editor where
 
-import Data.ExprNew
+import Data.Expr
 import Prelude
 
 import Control.Monad.Error.Class (throwError)

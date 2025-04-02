@@ -1,6 +1,6 @@
 module Test.Expr where
 
-import Data.ExprNew
+import Data.Expr
 import Prelude
 
 import Data.Array as Array

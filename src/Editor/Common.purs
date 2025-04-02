@@ -1,6 +1,6 @@
 module Editor.Common where
 
-import Data.ExprNew (Expr, Handle)
+import Data.Expr (Expr, Handle)
 
 --------------------------------------------------------------------------------
 

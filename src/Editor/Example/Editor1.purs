@@ -1,6 +1,6 @@
 module Editor.Example.Editor1 where
 
-import Data.ExprNew
+import Data.Expr
 import Prelude
 
 import Data.Array (range)
