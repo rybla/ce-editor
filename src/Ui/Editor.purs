@@ -19,6 +19,7 @@ import Data.Foldable (traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
+import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe')
@@ -310,23 +311,67 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       lift $ H.raise $ SetExpr_EngineOutput expr'
     -- paste Fragment
     _ | ki.cmd && ki.key == "v", Just frag <- clipboard -> do
-      let
-        handle' /\ expr' = case handle of
-          Point_Handle p -> case frag of
-            Span_Fragment f -> Point_Handle (Point { path: (unwrap p).path, j: (unwrap p).j + (f # offset_Span) }) /\ unContext at_h.outside f
-            Zipper_Fragment f -> Point_Handle (Point { path: (unwrap p).path, j: (f # offset_inner_Zipper) }) /\ unContext at_h.outside (unZipper f (Span []))
-            where
-            at_h = expr # atPoint p
-          SpanH_Handle h focus -> case frag of
-            Span_Fragment f -> todo "new handle" /\ unContext at_h.outside f
-            Zipper_Fragment f -> todo "new handle" /\ unContext at_h.outside (unZipper f at_h.at)
-            where
-            at_h = expr # atSpan h
-          ZipperH_Handle h focus -> case frag of
-            Span_Fragment f -> todo "new handle" /\ unContext at_h.outside f
-            Zipper_Fragment f -> todo "new handle" /\ unContext at_h.outside (unZipper f at_h.inside)
-            where
-            at_h = expr # atZipper h
+      handle' /\ expr' <- case handle of
+        Point_Handle p -> case frag of
+          Span_Fragment f -> pure $ Tuple
+            (Point_Handle (Point { path: (unwrap p).path, j: (unwrap p).j + (f # offset_Span) }))
+            (unContext at_h.outside f)
+          Zipper_Fragment f -> pure $ Tuple
+            (Point_Handle (Point { path: (unwrap p).path, j: (f # offset_inner_Zipper) }))
+            (unContext at_h.outside (unZipper f (Span [])))
+          where
+          at_h = expr # atPoint p
+        SpanH_Handle h focus -> case frag of
+          Span_Fragment f -> pure $ Tuple
+            ( case focus of
+                Left_SpanFocus -> Point_Handle (Point { path: (unwrap h).path, j: (unwrap h).j_L })
+                Right_SpanFocus -> Point_Handle (Point { path: (unwrap h).path, j: (unwrap h).j_L + (f # offset_Span) })
+            )
+            (unContext at_h.outside f)
+          -- pasting a Zipper around a Span
+          Zipper_Fragment (Zipper z) -> Tuple
+            <$>
+              ( let
+                  { path, at_span } = case z.ts # List.unsnoc of
+                    Nothing ->
+                      { path
+                      , at_span: expr # atSpan (SpanH { path, j_L, j_R: j_L + offset_Span at_h.at })
+                      }
+                      where
+                      path = (unwrap h).path
+                      j_L = Index (z.kids_L # Array.length)
+
+                    Just { init: ts, last: t } ->
+                      { path
+                      , at_span: expr # atSpan (SpanH { path, j_L, j_R: j_L + offset_Span at_h.at })
+                      }
+                      where
+                      path = (unwrap h).path <> getPath_Tooths ts
+                      j_L = t # offset_Tooth
+                in
+                  do
+                    -- TODO: places Point handle at outside of zipper paste instead of inside
+                    lift $ traceEngineM "Editor . Clipboard" $ Ui.column
+                      [ Ui.code $ "path = " <> show path
+                      , Ui.code $ "at_span.outside = " <> show at_span.outside
+                      , Ui.code $ "at_span.at = " <> show at_span.at
+                      ]
+                    pure case focus of
+                      Left_SpanFocus -> Point_Handle (Point { path, j: at_span.outside # offset_Context })
+                      Right_SpanFocus -> Point_Handle (Point { path, j: (at_span.outside # offset_Context) + (at_h.at # offset_Span) })
+              )
+            <*> pure (unContext at_h.outside (unZipper (Zipper z) at_h.at))
+          where
+          at_h = expr # atSpan h
+        ZipperH_Handle h focus -> case frag of
+          Span_Fragment f -> pure $ Tuple
+            (todo "new handle")
+            (unContext at_h.outside f)
+          Zipper_Fragment f -> pure $ Tuple
+            (todo "new handle")
+            (unContext at_h.outside (unZipper f at_h.inside))
+          where
+          at_h = expr # atZipper h
       lift $ traceEngineM "Editor . Clipboard" $ text $ "paste: " <> show frag
       lift $ H.raise $ SetExpr_EngineOutput expr'
       setHandle handle'

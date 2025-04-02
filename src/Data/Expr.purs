@@ -229,8 +229,14 @@ isRoot_Tooth (Tooth t) = t.l == Root
 unTooth :: Tooth -> Span -> Expr
 unTooth (Tooth t) span = Expr { l: t.l, kids: t.kids_L <> unwrap span <> t.kids_R }
 
-offset_inner_Tooth :: Tooth -> Index
-offset_inner_Tooth (Tooth t) = Index $ t.kids_L # Array.length
+offset_Tooth :: Tooth -> Index
+offset_Tooth (Tooth t) = Index $ t.kids_L # Array.length
+
+getStep_Tooth :: Tooth -> Step
+getStep_Tooth (Tooth t) = Step $ t.kids_L # Array.length
+
+getPath_Tooths :: List Tooth -> Path
+getPath_Tooths ts = Path (ts # map getStep_Tooth)
 
 --------------------------------------------------------------------------------
 
@@ -247,9 +253,14 @@ instance Show Context where
 unContext :: Context -> Span -> Expr
 unContext (Context (NonEmptyList (t :| ts))) s = unTooth t $ foldr (\t' s' -> Span [ unTooth t' s' ]) s ts
 
+offset_Context :: Context -> Index
+offset_Context (Context ts) = ts # NonEmptyList.last # offset_Tooth
+
 --------------------------------------------------------------------------------
 
 newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, ts :: List Tooth }
+
+derive instance Newtype Zipper _
 
 instance Show Zipper where
   show (Zipper z) =
@@ -264,7 +275,7 @@ unZipper (Zipper z) span = Span $ z.kids_L <> foldr (\t span' -> pure $ unTooth 
 
 offset_inner_Zipper :: Zipper -> Index
 offset_inner_Zipper (Zipper z) = case z.ts # List.unsnoc of
-  Just { last } -> last # offset_inner_Tooth
+  Just { last } -> last # offset_Tooth
   Nothing -> Index $ z.kids_L # Array.length
 
 --------------------------------------------------------------------------------

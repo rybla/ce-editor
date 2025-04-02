@@ -33,7 +33,8 @@ data Action
 type Output = Void
 
 disabledMessageLabels =
-  [ "Editor . ViewExpr"
+  [ "Editor . Keyboard"
+  , "Editor . ViewExpr"
   -- , "Drag"
   ]
 
