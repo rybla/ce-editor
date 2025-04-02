@@ -284,7 +284,11 @@ handleEngineAction (Keyboard_EngineAction ki) = do
   case unit of
     -- copy fragment
     _ | ki.cmd && ki.key == "c" -> do
-      let frag = todo "getFragment handle expr"
+      let
+        frag = case handle of
+          Point_Handle _ -> Span_Fragment (Span [])
+          SpanH_Handle h _ -> Span_Fragment (atSpan h expr).at
+          ZipperH_Handle h _ -> Zipper_Fragment (atZipper h expr).at
       lift $ traceEngineM "Editor . Keyboard" $ text $ "copy: " <> show frag
       modify_ _ { clipboard = pure $ frag }
     -- TODO: cut
