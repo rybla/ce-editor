@@ -349,51 +349,29 @@ updateDragToPoint p = do
             ]
         setHandle h'
 
--- TODO
 setHandle :: Handle -> EngineM' Unit
 setHandle h = do
   ps1 <- toggleHandleViewPointStyles false <$> gets _.handle
-  -- modify_ _ { handle = h }
-  -- let p_OL /\ p_IL /\ p_IR /\ p_OR = getHandlePoints h
-  -- lift $ traceEngineM "Editor . Drag" $ list
-  --   [ text $ "p_OL = " <> show p_OL
-  --   , text $ "p_IL = " <> show p_IL
-  --   , text $ "p_IR = " <> show p_IR
-  --   , text $ "p_OR = " <> show p_OR
-  --   ]
-  -- let ps2 = toggleHandleViewPointStyles true h
-  -- toggleViewPointStyles $ Map.unionWith forget ps1 ps2
-  pure unit
+  modify_ _ { handle = h }
+  lift $ traceEngineM "Editor . Drag" $ text (show h)
+  let ps2 = toggleHandleViewPointStyles true h
+  toggleViewPointStyles $ Map.unionWith forget ps1 ps2
 
 toggleHandleViewPointStyles :: Boolean -> Handle -> Map Point ViewPointStyle
-toggleHandleViewPointStyles active (Point_Handle p) = todo ""
-toggleHandleViewPointStyles active (SpanH_Handle h focus) = todo ""
-toggleHandleViewPointStyles active (ZipperH_Handle (ZipperH h) focus) = toggleHandleViewPointStyles_helper active (h.path_I == Path Nil) hp._OL hp._IL hp._IR hp._OR
+toggleHandleViewPointStyles active (Point_Handle p) = Map.fromFoldable [ p /\ toggleViewPointStyle active Point_ViewPointStyle ]
+toggleHandleViewPointStyles active (SpanH_Handle h _focus) = Map.fromFoldable [ hp._L /\ toggleViewPointStyle active Span_Left_ViewPointStyle, hp._R /\ toggleViewPointStyle active Span_Right_ViewPointStyle ]
+  where
+  hp = getPoints_SpanH h
+toggleHandleViewPointStyles active (ZipperH_Handle (ZipperH h) _focus) = case unit of
+  _ | hp._IL == hp._IR -> Map.fromFoldable [ hp._OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, hp._IL /\ toggleViewPointStyle active Zipper_Inline_InnerLeft_And_InnerRight_ViewPointStyle, hp._OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
+  _ | hp._OL == hp._IL -> Map.fromFoldable [ hp._OL /\ toggleViewPointStyle active Zipper_Inline_OuterLeft_And_InnerLeft_ViewPointStyle, hp._IR /\ toggleViewPointStyle active Zipper_InnerRight_ViewPointStyle, hp._OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
+  _ | hp._IR == hp._OR -> Map.fromFoldable [ hp._OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, hp._IL /\ toggleViewPointStyle active Zipper_InnerLeft_ViewPointStyle, hp._IR /\ toggleViewPointStyle active Zipper_Inline_InnerRight_And_OuterRight_ViewPointStyle ]
+  _ | hp._OL == hp._IL -> Map.fromFoldable [ hp._OL /\ toggleViewPointStyle active Zipper_OuterLeft_And_InnerLeft_ViewPointStyle, hp._IR /\ toggleViewPointStyle active Zipper_InnerRight_ViewPointStyle, hp._OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
+  _ | hp._IR == hp._OR -> Map.fromFoldable [ hp._OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, hp._IL /\ toggleViewPointStyle active Zipper_InnerLeft_ViewPointStyle, hp._IR /\ toggleViewPointStyle active Zipper_InnerRight_And_OuterRight_ViewPointStyle ]
+  _ | hp._IL == hp._IR -> Map.fromFoldable [ hp._OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, hp._IL /\ toggleViewPointStyle active Zipper_InnerLeft_And_InnerRight_ViewPointStyle, hp._OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
+  _ -> Map.fromFoldable [ hp._OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, hp._IL /\ toggleViewPointStyle active Zipper_InnerLeft_ViewPointStyle, hp._IR /\ toggleViewPointStyle active Zipper_InnerRight_ViewPointStyle, hp._OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
   where
   hp = getPoints_ZipperH (ZipperH h)
-
-toggleHandleViewPointStyles_helper :: Boolean -> Boolean -> Point -> Point -> Point -> Point -> Map Point ViewPointStyle
--- 
--- Point
-toggleHandleViewPointStyles_helper active _inline p_OL_IL_IR_OR _p_IL _p_IR _p_OR | allEqual [ p_OL_IL_IR_OR, _p_IL, _p_IR, _p_OR ] = Map.fromFoldable [ p_OL_IL_IR_OR /\ toggleViewPointStyle active Point_ViewPointStyle ]
--- 
--- Cursor
-toggleHandleViewPointStyles_helper active _inline@true p_OL_IL_IR p_IL p_IR _p_OR | allEqual [ p_OL_IL_IR, p_IL, p_IR ] = Map.fromFoldable [ p_OL_IL_IR /\ toggleViewPointStyle active Span_Left_ViewPointStyle, _p_OR /\ toggleViewPointStyle active Span_Right_ViewPointStyle ]
-toggleHandleViewPointStyles_helper active _inline@true p_OL p_IL_IR_OR _p_IR _p_OR | allEqual [ p_IL_IR_OR, _p_IR, _p_OR ] = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Span_Left_ViewPointStyle, p_IL_IR_OR /\ toggleViewPointStyle active Span_Right_ViewPointStyle ]
--- 
--- Select
---   - Select inline
-toggleHandleViewPointStyles_helper active _inline@true p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, p_IL_IR /\ toggleViewPointStyle active Zipper_Inline_InnerLeft_And_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
-toggleHandleViewPointStyles_helper active _inline@true p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = Map.fromFoldable [ p_OL_IL /\ toggleViewPointStyle active Zipper_Inline_OuterLeft_And_InnerLeft_ViewPointStyle, p_IR /\ toggleViewPointStyle active Zipper_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
-toggleHandleViewPointStyles_helper active _inline@true p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, p_IL /\ toggleViewPointStyle active Zipper_InnerLeft_ViewPointStyle, p_IR_OR /\ toggleViewPointStyle active Zipper_Inline_InnerRight_And_OuterRight_ViewPointStyle ]
--- TODO: this is not a special case, right?
--- toggleHandleViewPointStyles_helper active inline p_OL p_IL p_IR p_OR | inline =  [ p_OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, p_IL /\ toggleViewPointStyle active Zipper_InnerLeft_ViewPointStyle, p_IR /\ toggleViewPointStyle active Zipper_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
---   - Select not inline
-toggleHandleViewPointStyles_helper active _inline p_OL_IL _p_IL p_IR p_OR | allEqual [ p_OL_IL, _p_IL ] = Map.fromFoldable [ p_OL_IL /\ toggleViewPointStyle active Zipper_OuterLeft_And_InnerLeft_ViewPointStyle, p_IR /\ toggleViewPointStyle active Zipper_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
-toggleHandleViewPointStyles_helper active _inline p_OL p_IL p_IR_OR _p_OR | allEqual [ p_IR_OR, _p_OR ] = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, p_IL /\ toggleViewPointStyle active Zipper_InnerLeft_ViewPointStyle, p_IR_OR /\ toggleViewPointStyle active Zipper_InnerRight_And_OuterRight_ViewPointStyle ]
-toggleHandleViewPointStyles_helper active _inline p_OL p_IL_IR _p_IR p_OR | allEqual [ p_IL_IR, _p_IR ] = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, p_IL_IR /\ toggleViewPointStyle active Zipper_InnerLeft_And_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
---   - Select normal
-toggleHandleViewPointStyles_helper active _inline p_OL p_IL p_IR p_OR = Map.fromFoldable [ p_OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, p_IL /\ toggleViewPointStyle active Zipper_InnerLeft_ViewPointStyle, p_IR /\ toggleViewPointStyle active Zipper_InnerRight_ViewPointStyle, p_OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
 
 toggleViewPointStyles :: Map Point ViewPointStyle -> EngineM' Unit
 toggleViewPointStyles xs =
