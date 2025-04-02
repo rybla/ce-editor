@@ -33,7 +33,8 @@ data Action
 type Output = Void
 
 disabledMessageLabels =
-  [ -- "Drag"
+  [ "Editor . ViewExpr"
+  -- , "Drag"
   ]
 
 component ∷ forall input output. H.Component Query input output Aff

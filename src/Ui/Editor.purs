@@ -569,12 +569,12 @@ handleViewExprAction (Receive_ViewExprAction input) = do
   state <- get
   let state' = initialViewExprState input
   when (state /= state') do
-    -- lift $ traceViewExprM "Editor . ViewExpr" $ Ui.column
-    --   [ Ui.text "receive"
-    --   , Ui.list
-    --       [ Ui.span [ text "expr' = ", code $ show state'.expr ]
-    --       ]
-    --   ]
+    lift $ traceViewExprM "Editor . ViewExpr" $ Ui.column
+      [ Ui.text "receive"
+      , Ui.list
+          [ Ui.span [ text "expr' = ", code $ show state'.expr ]
+          ]
+      ]
     put state'
     -- ping_ViewExpr
     pure unit
