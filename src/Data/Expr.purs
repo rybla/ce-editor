@@ -117,12 +117,6 @@ mkExpr l kids = Expr { l, kids }
 
 infix 0 mkExpr as %
 
-getFirstIndex_Expr :: Expr -> Index
-getFirstIndex_Expr (Expr _) = Index 0
-
-getLastIndex_Expr :: Expr -> Index
-getLastIndex_Expr (Expr e) = Index (e.kids # Array.length)
-
 getExtremeIndexes :: Expr -> { _L :: Index, _R :: Index }
 getExtremeIndexes (Expr e) = { _L: Index 0, _R: Index (Array.length e.kids) }
 
@@ -180,8 +174,8 @@ uncons_Path (Path is) = List.uncons is <#> \{ head, tail } -> { head, tail: Path
 unsnoc_Path ∷ Path → Maybe { init ∷ Path, last ∷ Step }
 unsnoc_Path (Path is) = List.unsnoc is <#> \{ init, last } -> { init: Path init, last }
 
-atPath :: Path -> Expr -> { outside :: List Tooth, at :: Expr }
-atPath = go Nil
+atSubExpr :: Path -> Expr -> { outside :: List Tooth, at :: Expr }
+atSubExpr = go Nil
   where
   go ts path e = case path # uncons_Path of
     Just { head: i, tail: path' } -> go (t : ts) path' e'
@@ -312,7 +306,7 @@ atPoint (Point p) e = { outside }
 atSpan :: SpanH -> Expr -> { outside :: Context, at :: Span }
 atSpan (SpanH h) e = { outside: Context (NonEmptyList.snoc' at_path.outside at_span.outside), at: at_span.at }
   where
-  at_path = e # atPath h.path
+  at_path = e # atSubExpr h.path
   at_span = at_path.at # atIndexSpan_Expr h.j_L h.j_R
 
 --------------------------------------------------------------------------------
@@ -368,7 +362,7 @@ atZipper (ZipperH h) e =
       at_kid_M = at_path_O.at # atStep (i_I - (Step ((unwrap at_span_O.outside).kids_L # Array.length)))
       at_span_I = at_kid_M.at # atSpan (SpanH { j_L: h.j_IL, j_R: h.j_IR, path: path_I })
   where
-  at_path_O = e # atPath h.path_O
+  at_path_O = e # atSubExpr h.path_O
   at_span_O = at_path_O.at # atIndexSpan_Expr h.j_OL h.j_OR
 
 --------------------------------------------------------------------------------
@@ -429,10 +423,70 @@ getDragOrigin _ p = Point_Handle p
 
 drag :: Handle -> Point -> Expr -> Maybe Handle
 
-drag (Point_Handle (Point p)) (Point p') _e = case unit of
+drag (Point_Handle (Point p)) (Point p') e = case unit of
   _ | Point p == Point p' -> pure $ Point_Handle (Point p')
   _ | areOrderedSiblings_Point (Point p) (Point p') -> pure $ SpanH_Handle (SpanH { path: p.path, j_L: p.j, j_R: p'.j }) Right_SpanFocus
   _ | areOrderedSiblings_Point (Point p') (Point p) -> pure $ SpanH_Handle (SpanH { path: p.path, j_L: p'.j, j_R: p.j }) Left_SpanFocus
+  -- drag from inner left to outer left
+  _ | p_IL <- p, p_OL <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p') (Point p), p.j .<| i -> do
+    let path_O = p'.path
+    let path_I = i |: path_I'
+    pure $ ZipperH_Handle
+      ( ZipperH
+          { path_O
+          , j_OL: p_OL.j
+          , j_OR: i # getIndexesAroundStep # _._R
+          , path_I
+          , j_IL: p_IL.j
+          , j_IR: e # atSubExpr (path_O <> path_I) # _.at # getExtremeIndexes # _._R
+          }
+      )
+      OuterLeft_ZipperFocus
+  -- drag from inner right to outer right
+  _ | p_IR <- p, p_OR <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p') (Point p), i |<. p_OR.j -> do
+    let path_O = p_OR.path
+    let path_I = i |: path_I'
+    pure $ ZipperH_Handle
+      ( ZipperH
+          { path_O
+          , j_OL: i # getIndexesAroundStep # _._L
+          , j_OR: p_OR.j
+          , path_I
+          , j_IL: e # atSubExpr (path_O <> path_I) # _.at # getExtremeIndexes # _._L
+          , j_IR: p_IR.j
+          }
+      )
+      OuterRight_ZipperFocus
+  -- drag from outer left to inner left
+  _ | p_OL <- p, p_IL <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OL) (Point p_IL), p_OL.j .<| i -> do
+    let path_O = p_OL.path
+    let path_I = i |: path_I'
+    pure $ ZipperH_Handle
+      ( ZipperH
+          { path_O
+          , j_OL: p_OL.j
+          , j_OR: i # getIndexesAroundStep # _._R
+          , path_I
+          , j_IL: p_IL.j
+          , j_IR: e # atSubExpr (path_O <> path_I) # _.at # getExtremeIndexes # _._R
+          }
+      )
+      OuterRight_ZipperFocus
+  -- drag from outer right to inner right
+  _ | p_OR <- p, p_IR <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OR) (Point p_IR), i |<. p_OR.j -> do
+    let path_O = p_OR.path
+    let path_I = i |: path_I'
+    pure $ ZipperH_Handle
+      ( ZipperH
+          { path_O
+          , j_OL: i # getIndexesAroundStep # _._L
+          , j_OR: p_OR.j
+          , path_I
+          , j_IL: e # atSubExpr (path_O <> path_I) # _.at # getExtremeIndexes # _._L
+          , j_IR: p_IR.j
+          }
+      )
+      InnerRight_ZipperFocus
   _ | otherwise -> Nothing
 
 drag (SpanH_Handle h focus) (Point p') _e = case focus of
@@ -452,7 +506,10 @@ drag (SpanH_Handle h focus) (Point p') _e = case focus of
   where
   hp = getPoints_SpanH h
 
-drag (ZipperH_Handle _h _focus) _p' _e = Nothing -- TODO
+drag (ZipperH_Handle h focus) _p' _e = case focus of
+  _ | otherwise -> Nothing
+  where
+  _hp = getPoints_ZipperH h
 
 --------------------------------------------------------------------------------
 
