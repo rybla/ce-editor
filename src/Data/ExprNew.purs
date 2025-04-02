@@ -276,6 +276,18 @@ instance Show SpanHandle where
 instance Eq SpanHandle where
   eq x = genericEq x
 
+getPoints_SpanHandle :: SpanHandle -> { _L :: Point, _R :: Point }
+getPoints_SpanHandle (SpanHandle h) =
+  { _L: Point { path: h.path, j: h.j_L }
+  , _R: Point { path: h.path, j: h.j_R }
+  }
+
+getLeftPoint_SpanHandle :: SpanHandle -> Point
+getLeftPoint_SpanHandle (SpanHandle h) = Point { path: h.path, j: h.j_L }
+
+getRightPoint_SpanHandle :: SpanHandle -> Point
+getRightPoint_SpanHandle (SpanHandle h) = Point { path: h.path, j: h.j_R }
+
 atSpan :: SpanHandle -> Expr -> { ctx :: Context, at :: Span }
 atSpan (SpanHandle h) e = { ctx: Context (NonEmptyList.snoc' at_path.outside at_span.outside), at: at_span.at }
   where
@@ -303,6 +315,14 @@ instance Show ZipperHandle where
 
 instance Eq ZipperHandle where
   eq x = genericEq x
+
+getPoints_ZipperHandle ∷ ZipperHandle → { _OL ∷ Point, _IL ∷ Point, _IR ∷ Point, _OR ∷ Point }
+getPoints_ZipperHandle (ZipperHandle h) =
+  { _OL: Point { path: h.path_O, j: h.j_OL }
+  , _IL: Point { path: h.path_O <> h.path_I, j: h.j_IL }
+  , _IR: Point { path: h.path_O <> h.path_I, j: h.j_IR }
+  , _OR: Point { path: h.path_O, j: h.j_OR }
+  }
 
 atZipper :: ZipperHandle -> Expr -> { ctx :: Context, at :: Zipper, inside :: Span }
 atZipper (ZipperHandle h) e =
@@ -333,7 +353,8 @@ atZipper (ZipperHandle h) e =
 --------------------------------------------------------------------------------
 
 data Handle
-  = SpanHandle_Handle SpanHandle SpanHandleFocus
+  = Point_Handle Point
+  | SpanHandle_Handle SpanHandle SpanHandleFocus
   | ZipperHandle_Handle ZipperHandle ZipperHandleFocus
 
 data SpanHandleFocus = Left_SpanHandleFocus | Right_SpanHandleFocus
@@ -347,9 +368,16 @@ data ZipperHandleFocus
 --------------------------------------------------------------------------------
 
 getDragOrigin :: Handle -> Point -> Handle
-getDragOrigin = todo ""
+getDragOrigin (SpanHandle_Handle h _) p | hp <- getPoints_SpanHandle h, p == hp._L = SpanHandle_Handle h Left_SpanHandleFocus
+getDragOrigin (SpanHandle_Handle h _) p | hp <- getPoints_SpanHandle h, p == hp._R = SpanHandle_Handle h Right_SpanHandleFocus
+getDragOrigin (ZipperHandle_Handle h _) p | hp <- getPoints_ZipperHandle h, p == hp._OL = ZipperHandle_Handle h OuterLeft_ZipperHandleFocus
+getDragOrigin (ZipperHandle_Handle h _) p | hp <- getPoints_ZipperHandle h, p == hp._IL = ZipperHandle_Handle h InnerLeft_ZipperHandleFocus
+getDragOrigin (ZipperHandle_Handle h _) p | hp <- getPoints_ZipperHandle h, p == hp._IR = ZipperHandle_Handle h InnerRight_ZipperHandleFocus
+getDragOrigin (ZipperHandle_Handle h _) p | hp <- getPoints_ZipperHandle h, p == hp._OR = ZipperHandle_Handle h OuterRight_ZipperHandleFocus
+getDragOrigin _ p = Point_Handle p
 
 drag :: Handle -> Point -> Expr -> Maybe Handle
+drag (Point_Handle h) p e = todo ""
 drag (SpanHandle_Handle h focus) p e = todo ""
 drag (ZipperHandle_Handle h focus) p e = todo ""
 
