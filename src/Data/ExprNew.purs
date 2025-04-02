@@ -9,12 +9,15 @@ import Data.Foldable (foldr)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
-import Data.Maybe (Maybe(..))
+import Data.List.NonEmpty as NonEmptyList
+import Data.List.Types (NonEmptyList(..))
+import Data.Maybe (Maybe(..), fromMaybe')
 import Data.Newtype (class Newtype, unwrap, wrap)
+import Data.NonEmpty ((:|))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, parens, spaces, todo)
+import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces, todo)
 
 --------------------------------------------------------------------------------
 
@@ -33,6 +36,11 @@ derive newtype instance Semiring Step
 
 derive newtype instance Ring Step
 
+atStep :: Step -> Expr -> { outside :: Tooth, at :: Expr }
+atStep i (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, at }
+  where
+  { before: kids_L, at, after: kids_R } = e.kids # extractAt_Array (unwrap i) # fromMaybe' impossible
+
 --------------------------------------------------------------------------------
 
 newtype Index = Index Int
@@ -50,14 +58,10 @@ derive newtype instance Semiring Index
 
 derive newtype instance Ring Index
 
-getFirstIndex_Expr :: Expr -> Index
-getFirstIndex_Expr (Expr _) = Index 0
-
-getLastIndex_Expr :: Expr -> Index
-getLastIndex_Expr (Expr e) = Index (e.kids # Array.length)
-
-getExtremeIndices :: Expr -> { left :: Index, right :: Index }
-getExtremeIndices (Expr e) = { left: Index 0, right: Index (Array.length e.kids) }
+atIndexSpan :: Index -> Index -> Expr -> { outside :: Tooth, at :: Span }
+atIndexSpan i_L i_R (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, at: Span es }
+  where
+  { before: kids_L, at: es, after: kids_R } = extractSpan_Array (unwrap i_L) (unwrap i_R) e.kids
 
 --------------------------------------------------------------------------------
 -- Step and Index Utilities
@@ -75,8 +79,8 @@ orderedIndexAndStep (Index j) (Step i) = j <= i
 -- the `|` corresponds to a step and the `.` corresponds to an index
 infixl 4 orderedIndexAndStep as .<|
 
-getIndicesAroundStep :: Step -> { left :: Index, right :: Index }
-getIndicesAroundStep (Step i) = { left: Index i, right: Index (i + 1) }
+getIndexesAroundStep :: Step -> { left :: Index, right :: Index }
+getIndexesAroundStep (Step i) = { left: Index i, right: Index (i + 1) }
 
 --------------------------------------------------------------------------------
 
@@ -108,6 +112,15 @@ instance Show Expr where
 instance Eq Expr where
   eq x = genericEq x
 
+getFirstIndex_Expr :: Expr -> Index
+getFirstIndex_Expr (Expr _) = Index 0
+
+getLastIndex_Expr :: Expr -> Index
+getLastIndex_Expr (Expr e) = Index (e.kids # Array.length)
+
+getExtremeIndexes :: Expr -> { left :: Index, right :: Index }
+getExtremeIndexes (Expr e) = { left: Index 0, right: Index (Array.length e.kids) }
+
 --------------------------------------------------------------------------------
 
 newtype Span = Span (Array Expr)
@@ -118,6 +131,9 @@ derive instance Newtype Span _
 
 instance Show Span where
   show x = genericShow x
+
+getKid_Span :: Step -> Span -> Expr
+getKid_Span i (Span es) = es Array.!! unwrap i # fromMaybe' impossible
 
 --------------------------------------------------------------------------------
 
@@ -150,6 +166,15 @@ uncons_Path (Path is) = List.uncons is <#> \{ head, tail } -> { head, tail: Path
 
 unsnoc_Path ∷ Path → Maybe { init ∷ Path, last ∷ Step }
 unsnoc_Path (Path is) = List.unsnoc is <#> \{ init, last } -> { init: Path init, last }
+
+atPath :: Path -> Expr -> { outside :: List Tooth, at :: Expr }
+atPath = go Nil
+  where
+  go ts path e = case path # uncons_Path of
+    Just { head: i, tail: path' } -> go (t : ts) path' e'
+      where
+      { outside: t, at: e' } = e # atStep i
+    Nothing -> { outside: ts, at: e }
 
 stripPrefix_Path :: Path -> Path -> Path
 stripPrefix_Path (Path Nil) is' = is'
@@ -199,7 +224,7 @@ unTooth (Tooth t) span = Expr { l: t.l, kids: t.kids_L <> unwrap span <> t.kids_
 
 --------------------------------------------------------------------------------
 
-newtype Context = Context (List Tooth)
+newtype Context = Context (NonEmptyList Tooth)
 
 derive instance Generic Context _
 
@@ -210,8 +235,7 @@ instance Show Context where
     "{{ " <> foldr showTooth' "{{}}" ts <> " }}"
 
 unContext :: Context -> Span -> Expr
-unContext (Context (t : ts)) s | isRoot_Tooth t = unTooth t $ foldr (\t' s' -> Span [ unTooth t' s' ]) s ts
-unContext _ _ = bug "Context should always start with Root tooth"
+unContext (Context (NonEmptyList (t :| ts))) s = unTooth t $ foldr (\t' s' -> Span [ unTooth t' s' ]) s ts
 
 --------------------------------------------------------------------------------
 
@@ -231,7 +255,7 @@ unZipper (Zipper z) span = Span $ z.kids_L <> foldr (\t span' -> pure $ unTooth 
 --------------------------------------------------------------------------------
 
 newtype SpanHandle = SpanHandle
-  { path_O :: Path
+  { path :: Path
   , j_L :: Index
   , j_R :: Index
   }
@@ -242,13 +266,16 @@ derive instance Newtype SpanHandle _
 
 instance Show SpanHandle where
   show (SpanHandle h) =
-    spaces [ "[[", show h.path_O, "|", show h.j_L, "…", show h.j_R, "]]" ]
+    spaces [ "[[", show h.path, "|", show h.j_L, "…", show h.j_R, "]]" ]
 
 instance Eq SpanHandle where
   eq x = genericEq x
 
 atSpan :: SpanHandle -> Expr -> { ctx :: Context, at :: Span }
-atSpan = todo "atSpan"
+atSpan (SpanHandle h) e = { ctx: Context (NonEmptyList.snoc' at_path.outside at_span.outside), at: at_span.at }
+  where
+  at_path = e # atPath h.path
+  at_span = at_path.at # atIndexSpan h.j_L h.j_R
 
 --------------------------------------------------------------------------------
 
@@ -273,7 +300,35 @@ instance Eq ZipperHandle where
   eq x = genericEq x
 
 atZipper :: ZipperHandle -> Expr -> { ctx :: Context, at :: Zipper, inside :: Span }
-atZipper = todo "atZipper"
+atZipper (ZipperHandle h) e =
+  case h.path_I # uncons_Path of
+    Nothing ->
+      -- { ctx: Context (NonEmptyList.snoc' at_path_O.outside at_span_O.outside)
+      -- , at: Zipper
+      --     { kids_L: ?a
+      --     , kids_R: ?a
+      --     , ts: ?a
+      --     }
+      -- , inside: ?a
+      -- }
+      -- where
+      -- at_kid_M = at_span_O.at # ?atIndexSpan ?a ?a
+      todo ""
+    Just { head: i_I, tail: path_I } ->
+      { ctx: Context (NonEmptyList.snoc' at_path_O.outside at_span_O.outside)
+      , at: Zipper
+          { kids_L: (unwrap at_kid_M.outside).kids_L
+          , kids_R: (unwrap at_kid_M.outside).kids_R
+          , ts: at_span_I.ctx # unwrap # NonEmptyList.toList
+          }
+      , inside: at_span_I.at
+      }
+      where
+      at_kid_M = at_path_O.at # atStep (i_I - (Step ((unwrap at_span_O.outside).kids_L # Array.length)))
+      at_span_I = at_kid_M.at # atSpan (SpanHandle { j_L: h.j_IL, j_R: h.j_IR, path: path_I })
+  where
+  at_path_O = e # atPath h.path_O
+  at_span_O = at_path_O.at # atIndexSpan h.j_OL h.j_OR
 
 --------------------------------------------------------------------------------
 
