@@ -386,11 +386,11 @@ updateDragToPoint p = do
 
 setHandle :: Handle -> EngineM' Unit
 setHandle h = do
-  ps1 <- toggleHandleViewPointStyles false <$> gets _.handle
+  vps1 <- toggleHandleViewPointStyles false <$> gets _.handle
   modify_ _ { handle = h }
-  lift $ traceEngineM "Editor . Drag" $ text (show h)
-  let ps2 = toggleHandleViewPointStyles true h
-  toggleViewPointStyles $ Map.unionWith forget ps1 ps2
+  lift $ traceEngineM "Editor . Drag" $ Ui.span [ text "new handle: ", code (show h) ]
+  let vps2 = toggleHandleViewPointStyles true h
+  toggleViewPointStyles $ Map.unionWith forget vps1 vps2
 
 toggleHandleViewPointStyles :: Boolean -> Handle -> Map Point ViewPointStyle
 toggleHandleViewPointStyles active (Point_Handle p) = Map.fromFoldable [ p /\ toggleViewPointStyle active Point_ViewPointStyle ]
