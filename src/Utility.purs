@@ -7,7 +7,6 @@ import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEArray
 import Data.Array.ST as STArray
-import Data.Foldable (foldl, foldr, or)
 import Data.FoldableWithIndex (traverseWithIndex_)
 import Data.List (List(..), (:))
 import Data.List as List
@@ -16,7 +15,6 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String as String
 import Data.Traversable (traverse_)
-import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested ((/\))
 import Foreign.Object as Object
 import Partial.Unsafe (unsafeCrashWith)
@@ -32,8 +30,8 @@ bug msg = unsafeCrashWith $ "[[BUG]]\n" <> msg
 assert :: String -> Boolean -> Unit
 assert msg b = if b then unit else bug $ "failed assertion: " <> msg
 
-impossible :: forall @a. Unit -> a
-impossible _ = bug "impossible"
+impossible :: forall @a. String -> Unit -> a
+impossible msg _ = bug $ "impossible: " <> msg
 
 replaceFormatVars :: Map String String -> String -> String
 replaceFormatVars sigma = go (Map.toUnfoldable sigma)

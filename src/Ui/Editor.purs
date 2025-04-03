@@ -412,7 +412,7 @@ updateDragToPoint p = do
             , list
                 [ text $ "drag_origin_handle = " <> show drag_origin_handle
                 , text $ "                 p = " <> show p
-                , text $ "getHandleFromTo ==> " <> show h'
+                , text $ "            drag ==> " <> show h'
                 ]
             ]
         setHandle h'
@@ -449,7 +449,7 @@ toggleViewPointStyles xs =
         xs
           # Map.toUnfoldable
           # NonEmptyArray.fromArray
-          # fromMaybe' impossible
+          # fromMaybe' (impossible "toggleViewPointStyles: xs is empty")
           # map (\(Point p /\ s) -> SingleViewExprQuery p.path $ ViewPointQuery_ViewExprQuery p.j $ ModifyViewPointState (_ { style = s }) unit)
 
 toggleViewPointStyle :: Boolean -> ViewPointStyle -> ViewPointStyle

@@ -39,7 +39,8 @@ derive newtype instance Ring Step
 atStep :: Step -> Expr -> { outside :: Tooth, at :: Expr }
 atStep i (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, at }
   where
-  { before: kids_L, at, after: kids_R } = e.kids # extractAt_Array (unwrap i) # fromMaybe' impossible
+  { before: kids_L, at, after: kids_R } = e.kids # extractAt_Array (unwrap i)
+    # fromMaybe' (impossible $ "atStep: i is out of bounds: " <> show { i, e: Expr e })
 
 --------------------------------------------------------------------------------
 
@@ -135,7 +136,7 @@ instance Show Span where
   show x = genericShow x
 
 getKid_Span :: Step -> Span -> Expr
-getKid_Span i (Span es) = es Array.!! unwrap i # fromMaybe' impossible
+getKid_Span i (Span es) = es Array.!! unwrap i # fromMaybe' (impossible "getKid_Span: i is out of bounds")
 
 atIndexSpan_Span :: Index -> Index -> Span -> { _L :: Span, _R :: Span, at :: Span }
 atIndexSpan_Span i_L i_R (Span es) = { _L: Span left, _R: Span right, at: Span es }
