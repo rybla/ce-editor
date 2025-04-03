@@ -82,6 +82,9 @@ infixl 4 orderedIndexAndStep as .<|
 getIndexesAroundStep :: Step -> { _L :: Index, _R :: Index }
 getIndexesAroundStep (Step i) = { _L: Index i, _R: Index (i + 1) }
 
+getStepsAroundIndex :: Index -> { _L :: Step, _R :: Step }
+getStepsAroundIndex (Index i) = { _L: Step i, _R: Step (i + 1) }
+
 --------------------------------------------------------------------------------
 
 data Label
@@ -152,7 +155,7 @@ instance Show Path where
   show (Path is) = is
     # Array.fromFoldable
     # map show
-    # Array.intercalate " | "
+    # Array.intercalate " "
     # brackets
 
 derive instance Eq Path

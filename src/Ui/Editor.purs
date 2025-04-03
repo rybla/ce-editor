@@ -341,6 +341,15 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
                       path = (unwrap h).path
                       j_L = Index (z.kids_L # Array.length)
 
+                    Just { init: Nil, last: t } ->
+                      { path
+                      , at_span: expr # atSpan (SpanH { path, j_L, j_R: j_L + offset_Span at_h.at })
+                      }
+                      where
+                      path = (unwrap h).path <> Path (((((unwrap h).j_L # getStepsAroundIndex)._L) + (t # getStep_Tooth)) : Nil)
+                      -- j_L = (unwrap h).j_L -- + (t # offset_Tooth)
+                      j_L = Index 0
+
                     Just { init: ts, last: t } ->
                       { path
                       , at_span: expr # atSpan (SpanH { path, j_L, j_R: j_L + offset_Span at_h.at })
