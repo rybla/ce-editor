@@ -4,6 +4,8 @@ import Data.Expr
 import Prelude
 
 import Data.Array (range)
+import Data.List (List(..))
+import Data.Maybe (Maybe(..))
 import Data.Newtype (wrap)
 import Editor.Common (Editor)
 
@@ -16,6 +18,7 @@ editor =
   , initial_exprs: [ example_expr 1 2 ]
   -- , initial_handle: mkCursorHandle $ Cursor (Path Nil) (Index 0) (Index 0) Left_CursorFocus
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
+  , example_fragment: \s -> Just $ Zipper_Fragment $ Zipper { kids_L: [], kids_R: [], inside: Just $ SpanContext { _O: ExprContext Nil, _I: SpanTooth { l: String s, kids_L: [], kids_R: [] } } }
   }
 
 example_expr :: Int -> Int -> Expr
