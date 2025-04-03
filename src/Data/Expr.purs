@@ -443,7 +443,8 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
   _ | areOrderedSiblings_Point (Point p) (Point p') -> pure $ SpanH_Handle (SpanH { path: p.path, j_L: p.j, j_R: p'.j }) Right_SpanFocus
   _ | areOrderedSiblings_Point (Point p') (Point p) -> pure $ SpanH_Handle (SpanH { path: p.path, j_L: p'.j, j_R: p.j }) Left_SpanFocus
   -- drag from inner left to outer left
-  _ | p_IL <- p, p_OL <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p') (Point p), p.j .<| i -> do
+  _ | p_IL <- p, p_OL <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OL) (Point p_IL), p_OL.j .<| i -> do
+    -- Debug.traceM $ "drag from inner left to outer left:\n  " <> show { p_IL, p_OL, i }
     let path_O = p'.path
     let path_I = i |: path_I'
     pure $ ZipperH_Handle
@@ -458,7 +459,7 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
       )
       OuterLeft_ZipperFocus
   -- drag from inner right to outer right
-  _ | p_IR <- p, p_OR <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p') (Point p), i |<. p_OR.j -> do
+  _ | p_IR <- p, p_OR <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OR) (Point p_IR), i |<. p_OR.j -> do
     let path_O = p_OR.path
     let path_I = i |: path_I'
     pure $ ZipperH_Handle
@@ -486,7 +487,7 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
           , j_IR: e # atSubExpr (path_O <> path_I) # _.at # getExtremeIndexes # _._R
           }
       )
-      OuterRight_ZipperFocus
+      InnerLeft_ZipperFocus
   -- drag from outer right to inner right
   _ | p_OR <- p, p_IR <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OR) (Point p_IR), i |<. p_OR.j -> do
     let path_O = p_OR.path
