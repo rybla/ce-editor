@@ -331,7 +331,18 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
             <$>
               ( case z.inside of
                   Nothing -> pure $ Point_Handle (Point { path: h.path, j: Zipper z # offset_inner_Zipper })
-                  Just (SpanContext inside) -> pure $ Point_Handle (Point { path: h.path <> (inside._O # getPath_ExprContext), j: Zipper z # offset_inner_Zipper })
+                  Just (SpanContext inside) -> do
+                    let path = h.path <> (inside._O # getPath_ExprContext)
+                    let j = Zipper z # offset_inner_Zipper
+                    lift $ traceEngineM "Editor . Clipboard" $ Ui.column
+                      [ Ui.text $ "paste"
+                      , Ui.code $ "   z   = " <> show z
+                      , Ui.code $ "inside._O = " <> show inside._O
+                      , Ui.code $ "inside._I = " <> show inside._I
+                      , Ui.code $ "path   = " <> show path
+                      , Ui.code $ "   j   = " <> show j
+                      ]
+                    pure $ Point_Handle (Point { path, j })
               )
             <*> pure (unSpanContext at_h.outside $ unZipper (Zipper z) at_h.at)
           where
