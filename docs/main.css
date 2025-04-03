@@ -25,7 +25,7 @@ body {
 .Expr {
   padding: 0.5em;
 
-  display: inline-flex;
+  display: Inline-flex;
   /* display: flex; */
   flex-direction: row;
   /* align-items: center; */
@@ -131,7 +131,7 @@ body {
   background-color: var(--background-color);
 }
 
-.Point.Zipper_inline_InnerLeft_And_InnerRight_ViewPointStyle {
+.Point.Zipper_Inline_InnerLeft_And_InnerRight_ViewPointStyle {
   background-color: var(--handle-point-background-color);
 }
 
