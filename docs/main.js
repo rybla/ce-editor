@@ -4556,12 +4556,12 @@
             if (v instanceof Nothing) {
               $tco_done = true;
               return {
-                outside: ts,
+                outside: reverse2(ts),
                 at: e
               };
             }
             ;
-            throw new Error("Failed pattern match at Data.Expr (line 181, column 18 - line 185, column 38): " + [v.constructor.name]);
+            throw new Error("Failed pattern match at Data.Expr (line 181, column 18 - line 185, column 51): " + [v.constructor.name]);
           }
           ;
           while (!$tco_done) {
@@ -10429,6 +10429,7 @@
     }
   })(showBoolean))(showString))(showBoolean)));
   var show52 = /* @__PURE__ */ show(showFragment);
+  var elem4 = /* @__PURE__ */ elem2(eqString);
   var composeKleisli2 = /* @__PURE__ */ composeKleisli(bindMaybe);
   var tell4 = /* @__PURE__ */ tell2();
   var EngineIsSymbol = {
@@ -11233,16 +11234,16 @@
       return v.handle;
     })))(function(vps1) {
       return discard13(modify_5(function(v) {
-        var $370 = {};
-        for (var $371 in v) {
-          if ({}.hasOwnProperty.call(v, $371)) {
-            $370[$371] = v[$371];
+        var $371 = {};
+        for (var $372 in v) {
+          if ({}.hasOwnProperty.call(v, $372)) {
+            $371[$372] = v[$372];
           }
           ;
         }
         ;
-        $370.handle = h;
-        return $370;
+        $371.handle = h;
+        return $371;
       }))(function() {
         return discard13(lift5(traceEngineM("Editor . Drag")(span5([text6("new handle: "), code3(show14(h))]))))(function() {
           var vps2 = toggleHandleViewPointStyles(true)(h);
@@ -11415,17 +11416,17 @@
   };
   var point_component = /* @__PURE__ */ function() {
     var render = function(state3) {
-      return div2([classes2(fold4([["Point"], [show62(state3.style)]])), onMouseDown(function($582) {
-        return ViewPointInteraction_ViewPointAction.create(StartDrag_ViewPointInteraction.create($582));
-      }), onMouseEnter(function($583) {
-        return ViewPointInteraction_ViewPointAction.create(MidDrag_ViewPointInteraction.create($583));
+      return div2([classes2(fold4([["Point"], [show62(state3.style)]])), onMouseDown(function($584) {
+        return ViewPointInteraction_ViewPointAction.create(StartDrag_ViewPointInteraction.create($584));
+      }), onMouseEnter(function($585) {
+        return ViewPointInteraction_ViewPointAction.create(MidDrag_ViewPointInteraction.create($585));
       })])([text6(" ")]);
     };
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(Initialize_ViewPointAction.value),
-      receive: function($584) {
-        return pure17(Receive_ViewPointAction.create($584));
+      receive: function($586) {
+        return pure17(Receive_ViewPointAction.create($586));
       },
       handleQuery: function(query32) {
         return bind16(get1)(function(state3) {
@@ -11640,8 +11641,8 @@
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(Initialize_ViewExprAction.value),
-      receive: function($585) {
-        return pure17(Receive_ViewExprAction.create($585));
+      receive: function($587) {
+        return pure17(Receive_ViewExprAction.create($587));
       },
       handleQuery: function(query32) {
         return bind16(get1)(function(state3) {
@@ -11752,16 +11753,16 @@
               }))(function(h) {
                 var h$prime = getDragOrigin(h)(p2);
                 return discard13(modify_5(function(v2) {
-                  var $490 = {};
-                  for (var $491 in v2) {
-                    if ({}.hasOwnProperty.call(v2, $491)) {
-                      $490[$491] = v2[$491];
+                  var $491 = {};
+                  for (var $492 in v2) {
+                    if ({}.hasOwnProperty.call(v2, $492)) {
+                      $491[$492] = v2[$492];
                     }
                     ;
                   }
                   ;
-                  $490.drag_origin_handle = new Just(h$prime);
-                  return $490;
+                  $491.drag_origin_handle = new Just(h$prime);
+                  return $491;
                 }))(function() {
                   return setHandle(h$prime);
                 });
@@ -11809,16 +11810,16 @@
           }))(function(h) {
             var h$prime = getDragOrigin(h)(v.value0);
             return discard13(modify_5(function(v1) {
-              var $506 = {};
-              for (var $507 in v1) {
-                if ({}.hasOwnProperty.call(v1, $507)) {
-                  $506[$507] = v1[$507];
+              var $507 = {};
+              for (var $508 in v1) {
+                if ({}.hasOwnProperty.call(v1, $508)) {
+                  $507[$508] = v1[$508];
                 }
                 ;
               }
               ;
-              $506.drag_origin_handle = new Just(h$prime);
-              return $506;
+              $507.drag_origin_handle = new Just(h$prime);
+              return $507;
             }))(function() {
               return discard13(setHandle(h$prime))(function() {
                 return pure16(v.value2);
@@ -11842,16 +11843,16 @@
     if (v instanceof EndDrag_EngineQuery) {
       return discard13(lift5(traceEngineM("Editor . Drag")(text6("got EndDrag"))))(function() {
         return discard13(modify_5(function(v1) {
-          var $514 = {};
-          for (var $515 in v1) {
-            if ({}.hasOwnProperty.call(v1, $515)) {
-              $514[$515] = v1[$515];
+          var $515 = {};
+          for (var $516 in v1) {
+            if ({}.hasOwnProperty.call(v1, $516)) {
+              $515[$516] = v1[$516];
             }
             ;
           }
           ;
-          $514.drag_origin_handle = Nothing.value;
-          return $514;
+          $515.drag_origin_handle = Nothing.value;
+          return $515;
         }))(function() {
           return pure16(v.value0);
         });
@@ -11866,11 +11867,11 @@
         return bind7(liftEffect7(bindFlipped9(document)(windowImpl)))(function(doc) {
           return discard13(lift5(subscribe$prime(function(_subId) {
             return eventListener2(keydown)(toEventTarget(doc))(function() {
-              var $586 = map26(function($588) {
-                return Keyboard_EngineAction.create(fromKeyboardEventToKeyInfo($588));
+              var $588 = map26(function($590) {
+                return Keyboard_EngineAction.create(fromKeyboardEventToKeyInfo($590));
               });
-              return function($587) {
-                return $586(fromEvent($587));
+              return function($589) {
+                return $588(fromEvent($589));
               };
             }());
           })))(function() {
@@ -11917,16 +11918,16 @@
               }();
               return discard13(lift5(traceEngineM("Editor . Clipboard")(text6("copy: " + show52(frag)))))(function() {
                 return modify_5(function(v22) {
-                  var $528 = {};
-                  for (var $529 in v22) {
-                    if ({}.hasOwnProperty.call(v22, $529)) {
-                      $528[$529] = v22[$529];
+                  var $529 = {};
+                  for (var $530 in v22) {
+                    if ({}.hasOwnProperty.call(v22, $530)) {
+                      $529[$530] = v22[$530];
                     }
                     ;
                   }
                   ;
-                  $528.clipboard = pure17(frag);
-                  return $528;
+                  $529.clipboard = pure17(frag);
+                  return $529;
                 });
               });
             }
@@ -11951,16 +11952,16 @@
               }();
               return discard13(lift5(traceEngineM("Editor . Clipboard")(text6("cut: " + show52(v2.value0)))))(function() {
                 return discard13(modify_5(function(v3) {
-                  var $538 = {};
-                  for (var $539 in v3) {
-                    if ({}.hasOwnProperty.call(v3, $539)) {
-                      $538[$539] = v3[$539];
+                  var $539 = {};
+                  for (var $540 in v3) {
+                    if ({}.hasOwnProperty.call(v3, $540)) {
+                      $539[$540] = v3[$540];
                     }
                     ;
                   }
                   ;
-                  $538.clipboard = pure17(v2.value0);
-                  return $538;
+                  $539.clipboard = pure17(v2.value0);
+                  return $539;
                 }))(function() {
                   return lift5(raise(new SetExpr_EngineOutput(v2.value1)));
                 });
@@ -11971,17 +11972,22 @@
               var v4 = function(v5) {
                 return pure16(unit);
               };
-              var $544 = v1.editor.example_fragment(v.value0.key);
-              if ($544 instanceof Just) {
-                return discard13(lift5(traceEngineM("Editor . Insert")(text6("insert example: " + show52($544.value0)))))(function() {
-                  return insert_fragment($544.value0);
-                });
+              var $545 = v1.editor.example_fragment(v.value0.key);
+              if ($545 instanceof Just) {
+                var $546 = elem4(v.value0.key)(["a", "b", "c"]);
+                if ($546) {
+                  return discard13(lift5(traceEngineM("Editor . Insert")(text6("insert example: " + show52($545.value0)))))(function() {
+                    return insert_fragment($545.value0);
+                  });
+                }
+                ;
+                return v4(true);
               }
               ;
               return v4(true);
             };
-            var $547 = v.value0.cmd && v.value0.key === "v";
-            if ($547) {
+            var $549 = v.value0.cmd && v.value0.key === "v";
+            if ($549) {
               if (v1.clipboard instanceof Just) {
                 return discard13(lift5(traceEngineM("Editor . Clipboard")(text6("paste: " + show52(v1.clipboard.value0)))))(function() {
                   return insert_fragment(v1.clipboard.value0);
@@ -12029,16 +12035,16 @@
       ;
       if (v.value0 instanceof SetExpr_EngineOutput) {
         return modify_5(function(v1) {
-          var $560 = {};
-          for (var $561 in v1) {
-            if ({}.hasOwnProperty.call(v1, $561)) {
-              $560[$561] = v1[$561];
+          var $562 = {};
+          for (var $563 in v1) {
+            if ({}.hasOwnProperty.call(v1, $563)) {
+              $562[$563] = v1[$563];
             }
             ;
           }
           ;
-          $560.expr = v.value0.value0;
-          return $560;
+          $562.expr = v.value0.value0;
+          return $562;
         });
       }
       ;
@@ -12071,8 +12077,8 @@
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(Initialize_EngineAction.value),
-      receive: function($589) {
-        return pure17(Receive_EngineAction.create($589));
+      receive: function($591) {
+        return pure17(Receive_EngineAction.create($591));
       },
       handleQuery: function(query32) {
         return bind16(get1)(function(state3) {

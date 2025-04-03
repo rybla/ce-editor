@@ -182,7 +182,7 @@ atSubExpr = go Nil
     Just { head: i, tail: path' } -> go (t : ts) path' e'
       where
       { outside: t, at: e' } = e # atStep i
-    Nothing -> { outside: ts, at: e }
+    Nothing -> { outside: List.reverse ts, at: e }
 
 stripPrefix_Path :: Path -> Path -> Path
 stripPrefix_Path (Path Nil) is' = is'

@@ -8,7 +8,7 @@ import Control.Monad.Except (ExceptT, runExceptT)
 import Control.Monad.State (get, gets, modify_, put)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (tell)
-import Data.Array (fold)
+import Data.Array (elem, fold)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEArray
@@ -312,7 +312,7 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       lift $ traceEngineM "Editor . Clipboard" $ text $ "paste: " <> show frag
       insert_fragment frag
     -- insert example Fragment 
-    _ | Just frag <- editor.example_fragment ki.key -> do
+    _ | Just frag <- editor.example_fragment ki.key, ki.key `elem` [ "a", "b", "c" ] -> do
       lift $ traceEngineM "Editor . Insert" $ text $ "insert example: " <> show frag
       insert_fragment frag
     _ -> pure unit
