@@ -11,7 +11,6 @@ import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Properties (IProp)
 import Halogen.HTML.Properties as HP
-import Utility (todo)
 import Web.DOM (Element)
 import Web.UIEvent.KeyboardEvent (KeyboardEvent)
 import Web.UIEvent.KeyboardEvent as KeyboardEvent
@@ -21,6 +20,8 @@ import Web.UIEvent.KeyboardEvent as KeyboardEvent
 span kids = HH.span [] kids
 code str = HH.code [] [ HH.text str ]
 text str = HH.text str
+
+error kids = HH.span [ HP.style "display: inline-block; background-color: color-mix(in rgb, red, transparent 50%);" ] kids
 
 list ∷ ∀ (w ∷ Type) (i ∷ Type). Array (HTML w i) → HTML w i
 list kids = HH.ul [] (kids # map \kid -> HH.li [] [ kid ])

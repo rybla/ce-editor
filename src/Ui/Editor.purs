@@ -331,43 +331,11 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
           -- pasting a Zipper around a Span
           Zipper_Fragment (Zipper z) -> Tuple
             <$>
-              ( let
-                  { path, at_span } = case z.ts # List.unsnoc of
-                    Nothing ->
-                      { path
-                      , at_span: expr # atSpan (SpanH { path, j_L, j_R: j_L + offset_Span at_h.at })
-                      }
-                      where
-                      path = (unwrap h).path
-                      j_L = Index (z.kids_L # Array.length)
-
-                    Just { init: Nil, last: t } ->
-                      { path
-                      , at_span: expr # atSpan (SpanH { path, j_L, j_R: j_L + offset_Span at_h.at })
-                      }
-                      where
-                      path = (unwrap h).path <> Path (((((unwrap h).j_L # getStepsAroundIndex)._L) + (t # getStep_Tooth)) : Nil)
-                      -- j_L = (unwrap h).j_L -- + (t # offset_Tooth)
-                      j_L = Index 0
-
-                    Just { init: ts, last: t } ->
-                      { path
-                      , at_span: expr # atSpan (SpanH { path, j_L, j_R: j_L + offset_Span at_h.at })
-                      }
-                      where
-                      path = (unwrap h).path <> getPath_Tooths ts
-                      j_L = t # offset_Tooth
-                in
-                  do
-                    -- TODO: places Point handle at outside of zipper paste instead of inside
-                    lift $ traceEngineM "Editor . Clipboard" $ Ui.column
-                      [ Ui.code $ "path = " <> show path
-                      , Ui.code $ "at_span.outside = " <> show at_span.outside
-                      , Ui.code $ "at_span.at = " <> show at_span.at
-                      ]
-                    pure case focus of
-                      Left_SpanFocus -> Point_Handle (Point { path, j: at_span.outside # offset_Context })
-                      Right_SpanFocus -> Point_Handle (Point { path, j: (at_span.outside # offset_Context) + (at_h.at # offset_Span) })
+              ( case z.ts # List.unsnoc of
+                  Just { init: Nil, last: t } -> do
+                    let path = (unwrap h).path <> getPath_Tooths z.ts
+                    pure $ Point_Handle (Point { path, j: Index 0 })
+                  _ -> throwError $ Ui.error [ Ui.text "unimplemented" ]
               )
             <*> pure (unContext at_h.outside (unZipper (Zipper z) at_h.at))
           where
