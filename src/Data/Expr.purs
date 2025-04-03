@@ -273,7 +273,7 @@ offset_Context (Context ts) = ts # NonEmptyList.last # offset_Tooth
 
 --------------------------------------------------------------------------------
 
-newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, ts :: List Tooth }
+newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, ts :: List Tooth, b :: Bracket }
 
 derive instance Newtype Zipper _
 
