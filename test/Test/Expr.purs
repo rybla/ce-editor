@@ -21,7 +21,7 @@ test_drag = Spec.describe "drag" do
       h = spanH { path: [ 0 ], j_L: 0, j_R: 1 } Right_SpanFocus
       p = point [ 0 ] 2
       h'@(SpanH_Handle sh _) = spanH { path: [ 0 ], j_L: 0, j_R: 2 } Right_SpanFocus
-      hp = sh # getPoints_SpanH
+      hp = sh # getEndPoints_SpanH
     areOrderedSiblings_Point hp._L p `shouldEqual` true
     drag h p (example_expr 2 2) `shouldEqual` pure h'
 

@@ -9,15 +9,12 @@ import Data.Foldable (foldr)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
-import Data.List.NonEmpty as NonEmptyList
-import Data.List.Types (NonEmptyList(..))
-import Data.Maybe (Maybe(..), fromMaybe')
-import Data.Newtype (class Newtype, unwrap, wrap)
-import Data.NonEmpty ((:|))
+import Data.Maybe (Maybe(..), fromMaybe', maybe)
+import Data.Newtype (class Newtype, unwrap)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces, todo)
+import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces)
 
 --------------------------------------------------------------------------------
 
@@ -59,8 +56,8 @@ derive newtype instance Semiring Index
 
 derive newtype instance Ring Index
 
-atIndexSpan_Expr :: Index -> Index -> Expr -> { outside :: Tooth, at :: Span }
-atIndexSpan_Expr i_L i_R (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, at: Span es }
+atIndexSpan_Expr :: Index -> Index -> Expr -> { outside :: SpanTooth, at :: Span }
+atIndexSpan_Expr i_L i_R (Expr e) = { outside: SpanTooth { l: e.l, kids_L, kids_R }, at: Span es }
   where
   { before: kids_L, at: es, after: kids_R } = extractSpan_Array (unwrap i_L) (unwrap i_R) e.kids
 
@@ -222,7 +219,7 @@ derive instance Generic Tooth _
 derive instance Newtype Tooth _
 
 instance Show Tooth where
-  show t = showTooth' t "{{}}"
+  show t = "{{ " <> showTooth' t "{{}}" <> " }}"
 
 showTooth' :: Tooth -> String -> String
 showTooth' (Tooth t) s = parens $ Array.intercalate " " $ [ show t.l, "%" ] <> (t.kids_L # map show) <> [ s ] <> (t.kids_R # map show)
@@ -230,8 +227,8 @@ showTooth' (Tooth t) s = parens $ Array.intercalate " " $ [ show t.l, "%" ] <> (
 isRoot_Tooth :: Tooth -> Boolean
 isRoot_Tooth (Tooth t) = t.l == Root
 
-unTooth :: Tooth -> Span -> Expr
-unTooth (Tooth t) span = Expr { l: t.l, kids: t.kids_L <> unwrap span <> t.kids_R }
+unTooth :: Tooth -> Expr -> Expr
+unTooth (Tooth t) e = Expr { l: t.l, kids: t.kids_L <> [ e ] <> t.kids_R }
 
 offset_Tooth :: Tooth -> Index
 offset_Tooth (Tooth t) = Index $ t.kids_L # Array.length
@@ -239,41 +236,75 @@ offset_Tooth (Tooth t) = Index $ t.kids_L # Array.length
 getStep_Tooth :: Tooth -> Step
 getStep_Tooth (Tooth t) = Step $ t.kids_L # Array.length
 
-getPath_Tooths :: List Tooth -> Path
-getPath_Tooths ts = Path (ts # map getStep_Tooth)
+--------------------------------------------------------------------------------
+
+newtype SpanTooth = SpanTooth { l :: Label, kids_L :: Array Expr, kids_R :: Array Expr }
+
+derive instance Generic SpanTooth _
+
+derive instance Newtype SpanTooth _
+
+instance Show SpanTooth where
+  show st = "{{ " <> showSpanTooth' st "{{}}" <> " }}"
+
+showSpanTooth' :: SpanTooth -> String -> String
+showSpanTooth' (SpanTooth st) s = parens $ Array.intercalate " " $ [ show st.l, "%" ] <> (st.kids_L # map show) <> [ s ] <> (st.kids_R # map show)
+
+unSpanTooth :: SpanTooth -> Span -> Expr
+unSpanTooth (SpanTooth b) s = Expr { l: b.l, kids: b.kids_L <> unwrap s <> b.kids_R }
+
+offset_outer_SpanTooth :: SpanTooth -> { _L :: Index, _R :: Index }
+offset_outer_SpanTooth (SpanTooth st) = { _L: Index $ st.kids_L # Array.length, _R: Index $ st.kids_R # Array.length }
+
+offset_inner_SpanTooth :: SpanTooth -> Index
+offset_inner_SpanTooth (SpanTooth st) = Index $ st.kids_L # Array.length
 
 --------------------------------------------------------------------------------
 
-newtype Bracket = Bracket { l :: Label, kids_L :: Array Expr, kids_R :: Array Expr }
+newtype ExprContext = ExprContext (List Tooth)
 
-derive instance Generic Bracket _
+derive instance Generic ExprContext _
 
-derive instance Newtype Bracket _
+derive instance Newtype ExprContext _
 
-instance Show Bracket where
-  show (Bracket b) = todo "Show Bracket"
+instance Show ExprContext where
+  show ec = "{{ " <> showExprContext' ec "{{}}" <> " }}"
 
---------------------------------------------------------------------------------
+showExprContext' :: ExprContext -> String -> String
+showExprContext' (ExprContext ts) s = foldr showTooth' s ts
 
-newtype Context = Context (NonEmptyList Tooth)
+unExprContext :: ExprContext -> Expr -> Expr
+unExprContext (ExprContext ts) e = foldr unTooth e ts
 
-derive instance Generic Context _
+offset_inner_ExprContext :: ExprContext -> Index
+offset_inner_ExprContext (ExprContext ts) = ts # List.last # maybe (Index 0) offset_Tooth
 
-derive instance Newtype Context _
-
-instance Show Context where
-  show (Context ts) =
-    "{{ " <> foldr showTooth' "{{}}" ts <> " }}"
-
-unContext :: Context -> Span -> Expr
-unContext (Context (NonEmptyList (t :| ts))) s = unTooth t $ foldr (\t' s' -> Span [ unTooth t' s' ]) s ts
-
-offset_Context :: Context -> Index
-offset_Context (Context ts) = ts # NonEmptyList.last # offset_Tooth
+getPath_ExprContext :: ExprContext -> Path
+getPath_ExprContext (ExprContext ts) = Path (ts # map getStep_Tooth)
 
 --------------------------------------------------------------------------------
 
-newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, ts :: List Tooth, b :: Bracket }
+newtype SpanContext = SpanContext { _O :: ExprContext, _I :: SpanTooth }
+
+derive instance Generic SpanContext _
+
+derive instance Newtype SpanContext _
+
+instance Show SpanContext where
+  show (SpanContext sc@{ _O: ExprContext ts }) = "{{ " <> foldr showTooth' (show sc._I) ts <> " }}"
+
+showSpanContext' :: SpanContext -> String -> String
+showSpanContext' (SpanContext sc) s = showExprContext' sc._O $ showSpanTooth' sc._I s
+
+unSpanContext :: SpanContext -> Span -> Expr
+unSpanContext (SpanContext sc) s = unExprContext sc._O $ unSpanTooth sc._I s
+
+offset_inner_SpanContext :: SpanContext -> Index
+offset_inner_SpanContext (SpanContext sc) = sc._I # offset_inner_SpanTooth
+
+--------------------------------------------------------------------------------
+
+newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, inside :: Maybe SpanContext }
 
 derive instance Newtype Zipper _
 
@@ -281,17 +312,24 @@ instance Show Zipper where
   show (Zipper z) =
     "{{ "
       <> (z.kids_L # map show # Array.intercalate " ")
-      <> foldr showTooth' "{{}}" z.ts
+      <>
+        ( case z.inside of
+            Nothing -> "{{}}"
+            Just inside -> showSpanContext' inside "{{}}"
+        )
       <> (z.kids_R # map show # Array.intercalate " ")
       <> " }}"
 
 unZipper :: Zipper -> Span -> Span
-unZipper (Zipper z) span = Span $ z.kids_L <> foldr (\t span' -> pure $ unTooth t (wrap span')) (unwrap span) z.ts <> z.kids_R
+unZipper (Zipper z@{ inside: Nothing }) s = Span $ z.kids_L <> unwrap s <> z.kids_R
+unZipper (Zipper z@{ inside: Just inside }) s = Span $ z.kids_L <> [ unSpanContext inside s ] <> z.kids_R
+
+offset_outer_Zipper :: Zipper -> { _L :: Index, _R :: Index }
+offset_outer_Zipper (Zipper z) = { _L: Index $ z.kids_L # Array.length, _R: Index $ z.kids_R # Array.length }
 
 offset_inner_Zipper :: Zipper -> Index
-offset_inner_Zipper (Zipper z) = case z.ts # List.unsnoc of
-  Just { last } -> last # offset_Tooth
-  Nothing -> Index $ z.kids_L # Array.length
+offset_inner_Zipper z@(Zipper { inside: Nothing }) = (z # offset_outer_Zipper)._L
+offset_inner_Zipper (Zipper { inside: Just inside }) = inside # offset_inner_SpanContext
 
 --------------------------------------------------------------------------------
 
@@ -312,25 +350,19 @@ instance Show SpanH where
 instance Eq SpanH where
   eq x = genericEq x
 
-getPoints_SpanH :: SpanH -> { _L :: Point, _R :: Point }
-getPoints_SpanH (SpanH h) =
+getEndPoints_SpanH :: SpanH -> { _L :: Point, _R :: Point }
+getEndPoints_SpanH (SpanH h) =
   { _L: Point { path: h.path, j: h.j_L }
   , _R: Point { path: h.path, j: h.j_R }
   }
 
-getLeftPoint_SpanH :: SpanH -> Point
-getLeftPoint_SpanH (SpanH h) = Point { path: h.path, j: h.j_L }
-
-getRightPoint_SpanH :: SpanH -> Point
-getRightPoint_SpanH (SpanH h) = Point { path: h.path, j: h.j_R }
-
-atPoint :: Point -> Expr -> { outside :: Context }
-atPoint (Point p) e = { outside }
+atPoint :: Point -> Expr -> { outside :: SpanContext }
+atPoint (Point p) e = { outside: at_span.outside }
   where
-  { outside } = atSpan (SpanH { path: p.path, j_L: p.j, j_R: p.j }) e
+  at_span = atSpan (SpanH { path: p.path, j_L: p.j, j_R: p.j }) e
 
-atSpan :: SpanH -> Expr -> { outside :: Context, at :: Span }
-atSpan (SpanH h) e = { outside: Context (NonEmptyList.snoc' at_path.outside at_span.outside), at: at_span.at }
+atSpan :: SpanH -> Expr -> { outside :: SpanContext, at :: Span }
+atSpan (SpanH h) e = { outside: SpanContext { _O: ExprContext at_path.outside, _I: at_span.outside }, at: at_span.at }
   where
   at_path = e # atSubExpr h.path
   at_span = at_path.at # atIndexSpan_Expr h.j_L h.j_R
@@ -357,30 +389,34 @@ instance Show ZipperH where
 instance Eq ZipperH where
   eq x = genericEq x
 
-getPoints_ZipperH ∷ ZipperH → { _OL ∷ Point, _IL ∷ Point, _IR ∷ Point, _OR ∷ Point }
-getPoints_ZipperH (ZipperH h) =
+getEndPoints_ZipperH ∷ ZipperH → { _OL ∷ Point, _IL ∷ Point, _IR ∷ Point, _OR ∷ Point }
+getEndPoints_ZipperH (ZipperH h) =
   { _OL: Point { path: h.path_O, j: h.j_OL }
   , _IL: Point { path: h.path_O <> h.path_I, j: h.j_IL }
   , _IR: Point { path: h.path_O <> h.path_I, j: h.j_IR }
   , _OR: Point { path: h.path_O, j: h.j_OR }
   }
 
-atZipper :: ZipperH -> Expr -> { outside :: Context, at :: Zipper, inside :: Span }
+atZipper :: ZipperH -> Expr -> { outside :: SpanContext, at :: Zipper, inside :: Span }
 atZipper (ZipperH h) e =
   case h.path_I # uncons_Path of
     Nothing ->
-      { outside: Context (NonEmptyList.snoc' at_path_O.outside at_span_O.outside)
-      , at: Zipper { kids_L: unwrap at_kid_M._L, kids_R: unwrap at_kid_M._R, ts: Nil }
+      { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
+      , at: Zipper
+          { kids_L: unwrap at_kid_M._L
+          , kids_R: unwrap at_kid_M._R
+          , inside: Nothing
+          }
       , inside: at_kid_M.at
       }
       where
       at_kid_M = at_span_O.at # atIndexSpan_Span (h.j_IL - h.j_OL) (h.j_IR - h.j_OL)
     Just { head: i_I, tail: path_I } ->
-      { outside: Context (NonEmptyList.snoc' at_path_O.outside at_span_O.outside)
+      { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
       , at: Zipper
           { kids_L: (unwrap at_kid_M.outside).kids_L
           , kids_R: (unwrap at_kid_M.outside).kids_R
-          , ts: at_span_I.outside # unwrap # NonEmptyList.toList
+          , inside: Just at_span_I.outside
           }
       , inside: at_span_I.at
       }
@@ -439,12 +475,12 @@ instance Show ZipperFocus where
 --------------------------------------------------------------------------------
 
 getDragOrigin :: Handle -> Point -> Handle
-getDragOrigin (SpanH_Handle h _) p | hp <- getPoints_SpanH h, p == hp._L = SpanH_Handle h Left_SpanFocus
-getDragOrigin (SpanH_Handle h _) p | hp <- getPoints_SpanH h, p == hp._R = SpanH_Handle h Right_SpanFocus
-getDragOrigin (ZipperH_Handle h _) p | hp <- getPoints_ZipperH h, p == hp._OL = ZipperH_Handle h OuterLeft_ZipperFocus
-getDragOrigin (ZipperH_Handle h _) p | hp <- getPoints_ZipperH h, p == hp._IL = ZipperH_Handle h InnerLeft_ZipperFocus
-getDragOrigin (ZipperH_Handle h _) p | hp <- getPoints_ZipperH h, p == hp._IR = ZipperH_Handle h InnerRight_ZipperFocus
-getDragOrigin (ZipperH_Handle h _) p | hp <- getPoints_ZipperH h, p == hp._OR = ZipperH_Handle h OuterRight_ZipperFocus
+getDragOrigin (SpanH_Handle h _) p | hp <- getEndPoints_SpanH h, p == hp._L = SpanH_Handle h Left_SpanFocus
+getDragOrigin (SpanH_Handle h _) p | hp <- getEndPoints_SpanH h, p == hp._R = SpanH_Handle h Right_SpanFocus
+getDragOrigin (ZipperH_Handle h _) p | hp <- getEndPoints_ZipperH h, p == hp._OL = ZipperH_Handle h OuterLeft_ZipperFocus
+getDragOrigin (ZipperH_Handle h _) p | hp <- getEndPoints_ZipperH h, p == hp._IL = ZipperH_Handle h InnerLeft_ZipperFocus
+getDragOrigin (ZipperH_Handle h _) p | hp <- getEndPoints_ZipperH h, p == hp._IR = ZipperH_Handle h InnerRight_ZipperFocus
+getDragOrigin (ZipperH_Handle h _) p | hp <- getEndPoints_ZipperH h, p == hp._OR = ZipperH_Handle h OuterRight_ZipperFocus
 getDragOrigin _ p = Point_Handle p
 
 drag :: Handle -> Point -> Expr -> Maybe Handle
@@ -531,12 +567,12 @@ drag (SpanH_Handle h focus) (Point p') _e = case focus of
   Left_SpanFocus | areOrderedSiblings_Point hp._R (Point p') -> pure $ SpanH_Handle (SpanH { path: (unwrap hp._R).path, j_L: (unwrap hp._R).j, j_R: p'.j }) Right_SpanFocus
   _ | otherwise -> Nothing
   where
-  hp = getPoints_SpanH h
+  hp = getEndPoints_SpanH h
 
 drag (ZipperH_Handle h focus) _p' _e = case focus of
   _ | otherwise -> Nothing
   where
-  _hp = getPoints_ZipperH h
+  _hp = getEndPoints_ZipperH h
 
 --------------------------------------------------------------------------------
 

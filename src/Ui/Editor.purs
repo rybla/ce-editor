@@ -19,7 +19,6 @@ import Data.Foldable (traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
-import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe')
@@ -29,9 +28,8 @@ import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Editor (Editor)
-import Effect.Aff (Aff, Milliseconds(..))
-import Effect.Aff as Aff
-import Halogen (liftAff, liftEffect)
+import Effect.Aff (Aff)
+import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML (PlainHTML)
 import Halogen.HTML as HH
@@ -42,7 +40,7 @@ import Type.Prelude (Proxy(..))
 import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, style, text)
 import Ui.Common as Ui
 import Ui.Console as Console
-import Utility (allEqual, forget, impossible, sortEquivalenceClasses, todo)
+import Utility (forget, impossible, sortEquivalenceClasses, todo)
 import Web.Event.Event as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -225,7 +223,7 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
         let last_j = getIndexesAroundStep last
-        let h = todo "mkCursorHandle (Cursor init l r Left_CursorFocus)"
+        let h = SpanH_Handle (SpanH { path: init, j_L: last_j._L, j_R: last_j._R }) Left_SpanFocus
         setHandle h
     pure a
   StartDrag_ViewExprAction _event -> do
@@ -300,10 +298,10 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       let
         frag /\ expr' = case handle of
           Point_Handle _ -> Span_Fragment (Span []) /\ expr
-          SpanH_Handle h _ -> Span_Fragment at_h.at /\ unContext at_h.outside (Span [])
+          SpanH_Handle h _ -> Span_Fragment at_h.at /\ unSpanContext at_h.outside (Span [])
             where
             at_h = expr # atSpan h
-          ZipperH_Handle h _ -> Zipper_Fragment at_h.at /\ unContext at_h.outside at_h.inside
+          ZipperH_Handle h _ -> Zipper_Fragment at_h.at /\ unSpanContext at_h.outside at_h.inside
             where
             at_h = expr # atZipper h
       lift $ traceEngineM "Editor . Clipboard" $ text $ "cut: " <> show frag
@@ -312,41 +310,39 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
     -- paste Fragment
     _ | ki.cmd && ki.key == "v", Just frag <- clipboard -> do
       handle' /\ expr' <- case handle of
-        Point_Handle p -> case frag of
+        Point_Handle (Point p) -> case frag of
           Span_Fragment f -> pure $ Tuple
-            (Point_Handle (Point { path: (unwrap p).path, j: (unwrap p).j + (f # offset_Span) }))
-            (unContext at_h.outside f)
+            (Point_Handle (Point { path: p.path, j: p.j + (f # offset_Span) }))
+            (unSpanContext at_h.outside f)
           Zipper_Fragment f -> pure $ Tuple
-            (Point_Handle (Point { path: (unwrap p).path, j: (f # offset_inner_Zipper) }))
-            (unContext at_h.outside (unZipper f (Span [])))
+            (Point_Handle (Point { path: p.path, j: (f # offset_inner_Zipper) }))
+            (unSpanContext at_h.outside $ unZipper f $ Span [])
           where
-          at_h = expr # atPoint p
-        SpanH_Handle h focus -> case frag of
+          at_h = expr # atPoint (Point p)
+        SpanH_Handle (SpanH h) focus -> case frag of
           Span_Fragment f -> pure $ Tuple
             ( case focus of
-                Left_SpanFocus -> Point_Handle (Point { path: (unwrap h).path, j: (unwrap h).j_L })
-                Right_SpanFocus -> Point_Handle (Point { path: (unwrap h).path, j: (unwrap h).j_L + (f # offset_Span) })
+                Left_SpanFocus -> Point_Handle (Point { path: h.path, j: h.j_L })
+                Right_SpanFocus -> Point_Handle (Point { path: h.path, j: h.j_L + (f # offset_Span) })
             )
-            (unContext at_h.outside f)
+            (unSpanContext at_h.outside f)
           -- pasting a Zipper around a Span
           Zipper_Fragment (Zipper z) -> Tuple
             <$>
-              ( case z.ts # List.unsnoc of
-                  Just { init: Nil, last: t } -> do
-                    let path = (unwrap h).path <> getPath_Tooths z.ts
-                    pure $ Point_Handle (Point { path, j: Index 0 })
-                  _ -> throwError $ Ui.error [ Ui.text "unimplemented" ]
+              ( case z.inside of
+                  Nothing -> pure $ Point_Handle (Point { path: h.path, j: Zipper z # offset_inner_Zipper })
+                  Just (SpanContext inside) -> pure $ Point_Handle (Point { path: h.path <> (inside._O # getPath_ExprContext), j: Zipper z # offset_inner_Zipper })
               )
-            <*> pure (unContext at_h.outside (unZipper (Zipper z) at_h.at))
+            <*> pure (unSpanContext at_h.outside $ unZipper (Zipper z) at_h.at)
           where
-          at_h = expr # atSpan h
-        ZipperH_Handle h focus -> case frag of
+          at_h = expr # atSpan (SpanH h)
+        ZipperH_Handle h _focus -> case frag of
           Span_Fragment f -> pure $ Tuple
             (todo "new handle")
-            (unContext at_h.outside f)
+            (unSpanContext at_h.outside f)
           Zipper_Fragment f -> pure $ Tuple
             (todo "new handle")
-            (unContext at_h.outside (unZipper f at_h.inside))
+            (unSpanContext at_h.outside $ unZipper f at_h.inside)
           where
           at_h = expr # atZipper h
       lift $ traceEngineM "Editor . Clipboard" $ text $ "paste: " <> show frag
@@ -397,7 +393,7 @@ toggleHandleViewPointStyles :: Boolean -> Handle -> Map Point ViewPointStyle
 toggleHandleViewPointStyles active (Point_Handle p) = Map.fromFoldable [ p /\ toggleViewPointStyle active Point_ViewPointStyle ]
 toggleHandleViewPointStyles active (SpanH_Handle h _focus) = Map.fromFoldable [ hp._L /\ toggleViewPointStyle active Span_Left_ViewPointStyle, hp._R /\ toggleViewPointStyle active Span_Right_ViewPointStyle ]
   where
-  hp = getPoints_SpanH h
+  hp = getEndPoints_SpanH h
 toggleHandleViewPointStyles active (ZipperH_Handle (ZipperH h) _focus) = case unit of
   _ | hp._IL == hp._IR -> Map.fromFoldable [ hp._OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, hp._IL /\ toggleViewPointStyle active Zipper_Inline_InnerLeft_And_InnerRight_ViewPointStyle, hp._OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
   _ | hp._OL == hp._IL -> Map.fromFoldable [ hp._OL /\ toggleViewPointStyle active Zipper_Inline_OuterLeft_And_InnerLeft_ViewPointStyle, hp._IR /\ toggleViewPointStyle active Zipper_InnerRight_ViewPointStyle, hp._OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
@@ -407,7 +403,7 @@ toggleHandleViewPointStyles active (ZipperH_Handle (ZipperH h) _focus) = case un
   _ | hp._IL == hp._IR -> Map.fromFoldable [ hp._OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, hp._IL /\ toggleViewPointStyle active Zipper_InnerLeft_And_InnerRight_ViewPointStyle, hp._OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
   _ -> Map.fromFoldable [ hp._OL /\ toggleViewPointStyle active Zipper_OuterLeft_ViewPointStyle, hp._IL /\ toggleViewPointStyle active Zipper_InnerLeft_ViewPointStyle, hp._IR /\ toggleViewPointStyle active Zipper_InnerRight_ViewPointStyle, hp._OR /\ toggleViewPointStyle active Zipper_OuterRight_ViewPointStyle ]
   where
-  hp = getPoints_ZipperH (ZipperH h)
+  hp = getEndPoints_ZipperH (ZipperH h)
 
 toggleViewPointStyles :: Map Point ViewPointStyle -> EngineM' Unit
 toggleViewPointStyles xs =
