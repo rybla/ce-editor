@@ -326,12 +326,28 @@ insert_fragment frag = do
       Span_Fragment f -> pure $ Tuple
         (Point_Handle (Point { path: p.path, j: p.j + (f # offset_Span) }))
         (unSpanContext at_h.outside f)
-      Zipper_Fragment f -> pure $ Tuple
-        (Point_Handle (Point { path: p.path, j: (f # offset_inner_Zipper) }))
-        (unSpanContext at_h.outside $ unZipper f $ Span [])
+      -- pasting a Zipper around a Span
+      Zipper_Fragment (Zipper z) -> Tuple
+        <$>
+          ( case z.inside of
+              Nothing -> pure $ Point_Handle
+                ( Point
+                    { path: p.path <> Path ((p.j # getStepsAroundIndex)._L : Nil)
+                    , j: Zipper z # offset_inner_Zipper
+                    }
+                )
+              Just (SpanContext inside) -> pure $ Point_Handle
+                ( Point
+                    { path: p.path <> Path ((p.j # getStepsAroundIndex)._L : Nil) <> (inside._O # getPath_ExprContext)
+                    , j: Zipper z # offset_inner_Zipper
+                    }
+                )
+          )
+        <*> pure (unSpanContext at_h.outside $ unZipper (Zipper z) (Span []))
       where
       at_h = expr # atPoint (Point p)
     SpanH_Handle (SpanH h) focus -> case frag of
+      -- pasting a Span in place of a Span
       Span_Fragment f -> pure $ Tuple
         ( case focus of
             Left_SpanFocus -> Point_Handle (Point { path: h.path, j: h.j_L })
