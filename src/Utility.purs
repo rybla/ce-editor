@@ -7,6 +7,7 @@ import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEArray
 import Data.Array.ST as STArray
+import Data.Either (fromRight')
 import Data.FoldableWithIndex (traverseWithIndex_)
 import Data.List (List(..), (:))
 import Data.List as List
@@ -14,6 +15,8 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String as String
+import Data.String.Regex (Regex)
+import Data.String.Regex as Regex
 import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
 import Foreign.Object as Object
@@ -114,4 +117,10 @@ extractSpan_Array i_L i_R xs =
     { before, after: at } = Array.splitAt i_L before_
   in
     { before, at, after }
+
+isAlpha :: String -> Boolean
+isAlpha = Regex.test isAlpha_regex
+
+isAlpha_regex ∷ Regex
+isAlpha_regex = Regex.regex "^[a-zA-Z]$" mempty # fromRight' (impossible "isAlpha_regex: failure")
 

@@ -1016,6 +1016,15 @@
       };
     }
   };
+  var fromRight$prime = function(v) {
+    return function(v1) {
+      if (v1 instanceof Right) {
+        return v1.value0;
+      }
+      ;
+      return v(unit);
+    };
+  };
   var either = function(v) {
     return function(v1) {
       return function(v2) {
@@ -2455,8 +2464,8 @@
             var $tco_var_source = $copy_source;
             var $tco_done = false;
             var $tco_result;
-            function $tco_loop(source2, memo) {
-              var v = f(source2);
+            function $tco_loop(source3, memo) {
+              var v = f(source3);
               if (v.value1 instanceof Just) {
                 $tco_var_source = v.value1.value0;
                 $copy_memo = new Cons(v.value0, memo);
@@ -2490,8 +2499,8 @@
             var $tco_var_source = $copy_source;
             var $tco_done = false;
             var $tco_result;
-            function $tco_loop(source2, memo) {
-              var v = f(source2);
+            function $tco_loop(source3, memo) {
+              var v = f(source3);
               if (v instanceof Nothing) {
                 $tco_done = true;
                 return foldl2(flip(Cons.create))(Nil.value)(memo);
@@ -3534,6 +3543,128 @@
     };
   };
 
+  // output/Data.String.Regex/foreign.js
+  var regexImpl = function(left) {
+    return function(right) {
+      return function(s1) {
+        return function(s2) {
+          try {
+            return right(new RegExp(s1, s2));
+          } catch (e) {
+            return left(e.message);
+          }
+        };
+      };
+    };
+  };
+  var test = function(r) {
+    return function(s) {
+      var lastIndex = r.lastIndex;
+      var result = r.test(s);
+      r.lastIndex = lastIndex;
+      return result;
+    };
+  };
+
+  // output/Data.String.CodeUnits/foreign.js
+  var _indexOf = function(just) {
+    return function(nothing) {
+      return function(x) {
+        return function(s) {
+          var i2 = s.indexOf(x);
+          return i2 === -1 ? nothing : just(i2);
+        };
+      };
+    };
+  };
+
+  // output/Data.String.CodeUnits/index.js
+  var indexOf = /* @__PURE__ */ function() {
+    return _indexOf(Just.create)(Nothing.value);
+  }();
+  var contains = function(pat) {
+    var $23 = indexOf(pat);
+    return function($24) {
+      return isJust($23($24));
+    };
+  };
+
+  // output/Data.String.Regex.Flags/index.js
+  var semigroupRegexFlags = {
+    append: function(v) {
+      return function(v1) {
+        return {
+          global: v.global || v1.global,
+          ignoreCase: v.ignoreCase || v1.ignoreCase,
+          multiline: v.multiline || v1.multiline,
+          dotAll: v.dotAll || v1.dotAll,
+          sticky: v.sticky || v1.sticky,
+          unicode: v.unicode || v1.unicode
+        };
+      };
+    }
+  };
+  var noFlags = {
+    global: false,
+    ignoreCase: false,
+    multiline: false,
+    dotAll: false,
+    sticky: false,
+    unicode: false
+  };
+  var monoidRegexFlags = {
+    mempty: noFlags,
+    Semigroup0: function() {
+      return semigroupRegexFlags;
+    }
+  };
+
+  // output/Data.String.Regex/index.js
+  var renderFlags = function(v) {
+    return function() {
+      if (v.global) {
+        return "g";
+      }
+      ;
+      return "";
+    }() + (function() {
+      if (v.ignoreCase) {
+        return "i";
+      }
+      ;
+      return "";
+    }() + (function() {
+      if (v.multiline) {
+        return "m";
+      }
+      ;
+      return "";
+    }() + (function() {
+      if (v.dotAll) {
+        return "s";
+      }
+      ;
+      return "";
+    }() + (function() {
+      if (v.sticky) {
+        return "y";
+      }
+      ;
+      return "";
+    }() + function() {
+      if (v.unicode) {
+        return "u";
+      }
+      ;
+      return "";
+    }()))));
+  };
+  var regex = function(s) {
+    return function(f) {
+      return regexImpl(Left.create)(Right.create)(s)(renderFlags(f));
+    };
+  };
+
   // output/Foreign.Object/foreign.js
   function _lookup(no, yes, k, m) {
     return k in m ? yes(m[k]) : no;
@@ -3675,7 +3806,7 @@
             return;
           }
           ;
-          throw new Error("Failed pattern match at Utility (line 39, column 3 - line 39, column 15): " + [v.constructor.name, v1.constructor.name]);
+          throw new Error("Failed pattern match at Utility (line 42, column 3 - line 42, column 15): " + [v.constructor.name, v1.constructor.name]);
         }
         ;
         while (!$tco_done) {
@@ -3741,6 +3872,8 @@
       return bug("impossible: " + msg);
     };
   };
+  var isAlpha_regex = /* @__PURE__ */ fromRight$prime(/* @__PURE__ */ impossible("isAlpha_regex: failure"))(/* @__PURE__ */ regex("^[a-zA-Z]$")(/* @__PURE__ */ mempty(monoidRegexFlags)));
+  var isAlpha = /* @__PURE__ */ test(isAlpha_regex);
   var brackets = function(s) {
     return "[" + (s + "]");
   };
@@ -7528,7 +7661,7 @@
   };
 
   // output/Data.List.NonEmpty/index.js
-  var singleton6 = /* @__PURE__ */ function() {
+  var singleton7 = /* @__PURE__ */ function() {
     var $200 = singleton3(plusList);
     return function($201) {
       return NonEmptyList($200($201));
@@ -7537,29 +7670,6 @@
   var cons3 = function(y) {
     return function(v) {
       return new NonEmpty(y, new Cons(v.value0, v.value1));
-    };
-  };
-
-  // output/Data.String.CodeUnits/foreign.js
-  var _indexOf = function(just) {
-    return function(nothing) {
-      return function(x) {
-        return function(s) {
-          var i2 = s.indexOf(x);
-          return i2 === -1 ? nothing : just(i2);
-        };
-      };
-    };
-  };
-
-  // output/Data.String.CodeUnits/index.js
-  var indexOf = /* @__PURE__ */ function() {
-    return _indexOf(Just.create)(Nothing.value);
-  }();
-  var contains = function(pat) {
-    var $23 = indexOf(pat);
-    return function($24) {
-      return isJust($23($24));
     };
   };
 
@@ -8087,7 +8197,7 @@
           ;
           return $tco_result;
         };
-        return go2(new Tuple(Nil.value, singleton6(z)));
+        return go2(new Tuple(Nil.value, singleton7(z)));
       };
     };
   };
@@ -10429,7 +10539,6 @@
     }
   })(showBoolean))(showString))(showBoolean)));
   var show52 = /* @__PURE__ */ show(showFragment);
-  var elem4 = /* @__PURE__ */ elem2(eqString);
   var composeKleisli2 = /* @__PURE__ */ composeKleisli(bindMaybe);
   var tell4 = /* @__PURE__ */ tell2();
   var EngineIsSymbol = {
@@ -11234,16 +11343,16 @@
       return v.handle;
     })))(function(vps1) {
       return discard13(modify_5(function(v) {
-        var $371 = {};
-        for (var $372 in v) {
-          if ({}.hasOwnProperty.call(v, $372)) {
-            $371[$372] = v[$372];
+        var $370 = {};
+        for (var $371 in v) {
+          if ({}.hasOwnProperty.call(v, $371)) {
+            $370[$371] = v[$371];
           }
           ;
         }
         ;
-        $371.handle = h;
-        return $371;
+        $370.handle = h;
+        return $370;
       }))(function() {
         return discard13(lift5(traceEngineM("Editor . Drag")(span5([text6("new handle: "), code3(show14(h))]))))(function() {
           var vps2 = toggleHandleViewPointStyles(true)(h);
@@ -11416,17 +11525,17 @@
   };
   var point_component = /* @__PURE__ */ function() {
     var render = function(state3) {
-      return div2([classes2(fold4([["Point"], [show62(state3.style)]])), onMouseDown(function($584) {
-        return ViewPointInteraction_ViewPointAction.create(StartDrag_ViewPointInteraction.create($584));
-      }), onMouseEnter(function($585) {
-        return ViewPointInteraction_ViewPointAction.create(MidDrag_ViewPointInteraction.create($585));
+      return div2([classes2(fold4([["Point"], [show62(state3.style)]])), onMouseDown(function($583) {
+        return ViewPointInteraction_ViewPointAction.create(StartDrag_ViewPointInteraction.create($583));
+      }), onMouseEnter(function($584) {
+        return ViewPointInteraction_ViewPointAction.create(MidDrag_ViewPointInteraction.create($584));
       })])([text6(" ")]);
     };
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(Initialize_ViewPointAction.value),
-      receive: function($586) {
-        return pure17(Receive_ViewPointAction.create($586));
+      receive: function($585) {
+        return pure17(Receive_ViewPointAction.create($585));
       },
       handleQuery: function(query32) {
         return bind16(get1)(function(state3) {
@@ -11641,8 +11750,8 @@
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(Initialize_ViewExprAction.value),
-      receive: function($587) {
-        return pure17(Receive_ViewExprAction.create($587));
+      receive: function($586) {
+        return pure17(Receive_ViewExprAction.create($586));
       },
       handleQuery: function(query32) {
         return bind16(get1)(function(state3) {
@@ -11753,16 +11862,16 @@
               }))(function(h) {
                 var h$prime = getDragOrigin(h)(p2);
                 return discard13(modify_5(function(v2) {
-                  var $491 = {};
-                  for (var $492 in v2) {
-                    if ({}.hasOwnProperty.call(v2, $492)) {
-                      $491[$492] = v2[$492];
+                  var $490 = {};
+                  for (var $491 in v2) {
+                    if ({}.hasOwnProperty.call(v2, $491)) {
+                      $490[$491] = v2[$491];
                     }
                     ;
                   }
                   ;
-                  $491.drag_origin_handle = new Just(h$prime);
-                  return $491;
+                  $490.drag_origin_handle = new Just(h$prime);
+                  return $490;
                 }))(function() {
                   return setHandle(h$prime);
                 });
@@ -11810,16 +11919,16 @@
           }))(function(h) {
             var h$prime = getDragOrigin(h)(v.value0);
             return discard13(modify_5(function(v1) {
-              var $507 = {};
-              for (var $508 in v1) {
-                if ({}.hasOwnProperty.call(v1, $508)) {
-                  $507[$508] = v1[$508];
+              var $506 = {};
+              for (var $507 in v1) {
+                if ({}.hasOwnProperty.call(v1, $507)) {
+                  $506[$507] = v1[$507];
                 }
                 ;
               }
               ;
-              $507.drag_origin_handle = new Just(h$prime);
-              return $507;
+              $506.drag_origin_handle = new Just(h$prime);
+              return $506;
             }))(function() {
               return discard13(setHandle(h$prime))(function() {
                 return pure16(v.value2);
@@ -11843,16 +11952,16 @@
     if (v instanceof EndDrag_EngineQuery) {
       return discard13(lift5(traceEngineM("Editor . Drag")(text6("got EndDrag"))))(function() {
         return discard13(modify_5(function(v1) {
-          var $515 = {};
-          for (var $516 in v1) {
-            if ({}.hasOwnProperty.call(v1, $516)) {
-              $515[$516] = v1[$516];
+          var $514 = {};
+          for (var $515 in v1) {
+            if ({}.hasOwnProperty.call(v1, $515)) {
+              $514[$515] = v1[$515];
             }
             ;
           }
           ;
-          $515.drag_origin_handle = Nothing.value;
-          return $515;
+          $514.drag_origin_handle = Nothing.value;
+          return $514;
         }))(function() {
           return pure16(v.value0);
         });
@@ -11867,11 +11976,11 @@
         return bind7(liftEffect7(bindFlipped9(document)(windowImpl)))(function(doc) {
           return discard13(lift5(subscribe$prime(function(_subId) {
             return eventListener2(keydown)(toEventTarget(doc))(function() {
-              var $588 = map26(function($590) {
-                return Keyboard_EngineAction.create(fromKeyboardEventToKeyInfo($590));
+              var $587 = map26(function($589) {
+                return Keyboard_EngineAction.create(fromKeyboardEventToKeyInfo($589));
               });
-              return function($589) {
-                return $588(fromEvent($589));
+              return function($588) {
+                return $587(fromEvent($588));
               };
             }());
           })))(function() {
@@ -11918,16 +12027,16 @@
               }();
               return discard13(lift5(traceEngineM("Editor . Clipboard")(text6("copy: " + show52(frag)))))(function() {
                 return modify_5(function(v22) {
-                  var $529 = {};
-                  for (var $530 in v22) {
-                    if ({}.hasOwnProperty.call(v22, $530)) {
-                      $529[$530] = v22[$530];
+                  var $528 = {};
+                  for (var $529 in v22) {
+                    if ({}.hasOwnProperty.call(v22, $529)) {
+                      $528[$529] = v22[$529];
                     }
                     ;
                   }
                   ;
-                  $529.clipboard = pure17(frag);
-                  return $529;
+                  $528.clipboard = pure17(frag);
+                  return $528;
                 });
               });
             }
@@ -11952,16 +12061,16 @@
               }();
               return discard13(lift5(traceEngineM("Editor . Clipboard")(text6("cut: " + show52(v2.value0)))))(function() {
                 return discard13(modify_5(function(v3) {
-                  var $539 = {};
-                  for (var $540 in v3) {
-                    if ({}.hasOwnProperty.call(v3, $540)) {
-                      $539[$540] = v3[$540];
+                  var $538 = {};
+                  for (var $539 in v3) {
+                    if ({}.hasOwnProperty.call(v3, $539)) {
+                      $538[$539] = v3[$539];
                     }
                     ;
                   }
                   ;
-                  $539.clipboard = pure17(v2.value0);
-                  return $539;
+                  $538.clipboard = pure17(v2.value0);
+                  return $538;
                 }))(function() {
                   return lift5(raise(new SetExpr_EngineOutput(v2.value1)));
                 });
@@ -11972,12 +12081,12 @@
               var v4 = function(v5) {
                 return pure16(unit);
               };
-              var $545 = v1.editor.example_fragment(v.value0.key);
-              if ($545 instanceof Just) {
-                var $546 = elem4(v.value0.key)(["a", "b", "c"]);
-                if ($546) {
-                  return discard13(lift5(traceEngineM("Editor . Insert")(text6("insert example: " + show52($545.value0)))))(function() {
-                    return insert_fragment($545.value0);
+              var $544 = v1.editor.example_fragment(v.value0.key);
+              if ($544 instanceof Just) {
+                var $545 = isAlpha(v.value0.key);
+                if ($545) {
+                  return discard13(lift5(traceEngineM("Editor . Insert")(text6("insert example: " + show52($544.value0)))))(function() {
+                    return insert_fragment($544.value0);
                   });
                 }
                 ;
@@ -11986,8 +12095,8 @@
               ;
               return v4(true);
             };
-            var $549 = v.value0.cmd && v.value0.key === "v";
-            if ($549) {
+            var $548 = v.value0.cmd && v.value0.key === "v";
+            if ($548) {
               if (v1.clipboard instanceof Just) {
                 return discard13(lift5(traceEngineM("Editor . Clipboard")(text6("paste: " + show52(v1.clipboard.value0)))))(function() {
                   return insert_fragment(v1.clipboard.value0);
@@ -12035,16 +12144,16 @@
       ;
       if (v.value0 instanceof SetExpr_EngineOutput) {
         return modify_5(function(v1) {
-          var $562 = {};
-          for (var $563 in v1) {
-            if ({}.hasOwnProperty.call(v1, $563)) {
-              $562[$563] = v1[$563];
+          var $561 = {};
+          for (var $562 in v1) {
+            if ({}.hasOwnProperty.call(v1, $562)) {
+              $561[$562] = v1[$562];
             }
             ;
           }
           ;
-          $562.expr = v.value0.value0;
-          return $562;
+          $561.expr = v.value0.value0;
+          return $561;
         });
       }
       ;
@@ -12077,8 +12186,8 @@
     var $$eval = mkEval({
       finalize: defaultEval.finalize,
       initialize: pure17(Initialize_EngineAction.value),
-      receive: function($591) {
-        return pure17(Receive_EngineAction.create($591));
+      receive: function($590) {
+        return pure17(Receive_EngineAction.create($590));
       },
       handleQuery: function(query32) {
         return bind16(get1)(function(state3) {

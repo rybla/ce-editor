@@ -40,7 +40,7 @@ import Type.Prelude (Proxy(..))
 import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, style, text)
 import Ui.Common as Ui
 import Ui.Console as Console
-import Utility (forget, impossible, sortEquivalenceClasses, todo)
+import Utility (forget, impossible, isAlpha, sortEquivalenceClasses, todo)
 import Web.Event.Event as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -312,7 +312,7 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       lift $ traceEngineM "Editor . Clipboard" $ text $ "paste: " <> show frag
       insert_fragment frag
     -- insert example Fragment 
-    _ | Just frag <- editor.example_fragment ki.key, ki.key `elem` [ "a", "b", "c" ] -> do
+    _ | Just frag <- editor.example_fragment ki.key, ki.key # isAlpha -> do
       lift $ traceEngineM "Editor . Insert" $ text $ "insert example: " <> show frag
       insert_fragment frag
     _ -> pure unit

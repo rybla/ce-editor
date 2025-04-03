@@ -22,6 +22,7 @@ package:
     - record
     - spec
     - spec-node
+    - strings
     - transformers
     - variant
   test:
