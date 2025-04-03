@@ -17,7 +17,7 @@ import Data.NonEmpty ((:|))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces)
+import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces, todo)
 
 --------------------------------------------------------------------------------
 
@@ -241,6 +241,17 @@ getStep_Tooth (Tooth t) = Step $ t.kids_L # Array.length
 
 getPath_Tooths :: List Tooth -> Path
 getPath_Tooths ts = Path (ts # map getStep_Tooth)
+
+--------------------------------------------------------------------------------
+
+newtype Bracket = Bracket { l :: Label, kids_L :: Array Expr, kids_R :: Array Expr }
+
+derive instance Generic Bracket _
+
+derive instance Newtype Bracket _
+
+instance Show Bracket where
+  show (Bracket b) = todo "Show Bracket"
 
 --------------------------------------------------------------------------------
 
