@@ -309,6 +309,17 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       lift $ traceEngineM "Editor . Clipboard" $ text $ "cut: " <> show frag
       modify_ _ { clipboard = pure $ frag }
       lift $ H.raise $ SetExpr_EngineOutput expr'
+    _ | KeyInfo ki # matchKeyInfo (_ == "Backspace") { cmd: false, shift: pure false } -> do
+      let
+        expr' = case handle of
+          Point_Handle _ -> expr
+          SpanH_Handle h _ -> unSpanContext at_h.outside (Span [])
+            where
+            at_h = expr # atSpan h
+          ZipperH_Handle h _ -> unSpanContext at_h.outside at_h.inside
+            where
+            at_h = expr # atZipper h
+      lift $ H.raise $ SetExpr_EngineOutput expr'
     -- paste Fragment
     _ | Just frag <- clipboard, KeyInfo ki # matchKeyInfo (_ == "v") { cmd: true } -> do
       lift $ traceEngineM "Editor . Clipboard" $ text $ "paste: " <> show frag

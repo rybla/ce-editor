@@ -22,3 +22,4 @@
   - [x] currently, just replaces the entire zipper+inside with the pasted span
 - [x] need different kind of tooth at bottom of zipper
 - [x] Escape to move handle to beginning of file
+- [x] Backspace to delete stuff inside handle
