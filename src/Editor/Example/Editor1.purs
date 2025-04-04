@@ -19,6 +19,7 @@ editor =
   -- , initial_handle: mkCursorHandle $ Cursor (Path Nil) (Index 0) (Index 0) Left_CursorFocus
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
   , example_fragment: \s -> Just $ Zipper_Fragment $ Zipper { kids_L: [], kids_R: [], inside: Just $ SpanContext { _O: ExprContext Nil, _I: SpanTooth { l: String s, kids_L: [], kids_R: [] } } }
+  , max_history_length: 100
   }
 
 example_expr :: Int -> Int -> Expr

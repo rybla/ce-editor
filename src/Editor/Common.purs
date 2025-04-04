@@ -10,4 +10,5 @@ type Editor =
   , initial_exprs :: Array Expr
   , initial_handle :: Handle
   , example_fragment :: String -> Maybe Fragment
+  , max_history_length :: Int
   }

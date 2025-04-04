@@ -472,6 +472,11 @@ instance Show ZipperFocus where
   show InnerRight_ZipperFocus = "IR"
   show OuterRight_ZipperFocus = "OR"
 
+getOuterLeftPoint_Handle :: Handle -> Point
+getOuterLeftPoint_Handle (Point_Handle p) = p
+getOuterLeftPoint_Handle (SpanH_Handle sh _) = (sh # getEndPoints_SpanH)._L
+getOuterLeftPoint_Handle (ZipperH_Handle zh _) = (zh # getEndPoints_ZipperH)._OL
+
 --------------------------------------------------------------------------------
 
 getDragOrigin :: Handle -> Point -> Handle

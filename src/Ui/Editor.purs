@@ -5,7 +5,7 @@ import Prelude
 
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.Except (ExceptT, runExceptT)
-import Control.Monad.State (get, gets, modify, modify_, put)
+import Control.Monad.State (get, gets, modify_, put)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (tell)
 import Data.Array (fold)
@@ -37,7 +37,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
-import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, matchKeyInfo, mkKeyInfo, style, text)
+import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, matchKeyInfo, style, text)
 import Ui.Common as Ui
 import Ui.Console as Console
 import Utility (forget, impossible, isAlpha, sortEquivalenceClasses, todo)
@@ -63,6 +63,7 @@ type Input = Editor
 type State =
   { editor :: Editor
   , expr :: Expr
+  , max_history_length :: Int
   }
 
 data Action
@@ -89,6 +90,7 @@ component = H.mkComponent { initialState, eval, render }
   initialState editor =
     { editor
     , expr: Root % editor.initial_exprs
+    , max_history_length: 100
     }
 
   eval = H.mkEval H.defaultEval
@@ -321,7 +323,7 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       lift $ traceEngineM "Editor . Clipboard" $ text $ "cut: " <> show frag
       modify_ _ { clipboard = pure $ frag }
       set_expr expr'
-    -- TODO: set_handle $ ?a
+      set_handle $ Point_Handle $ handle # getOuterLeftPoint_Handle
     _ | KeyInfo ki # matchKeyInfo (_ == "Backspace") {} -> do
       let
         expr' = case handle of
@@ -333,6 +335,7 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
             where
             at_h = expr # atZipper h
       set_expr expr'
+      set_handle $ Point_Handle $ handle # getOuterLeftPoint_Handle
     -- paste Fragment
     _ | Just frag <- clipboard, KeyInfo ki # matchKeyInfo (_ == "v") { cmd: pure true } -> do
       lift $ traceEngineM "Editor . Clipboard" $ text $ "paste: " <> show frag
@@ -351,13 +354,13 @@ set_expr expr = do
 
 snapshot :: EngineM' Unit
 snapshot = do
-  { handle, expr, history } <- get
+  { editor, handle, expr, history } <- get
   let s = { handle, expr }
   case history of
     Nil -> modify_ \st -> st { history = s : Nil }
     s' : _
       | s == s' -> pure unit
-      | otherwise -> modify_ \st -> st { history = s : history, future = mempty }
+      | otherwise -> modify_ \st -> st { history = s : history # List.take editor.max_history_length, future = mempty }
   { history: history' } <- get
   lift $ traceEngineM "Engine" $ Ui.span [ Ui.text $ "snapshot; history' length = " <> show (history' # List.length) ]
 
