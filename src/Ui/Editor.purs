@@ -36,7 +36,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
-import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, style, text)
+import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, matchKeyInfo, mkKeyInfo, style, text)
 import Ui.Common as Ui
 import Ui.Console as Console
 import Utility (forget, impossible, isAlpha, sortEquivalenceClasses, todo)
@@ -283,8 +283,11 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
   lift $ traceEngineM "Editor . Keyboard" $ text $ "key: " <> show ki
   { handle, clipboard, expr, editor } <- get
   case unit of
+    _ | KeyInfo ki # matchKeyInfo (_ == "Escape") { cmd: false, shift: pure false } -> do
+      setHandle $ Point_Handle $ Point { path: mempty, j: Index 0 }
+      pure unit
     -- copy Fragment
-    _ | ki.cmd && ki.key == "c" -> do
+    _ | KeyInfo ki # matchKeyInfo (_ == "c") { cmd: true } -> do
       let
         frag = case handle of
           Point_Handle _ -> Span_Fragment (Span [])
@@ -293,7 +296,7 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       lift $ traceEngineM "Editor . Clipboard" $ text $ "copy: " <> show frag
       modify_ _ { clipboard = pure $ frag }
     -- cut Fragment
-    _ | ki.cmd && ki.key == "x" -> do
+    _ | KeyInfo ki # matchKeyInfo (_ == "x") { cmd: true } -> do
       let
         frag /\ expr' = case handle of
           Point_Handle _ -> Span_Fragment (Span []) /\ expr
@@ -307,11 +310,11 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       modify_ _ { clipboard = pure $ frag }
       lift $ H.raise $ SetExpr_EngineOutput expr'
     -- paste Fragment
-    _ | ki.cmd && ki.key == "v", Just frag <- clipboard -> do
+    _ | Just frag <- clipboard, KeyInfo ki # matchKeyInfo (_ == "v") { cmd: true } -> do
       lift $ traceEngineM "Editor . Clipboard" $ text $ "paste: " <> show frag
       insert_fragment frag
     -- insert example Fragment 
-    _ | Just frag <- editor.example_fragment ki.key, ki.key # isAlpha -> do
+    _ | Just frag <- editor.example_fragment ki.key, KeyInfo ki # matchKeyInfo isAlpha {} -> do
       lift $ traceEngineM "Editor . Insert" $ text $ "insert example: " <> show frag
       insert_fragment frag
     _ -> pure unit

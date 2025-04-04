@@ -5,15 +5,23 @@ import Prelude
 import Control.Monad.Writer (Writer, execWriter)
 import Data.Array as Array
 import Data.Foldable (intercalate)
+import Data.HeytingAlgebra (implies)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
 import Effect (Effect)
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Properties (IProp)
 import Halogen.HTML.Properties as HP
+import Record as Record
+import Type.Proxy (Proxy(..))
 import Web.DOM (Element)
 import Web.UIEvent.KeyboardEvent (KeyboardEvent)
 import Web.UIEvent.KeyboardEvent as KeyboardEvent
+
+--------------------------------------------------------------------------------
+
+infixr 2 implies as ==>
 
 --------------------------------------------------------------------------------
 
@@ -49,6 +57,8 @@ newtype KeyInfo = KeyInfo
 
 derive instance Newtype KeyInfo _
 
+derive newtype instance Eq KeyInfo
+
 instance Show KeyInfo where
   show (KeyInfo ki) = Array.fold
     [ if ki.shift then "" else "^"
@@ -64,3 +74,11 @@ fromKeyboardEventToKeyInfo ke = KeyInfo
   , cmd: KeyboardEvent.ctrlKey ke || KeyboardEvent.metaKey ke
   , shift: KeyboardEvent.shiftKey ke
   }
+
+mkKeyInfo key r = KeyInfo (Record.merge r { key, cmd: false, shift: false })
+
+matchKeyInfo filter_key r_ (KeyInfo ki') = filter_key ki'.key && r.cmd == r'.cmd && (maybe true (r'.shift == _) r.shift)
+  where
+  r = Record.merge r_ { cmd: false, shift: Nothing @Boolean }
+  r' = Record.delete (Proxy @"key") ki'
+
