@@ -23,3 +23,4 @@
 - [x] need different kind of tooth at bottom of zipper
 - [x] Escape to move handle to beginning of file
 - [x] Backspace to delete stuff inside handle
+- [x] undo and redo

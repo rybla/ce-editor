@@ -4,7 +4,7 @@ import Prelude
 
 import Control.Monad.Writer (Writer, execWriter)
 import Data.Array as Array
-import Data.Foldable (intercalate)
+import Data.Foldable (all, and, intercalate)
 import Data.HeytingAlgebra (implies)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
@@ -77,8 +77,12 @@ fromKeyboardEventToKeyInfo ke = KeyInfo
 
 mkKeyInfo key r = KeyInfo (Record.merge r { key, cmd: false, shift: false })
 
-matchKeyInfo filter_key r_ (KeyInfo ki') = filter_key ki'.key && r.cmd == r'.cmd && (maybe true (r'.shift == _) r.shift)
+matchKeyInfo filter_key r_ (KeyInfo ki') = and
+  [ filter_key ki'.key
+  , r.cmd # maybe true (r'.cmd == _)
+  , r.shift # maybe true (r'.shift == _)
+  ]
   where
-  r = Record.merge r_ { cmd: false, shift: Nothing @Boolean }
+  r = Record.merge r_ { cmd: Nothing @Boolean, shift: Nothing @Boolean }
   r' = Record.delete (Proxy @"key") ki'
 
