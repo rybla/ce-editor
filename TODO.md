@@ -20,4 +20,4 @@
   - [ ] adjust ends of zipper with mouse
 - [ ] what happens when paste a span on a zipper handle? 
   - [x] currently, just replaces the entire zipper+inside with the pasted span
-- [ ] need different kind of tooth at bottom of zipper
+- [x] need different kind of tooth at bottom of zipper
