@@ -321,6 +321,7 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       lift $ traceEngineM "Editor . Clipboard" $ text $ "cut: " <> show frag
       modify_ _ { clipboard = pure $ frag }
       set_expr expr'
+    -- TODO: set_handle $ ?a
     _ | KeyInfo ki # matchKeyInfo (_ == "Backspace") {} -> do
       let
         expr' = case handle of
@@ -350,12 +351,15 @@ set_expr expr = do
 
 snapshot :: EngineM' Unit
 snapshot = do
-  st <- modify \st -> st
-    { history = { handle: st.handle, expr: st.expr } : st.history
-    , future = mempty
-    }
-  lift $ traceEngineM "Engine" $ Ui.span [ Ui.text $ "snapshot; history length = " <> show (st.history # List.length) ]
-  pure unit
+  { handle, expr, history } <- get
+  let s = { handle, expr }
+  case history of
+    Nil -> modify_ \st -> st { history = s : Nil }
+    s' : _
+      | s == s' -> pure unit
+      | otherwise -> modify_ \st -> st { history = s : history, future = mempty }
+  { history: history' } <- get
+  lift $ traceEngineM "Engine" $ Ui.span [ Ui.text $ "snapshot; history' length = " <> show (history' # List.length) ]
 
 undo :: EngineM' Unit
 undo = do
