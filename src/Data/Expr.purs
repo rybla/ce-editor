@@ -2,6 +2,7 @@ module Data.Expr where
 
 import Prelude
 
+import Control.Alternative (guard)
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Eq.Generic (genericEq)
@@ -9,7 +10,7 @@ import Data.Foldable (foldr)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
-import Data.Maybe (Maybe(..), fromMaybe', maybe)
+import Data.Maybe (Maybe(..), fromMaybe', isJust, maybe)
 import Data.Newtype (class Newtype, unwrap)
 import Data.NonEmpty (NonEmpty, (:|))
 import Data.Ord.Generic (genericCompare)
@@ -481,14 +482,19 @@ instance Show Fragment where
 -- Utilities
 --------------------------------------------------------------------------------
 
-areSiblings_Point :: Point -> Point -> Boolean
-areSiblings_Point (Point p0) (Point p1) = p0.path == p1.path
+-- areSiblings_Point :: Point -> Point -> Boolean
+-- areSiblings_Point (Point p0) (Point p1) = p0.path == p1.path
+
+areSiblings_Point :: Point -> Point -> Maybe (Index /\ Index)
+areSiblings_Point (Point p) (Point p') = do
+  guard $ p.path == p'.path
+  pure $ p.j /\ p'.j
 
 areOrderedSiblings_Point :: Point -> Point -> Boolean
 areOrderedSiblings_Point (Point p0) (Point p1) = (p0.path == p1.path) && (p0.j <= p1.j)
 
 orderSiblings_Point :: Point -> Point -> Maybe (Point /\ Point)
-orderSiblings_Point (Point p0) (Point p1) | areSiblings_Point (Point p0) (Point p1) =
+orderSiblings_Point (Point p0) (Point p1) | areSiblings_Point (Point p0) (Point p1) # isJust =
   if p0.j <= p1.j then
     Just $ Point p0 /\ Point p1
   else
@@ -498,8 +504,8 @@ orderSiblings_Point _ _ = Nothing
 -- | if p0 is a sibling of an ancestor of p1, then computes:
 -- |   - the index into the parent of p0 that goes down towards p1
 -- |   - the path that when appended to the end of p0's path is the path of p1
-isAncestorSibling_Point :: Point -> Point -> Maybe (Step /\ Path)
-isAncestorSibling_Point (Point p0) (Point p1) = go p0.path p1.path
+isAncestorSiblingOf_Point :: Point -> Point -> Maybe (Step /\ Path)
+isAncestorSiblingOf_Point (Point p0) (Point p1) = go p0.path p1.path
   where
   go Nil (i1 : is1') = pure $ i1 /\ is1'
   go (i0 : is0') (i1 : is1') | i0 == i1 = go is0' is1'
