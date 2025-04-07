@@ -10669,7 +10669,7 @@
                     return Nothing.value;
                   }
                   ;
-                  throw new Error("Failed pattern match at Data.Expr.Drag (line 25, column 1 - line 25, column 48): " + [unit.constructor.name]);
+                  throw new Error("Failed pattern match at Data.Expr.Drag (line 20, column 1 - line 20, column 48): " + [unit.constructor.name]);
                 };
                 var $95 = isAncestorSiblingOf_Point(v.value0)(v1);
                 if ($95 instanceof Just) {
@@ -10786,11 +10786,7 @@
             return drag2(new Point_Handle(hp["_R"]))(v1)(v2);
           }
           ;
-          if (otherwise) {
-            return Nothing.value;
-          }
-          ;
-          throw new Error("Failed pattern match at Data.Expr.Drag (line 94, column 52 - line 110, column 27): " + [v.value1.constructor.name]);
+          throw new Error("Failed pattern match at Data.Expr.Drag (line 89, column 52 - line 91, column 59): " + [v.value1.constructor.name]);
         }
         ;
         if (v instanceof ZipperH_Handle) {
@@ -10901,7 +10897,7 @@
           return Nothing.value;
         }
         ;
-        throw new Error("Failed pattern match at Data.Expr.Drag (line 25, column 1 - line 25, column 48): " + [v.constructor.name, v1.constructor.name, v2.constructor.name]);
+        throw new Error("Failed pattern match at Data.Expr.Drag (line 20, column 1 - line 20, column 48): " + [v.constructor.name, v1.constructor.name, v2.constructor.name]);
       };
     };
   };

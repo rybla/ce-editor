@@ -3,15 +3,10 @@ module Data.Expr.Drag where
 import Data.Expr
 import Prelude
 
-import Control.Alternative (guard)
-import Data.Array (elem)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (unwrap)
 import Data.NonEmpty ((:|))
 import Data.NonEmpty as Ne
-import Data.Tuple.Nested (type (/\), (/\))
-import Debug as Debug
-import Utility (todo)
+import Data.Tuple.Nested ((/\))
 
 getDragOrigin :: Handle -> Point -> Handle
 getDragOrigin (SpanH_Handle h _) p | hp <- getEndPoints_SpanH h, p == hp._L = SpanH_Handle h Left_SpanFocus
