@@ -163,6 +163,11 @@ stripPrefix_Path Nil is' = is'
 stripPrefix_Path (i : is) (i' : is') | i == i' = stripPrefix_Path is is'
 stripPrefix_Path is is' = bug $ "stripPrefix_Path " <> show is <> " " <> show is'
 
+isPrefix_Path :: Path -> Path -> Boolean
+isPrefix_Path Nil _ = true
+isPrefix_Path (i : is) (i' : is') | i == i' = isPrefix_Path is is'
+isPrefix_Path _ _ = false
+
 --------------------------------------------------------------------------------
 
 type NePath = NonEmpty List Step
@@ -382,10 +387,15 @@ instance Eq ZipperH where
 getEndPoints_ZipperH ∷ ZipperH → { _OL ∷ Point, _IL ∷ Point, _IR ∷ Point, _OR ∷ Point }
 getEndPoints_ZipperH (ZipperH h) =
   { _OL: Point { path: h.path_O, j: h.j_OL }
-  , _IL: Point { path: h.path_O <> (h.path_I # fromNePath), j: h.j_IL }
-  , _IR: Point { path: h.path_O <> (h.path_I # fromNePath), j: h.j_IR }
+  , _IL: Point { path: ZipperH h # getTotalInnerPath_ZipperH # fromNePath, j: h.j_IL }
+  , _IR: Point { path: ZipperH h # getTotalInnerPath_ZipperH # fromNePath, j: h.j_IR }
   , _OR: Point { path: h.path_O, j: h.j_OR }
   }
+
+getTotalInnerPath_ZipperH :: ZipperH -> NePath
+getTotalInnerPath_ZipperH (ZipperH h) = case h.path_O of
+  Nil -> h.path_I
+  i : path_O -> (i :| path_O) <> h.path_I
 
 atZipper :: ZipperH -> Expr -> { outside :: SpanContext, at :: Zipper, inside :: Span }
 atZipper (ZipperH h) e =

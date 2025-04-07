@@ -4,11 +4,13 @@ import Data.Expr
 import Prelude
 
 import Control.Alternative (guard)
+import Data.Array (elem)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.NonEmpty ((:|))
 import Data.NonEmpty as Ne
 import Data.Tuple.Nested (type (/\), (/\))
+import Debug as Debug
 import Utility (todo)
 
 getDragOrigin :: Handle -> Point -> Handle
@@ -107,29 +109,58 @@ drag (SpanH_Handle (SpanH h) focus) (Point p') _e = case focus of
   where
   hp = SpanH h # getEndPoints_SpanH
 
-drag (ZipperH_Handle (ZipperH h) focus) (Point p') _e = case focus of
-  -- adjust ZipperH's Outer Left Point
-  OuterLeft_ZipperFocus | Just (j' /\ _) <- areSiblings_Point (Point p') hp._OL -> case unit of
-    _ | j' <= h.j_OL -> pure $ ZipperH_Handle (ZipperH h { j_OL = j' }) focus
-    _ | j' <= (h.path_I # Ne.head # getIndexesAroundStep)._L -> pure $ ZipperH_Handle (ZipperH h { j_OL = j' }) focus
-    _ -> Nothing
-  -- adjust ZipperH's Outer Right Point
-  OuterRight_ZipperFocus | Just (j' /\ _) <- areSiblings_Point (Point p') hp._OR -> case unit of
-    _ | h.j_OR <= j' -> pure $ ZipperH_Handle (ZipperH h { j_OR = j' }) focus
-    _ | (h.path_I # Ne.head # getIndexesAroundStep)._R <= j' -> pure $ ZipperH_Handle (ZipperH h { j_OR = j' }) focus
-    _ -> Nothing
-  -- adjust ZipperH's Inner Left Point
-  InnerLeft_ZipperFocus | Just (j' /\ _) <- areSiblings_Point (Point p') hp._IL -> case unit of
-    _ | j' <= h.j_IL -> pure $ ZipperH_Handle (ZipperH h { j_IL = j' }) focus
-    _ | j' <= h.j_IR -> pure $ ZipperH_Handle (ZipperH h { j_IL = j' }) focus
-    _ -> Nothing
-  -- adjust ZipperH's Inner Right Point
-  InnerRight_ZipperFocus | Just (j' /\ _) <- areSiblings_Point (Point p') hp._IR -> case unit of
-    _ | h.j_IR <= j' -> pure $ ZipperH_Handle (ZipperH h { j_IR = j' }) focus
-    _ | h.j_IL <= j' -> pure $ ZipperH_Handle (ZipperH h { j_IR = j' }) focus
-    _ -> Nothing
+drag (ZipperH_Handle (ZipperH h) focus) (Point p') e = case focus of
+  -- adjust ZipperH's OuterLeft Point
+  OuterLeft_ZipperFocus | isPrefix_Path p'.path h_path_I ->
+    drag (Point_Handle hp._IL) (Point p') e >>= case _ of
+      ZipperH_Handle (ZipperH h') focus' -> pure $ ZipperH_Handle
+        ( ZipperH h'
+            { j_IL = h.j_IL
+            , j_IR = h.j_IR
+            , j_OR = if areOrderedSiblings_Point (Point p') (Point { path: h.path_O, j: (h.path_I # Ne.head # getIndexesAroundStep)._L }) then h.j_OR else h'.j_OR
+            }
+        )
+        focus'
+      h' -> Just h'
+  -- adjust ZipperH's OuterRight Point
+  OuterRight_ZipperFocus | isPrefix_Path p'.path h_path_I ->
+    drag (Point_Handle hp._IR) (Point p') e >>= case _ of
+      ZipperH_Handle (ZipperH h') focus' -> pure $ ZipperH_Handle
+        ( ZipperH h'
+            { j_IL = h.j_IL
+            , j_IR = h.j_IR
+            , j_OL = if areOrderedSiblings_Point (Point { path: h.path_O, j: (h.path_I # Ne.head # getIndexesAroundStep)._R }) (Point p') then h.j_OL else h'.j_OL
+            }
+        )
+        focus'
+      h' -> Just h'
+  -- adjust ZipperH's InnerLeft Point
+  InnerLeft_ZipperFocus | isPrefix_Path h.path_O p'.path ->
+    drag (Point_Handle hp._OL) (Point p') e >>= case _ of
+      ZipperH_Handle (ZipperH h') focus' -> pure $ ZipperH_Handle
+        ( ZipperH h'
+            { j_OL = h.j_OL
+            , j_OR = h.j_OR
+            , j_IR = if areOrderedSiblings_Point (Point p') hp._IR then h.j_IR else h'.j_IR
+            }
+        )
+        focus'
+      h' -> Just h'
+  -- adjust ZipperH's InnerRight Point
+  InnerRight_ZipperFocus | isPrefix_Path h.path_O p'.path ->
+    drag (Point_Handle hp._OR) (Point p') e >>= case _ of
+      ZipperH_Handle (ZipperH h') focus' -> pure $ ZipperH_Handle
+        ( ZipperH h'
+            { j_OL = h.j_OL
+            , j_OR = h.j_OR
+            , j_IL = if areOrderedSiblings_Point hp._IL (Point p') then h.j_IL else h'.j_IL
+            }
+        )
+        focus'
+      h' -> Just h'
   --
-  _ | otherwise -> Nothing
+  _ -> Nothing
   where
   hp = ZipperH h # getEndPoints_ZipperH
+  h_path_I = ZipperH h # getTotalInnerPath_ZipperH # fromNePath
 
