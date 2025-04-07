@@ -292,34 +292,34 @@ unSpanContext (SpanContext sc) s = unExprContext sc._O $ unSpanTooth sc._I s
 offset_inner_SpanContext :: SpanContext -> Index
 offset_inner_SpanContext (SpanContext sc) = sc._I # offset_inner_SpanTooth
 
+getPath_SpanContext :: SpanContext -> Path
+getPath_SpanContext (SpanContext sc) = sc._O # getPath_ExprContext
+
 --------------------------------------------------------------------------------
 
-newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, inside :: Maybe SpanContext }
+newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, inside :: SpanContext }
 
 derive instance Newtype Zipper _
 
 instance Show Zipper where
   show (Zipper z) =
     "{{ "
-      <> (z.kids_L # map show # Array.intercalate " ")
       <>
-        ( case z.inside of
-            Nothing -> "{{}}"
-            Just inside -> showSpanContext' inside "{{}}"
+        ( [ z.kids_L # map show # Array.intercalate " "
+          , showSpanContext' z.inside "{{}}"
+          , z.kids_R # map show # Array.intercalate " "
+          ] # Array.intercalate " "
         )
-      <> (z.kids_R # map show # Array.intercalate " ")
       <> " }}"
 
 unZipper :: Zipper -> Span -> Span
-unZipper (Zipper z@{ inside: Nothing }) s = Span $ z.kids_L <> unwrap s <> z.kids_R
-unZipper (Zipper z@{ inside: Just inside }) s = Span $ z.kids_L <> [ unSpanContext inside s ] <> z.kids_R
+unZipper (Zipper z) s = Span $ z.kids_L <> [ unSpanContext z.inside s ] <> z.kids_R
 
 offset_outer_Zipper :: Zipper -> { _L :: Index, _R :: Index }
 offset_outer_Zipper (Zipper z) = { _L: Index $ z.kids_L # Array.length, _R: Index $ z.kids_R # Array.length }
 
 offset_inner_Zipper :: Zipper -> Index
-offset_inner_Zipper z@(Zipper { inside: Nothing }) = (z # offset_outer_Zipper)._L
-offset_inner_Zipper (Zipper { inside: Just inside }) = inside # offset_inner_SpanContext
+offset_inner_Zipper (Zipper z) = z.inside # offset_inner_SpanContext
 
 --------------------------------------------------------------------------------
 
@@ -411,7 +411,7 @@ atZipper (ZipperH h) e =
       , at: Zipper
           { kids_L: (unwrap at_kid_M.outside).kids_L
           , kids_R: (unwrap at_kid_M.outside).kids_R
-          , inside: Just at_span_I.outside
+          , inside: at_span_I.outside
           }
       , inside: at_span_I.at
       }

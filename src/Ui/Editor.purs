@@ -349,6 +349,9 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       lift $ traceEngineM [ "Clipboard", "Paste" ] $ Ui.list
         [ Ui.code $ "frag: " <> show frag ]
       insert_fragment frag
+      do
+        st <- get
+        lift $ traceEngineM [ "Clipboard", "Paste" ] $ Ui.code $ "handle: " <> show st.handle
     -- insert example Fragment 
     _ | Just frag <- editor.example_fragment ki.key, KeyInfo ki # matchKeyInfo isAlpha {} -> do
       lift $ traceEngineM [ "Insert" ] $ Ui.list
@@ -422,19 +425,12 @@ insert_fragment frag = do
       -- pasting a Zipper around a Span
       Zipper_Fragment (Zipper z) -> Tuple
         <$>
-          ( case z.inside of
-              Nothing -> pure $ Point_Handle
-                ( Point
-                    { path: p.path <> ((p.j # getStepsAroundIndex)._L : Nil)
-                    , j: Zipper z # offset_inner_Zipper
-                    }
-                )
-              Just (SpanContext inside) -> pure $ Point_Handle
-                ( Point
-                    { path: p.path <> ((p.j # getStepsAroundIndex)._L : Nil) <> (inside._O # getPath_ExprContext)
-                    , j: Zipper z # offset_inner_Zipper
-                    }
-                )
+          ( pure $ Point_Handle
+              ( Point
+                  { path: p.path <> ((p.j # getStepsAroundIndex)._L : Nil) <> (z.inside # getPath_SpanContext)
+                  , j: Zipper z # offset_inner_Zipper
+                  }
+              )
           )
         <*> pure (unSpanContext at_h.outside $ unZipper (Zipper z) (Span []))
       where
@@ -450,19 +446,12 @@ insert_fragment frag = do
       -- pasting a Zipper around a Span
       Zipper_Fragment (Zipper z) -> Tuple
         <$>
-          ( case z.inside of
-              Nothing -> pure $ Point_Handle
-                ( Point
-                    { path: h.path <> ((h.j_L # getStepsAroundIndex)._L : Nil)
-                    , j: Zipper z # offset_inner_Zipper
-                    }
-                )
-              Just (SpanContext inside) -> pure $ Point_Handle
-                ( Point
-                    { path: h.path <> ((h.j_L # getStepsAroundIndex)._L : Nil) <> (inside._O # getPath_ExprContext)
-                    , j: Zipper z # offset_inner_Zipper
-                    }
-                )
+          ( pure $ Point_Handle
+              ( Point
+                  { path: h.path <> (h.j_L # getStepsAroundIndex)._L : Nil <> (z.inside # getPath_SpanContext)
+                  , j: Zipper z # offset_inner_Zipper
+                  }
+              )
           )
         <*> pure (unSpanContext at_h.outside $ unZipper (Zipper z) at_h.at)
       where

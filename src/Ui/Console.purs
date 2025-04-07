@@ -36,7 +36,7 @@ data Action
 
 type Output = Void
 
-disabledMessageLabelRegexes ∷ Array Regex
+disabledMessageLabelRegexes :: Array Regex
 disabledMessageLabelRegexes = map (\s -> Regex.regex ("^" <> s <> "( / [^/]*)*$") mempty # fromRight' (impossible $ "invalid regex: " <> s))
   [ "Engine / Receive"
   , "Engine / Keyboard"
