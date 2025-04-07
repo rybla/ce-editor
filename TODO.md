@@ -14,12 +14,12 @@
   - not useful cases:
     - rendering (since then I need to manufactor a Root Expr component)
   - **answer**: top level is still Root, but now we also have a Context type for encoding a Zipper that is from a top Expr (often, the Root Expr) specifically
-- [ ] adjust ends of handle with mouse
-  - [ ] adjust ends of span with mouse
-    - [ ] test if this works
-  - [ ] adjust ends of zipper with mouse
+- [x] adjust ends of handle with mouse
+  - [x] adjust ends of span with mouse
+    - [x] test if this works
+  - [x] adjust ends of zipper with mouse
 - [ ] what happens when paste a span on a zipper handle? 
-  - [x] currently, just replaces the entire zipper+inside with the pasted span
+  - [x] currently, just replaces the entire zipper+inside with the pasted span, but this isn't what _should_ happen, probably
 - [x] need different kind of tooth at bottom of zipper
 - [x] Escape to move handle to beginning of file
 - [x] Backspace to delete stuff inside handle
