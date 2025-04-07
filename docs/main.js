@@ -10553,7 +10553,6 @@
   var eq3 = /* @__PURE__ */ eq(eqPoint);
   var pure16 = /* @__PURE__ */ pure(applicativeMaybe);
   var append7 = /* @__PURE__ */ append(semigroupList);
-  var unwrap6 = /* @__PURE__ */ unwrap();
   var bind7 = /* @__PURE__ */ bind(bindMaybe);
   var getDragOrigin = function(v) {
     return function(v1) {
@@ -10566,9 +10565,9 @@
                   return new Point_Handle(v1);
                 };
                 if (v instanceof ZipperH_Handle) {
-                  var $54 = getEndPoints_ZipperH(v.value0);
-                  var $55 = eq3(v1)($54["_OR"]);
-                  if ($55) {
+                  var $53 = getEndPoints_ZipperH(v.value0);
+                  var $54 = eq3(v1)($53["_OR"]);
+                  if ($54) {
                     return new ZipperH_Handle(v.value0, OuterRight_ZipperFocus.value);
                   }
                   ;
@@ -10578,9 +10577,9 @@
                 return v12(true);
               };
               if (v instanceof ZipperH_Handle) {
-                var $60 = getEndPoints_ZipperH(v.value0);
-                var $61 = eq3(v1)($60["_IR"]);
-                if ($61) {
+                var $59 = getEndPoints_ZipperH(v.value0);
+                var $60 = eq3(v1)($59["_IR"]);
+                if ($60) {
                   return new ZipperH_Handle(v.value0, InnerRight_ZipperFocus.value);
                 }
                 ;
@@ -10590,9 +10589,9 @@
               return v10(true);
             };
             if (v instanceof ZipperH_Handle) {
-              var $66 = getEndPoints_ZipperH(v.value0);
-              var $67 = eq3(v1)($66["_IL"]);
-              if ($67) {
+              var $65 = getEndPoints_ZipperH(v.value0);
+              var $66 = eq3(v1)($65["_IL"]);
+              if ($66) {
                 return new ZipperH_Handle(v.value0, InnerLeft_ZipperFocus.value);
               }
               ;
@@ -10602,9 +10601,9 @@
             return v8(true);
           };
           if (v instanceof ZipperH_Handle) {
-            var $72 = getEndPoints_ZipperH(v.value0);
-            var $73 = eq3(v1)($72["_OL"]);
-            if ($73) {
+            var $71 = getEndPoints_ZipperH(v.value0);
+            var $72 = eq3(v1)($71["_OL"]);
+            if ($72) {
               return new ZipperH_Handle(v.value0, OuterLeft_ZipperFocus.value);
             }
             ;
@@ -10614,9 +10613,9 @@
           return v6(true);
         };
         if (v instanceof SpanH_Handle) {
-          var $78 = getEndPoints_SpanH(v.value0);
-          var $79 = eq3(v1)($78["_R"]);
-          if ($79) {
+          var $77 = getEndPoints_SpanH(v.value0);
+          var $78 = eq3(v1)($77["_R"]);
+          if ($78) {
             return new SpanH_Handle(v.value0, Right_SpanFocus.value);
           }
           ;
@@ -10626,9 +10625,9 @@
         return v4(true);
       };
       if (v instanceof SpanH_Handle) {
-        var $84 = getEndPoints_SpanH(v.value0);
-        var $85 = eq3(v1)($84["_L"]);
-        if ($85) {
+        var $83 = getEndPoints_SpanH(v.value0);
+        var $84 = eq3(v1)($83["_L"]);
+        if ($84) {
           return new SpanH_Handle(v.value0, Left_SpanFocus.value);
         }
         ;
@@ -10672,16 +10671,16 @@
                   ;
                   throw new Error("Failed pattern match at Data.Expr.Drag (line 25, column 1 - line 25, column 48): " + [unit.constructor.name]);
                 };
-                var $96 = isAncestorSiblingOf_Point(v.value0)(v1);
-                if ($96 instanceof Just) {
-                  var $97 = orderedStepAndIndex($96.value0.value0)(v.value0.j);
-                  if ($97) {
-                    var path_I4 = new NonEmpty($96.value0.value0, $96.value0.value1);
+                var $95 = isAncestorSiblingOf_Point(v.value0)(v1);
+                if ($95 instanceof Just) {
+                  var $96 = orderedStepAndIndex($95.value0.value0)(v.value0.j);
+                  if ($96) {
+                    var path_I4 = new NonEmpty($95.value0.value0, $95.value0.value1);
                     return pure16(new ZipperH_Handle({
                       path_O: v.value0.path,
                       j_OL: function(v10) {
                         return v10["_L"];
-                      }(getIndexesAroundStep($96.value0.value0)),
+                      }(getIndexesAroundStep($95.value0.value0)),
                       j_OR: v.value0.j,
                       path_I: path_I4,
                       j_IL: function(v10) {
@@ -10698,17 +10697,17 @@
                 ;
                 return v9(true);
               };
-              var $104 = isAncestorSiblingOf_Point(v.value0)(v1);
-              if ($104 instanceof Just) {
-                var $105 = orderedIndexAndStep(v.value0.j)($104.value0.value0);
-                if ($105) {
-                  var path_I3 = new NonEmpty($104.value0.value0, $104.value0.value1);
+              var $103 = isAncestorSiblingOf_Point(v.value0)(v1);
+              if ($103 instanceof Just) {
+                var $104 = orderedIndexAndStep(v.value0.j)($103.value0.value0);
+                if ($104) {
+                  var path_I3 = new NonEmpty($103.value0.value0, $103.value0.value1);
                   return pure16(new ZipperH_Handle({
                     path_O: v.value0.path,
                     j_OL: v.value0.j,
                     j_OR: function(v8) {
                       return v8["_R"];
-                    }(getIndexesAroundStep($104.value0.value0)),
+                    }(getIndexesAroundStep($103.value0.value0)),
                     path_I: path_I3,
                     j_IL: v1.j,
                     j_IR: function(v8) {
@@ -10724,16 +10723,16 @@
               ;
               return v7(true);
             };
-            var $112 = isAncestorSiblingOf_Point(v1)(v.value0);
-            if ($112 instanceof Just) {
-              var $113 = orderedStepAndIndex($112.value0.value0)(v1.j);
-              if ($113) {
-                var path_I2 = new NonEmpty($112.value0.value0, $112.value0.value1);
+            var $111 = isAncestorSiblingOf_Point(v1)(v.value0);
+            if ($111 instanceof Just) {
+              var $112 = orderedStepAndIndex($111.value0.value0)(v1.j);
+              if ($112) {
+                var path_I2 = new NonEmpty($111.value0.value0, $111.value0.value1);
                 return pure16(new ZipperH_Handle({
                   path_O: v1.path,
                   j_OL: function(v6) {
                     return v6["_L"];
-                  }(getIndexesAroundStep($112.value0.value0)),
+                  }(getIndexesAroundStep($111.value0.value0)),
                   j_OR: v1.j,
                   path_I: path_I2,
                   j_IL: function(v6) {
@@ -10750,17 +10749,17 @@
             ;
             return v5(true);
           };
-          var $120 = isAncestorSiblingOf_Point(v1)(v.value0);
-          if ($120 instanceof Just) {
-            var $121 = orderedIndexAndStep(v1.j)($120.value0.value0);
-            if ($121) {
-              var path_I = new NonEmpty($120.value0.value0, $120.value0.value1);
+          var $119 = isAncestorSiblingOf_Point(v1)(v.value0);
+          if ($119 instanceof Just) {
+            var $120 = orderedIndexAndStep(v1.j)($119.value0.value0);
+            if ($120) {
+              var path_I = new NonEmpty($119.value0.value0, $119.value0.value1);
               return pure16(new ZipperH_Handle({
                 path_O: v1.path,
                 j_OL: v1.j,
                 j_OR: function(v4) {
                   return v4["_R"];
-                }(getIndexesAroundStep($120.value0.value0)),
+                }(getIndexesAroundStep($119.value0.value0)),
                 path_I,
                 j_IL: v.value0.j,
                 j_IR: function(v4) {
@@ -10779,51 +10778,19 @@
         ;
         if (v instanceof SpanH_Handle) {
           var hp = getEndPoints_SpanH(v.value0);
-          if (v.value1 instanceof Right_SpanFocus && eq3(hp["_L"])(v1)) {
-            return pure16(new Point_Handle(v1));
+          if (v.value1 instanceof Right_SpanFocus) {
+            return drag2(new Point_Handle(hp["_L"]))(v1)(v2);
           }
           ;
-          if (v.value1 instanceof Right_SpanFocus && areOrderedSiblings_Point(hp["_L"])(v1)) {
-            return pure16(new SpanH_Handle({
-              path: unwrap6(hp["_L"]).path,
-              j_L: unwrap6(hp["_L"]).j,
-              j_R: v1.j
-            }, Right_SpanFocus.value));
-          }
-          ;
-          if (v.value1 instanceof Right_SpanFocus && areOrderedSiblings_Point(v1)(hp["_L"])) {
-            return pure16(new SpanH_Handle({
-              path: unwrap6(hp["_L"]).path,
-              j_L: v1.j,
-              j_R: unwrap6(hp["_L"]).j
-            }, Left_SpanFocus.value));
-          }
-          ;
-          if (v.value1 instanceof Left_SpanFocus && eq3(hp["_R"])(v1)) {
-            return pure16(new Point_Handle(v1));
-          }
-          ;
-          if (v.value1 instanceof Left_SpanFocus && areOrderedSiblings_Point(v1)(hp["_R"])) {
-            return pure16(new SpanH_Handle({
-              path: unwrap6(hp["_R"]).path,
-              j_L: v1.j,
-              j_R: unwrap6(hp["_R"]).j
-            }, Left_SpanFocus.value));
-          }
-          ;
-          if (v.value1 instanceof Left_SpanFocus && areOrderedSiblings_Point(hp["_R"])(v1)) {
-            return pure16(new SpanH_Handle({
-              path: unwrap6(hp["_R"]).path,
-              j_L: unwrap6(hp["_R"]).j,
-              j_R: v1.j
-            }, Right_SpanFocus.value));
+          if (v.value1 instanceof Left_SpanFocus) {
+            return drag2(new Point_Handle(hp["_R"]))(v1)(v2);
           }
           ;
           if (otherwise) {
             return Nothing.value;
           }
           ;
-          throw new Error("Failed pattern match at Data.Expr.Drag (line 94, column 53 - line 108, column 27): " + [v.value1.constructor.name]);
+          throw new Error("Failed pattern match at Data.Expr.Drag (line 94, column 52 - line 110, column 27): " + [v.value1.constructor.name]);
         }
         ;
         if (v instanceof ZipperH_Handle) {
@@ -10839,11 +10806,11 @@
                   j_IL: v.value0.j_IL,
                   j_IR: v.value0.j_IR,
                   j_OR: function() {
-                    var $131 = areOrderedSiblings_Point(v1)({
+                    var $130 = areOrderedSiblings_Point(v1)({
                       path: v.value0.path_O,
                       j: getIndexesAroundStep(head2(v.value0.path_I))["_L"]
                     });
-                    if ($131) {
+                    if ($130) {
                       return v.value0.j_OR;
                     }
                     ;
@@ -10866,11 +10833,11 @@
                   j_IL: v.value0.j_IL,
                   j_IR: v.value0.j_IR,
                   j_OL: function() {
-                    var $135 = areOrderedSiblings_Point({
+                    var $134 = areOrderedSiblings_Point({
                       path: v.value0.path_O,
                       j: getIndexesAroundStep(head2(v.value0.path_I))["_R"]
                     })(v1);
-                    if ($135) {
+                    if ($134) {
                       return v.value0.j_OL;
                     }
                     ;
@@ -10893,8 +10860,8 @@
                   j_OL: v.value0.j_OL,
                   j_OR: v.value0.j_OR,
                   j_IR: function() {
-                    var $139 = areOrderedSiblings_Point(v1)(hp["_IR"]);
-                    if ($139) {
+                    var $138 = areOrderedSiblings_Point(v1)(hp["_IR"]);
+                    if ($138) {
                       return v.value0.j_IR;
                     }
                     ;
@@ -10917,8 +10884,8 @@
                   j_OL: v.value0.j_OL,
                   j_OR: v.value0.j_OR,
                   j_IL: function() {
-                    var $143 = areOrderedSiblings_Point(hp["_IL"])(v1);
-                    if ($143) {
+                    var $142 = areOrderedSiblings_Point(hp["_IL"])(v1);
+                    if ($142) {
                       return v.value0.j_IL;
                     }
                     ;
