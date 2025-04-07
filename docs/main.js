@@ -4241,7 +4241,7 @@
         return "OR";
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 469, column 1 - line 473, column 37): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 464, column 1 - line 468, column 37): " + [v.constructor.name]);
     }
   };
   var show22 = /* @__PURE__ */ show(showZipperFocus);
@@ -4263,7 +4263,7 @@
         return "R";
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 454, column 1 - line 456, column 29): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 449, column 1 - line 451, column 29): " + [v.constructor.name]);
     }
   };
   var show5 = /* @__PURE__ */ show(showSpanFocus);
@@ -4319,7 +4319,7 @@
         return show10(v.value0) + (" @ " + show22(v.value1));
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 439, column 1 - line 442, column 64): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 434, column 1 - line 437, column 64): " + [v.constructor.name]);
     }
   };
   var showExpr = {
@@ -4370,7 +4370,7 @@
         return OuterRight_ZipperFocus.value;
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 464, column 1 - line 464, column 38): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 459, column 1 - line 459, column 38): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof OuterLeft_ZipperFocus) {
@@ -4389,7 +4389,7 @@
         return new Inr(new Inr(new Inr(NoArguments.value)));
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 464, column 1 - line 464, column 38): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 459, column 1 - line 459, column 38): " + [x.constructor.name]);
     }
   };
   var genericEq2 = /* @__PURE__ */ genericEq(genericZipperFocus_)(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(genericEqSum1)));
@@ -4429,7 +4429,7 @@
         return Right_SpanFocus.value;
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 449, column 1 - line 449, column 36): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 444, column 1 - line 444, column 36): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof Left_SpanFocus) {
@@ -4440,7 +4440,7 @@
         return new Inr(NoArguments.value);
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 449, column 1 - line 449, column 36): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 444, column 1 - line 444, column 36): " + [x.constructor.name]);
     }
   };
   var genericEq1 = /* @__PURE__ */ genericEq(genericSpanFocus_)(genericEqSum1);
@@ -4491,7 +4491,7 @@
         return new ZipperH_Handle(x.value0.value0.value0, x.value0.value0.value1);
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 437, column 1 - line 437, column 33): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 432, column 1 - line 432, column 33): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof Point_Handle) {
@@ -4506,7 +4506,7 @@
         return new Inr(new Inr(new Product(x.value0, x.value1)));
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 437, column 1 - line 437, column 33): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 432, column 1 - line 432, column 33): " + [x.constructor.name]);
     }
   };
   var genericFragment_ = {
@@ -4519,7 +4519,7 @@
         return new Zipper_Fragment(x.value0);
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 486, column 1 - line 486, column 35): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 481, column 1 - line 481, column 35): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof Span_Fragment) {
@@ -4530,7 +4530,7 @@
         return new Inr(x.value0);
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 486, column 1 - line 486, column 35): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 481, column 1 - line 481, column 35): " + [x.constructor.name]);
     }
   };
   var genericExpr_ = {
@@ -4711,7 +4711,7 @@
         return append12(v.kids_L)(append12([unSpanContext(v.inside.value0)(v1)])(v.kids_R));
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 318, column 1 - line 318, column 35): " + [v.constructor.name, v1.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 313, column 1 - line 313, column 35): " + [v.constructor.name, v1.constructor.name]);
     };
   };
   var showTooth$prime = function(v) {
@@ -4745,7 +4745,7 @@
           return showSpanContext$prime(v.inside.value0)("{{}}");
         }
         ;
-        throw new Error("Failed pattern match at Data.Expr (line 311, column 11 - line 313, column 58): " + [v.inside.constructor.name]);
+        throw new Error("Failed pattern match at Data.Expr (line 306, column 11 - line 308, column 58): " + [v.inside.constructor.name]);
       }() + (intercalate6(" ")(map9(show11)(v.kids_R)) + " }}")));
     }
   };
@@ -4794,7 +4794,7 @@
       return offset_inner_SpanContext(v.inside.value0);
     }
     ;
-    throw new Error("Failed pattern match at Data.Expr (line 325, column 1 - line 325, column 39): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Data.Expr (line 320, column 1 - line 320, column 39): " + [v.constructor.name]);
   };
   var offset_Span = function(v) {
     return length(v);
@@ -4877,7 +4877,7 @@
       return append22(new NonEmpty(v.path_O.value0, v.path_O.value1))(v.path_I);
     }
     ;
-    throw new Error("Failed pattern match at Data.Expr (line 396, column 41 - line 398, column 42): " + [v.path_O.constructor.name]);
+    throw new Error("Failed pattern match at Data.Expr (line 391, column 41 - line 393, column 42): " + [v.path_O.constructor.name]);
   };
   var getStepsAroundIndex = function(v) {
     return {
@@ -4949,7 +4949,7 @@
       return getEndPoints_ZipperH(v.value0)["_OL"];
     }
     ;
-    throw new Error("Failed pattern match at Data.Expr (line 475, column 1 - line 475, column 44): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Data.Expr (line 470, column 1 - line 470, column 44): " + [v.constructor.name]);
   };
   var atStep = function(i2) {
     return function(v) {
@@ -10459,8 +10459,8 @@
     return AddMessage2;
   }();
   var disabledMessageLabelRegexes = /* @__PURE__ */ map(functorArray)(function(s) {
-    return fromRight$prime(impossible("invalid regex: " + s))(regex("^" + (s + "$"))(mempty2));
-  })(["Engine / Keyboard( / [^/]*)*", "Engine / Drag( / [^/]*)*", "ViewExpr( / [^/]*)*"]);
+    return fromRight$prime(impossible("invalid regex: " + s))(regex("^" + (s + "( / [^/]*)*$"))(mempty2));
+  })(["Engine / Receive", "Engine / Keyboard", "Engine / Drag", "Engine / Snapshot", "Engine / Insert", "ViewExpr"]);
   var component = /* @__PURE__ */ function() {
     var render = function(state3) {
       return div2([classes2(["Console"]), style3(discard12(tell3(["flex-grow: 0", "flex-shrink: 0"]))(function() {

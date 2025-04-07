@@ -37,10 +37,13 @@ data Action
 type Output = Void
 
 disabledMessageLabelRegexes ∷ Array Regex
-disabledMessageLabelRegexes = map (\s -> Regex.regex ("^" <> s <> "$") mempty # fromRight' (impossible $ "invalid regex: " <> s))
-  [ "Engine / Keyboard( / [^/]*)*"
-  , "Engine / Drag( / [^/]*)*"
-  , "ViewExpr( / [^/]*)*"
+disabledMessageLabelRegexes = map (\s -> Regex.regex ("^" <> s <> "( / [^/]*)*$") mempty # fromRight' (impossible $ "invalid regex: " <> s))
+  [ "Engine / Receive"
+  , "Engine / Keyboard"
+  , "Engine / Drag"
+  , "Engine / Snapshot"
+  , "Engine / Insert"
+  , "ViewExpr"
   ]
 
 component ∷ forall input output. H.Component Query input output Aff
