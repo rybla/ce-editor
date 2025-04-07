@@ -6,10 +6,13 @@ import Prelude
 import Data.Array as Array
 import Data.Expr.Drag (drag)
 import Data.List as List
+import Data.Maybe (fromMaybe')
+import Data.NonEmpty as NonEmpty
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec)
 import Test.Spec as Spec
 import Test.Utilities (shouldEqual)
+import Utility (impossible)
 
 test :: Spec Unit
 test = Spec.describe "Expr" do
@@ -44,10 +47,20 @@ test_drag = Spec.describe "drag" do
 -- Utilities
 --------------------------------------------------------------------------------
 
+point ∷ Array Int → Int → Point
 point is j = Point { path: path is, j: Index j }
+
+path :: Array Int -> Path
 path is = is # List.fromFoldable # map Step
+
+nepath :: Array Int -> NePath
+nepath is = (is # map Step # List.fromFoldable # toNePath # fromMaybe' (impossible $ "must be non-empty: " <> show is)) :: NePath
+
+spanH ∷ { j_L ∷ Int, j_R ∷ Int, path ∷ Array Int } → SpanFocus → Handle
 spanH h f = SpanH_Handle (SpanH { path: path h.path, j_L: Index h.j_L, j_R: Index h.j_R }) f
-zipperH h f = ZipperH_Handle (ZipperH { path_O: path h.path_O, j_OL: Index h.j_OL, j_OR: Index h.j_OR, path_I: path h.path_I, j_IL: Index h.j_IL, j_IR: Index h.j_IR }) f
+
+zipperH ∷ { j_IL ∷ Int, j_IR ∷ Int, j_OL ∷ Int, j_OR ∷ Int, path_I ∷ Array Int, path_O ∷ Array Int } → ZipperFocus → Handle
+zipperH h f = ZipperH_Handle (ZipperH { path_O: path h.path_O, j_OL: Index h.j_OL, j_OR: Index h.j_OR, path_I: nepath h.path_I, j_IL: Index h.j_IL, j_IR: Index h.j_IR }) f
 
 example_expr :: Int -> Int -> Expr
 example_expr _ 0 = String "L" % []

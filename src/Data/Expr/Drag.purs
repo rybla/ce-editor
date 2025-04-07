@@ -1,11 +1,11 @@
 module Data.Expr.Drag where
 
-import Prelude
 import Data.Expr
+import Prelude
 
-import Data.List ((:))
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
+import Data.NonEmpty ((:|))
 import Data.Tuple.Nested ((/\))
 
 getDragOrigin :: Handle -> Point -> Handle
@@ -27,7 +27,7 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
   _ | p_IL <- p, p_OL <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OL) (Point p_IL), p_OL.j .<| i -> do
     -- Debug.traceM $ "drag from inner left to outer left:\n  " <> show { p_IL, p_OL, i }
     let path_O = p'.path
-    let path_I = i : path_I'
+    let path_I = i :| path_I'
     pure $ ZipperH_Handle
       ( ZipperH
           { path_O
@@ -35,21 +35,21 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
           , j_OR: i # getIndexesAroundStep # _._R
           , path_I
           , j_IL: p_IL.j
-          , j_IR: e # atSubExpr (path_O <> path_I) # _.at # getExtremeIndexes # _._R
+          , j_IR: e # atSubExpr (path_O <> (path_I # fromNePath)) # _.at # getExtremeIndexes # _._R
           }
       )
       OuterLeft_ZipperFocus
   -- drag from inner right to outer right
   _ | p_IR <- p, p_OR <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OR) (Point p_IR), i |<. p_OR.j -> do
     let path_O = p_OR.path
-    let path_I = i : path_I'
+    let path_I = i :| path_I'
     pure $ ZipperH_Handle
       ( ZipperH
           { path_O
           , j_OL: i # getIndexesAroundStep # _._L
           , j_OR: p_OR.j
           , path_I
-          , j_IL: e # atSubExpr (path_O <> path_I) # _.at # getExtremeIndexes # _._L
+          , j_IL: e # atSubExpr (path_O <> (path_I # fromNePath)) # _.at # getExtremeIndexes # _._L
           , j_IR: p_IR.j
           }
       )
@@ -57,7 +57,7 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
   -- drag from outer left to inner left
   _ | p_OL <- p, p_IL <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OL) (Point p_IL), p_OL.j .<| i -> do
     let path_O = p_OL.path
-    let path_I = i : path_I'
+    let path_I = i :| path_I'
     pure $ ZipperH_Handle
       ( ZipperH
           { path_O
@@ -65,21 +65,21 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
           , j_OR: i # getIndexesAroundStep # _._R
           , path_I
           , j_IL: p_IL.j
-          , j_IR: e # atSubExpr (path_O <> path_I) # _.at # getExtremeIndexes # _._R
+          , j_IR: e # atSubExpr (path_O <> (path_I # fromNePath)) # _.at # getExtremeIndexes # _._R
           }
       )
       InnerLeft_ZipperFocus
   -- drag from outer right to inner right
   _ | p_OR <- p, p_IR <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OR) (Point p_IR), i |<. p_OR.j -> do
     let path_O = p_OR.path
-    let path_I = i : path_I'
+    let path_I = i :| path_I'
     pure $ ZipperH_Handle
       ( ZipperH
           { path_O
           , j_OL: i # getIndexesAroundStep # _._L
           , j_OR: p_OR.j
           , path_I
-          , j_IL: e # atSubExpr (path_O <> path_I) # _.at # getExtremeIndexes # _._L
+          , j_IL: e # atSubExpr (path_O <> (path_I # fromNePath)) # _.at # getExtremeIndexes # _._L
           , j_IR: p_IR.j
           }
       )

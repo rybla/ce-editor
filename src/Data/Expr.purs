@@ -11,10 +11,11 @@ import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe', maybe)
 import Data.Newtype (class Newtype, unwrap)
+import Data.NonEmpty (NonEmpty, (:|))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces)
+import Utility (bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces)
 
 --------------------------------------------------------------------------------
 
@@ -160,6 +161,22 @@ stripPrefix_Path :: Path -> Path -> Path
 stripPrefix_Path Nil is' = is'
 stripPrefix_Path (i : is) (i' : is') | i == i' = stripPrefix_Path is is'
 stripPrefix_Path is is' = bug $ "stripPrefix_Path " <> show is <> " " <> show is'
+
+--------------------------------------------------------------------------------
+
+type NePath = NonEmpty List Step
+
+cons_NePath :: Step -> NePath -> NePath
+cons_NePath s (s' :| path) = s :| (s' : path)
+
+infixr 5 cons_NePath as :|*
+
+fromNePath :: NePath -> Path
+fromNePath = List.fromFoldable
+
+toNePath :: Path -> Maybe NePath
+toNePath Nil = Nothing
+toNePath (s : path) = Just (s :| path)
 
 --------------------------------------------------------------------------------
 
@@ -345,7 +362,7 @@ newtype ZipperH = ZipperH
   { path_O :: Path
   , j_OL :: Index
   , j_OR :: Index
-  , path_I :: Path
+  , path_I :: NePath
   , j_IL :: Index
   , j_IR :: Index
   }
@@ -364,26 +381,26 @@ instance Eq ZipperH where
 getEndPoints_ZipperH ∷ ZipperH → { _OL ∷ Point, _IL ∷ Point, _IR ∷ Point, _OR ∷ Point }
 getEndPoints_ZipperH (ZipperH h) =
   { _OL: Point { path: h.path_O, j: h.j_OL }
-  , _IL: Point { path: h.path_O <> h.path_I, j: h.j_IL }
-  , _IR: Point { path: h.path_O <> h.path_I, j: h.j_IR }
+  , _IL: Point { path: h.path_O <> (h.path_I # fromNePath), j: h.j_IL }
+  , _IR: Point { path: h.path_O <> (h.path_I # fromNePath), j: h.j_IR }
   , _OR: Point { path: h.path_O, j: h.j_OR }
   }
 
 atZipper :: ZipperH -> Expr -> { outside :: SpanContext, at :: Zipper, inside :: Span }
 atZipper (ZipperH h) e =
   case h.path_I of
-    Nil ->
-      { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
-      , at: Zipper
-          { kids_L: unwrap at_kid_M._L
-          , kids_R: unwrap at_kid_M._R
-          , inside: Nothing
-          }
-      , inside: at_kid_M.at
-      }
-      where
-      at_kid_M = at_span_O.at # atIndexSpan_Span (h.j_IL - h.j_OL) (h.j_IR - h.j_OL)
-    i_I : path_I ->
+    -- Nil ->
+    --   { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
+    --   , at: Zipper
+    --       { kids_L: unwrap at_kid_M._L
+    --       , kids_R: unwrap at_kid_M._R
+    --       , inside: Nothing
+    --       }
+    --   , inside: at_kid_M.at
+    --   }
+    --   where
+    --   at_kid_M = at_span_O.at # atIndexSpan_Span (h.j_IL - h.j_OL) (h.j_IR - h.j_OL)
+    i_I :| path_I ->
       { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
       , at: Zipper
           { kids_L: (unwrap at_kid_M.outside).kids_L
