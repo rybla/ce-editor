@@ -101,7 +101,7 @@ component = H.mkComponent { initialState, eval, render }
         handleAction action # runExceptT >>= case _ of
           Left err -> do
             put state
-            trace " Error" err
+            trace [ "Error" ] err
           Right it -> pure it
     }
 
@@ -126,7 +126,7 @@ component = H.mkComponent { initialState, eval, render }
 
 handleAction :: Action -> M' Unit
 handleAction Initialize = do
-  lift $ trace "Initialize" $ text "initialize"
+  lift $ trace [ "Initialize" ] $ text "initialize"
   doc <- liftEffect $ HTML.Window.document =<< HTML.window
   lift $ H.subscribe' \_sub_id -> HQE.eventListener MouseEventType.mouseup (HTMLDocument.toEventTarget doc) $ MouseEvent.fromEvent >=> \_e -> do
     pure $ EngineQuery_Action EndDrag_EngineQuery
@@ -199,7 +199,7 @@ engine_component = H.mkComponent { initialState: initialEngineState, eval, rende
         handleEngineQuery query # runExceptT >>= case _ of
           Left err -> do
             put state
-            traceEngineM "Error" err
+            traceEngineM [ "Error" ] err
             pure none
           Right a -> pure $ pure a
     , handleAction = \action -> do
@@ -207,7 +207,7 @@ engine_component = H.mkComponent { initialState: initialEngineState, eval, rende
         handleEngineAction action # runExceptT >>= case _ of
           Left err -> do
             put state
-            traceEngineM "Error" err
+            traceEngineM [ "Error" ] err
           Right it -> pure it
     }
 
@@ -227,7 +227,7 @@ initialEngineState input =
 handleEngineQuery :: forall a. EngineQuery a -> EngineM' a
 handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
   Click_ViewExprAction _event -> do
-    lift $ traceEngineM "Engine" $ text $ "got Click from Expr at " <> show "TODO: (Array.fromFoldable is)"
+    lift $ traceEngineM [ "Engine" ] $ text $ "got Click from Expr at " <> show "TODO: (Array.fromFoldable is)"
     case unsnoc_Path path of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
@@ -241,7 +241,7 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
       Just { init, last } -> do
         -- the point right before the expr
         let p = Point { path: init, j: (getIndexesAroundStep last)._L }
-        lift $ traceEngineM "Drag" $ text $ "got StartDrag from Expr at " <> show p
+        lift $ traceEngineM [ "Drag" ] $ text $ "got StartDrag from Expr at " <> show p
         h <- gets _.handle
         let h' = getDragOrigin h p
         modify_ _ { drag_origin_handle = Just h' }
@@ -253,29 +253,29 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
       Just { init, last } -> do
         -- the point right before the expr
         let p = Point { path: init, j: (getIndexesAroundStep last)._L }
-        lift $ traceEngineM "Drag" $ text $ "got MidDrag from Expr at " <> show p
+        lift $ traceEngineM [ "Drag" ] $ text $ "got MidDrag from Expr at " <> show p
         updateDragToPoint p
     pure a
 handleEngineQuery (ViewPointInteraction_EngineQuery p pi a) = case pi of
   StartDrag_ViewPointInteraction _event -> do
-    lift $ traceEngineM "Drag" $ text $ "got StartDrag from Point at " <> show p
+    lift $ traceEngineM [ "Drag" ] $ text $ "got StartDrag from Point at " <> show p
     h <- gets _.handle
     let h' = getDragOrigin h p
     modify_ _ { drag_origin_handle = Just h' }
     set_handle h'
     pure a
   MidDrag_ViewPointInteraction _event -> do
-    lift $ traceEngineM "Drag" $ text $ "got MidDrag from Point at " <> show p
+    lift $ traceEngineM [ "Drag" ] $ text $ "got MidDrag from Point at " <> show p
     updateDragToPoint p
     pure a
 handleEngineQuery (EndDrag_EngineQuery a) = do
-  lift $ traceEngineM "Drag" $ text $ "got EndDrag"
+  lift $ traceEngineM [ "Drag" ] $ text $ "got EndDrag"
   modify_ _ { drag_origin_handle = Nothing }
   pure a
 
 handleEngineAction :: EngineAction -> EngineM' Unit
 handleEngineAction Initialize_EngineAction = do
-  lift $ traceEngineM "Initialize" $ text "initialize"
+  lift $ traceEngineM [ "Initialize" ] $ text "initialize"
   doc <- liftEffect $ Window.document =<< HTML.window
   lift $ H.subscribe' \_subId ->
     HQE.eventListener
@@ -293,7 +293,7 @@ handleEngineAction (Receive_EngineAction input) = do
     , future = st.future
     }
 handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
-  lift $ traceEngineM "Keyboard" $ text $ "key: " <> show ki
+  lift $ traceEngineM [ "Keyboard" ] $ text $ "key: " <> show ki
   { handle, clipboard, expr, editor } <- get
   case unit of
     _ | KeyInfo ki # matchKeyInfo (_ == "z") { cmd: pure true, shift: pure false } -> undo
@@ -308,7 +308,7 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
           Point_Handle _ -> Span_Fragment (Span [])
           SpanH_Handle h _ -> Span_Fragment (atSpan h expr).at
           ZipperH_Handle h _ -> Zipper_Fragment (atZipper h expr).at
-      lift $ traceEngineM "Clipboard . Copy" $ Ui.list
+      lift $ traceEngineM [ "Clipboard", "Copy" ] $ Ui.list
         [ Ui.code $ "frag: " <> show frag ]
       modify_ _ { clipboard = pure $ frag }
     -- cut Fragment
@@ -322,7 +322,7 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
           ZipperH_Handle h _ -> Zipper_Fragment at_h.at /\ unSpanContext at_h.outside at_h.inside
             where
             at_h = expr # atZipper h
-      lift $ traceEngineM "Clipboard . Cut" $ Ui.list
+      lift $ traceEngineM [ "Clipboard", "Cut" ] $ Ui.list
         [ Ui.code $ "frag: " <> show frag ]
       modify_ _ { clipboard = pure $ frag }
       set_expr expr'
@@ -341,12 +341,12 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       set_handle $ Point_Handle $ handle # getOuterLeftPoint_Handle
     -- paste Fragment
     _ | Just frag <- clipboard, KeyInfo ki # matchKeyInfo (_ == "v") { cmd: pure true } -> do
-      lift $ traceEngineM "Clipboard . Paste" $ Ui.list
+      lift $ traceEngineM [ "Clipboard", "Paste" ] $ Ui.list
         [ Ui.code $ "frag: " <> show frag ]
       insert_fragment frag
     -- insert example Fragment 
     _ | Just frag <- editor.example_fragment ki.key, KeyInfo ki # matchKeyInfo isAlpha {} -> do
-      lift $ traceEngineM "Insert" $ Ui.list
+      lift $ traceEngineM [ "Insert" ] $ Ui.list
         [ Ui.code $ "frag: " <> show frag ]
       insert_fragment frag
     _ -> pure unit
@@ -368,7 +368,7 @@ snapshot = do
       | otherwise -> modify_ \st -> st { history = s : history # List.take editor.max_history_length, future = mempty }
   { history: history' } <- get
   -- lift $ traceEngineM "Snapshot" $ Ui.span [ Ui.text $ "history' length = " <> show (history' # List.length) ]
-  lift $ traceEngineM "Snapshot" $ Ui.column
+  lift $ traceEngineM [ "Snapshot" ] $ Ui.column
     [ Ui.text "history:"
     , Ui.list
         [ Ui.code $ "length: " <> show (history' # List.length)
@@ -483,7 +483,7 @@ updateDragToPoint p = do
     Nothing -> pure unit
     Just drag_origin_handle -> case drag drag_origin_handle p e of
       Nothing -> do
-        lift $ traceEngineM "Drag" $
+        lift $ traceEngineM [ "Drag" ] $
           column
             [ text $ "updateDragToPoint (failure)"
             , list
@@ -493,7 +493,7 @@ updateDragToPoint p = do
             ]
         pure unit
       Just h' -> do
-        lift $ traceEngineM "Drag" $
+        lift $ traceEngineM [ "Drag" ] $
           column
             [ text $ "updateDragToPoint (success)"
             , list
@@ -508,7 +508,7 @@ set_handle :: Handle -> EngineM' Unit
 set_handle h = do
   vps1 <- toggleHandleViewPointStyles false <$> gets _.handle
   modify_ _ { handle = h }
-  lift $ traceEngineM "Drag" $ Ui.span [ text "new handle: ", code (show h) ]
+  lift $ traceEngineM [ "Drag" ] $ Ui.span [ text "new handle: ", code (show h) ]
   let vps2 = toggleHandleViewPointStyles true h
   toggleViewPointStyles $ Map.unionWith forget vps1 vps2
 
@@ -604,7 +604,7 @@ viewExpr_component = H.mkComponent { initialState: initialViewExprState, eval, r
             put state
             case mb_err of
               Nothing -> pure unit
-              Just err -> traceViewExprM "Error" err
+              Just err -> traceViewExprM [ "Error" ] err
             pure none
           Right a -> pure $ pure a
     , handleAction = \action -> do
@@ -613,7 +613,7 @@ viewExpr_component = H.mkComponent { initialState: initialViewExprState, eval, r
           Left mb_err -> do
             case mb_err of
               Nothing -> pure unit
-              Just err -> traceViewExprM "Error" err
+              Just err -> traceViewExprM [ "Error" ] err
             put state
           Right it -> pure it
     }
@@ -687,7 +687,7 @@ handleViewExprAction (Receive_ViewExprAction input) = do
   state <- get
   let state' = initialViewExprState input
   when (state /= state') do
-    lift $ traceViewExprM "ViewExpr" $ Ui.column
+    lift $ traceViewExprM [ "Receive" ] $ Ui.column
       [ Ui.text "receive"
       , Ui.list
           [ Ui.span [ text "expr' = ", code $ show state'.expr ]
@@ -785,7 +785,7 @@ point_component = H.mkComponent { initialState, eval, render }
             put state
             case mb_err of
               Nothing -> pure unit
-              Just err -> traceViewPointM "Error" err
+              Just err -> traceViewPointM [ "Error" ] err
             pure none
           Right a -> pure $ pure a
     , handleAction = \action -> do
@@ -795,7 +795,7 @@ point_component = H.mkComponent { initialState, eval, render }
             put state
             case mb_err of
               Nothing -> pure unit
-              Just err -> traceViewPointM "Error" err
+              Just err -> traceViewPointM [ "Error" ] err
           Right it -> pure it
     }
 
@@ -833,15 +833,15 @@ handleViewPointAction (ViewPointInteraction_ViewPointAction pi) = do
 
 --------------------------------------------------------------------------------
 
-trace :: String -> PlainHTML -> M Unit
-trace label content = H.raise $ TellConsole \a -> Console.AddMessage { label: "Editor / " <> label, content } a
+trace :: Array String -> PlainHTML -> M Unit
+trace labels content = H.raise $ TellConsole \a -> Console.AddMessage { labels: [ "Editor" ] <> labels, content } a
 
-traceEngineM :: String -> PlainHTML -> EngineM Unit
-traceEngineM label content = H.raise $ Output_EngineOutput $ TellConsole \a -> Console.AddMessage { label: "Engine / " <> label, content } a
+traceEngineM :: Array String -> PlainHTML -> EngineM Unit
+traceEngineM labels content = H.raise $ Output_EngineOutput $ TellConsole \a -> Console.AddMessage { labels: [ "Engine" ] <> labels, content } a
 
-traceViewExprM :: String -> PlainHTML -> ViewExprM Unit
-traceViewExprM label content = H.raise $ Tuple (Path Nil) $ Output_ViewExprOutput $ TellConsole \a -> Console.AddMessage { label: "ViewExpr / " <> label, content } a
+traceViewExprM :: Array String -> PlainHTML -> ViewExprM Unit
+traceViewExprM labels content = H.raise $ Tuple (Path Nil) $ Output_ViewExprOutput $ TellConsole \a -> Console.AddMessage { labels: [ "ViewExpr" ] <> labels, content } a
 
-traceViewPointM :: String -> PlainHTML -> ViewPointM Unit
-traceViewPointM label content = H.raise $ Output_ViewPointOutput $ TellConsole \a -> Console.AddMessage { label: "ViewPoint / " <> label, content } a
+traceViewPointM :: Array String -> PlainHTML -> ViewPointM Unit
+traceViewPointM labels content = H.raise $ Output_ViewPointOutput $ TellConsole \a -> Console.AddMessage { labels: [ "ViewPoint" ] <> labels, content } a
 

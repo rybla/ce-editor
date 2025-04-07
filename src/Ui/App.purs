@@ -56,7 +56,7 @@ component = H.mkComponent { initialState, eval, render }
         state <- get
         handleAction action # runExceptT >>= flip either pure \err -> do
           put state
-          trace "App . Error" err
+          trace [ "App", "Error" ] err
         pure unit
     }
 
@@ -93,12 +93,12 @@ component = H.mkComponent { initialState, eval, render }
 
 handleAction :: Action -> M' Unit
 handleAction Initialize = do
-  lift $ trace "App" $ text "initialize"
+  lift $ trace [ "App", "Initialize" ] $ text "initialize"
   pure unit
 handleAction (EditorOutput (Editor.TellConsole q)) =
   H.tell (Proxy @"Console") unit q # lift
 handleAction ClickMe = do
-  lift $ trace "App" $ HH.div []
+  lift $ trace [ "App", "ClickMe" ] $ HH.div []
     [ HH.div [] [ text "you clicked the button!" ]
     , HH.div [] [ text "you clicked the button!" ]
     , HH.div [] [ text "you clicked the button!" ]
@@ -109,6 +109,6 @@ handleAction _ =
 
 --------------------------------------------------------------------------------
 
-trace :: String -> PlainHTML -> M Unit
-trace label content = H.tell (Proxy @"Console") unit $ Console.AddMessage { label, content }
+trace :: Array String -> PlainHTML -> M Unit
+trace labels content = H.tell (Proxy @"Console") unit $ Console.AddMessage { labels, content }
 

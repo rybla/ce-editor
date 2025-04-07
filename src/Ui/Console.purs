@@ -2,7 +2,7 @@ module Ui.Console where
 
 import Prelude
 
-import Common (ConsoleMessage)
+import Common (ConsoleMessage, showConsoleMessageLabels)
 import Control.Monad.Writer (tell)
 import Data.Array (filter, fold)
 import Data.Array as Array
@@ -83,18 +83,17 @@ component = H.mkComponent { initialState, eval, render }
               tell [ "display: flex", "flex-direction: column", "gap: 0.5em" ]
           ] $ fold
           [ state.messages
-              -- # filter (not <<< (_ `Array.elem` disabledMessageLabelRegexes) <<< _.label)
-              # filter (not <<< (\label -> (_ `Regex.test` label) `Array.any` disabledMessageLabelRegexes) <<< _.label)
+              # filter (not <<< (\labels -> (_ `Regex.test` (labels # showConsoleMessageLabels)) `Array.any` disabledMessageLabelRegexes) <<< _.labels)
               # mapWithIndex \i m ->
                   Tuple (show i) $
                     HH.div
                       [ classes $ fold
                           [ [ "ConsoleMessage" ]
-                          , if m.label # String.contains (String.Pattern "Error") then [ "ConsoleMessageError" ] else []
+                          , if m.labels # Array.any (String.contains (String.Pattern "Error")) then [ "ConsoleMessageError" ] else []
                           ]
                       ]
                       [ HH.div [ classes [ "ConsoleMessageLabel" ] ]
-                          [ HH.text m.label ]
+                          [ HH.text $ m.labels # showConsoleMessageLabels ]
                       , let
                           content = m.content # fromPlainHTML
                         in
