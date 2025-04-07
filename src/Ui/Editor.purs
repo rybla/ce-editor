@@ -229,7 +229,7 @@ handleEngineQuery :: forall a. EngineQuery a -> EngineM' a
 handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
   Click_ViewExprAction _event -> do
     lift $ traceEngineM [ "Engine" ] $ text $ "got Click from Expr at " <> show "TODO: (Array.fromFoldable is)"
-    case unsnoc_Path path of
+    case path # List.unsnoc of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
         let last_j = getIndexesAroundStep last
@@ -237,7 +237,7 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
         set_handle h
     pure a
   StartDrag_ViewExprAction _event -> do
-    case unsnoc_Path path of
+    case path # List.unsnoc of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
         -- the point right before the expr
@@ -249,7 +249,7 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
         set_handle h'
     pure a
   MidDrag_ViewExprAction _event -> do
-    case unsnoc_Path path of
+    case path # List.unsnoc of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
         -- the point right before the expr
@@ -425,13 +425,13 @@ insert_fragment frag = do
           ( case z.inside of
               Nothing -> pure $ Point_Handle
                 ( Point
-                    { path: p.path <> Path ((p.j # getStepsAroundIndex)._L : Nil)
+                    { path: p.path <> ((p.j # getStepsAroundIndex)._L : Nil)
                     , j: Zipper z # offset_inner_Zipper
                     }
                 )
               Just (SpanContext inside) -> pure $ Point_Handle
                 ( Point
-                    { path: p.path <> Path ((p.j # getStepsAroundIndex)._L : Nil) <> (inside._O # getPath_ExprContext)
+                    { path: p.path <> ((p.j # getStepsAroundIndex)._L : Nil) <> (inside._O # getPath_ExprContext)
                     , j: Zipper z # offset_inner_Zipper
                     }
                 )
@@ -453,13 +453,13 @@ insert_fragment frag = do
           ( case z.inside of
               Nothing -> pure $ Point_Handle
                 ( Point
-                    { path: h.path <> Path ((h.j_L # getStepsAroundIndex)._L : Nil)
+                    { path: h.path <> ((h.j_L # getStepsAroundIndex)._L : Nil)
                     , j: Zipper z # offset_inner_Zipper
                     }
                 )
               Just (SpanContext inside) -> pure $ Point_Handle
                 ( Point
-                    { path: h.path <> Path ((h.j_L # getStepsAroundIndex)._L : Nil) <> (inside._O # getPath_ExprContext)
+                    { path: h.path <> ((h.j_L # getStepsAroundIndex)._L : Nil) <> (inside._O # getPath_ExprContext)
                     , j: Zipper z # offset_inner_Zipper
                     }
                 )
@@ -670,9 +670,9 @@ handleViewExprQuery (ViewExprQuery qs_ a) = do
   qss # traverse_ \qs -> do
     let SingleViewExprQuery p _ = qs # NEArray.head
     case p of
-      Path Nil -> qs # traverse_ handleSingleViewExprQuery
-      Path (i : is) -> do
-        let qs' = ViewExprQuery (qs <#> \(SingleViewExprQuery _ q') -> (SingleViewExprQuery (Path is) q')) unit
+      Nil -> qs # traverse_ handleSingleViewExprQuery
+      i : is -> do
+        let qs' = ViewExprQuery (qs <#> \(SingleViewExprQuery _ q') -> (SingleViewExprQuery is q')) unit
         H.query (Proxy @"Expr") i qs' # lift >>= case _ of
           Nothing -> throwError none
           Just it -> pure it
@@ -702,22 +702,22 @@ handleViewExprAction (Receive_ViewExprAction input) = do
     pure unit
 -- kid Expr stuff
 handleViewExprAction (ViewExprOutput_ViewExprAction i (is /\ o)) = do
-  H.raise ((i |: is) /\ o) # lift
+  H.raise ((i : is) /\ o) # lift
 handleViewExprAction (ExprInteraction_ViewExprAction ei) = do
   case ei of
     Click_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     StartDrag_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     MidDrag_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-  H.raise (Path Nil /\ ExprInteraction ei) # lift
+  H.raise (Nil /\ ExprInteraction ei) # lift
   pure unit
 -- Point stuff
 handleViewExprAction (ViewPointOutput_ViewExprAction _i (Output_ViewPointOutput o)) =
-  H.raise (Path Nil /\ Output_ViewExprOutput o) # lift
+  H.raise (Nil /\ Output_ViewExprOutput o) # lift
 handleViewExprAction (ViewPointOutput_ViewExprAction i (ViewPointInteraction pi)) = do
   case pi of
     StartDrag_ViewPointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
     MidDrag_ViewPointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-  H.raise (Path Nil /\ ViewPointInteraction_ViewExprOutput i pi) # lift
+  H.raise (Nil /\ ViewPointInteraction_ViewExprOutput i pi) # lift
 
 --------------------------------------------------------------------------------
 -- Point
@@ -845,7 +845,7 @@ traceEngineM :: Array String -> PlainHTML -> EngineM Unit
 traceEngineM labels content = H.raise $ Output_EngineOutput $ TellConsole \a -> Console.AddMessage { labels: [ "Engine" ] <> labels, content } a
 
 traceViewExprM :: Array String -> PlainHTML -> ViewExprM Unit
-traceViewExprM labels content = H.raise $ Tuple (Path Nil) $ Output_ViewExprOutput $ TellConsole \a -> Console.AddMessage { labels: [ "ViewExpr" ] <> labels, content } a
+traceViewExprM labels content = H.raise $ Tuple Nil $ Output_ViewExprOutput $ TellConsole \a -> Console.AddMessage { labels: [ "ViewExpr" ] <> labels, content } a
 
 traceViewPointM :: Array String -> PlainHTML -> ViewPointM Unit
 traceViewPointM labels content = H.raise $ Output_ViewPointOutput $ TellConsole \a -> Console.AddMessage { labels: [ "ViewPoint" ] <> labels, content } a

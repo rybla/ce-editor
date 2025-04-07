@@ -145,48 +145,20 @@ offset_Span (Span es) = Index $ es # Array.length
 
 --------------------------------------------------------------------------------
 
-newtype Path = Path (List Step)
-
-derive instance Newtype Path _
-
-instance Show Path where
-  show (Path is) = is
-    # Array.fromFoldable
-    # map show
-    # Array.intercalate " "
-    # brackets
-
-derive instance Eq Path
-
-derive instance Ord Path
-
-derive newtype instance Semigroup Path
-
-derive newtype instance Monoid Path
-
-cons_Path :: Step -> Path -> Path
-cons_Path i (Path is) = Path (i : is)
-
-infixr 6 cons_Path as |:
-
-uncons_Path ∷ Path → Maybe { head ∷ Step, tail ∷ Path }
-uncons_Path (Path is) = List.uncons is <#> \{ head, tail } -> { head, tail: Path tail }
-
-unsnoc_Path ∷ Path → Maybe { init ∷ Path, last ∷ Step }
-unsnoc_Path (Path is) = List.unsnoc is <#> \{ init, last } -> { init: Path init, last }
+type Path = List Step
 
 atSubExpr :: Path -> Expr -> { outside :: List Tooth, at :: Expr }
 atSubExpr = go Nil
   where
-  go ts path e = case path # uncons_Path of
-    Just { head: i, tail: path' } -> go (t : ts) path' e'
+  go ts path e = case path of
+    i : path' -> go (t : ts) path' e'
       where
       { outside: t, at: e' } = e # atStep i
-    Nothing -> { outside: List.reverse ts, at: e }
+    Nil -> { outside: List.reverse ts, at: e }
 
 stripPrefix_Path :: Path -> Path -> Path
-stripPrefix_Path (Path Nil) is' = is'
-stripPrefix_Path (Path (i : is)) (Path (i' : is')) | i == i' = stripPrefix_Path (Path is) (Path is')
+stripPrefix_Path Nil is' = is'
+stripPrefix_Path (i : is) (i' : is') | i == i' = stripPrefix_Path is is'
 stripPrefix_Path is is' = bug $ "stripPrefix_Path " <> show is <> " " <> show is'
 
 --------------------------------------------------------------------------------
@@ -280,7 +252,7 @@ offset_inner_ExprContext :: ExprContext -> Index
 offset_inner_ExprContext (ExprContext ts) = ts # List.last # maybe (Index 0) offset_Tooth
 
 getPath_ExprContext :: ExprContext -> Path
-getPath_ExprContext (ExprContext ts) = Path (ts # map getStep_Tooth)
+getPath_ExprContext (ExprContext ts) = ts # map getStep_Tooth
 
 --------------------------------------------------------------------------------
 
@@ -399,8 +371,8 @@ getEndPoints_ZipperH (ZipperH h) =
 
 atZipper :: ZipperH -> Expr -> { outside :: SpanContext, at :: Zipper, inside :: Span }
 atZipper (ZipperH h) e =
-  case h.path_I # uncons_Path of
-    Nothing ->
+  case h.path_I of
+    Nil ->
       { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
       , at: Zipper
           { kids_L: unwrap at_kid_M._L
@@ -411,7 +383,7 @@ atZipper (ZipperH h) e =
       }
       where
       at_kid_M = at_span_O.at # atIndexSpan_Span (h.j_IL - h.j_OL) (h.j_IR - h.j_OL)
-    Just { head: i_I, tail: path_I } ->
+    i_I : path_I ->
       { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
       , at: Zipper
           { kids_L: (unwrap at_kid_M.outside).kids_L
@@ -576,7 +548,7 @@ orderSiblings_Point _ _ = Nothing
 isAncestorSibling_Point :: Point -> Point -> Maybe (Step /\ Path)
 isAncestorSibling_Point (Point p0) (Point p1) = go p0.path p1.path
   where
-  go (Path Nil) (Path (i1 : is1')) = pure $ i1 /\ Path is1'
-  go (Path (i0 : is0')) (Path (i1 : is1')) | i0 == i1 = go (Path is0') (Path is1')
+  go Nil (i1 : is1') = pure $ i1 /\ is1'
+  go (i0 : is0') (i1 : is1') | i0 == i1 = go is0' is1'
   go _ _ = empty
 

@@ -4,6 +4,7 @@ import Data.Expr
 import Prelude
 
 import Data.Array as Array
+import Data.Expr.Drag (drag)
 import Data.List as List
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec)
@@ -44,7 +45,7 @@ test_drag = Spec.describe "drag" do
 --------------------------------------------------------------------------------
 
 point is j = Point { path: path is, j: Index j }
-path is = Path (is # List.fromFoldable # map Step)
+path is = is # List.fromFoldable # map Step
 spanH h f = SpanH_Handle (SpanH { path: path h.path, j_L: Index h.j_L, j_R: Index h.j_R }) f
 zipperH h f = ZipperH_Handle (ZipperH { path_O: path h.path_O, j_OL: Index h.j_OL, j_OR: Index h.j_OR, path_I: path h.path_I, j_IL: Index h.j_IL, j_IR: Index h.j_IR }) f
 

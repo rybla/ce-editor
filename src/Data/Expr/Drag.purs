@@ -1,21 +1,12 @@
 module Data.Expr.Drag where
 
-import Data.Expr
 import Prelude
+import Data.Expr
 
-import Control.Plus (empty)
-import Data.Array as Array
-import Data.Eq.Generic (genericEq)
-import Data.Foldable (foldr)
-import Data.Generic.Rep (class Generic)
-import Data.List (List(..), (:))
-import Data.List as List
-import Data.Maybe (Maybe(..), fromMaybe', maybe)
-import Data.Newtype (class Newtype, unwrap)
-import Data.Ord.Generic (genericCompare)
-import Data.Show.Generic (genericShow)
-import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces, todo)
+import Data.List ((:))
+import Data.Maybe (Maybe(..))
+import Data.Newtype (unwrap)
+import Data.Tuple.Nested ((/\))
 
 getDragOrigin :: Handle -> Point -> Handle
 getDragOrigin (SpanH_Handle h _) p | hp <- getEndPoints_SpanH h, p == hp._L = SpanH_Handle h Left_SpanFocus
@@ -36,7 +27,7 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
   _ | p_IL <- p, p_OL <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OL) (Point p_IL), p_OL.j .<| i -> do
     -- Debug.traceM $ "drag from inner left to outer left:\n  " <> show { p_IL, p_OL, i }
     let path_O = p'.path
-    let path_I = i |: path_I'
+    let path_I = i : path_I'
     pure $ ZipperH_Handle
       ( ZipperH
           { path_O
@@ -51,7 +42,7 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
   -- drag from inner right to outer right
   _ | p_IR <- p, p_OR <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OR) (Point p_IR), i |<. p_OR.j -> do
     let path_O = p_OR.path
-    let path_I = i |: path_I'
+    let path_I = i : path_I'
     pure $ ZipperH_Handle
       ( ZipperH
           { path_O
@@ -66,7 +57,7 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
   -- drag from outer left to inner left
   _ | p_OL <- p, p_IL <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OL) (Point p_IL), p_OL.j .<| i -> do
     let path_O = p_OL.path
-    let path_I = i |: path_I'
+    let path_I = i : path_I'
     pure $ ZipperH_Handle
       ( ZipperH
           { path_O
@@ -81,7 +72,7 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
   -- drag from outer right to inner right
   _ | p_OR <- p, p_IR <- p', Just (i /\ path_I') <- isAncestorSibling_Point (Point p_OR) (Point p_IR), i |<. p_OR.j -> do
     let path_O = p_OR.path
-    let path_I = i |: path_I'
+    let path_I = i : path_I'
     pure $ ZipperH_Handle
       ( ZipperH
           { path_O
