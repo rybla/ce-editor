@@ -1,7 +1,7 @@
 module Data.Expr.Drag where
 
-import Prelude
 import Data.Expr
+import Prelude
 
 import Control.Plus (empty)
 import Data.Array as Array
@@ -15,7 +15,7 @@ import Data.Newtype (class Newtype, unwrap)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces)
+import Utility (brackets, bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces, todo)
 
 getDragOrigin :: Handle -> Point -> Handle
 getDragOrigin (SpanH_Handle h _) p | hp <- getEndPoints_SpanH h, p == hp._L = SpanH_Handle h Left_SpanFocus
@@ -108,11 +108,22 @@ drag (SpanH_Handle h focus) (Point p') _e = case focus of
   Left_SpanFocus | areOrderedSiblings_Point (Point p') hp._R -> pure $ SpanH_Handle (SpanH { path: (unwrap hp._R).path, j_L: p'.j, j_R: (unwrap hp._R).j }) Left_SpanFocus
   -- drag focus to right of SpanH's Right Point, which changes the focus to the Right
   Left_SpanFocus | areOrderedSiblings_Point hp._R (Point p') -> pure $ SpanH_Handle (SpanH { path: (unwrap hp._R).path, j_L: (unwrap hp._R).j, j_R: p'.j }) Right_SpanFocus
+  --
   _ | otherwise -> Nothing
   where
   hp = getEndPoints_SpanH h
 
 drag (ZipperH_Handle h focus) _p' _e = case focus of
+  -- -- adjust ZipperH's Outer Left Point
+  -- OuterLeft_ZipperFocus -> todo ""
+  -- -- adjust ZipperH's Outer Right Point
+  -- OuterRight_ZipperFocus -> todo ""
+  -- -- adjust ZipperH's Inner Left Point
+  -- InnerLeft_ZipperFocus -> todo ""
+  -- -- adjust ZipperH's Inner Right Point
+  -- InnerRight_ZipperFocus -> todo ""
+  --
   _ | otherwise -> Nothing
   where
   _hp = getEndPoints_ZipperH h
+
