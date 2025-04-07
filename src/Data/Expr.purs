@@ -158,11 +158,6 @@ atSubExpr = go Nil
       { outside: t, at: e' } = e # atStep i
     Nil -> { outside: List.reverse ts, at: e }
 
-stripPrefix_Path :: Path -> Path -> Path
-stripPrefix_Path Nil is' = is'
-stripPrefix_Path (i : is) (i' : is') | i == i' = stripPrefix_Path is is'
-stripPrefix_Path is is' = bug $ "stripPrefix_Path " <> show is <> " " <> show is'
-
 isPrefix_Path :: Path -> Path -> Boolean
 isPrefix_Path Nil _ = true
 isPrefix_Path (i : is) (i' : is') | i == i' = isPrefix_Path is is'
