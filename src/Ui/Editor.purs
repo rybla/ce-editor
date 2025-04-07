@@ -15,6 +15,7 @@ import Data.Array.NonEmpty as NEArray
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
+import Data.Expr.Drag (drag, getDragOrigin)
 import Data.Foldable (length, traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.FunctorWithIndex (mapWithIndex)
