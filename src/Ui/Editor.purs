@@ -276,22 +276,26 @@ handleEngineQuery (EndDrag_EngineQuery a) = do
 handleEngineAction :: EngineAction -> EngineM' Unit
 handleEngineAction Initialize_EngineAction = do
   lift $ traceEngineM [ "Initialize" ] $ text "initialize"
-  doc <- liftEffect $ Window.document =<< HTML.window
-  lift $ H.subscribe' \_subId ->
-    HQE.eventListener
-      KeyboardEvent.EventType.keydown
-      (HTMLDocument.toEventTarget doc)
-      (KeyboardEvent.fromEvent >>> map (fromKeyboardEventToKeyInfo >>> Keyboard_EngineAction))
-  pure unit
-handleEngineAction (Receive_EngineAction input) = do
-  -- lift $ traceEngineM "Receive" $ text ""
   st <- get
-  put $ (initialEngineState input)
-    -- preserve old clipboard
-    { clipboard = st.clipboard
-    , history = st.history
-    , future = st.future
-    }
+  do
+    doc <- liftEffect $ Window.document =<< HTML.window
+    lift $ H.subscribe' \_subId ->
+      HQE.eventListener
+        KeyboardEvent.EventType.keydown
+        (HTMLDocument.toEventTarget doc)
+        (KeyboardEvent.fromEvent >>> map (fromKeyboardEventToKeyInfo >>> Keyboard_EngineAction))
+  do
+    set_handle st.handle
+handleEngineAction (Receive_EngineAction input) = do
+  lift $ traceEngineM [ "Receive" ] $ text "receive"
+  do
+    st <- get
+    put $ (initialEngineState input)
+      -- preserve some stuff from old state
+      { clipboard = st.clipboard
+      , history = st.history
+      , future = st.future
+      }
 handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
   lift $ traceEngineM [ "Keyboard" ] $ text $ "key: " <> show ki
   { handle, clipboard, expr, editor } <- get
