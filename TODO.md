@@ -24,3 +24,4 @@
 - [x] Escape to move handle to beginning of file
 - [x] Backspace to delete stuff inside handle
 - [x] undo and redo
+- [x] better console message filtering
