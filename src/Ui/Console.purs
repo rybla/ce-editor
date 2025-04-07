@@ -6,8 +6,11 @@ import Common (ConsoleMessage)
 import Control.Monad.Writer (tell)
 import Data.Array (filter, fold)
 import Data.Array as Array
+import Data.Either (fromRight')
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.String as String
+import Data.String.Regex (Regex)
+import Data.String.Regex as Regex
 import Data.Tuple (Tuple(..))
 import Data.Unfoldable (none)
 import Effect.Aff (Aff, Milliseconds(..))
@@ -21,6 +24,7 @@ import Type.Proxy (Proxy(..))
 import Ui.Common (classes, style)
 import Ui.Widget (scrollToMe)
 import Ui.Widget as Widget
+import Utility (bug, impossible)
 
 data Query a = AddMessage ConsoleMessage a
 
@@ -32,10 +36,11 @@ data Action
 
 type Output = Void
 
-disabledMessageLabels =
-  [ "Editor . Keyboard"
-  , "Editor . ViewExpr"
-  -- , "Drag"
+disabledMessageLabelRegexes ∷ Array Regex
+disabledMessageLabelRegexes = map (\s -> Regex.regex ("^" <> s <> "$") mempty # fromRight' (impossible $ "invalid regex: " <> s))
+  [ "Engine / Keyboard( / [^/]*)*"
+  , "Engine / Drag( / [^/]*)*"
+  , "ViewExpr( / [^/]*)*"
   ]
 
 component ∷ forall input output. H.Component Query input output Aff
@@ -78,7 +83,8 @@ component = H.mkComponent { initialState, eval, render }
               tell [ "display: flex", "flex-direction: column", "gap: 0.5em" ]
           ] $ fold
           [ state.messages
-              # filter (not <<< (_ `Array.elem` disabledMessageLabels) <<< _.label)
+              -- # filter (not <<< (_ `Array.elem` disabledMessageLabelRegexes) <<< _.label)
+              # filter (not <<< (\label -> (_ `Regex.test` label) `Array.any` disabledMessageLabelRegexes) <<< _.label)
               # mapWithIndex \i m ->
                   Tuple (show i) $
                     HH.div

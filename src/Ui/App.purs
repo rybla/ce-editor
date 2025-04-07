@@ -93,7 +93,7 @@ component = H.mkComponent { initialState, eval, render }
 
 handleAction :: Action -> M' Unit
 handleAction Initialize = do
-  lift $ trace "App" $ text "initialized"
+  lift $ trace "App" $ text "initialize"
   pure unit
 handleAction (EditorOutput (Editor.TellConsole q)) =
   H.tell (Proxy @"Console") unit q # lift
