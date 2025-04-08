@@ -16,7 +16,7 @@ import Data.NonEmpty (NonEmpty, (:|))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (bug, extractAt_Array, extractSpan_Array, impossible, parens, spaces)
+import Utility (extractAt_Array, extractSpan_Array, impossible, parens, spaces)
 
 --------------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ atStep :: Step -> Expr -> { outside :: Tooth, at :: Expr }
 atStep i (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, at }
   where
   { before: kids_L, at, after: kids_R } = e.kids # extractAt_Array (unwrap i)
-    # fromMaybe' (impossible $ "atStep: i is out of bounds: " <> show { i, e: Expr e })
+    # fromMaybe' (impossible $ "atStep " <> show i <> " " <> show (Expr e))
 
 --------------------------------------------------------------------------------
 
@@ -83,7 +83,7 @@ getIndexesAroundStep :: Step -> { _L :: Index, _R :: Index }
 getIndexesAroundStep (Step i) = { _L: Index i, _R: Index (i + 1) }
 
 getStepsAroundIndex :: Index -> { _L :: Step, _R :: Step }
-getStepsAroundIndex (Index i) = { _L: Step i, _R: Step (i + 1) }
+getStepsAroundIndex (Index i) = { _L: Step (i - 1), _R: Step i }
 
 --------------------------------------------------------------------------------
 
@@ -120,8 +120,15 @@ mkExpr l kids = Expr { l, kids }
 
 infix 0 mkExpr as %
 
+getKid_Expr :: Step -> Expr -> Expr
+getKid_Expr (Step i) (Expr e) = e.kids Array.!! i # fromMaybe' (impossible $ "getKid_Expr " <> show (Expr e) <> " " <> show (Step i))
+
 getExtremeIndexes :: Expr -> { _L :: Index, _R :: Index }
 getExtremeIndexes (Expr e) = { _L: Index 0, _R: Index (Array.length e.kids) }
+
+getExtremeSteps :: Expr -> Maybe { _L :: Step, _R :: Step }
+getExtremeSteps (Expr e) | e.kids == [] = Nothing
+getExtremeSteps (Expr e) = Just { _L: Step 0, _R: Step (Array.length e.kids - 1) }
 
 --------------------------------------------------------------------------------
 
@@ -135,7 +142,7 @@ instance Show Span where
   show x = genericShow x
 
 getKid_Span :: Step -> Span -> Expr
-getKid_Span i (Span es) = es Array.!! unwrap i # fromMaybe' (impossible "getKid_Span: i is out of bounds")
+getKid_Span i (Span es) = es Array.!! unwrap i # fromMaybe' (impossible $ "getKid_Span " <> show i <> " " <> show (Span es))
 
 atIndexSpan_Span :: Index -> Index -> Span -> { _L :: Span, _R :: Span, at :: Span }
 atIndexSpan_Span i_L i_R (Span es) = { _L: Span left, _R: Span right, at: Span es }

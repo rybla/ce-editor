@@ -16,6 +16,7 @@ import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Expr.Drag (drag, getDragOrigin)
+import Data.Expr.Move (Dir(..), move)
 import Data.Foldable (length, traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -44,7 +45,7 @@ import Type.Prelude (Proxy(..))
 import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, matchKeyInfo, style, text)
 import Ui.Common as Ui
 import Ui.Console as Console
-import Utility (forget, impossible, isAlpha, sortEquivalenceClasses, todo)
+import Utility (bug, forget, impossible, isAlpha, sortEquivalenceClasses, todo)
 import Web.Event.Event as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -303,8 +304,22 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
   lift $ traceEngineM [ "Keyboard" ] $ text $ "key: " <> show ki
   { handle, clipboard, expr, editor } <- get
   case unit of
+    -- movement
+    _ | KeyInfo ki # matchKeyInfo (_ `Array.elem` [ "ArrowLeft", "ArrowRight" ]) { cmd: pure false, shift: pure false } -> do
+      let
+        dir = case ki.key of
+          "ArrowLeft" -> L
+          "ArrowRight" -> R
+          _ -> bug "impossible"
+      case handle # move expr dir of
+        Nothing -> pure unit
+        Just handle' -> do
+          lift $ traceEngineM [ "Move" ] $ code (show handle')
+          change_handle handle'
+    -- undo/redo
     _ | KeyInfo ki # matchKeyInfo (_ == "z") { cmd: pure true, shift: pure false } -> undo
     _ | KeyInfo ki # matchKeyInfo (_ == "z") { cmd: pure true, shift: pure true } -> redo
+    -- escape
     _ | KeyInfo ki # matchKeyInfo (_ == "Escape") {} -> do
       change_handle $ Point_Handle $ Point { path: mempty, j: Index 0 }
       pure unit

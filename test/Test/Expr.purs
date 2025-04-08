@@ -5,9 +5,11 @@ import Prelude
 
 import Data.Array as Array
 import Data.Expr.Drag (drag)
+import Data.Expr.Move (getBottomRightPoint, move_Point)
+import Data.Expr.Move as Expr.Move
 import Data.List as List
-import Data.Maybe (fromMaybe')
-import Data.NonEmpty as NonEmpty
+import Data.Maybe (Maybe(..), fromMaybe')
+import Data.Tuple.Nested ((/\))
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec)
 import Test.Spec as Spec
@@ -17,6 +19,7 @@ import Utility (impossible)
 test :: Spec Unit
 test = Spec.describe "Expr" do
   test_drag
+  test_move
 
 test_drag :: Spec Unit
 test_drag = Spec.describe "drag" do
@@ -42,6 +45,37 @@ test_drag = Spec.describe "drag" do
       p_OR = point [] 1
       h' = zipperH { path_O: [], j_OL: 0, j_OR: 1, path_I: [ 0 ], j_IL: 0, j_IR: 0 } OuterRight_ZipperFocus
     drag h p_OR (example_expr 1 1) `shouldEqual` pure h'
+
+test_move = Spec.describe "move" do
+  test_getBottomRightPoint
+  -- 
+  mkTest_move_Point_R (example_expr 2 3)
+    (point [] 0)
+    (point [ 0 ] 0 # Point_Handle # Just)
+  mkTest_move_Point_R (example_expr 2 3)
+    (point [ 0 ] 0)
+    (point [ 0, 0 ] 0 # Point_Handle # Just)
+  mkTest_move_Point_R (example_expr 2 3)
+    (point [ 0, 0 ] 0)
+    (point [ 0, 0 ] 1 # Point_Handle # Just)
+  -- 
+  pure unit
+  where
+  mkTest_move_Point_R e p mb_h =
+    Spec.it ("move_Point " <> show e <> " " <> show Expr.Move.R <> " " <> show p <> " == " <> show mb_h) do
+      move_Point e Expr.Move.R p `shouldEqual` mb_h
+
+test_getBottomRightPoint = Spec.describe "getBottomRightPoint" do
+  mkTest
+    (example_expr 2 2)
+    (Just (point [ 1 ] 2))
+  mkTest
+    (example_expr 2 3)
+    (Just (point [ 1, 1 ] 2))
+  where
+  mkTest e mb_p =
+    Spec.it ("getBottomRightPoint " <> show e <> " == " <> show mb_p) do
+      (getBottomRightPoint e) `shouldEqual` mb_p
 
 --------------------------------------------------------------------------------
 -- Utilities
