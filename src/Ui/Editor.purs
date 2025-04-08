@@ -31,6 +31,8 @@ import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Editor (Editor)
 import Effect.Aff (Aff)
+import Effect.Aff as Aff
+import Effect.Aff.Class (liftAff)
 import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML (PlainHTML)
@@ -234,7 +236,7 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
       Just { init, last } -> do
         let last_j = getIndexesAroundStep last
         let h = SpanH_Handle (SpanH { path: init, j_L: last_j._L, j_R: last_j._R }) Left_SpanFocus
-        set_handle h
+        change_handle h
     pure a
   StartDrag_ViewExprAction _event -> do
     case path # List.unsnoc of
@@ -246,7 +248,7 @@ handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
         h <- gets _.handle
         let h' = getDragOrigin h p
         modify_ _ { drag_origin_handle = Just h' }
-        set_handle h'
+        change_handle h'
     pure a
   MidDrag_ViewExprAction _event -> do
     case path # List.unsnoc of
@@ -263,7 +265,7 @@ handleEngineQuery (ViewPointInteraction_EngineQuery p pi a) = case pi of
     h <- gets _.handle
     let h' = getDragOrigin h p
     modify_ _ { drag_origin_handle = Just h' }
-    set_handle h'
+    change_handle h'
     pure a
   MidDrag_ViewPointInteraction _event -> do
     lift $ traceEngineM [ "Drag" ] $ text $ "got MidDrag from Point at " <> show p
@@ -286,7 +288,7 @@ handleEngineAction Initialize_EngineAction = do
         (HTMLDocument.toEventTarget doc)
         (KeyboardEvent.fromEvent >>> map (fromKeyboardEventToKeyInfo >>> Keyboard_EngineAction))
   do
-    set_handle st.handle
+    change_handle st.handle
 handleEngineAction (Receive_EngineAction input) = do
   lift $ traceEngineM [ "Receive" ] $ text "receive"
   do
@@ -304,7 +306,7 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
     _ | KeyInfo ki # matchKeyInfo (_ == "z") { cmd: pure true, shift: pure false } -> undo
     _ | KeyInfo ki # matchKeyInfo (_ == "z") { cmd: pure true, shift: pure true } -> redo
     _ | KeyInfo ki # matchKeyInfo (_ == "Escape") {} -> do
-      set_handle $ Point_Handle $ Point { path: mempty, j: Index 0 }
+      change_handle $ Point_Handle $ Point { path: mempty, j: Index 0 }
       pure unit
     -- copy Fragment
     _ | KeyInfo ki # matchKeyInfo (_ == "c") { cmd: pure true } -> do
@@ -327,12 +329,14 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
           ZipperH_Handle h _ -> Zipper_Fragment at_h.at /\ unSpanContext at_h.outside at_h.inside
             where
             at_h = expr # atZipper h
+      -- lift $ traceEngineM [ "Clipboard", "Cut" ] $ Ui.list
+      --   [ Ui.code $ "handle#getOuterLeftPoint_Handle: " <> show (handle # getOuterLeftPoint_Handle) ]
       lift $ traceEngineM [ "Clipboard", "Cut" ] $ Ui.list
         [ Ui.code $ "frag: " <> show frag ]
       modify_ _ { clipboard = pure $ frag }
-      lift $ traceEngineM [ "Clipboard", "Cut" ] $ Ui.text "here 1"
+      unset_handle handle
       set_expr expr'
-      lift $ traceEngineM [ "Clipboard", "Cut" ] $ Ui.text "here 2"
+      -- void $ liftAff $ Aff.delay $ Aff.Milliseconds 100.0
       set_handle $ Point_Handle $ handle # getOuterLeftPoint_Handle
     _ | KeyInfo ki # matchKeyInfo (_ == "Backspace") {} -> do
       let
@@ -345,7 +349,7 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
             where
             at_h = expr # atZipper h
       set_expr expr'
-      set_handle $ Point_Handle $ handle # getOuterLeftPoint_Handle
+      change_handle $ Point_Handle $ handle # getOuterLeftPoint_Handle
     -- paste Fragment
     _ | Just frag <- clipboard, KeyInfo ki # matchKeyInfo (_ == "v") { cmd: pure true } -> do
       lift $ traceEngineM [ "Clipboard", "Paste" ] $ Ui.list
@@ -404,7 +408,7 @@ undo = do
     s : history' -> do
       modify_ _ { history = history', future = { handle, expr } : future }
       lift $ H.raise $ SetExpr_EngineOutput s.expr
-      set_handle s.handle
+      change_handle s.handle
 
 redo :: EngineM' Unit
 redo = do
@@ -414,7 +418,7 @@ redo = do
     s : future' -> do
       modify_ _ { future = future', history = { handle, expr } : history }
       lift $ H.raise $ SetExpr_EngineOutput s.expr
-      set_handle s.handle
+      change_handle s.handle
 
 insert_fragment :: Fragment -> EngineM' Unit
 insert_fragment frag = do
@@ -468,7 +472,7 @@ insert_fragment frag = do
       where
       at_h = expr # atZipper h
   set_expr expr'
-  set_handle handle'
+  change_handle handle'
 
 --------------------------------------------------------------------------------
 
@@ -498,10 +502,16 @@ updateDragToPoint p = do
                 , text $ "            drag ==> " <> show h'
                 ]
             ]
-        set_handle h'
+        change_handle h'
+
+unset_handle :: Handle -> EngineM' Unit
+unset_handle h = toggleViewPointStyles $ toggleHandleViewPointStyles false h
 
 set_handle :: Handle -> EngineM' Unit
-set_handle h = do
+set_handle h = toggleViewPointStyles $ toggleHandleViewPointStyles true h
+
+change_handle :: Handle -> EngineM' Unit
+change_handle h = do
   vps1 <- toggleHandleViewPointStyles false <$> gets _.handle
   modify_ _ { handle = h }
   lift $ traceEngineM [ "Drag" ] $ Ui.span [ text "new handle: ", code (show h) ]

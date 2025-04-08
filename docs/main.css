@@ -200,6 +200,12 @@ body {
   transition-duration: 0.5s;
 }
 
+.ConsoleMessageBody ul,
+.ConsoleMessageBody li {
+  padding: 0;
+  margin: 0;
+}
+
 .ConsoleMessageError>.ConsoleMessageBody {
   background-color: rgb(255, 196, 196);
 }
