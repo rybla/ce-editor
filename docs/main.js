@@ -325,34 +325,34 @@
 
   // output/Control.Monad/index.js
   var whenM = function(dictMonad) {
-    var bind11 = bind(dictMonad.Bind1());
+    var bind10 = bind(dictMonad.Bind1());
     var when6 = when(dictMonad.Applicative0());
     return function(mb) {
       return function(m) {
-        return bind11(mb)(function(b2) {
+        return bind10(mb)(function(b2) {
           return when6(b2)(m);
         });
       };
     };
   };
   var unlessM = function(dictMonad) {
-    var bind11 = bind(dictMonad.Bind1());
+    var bind10 = bind(dictMonad.Bind1());
     var unless2 = unless(dictMonad.Applicative0());
     return function(mb) {
       return function(m) {
-        return bind11(mb)(function(b2) {
+        return bind10(mb)(function(b2) {
           return unless2(b2)(m);
         });
       };
     };
   };
   var ap = function(dictMonad) {
-    var bind11 = bind(dictMonad.Bind1());
+    var bind10 = bind(dictMonad.Bind1());
     var pure20 = pure(dictMonad.Applicative0());
     return function(f) {
       return function(a2) {
-        return bind11(f)(function(f$prime) {
-          return bind11(a2)(function(a$prime) {
+        return bind10(f)(function(f$prime) {
+          return bind10(a2)(function(a$prime) {
             return pure20(f$prime(a$prime));
           });
         });
@@ -4304,7 +4304,6 @@
   var semiringIndex = semiringInt;
   var ringStep = ringInt;
   var sub1 = /* @__PURE__ */ sub(ringStep);
-  var ringIndex = ringInt;
   var genericZipperH_ = {
     to: function(x) {
       return x;
@@ -4636,7 +4635,6 @@
       return genericEq3(genericEqConstructor(genericEqArgument(eqRec3(eqRowCons22(eqArray(eqExpr))))))(x);
     }
   };
-  var eq4 = /* @__PURE__ */ eq(/* @__PURE__ */ eqArray(eqExpr));
   var unTooth = function(v) {
     return function(e) {
       return {
@@ -4849,16 +4847,6 @@
       "_L": v,
       "_R": v + 1 | 0
     };
-  };
-  var getExtremeSteps = function(v) {
-    if (eq4(v.kids)([])) {
-      return Nothing.value;
-    }
-    ;
-    return new Just({
-      "_L": 0,
-      "_R": length(v.kids) - 1 | 0
-    });
   };
   var getExtremeIndexes = function(v) {
     return {
@@ -6109,10 +6097,10 @@
   };
   var monadTransExceptT = {
     lift: function(dictMonad) {
-      var bind11 = bind(dictMonad.Bind1());
+      var bind10 = bind(dictMonad.Bind1());
       var pure20 = pure(dictMonad.Applicative0());
       return function(m) {
-        return bind11(m)(function(a2) {
+        return bind10(m)(function(a2) {
           return pure20(new Right(a2));
         });
       };
@@ -6143,12 +6131,12 @@
     };
   };
   var bindExceptT = function(dictMonad) {
-    var bind11 = bind(dictMonad.Bind1());
+    var bind10 = bind(dictMonad.Bind1());
     var pure20 = pure(dictMonad.Applicative0());
     return {
       bind: function(v) {
         return function(k) {
-          return bind11(v)(either(function($193) {
+          return bind10(v)(either(function($193) {
             return pure20(Left.create($193));
           })(function(a2) {
             var v1 = k(a2);
@@ -6278,14 +6266,14 @@
     var append10 = append(dictSemigroup);
     var applyWriterT1 = applyWriterT(dictSemigroup);
     return function(dictBind) {
-      var bind11 = bind(dictBind);
+      var bind10 = bind(dictBind);
       var Apply0 = dictBind.Apply0();
       var map28 = map(Apply0.Functor0());
       var applyWriterT2 = applyWriterT1(Apply0);
       return {
         bind: function(v) {
           return function(k) {
-            return bind11(v)(function(v1) {
+            return bind10(v)(function(v1) {
               var v2 = k(v1.value0);
               return map28(function(v3) {
                 return new Tuple(v3.value0, append10(v1.value1)(v3.value1));
@@ -10913,11 +10901,9 @@
   };
 
   // output/Data.Expr.Move/index.js
-  var bind8 = /* @__PURE__ */ bind(bindMaybe);
   var lessThan2 = /* @__PURE__ */ lessThan(ordIndex);
-  var add2 = /* @__PURE__ */ add(semiringIndex);
   var append8 = /* @__PURE__ */ append(semigroupList);
-  var sub3 = /* @__PURE__ */ sub(ringIndex);
+  var eq4 = /* @__PURE__ */ eq(eqIndex);
   var L = /* @__PURE__ */ function() {
     function L2() {
     }
@@ -10932,115 +10918,59 @@
     R2.value = new R2();
     return R2;
   }();
-  var getBottomRightPoint = function(v) {
-    var go2 = function($copy_rev_path) {
-      return function($copy_i) {
-        return function($copy_v1) {
-          var $tco_var_rev_path = $copy_rev_path;
-          var $tco_var_i = $copy_i;
-          var $tco_done = false;
-          var $tco_result;
-          function $tco_loop(rev_path, i2, v1) {
-            var v2 = getExtremeSteps(v1);
-            if (v2 instanceof Nothing) {
-              $tco_done = true;
-              return {
-                path: reverse2(rev_path),
-                j: getIndexesAroundStep(i2)["_R"]
-              };
-            }
-            ;
-            if (v2 instanceof Just) {
-              $tco_var_rev_path = new Cons(i2, rev_path);
-              $tco_var_i = v2["value0"]["_R"];
-              $copy_v1 = getKid_Expr(v2["value0"]["_R"])(v1);
-              return;
-            }
-            ;
-            throw new Error("Failed pattern match at Data.Expr.Move (line 48, column 28 - line 50, column 73): " + [v2.constructor.name]);
-          }
-          ;
-          while (!$tco_done) {
-            $tco_result = $tco_loop($tco_var_rev_path, $tco_var_i, $copy_v1);
-          }
-          ;
-          return $tco_result;
-        };
-      };
-    };
-    return bind8(getExtremeSteps(v))(function(v1) {
-      return new Just(go2(Nil.value)(v1["_R"])(getKid_Expr(v1["_R"])(v)));
-    });
-  };
-  var getBottomLeftPoint = function(v) {
-    var go2 = function($copy_rev_path) {
-      return function($copy_i) {
-        return function($copy_v1) {
-          var $tco_var_rev_path = $copy_rev_path;
-          var $tco_var_i = $copy_i;
-          var $tco_done = false;
-          var $tco_result;
-          function $tco_loop(rev_path, i2, v1) {
-            var v2 = getExtremeSteps(v1);
-            if (v2 instanceof Nothing) {
-              $tco_done = true;
-              return {
-                path: reverse2(rev_path),
-                j: getIndexesAroundStep(i2)["_L"]
-              };
-            }
-            ;
-            if (v2 instanceof Just) {
-              $tco_var_rev_path = new Cons(i2, rev_path);
-              $tco_var_i = v2["value0"]["_L"];
-              $copy_v1 = getKid_Expr(v2["value0"]["_L"])(v1);
-              return;
-            }
-            ;
-            throw new Error("Failed pattern match at Data.Expr.Move (line 58, column 28 - line 60, column 73): " + [v2.constructor.name]);
-          }
-          ;
-          while (!$tco_done) {
-            $tco_result = $tco_loop($tco_var_rev_path, $tco_var_i, $copy_v1);
-          }
-          ;
-          return $tco_result;
-        };
-      };
-    };
-    return bind8(getExtremeSteps(v))(function(v1) {
-      return new Just(go2(Nil.value)(v1["_L"])(getKid_Expr(v1["_L"])(v)));
-    });
-  };
   var move_Point = function(e) {
     return function(dir2) {
       return function(v) {
         var at_parent = atSubExpr(v.path)(e);
-        var i2 = getExtremeIndexes(at_parent.at);
-        var v1 = function(v22) {
-          var v3 = function(v42) {
-            return Nothing.value;
+        var extreme_j = getExtremeIndexes(at_parent.at);
+        var v1 = function(v2) {
+          var v3 = function(v4) {
+            var v5 = function(v6) {
+              var v7 = function(v8) {
+                return Nothing.value;
+              };
+              if (dir2 instanceof R) {
+                var $41 = lessThan2(v.j)(extreme_j["_R"]);
+                if ($41) {
+                  var $42 = getStepsAroundIndex(v.j)["_R"];
+                  return new Just(new Point_Handle({
+                    path: append8(v.path)(new Cons($42, Nil.value)),
+                    j: getExtremeIndexes(getKid_Expr($42)(at_parent.at))["_L"]
+                  }));
+                }
+                ;
+                return v7(true);
+              }
+              ;
+              return v7(true);
+            };
+            if (dir2 instanceof R) {
+              var $44 = eq4(v.j)(extreme_j["_R"]);
+              if ($44) {
+                var $45 = unsnoc(v.path);
+                if ($45 instanceof Just) {
+                  return new Just(new Point_Handle({
+                    path: $45.value0.init,
+                    j: getIndexesAroundStep($45.value0.last)["_R"]
+                  }));
+                }
+                ;
+                return v5(true);
+              }
+              ;
+              return v5(true);
+            }
+            ;
+            return v5(true);
           };
-          if (dir2 instanceof R) {
-            var $71 = lessThan2(v.j)(i2["_R"]);
-            if ($71) {
-              var $72 = getStepsAroundIndex(v.j)["_R"];
-              var v4 = getBottomLeftPoint(getKid_Expr($72)(at_parent.at));
-              if (v4 instanceof Nothing) {
-                return new Just(new Point_Handle({
-                  path: v.path,
-                  j: add2(v.j)(1)
-                }));
-              }
-              ;
-              if (v4 instanceof Just) {
-                return new Just(new Point_Handle({
-                  j: v4.value0.j,
-                  path: append8(v.path)(new Cons($72, v4.value0.path))
-                }));
-              }
-              ;
-              throw new Error("Failed pattern match at Data.Expr.Move (line 34, column 5 - line 36, column 91): " + [v4.constructor.name]);
+          if (dir2 instanceof L) {
+            var $50 = lessThan2(extreme_j["_L"])(v.j);
+            if ($50) {
+              var $51 = getStepsAroundIndex(v.j)["_L"];
+              return new Just(new Point_Handle({
+                path: append8(v.path)(new Cons($51, Nil.value)),
+                j: getExtremeIndexes(getKid_Expr($51)(at_parent.at))["_R"]
+              }));
             }
             ;
             return v3(true);
@@ -11049,25 +10979,17 @@
           return v3(true);
         };
         if (dir2 instanceof L) {
-          var $76 = lessThan2(i2["_L"])(v.j);
-          if ($76) {
-            var $77 = getStepsAroundIndex(v.j)["_L"];
-            var v2 = getBottomRightPoint(getKid_Expr($77)(at_parent.at));
-            if (v2 instanceof Nothing) {
+          var $53 = eq4(extreme_j["_L"])(v.j);
+          if ($53) {
+            var $54 = unsnoc(v.path);
+            if ($54 instanceof Just) {
               return new Just(new Point_Handle({
-                path: v.path,
-                j: sub3(v.j)(1)
+                path: $54.value0.init,
+                j: getIndexesAroundStep($54.value0.last)["_L"]
               }));
             }
             ;
-            if (v2 instanceof Just) {
-              return new Just(new Point_Handle({
-                j: v2.value0.j,
-                path: append8(v.path)(new Cons($77, v2.value0.path))
-              }));
-            }
-            ;
-            throw new Error("Failed pattern match at Data.Expr.Move (line 30, column 5 - line 32, column 91): " + [v2.constructor.name]);
+            return v1(true);
           }
           ;
           return v1(true);
@@ -11135,7 +11057,7 @@
   var fromFoldable5 = /* @__PURE__ */ fromFoldable3(ordPoint)(foldableArray);
   var eq5 = /* @__PURE__ */ eq(eqPoint);
   var bindExceptT2 = /* @__PURE__ */ bindExceptT(monadHalogenM);
-  var bind9 = /* @__PURE__ */ bind(bindExceptT2);
+  var bind8 = /* @__PURE__ */ bind(bindExceptT2);
   var monadStateExceptT2 = /* @__PURE__ */ monadStateExceptT(monadStateHalogenM);
   var get3 = /* @__PURE__ */ get(monadStateExceptT2);
   var discard6 = /* @__PURE__ */ discard(discardUnit);
@@ -11208,7 +11130,7 @@
   var map111 = /* @__PURE__ */ map(/* @__PURE__ */ functorExceptT(functorHalogenM));
   var gets2 = /* @__PURE__ */ gets(monadStateExceptT2);
   var unionWith2 = /* @__PURE__ */ unionWith(ordPoint);
-  var add3 = /* @__PURE__ */ add(semiringIndex);
+  var add2 = /* @__PURE__ */ add(semiringIndex);
   var apply2 = /* @__PURE__ */ apply(/* @__PURE__ */ applyExceptT(monadHalogenM));
   var append23 = /* @__PURE__ */ append(semigroupList);
   var todo2 = /* @__PURE__ */ todo();
@@ -12024,7 +11946,7 @@
   var unset_handle = function(h) {
     return toggleViewPointStyles(toggleHandleViewPointStyles(false)(h));
   };
-  var snapshot = /* @__PURE__ */ bind9(get3)(function(v) {
+  var snapshot = /* @__PURE__ */ bind8(get3)(function(v) {
     var s = {
       handle: v.handle,
       expr: v.expr
@@ -12070,7 +11992,7 @@
       ;
       throw new Error("Failed pattern match at Ui.Editor (line 393, column 3 - line 397, column 120): " + [v.history.constructor.name]);
     }())(function() {
-      return bind9(get3)(function(v1) {
+      return bind8(get3)(function(v1) {
         return lift5(traceEngineM(["Snapshot"])(column([text6("history:"), list([code3("length: " + show11(length2(v1.history))), column(fold4([[code3("head:")], function() {
           var v2 = head3(v1.history);
           if (v2 instanceof Nothing) {
@@ -12126,7 +12048,7 @@
     }
     ;
     if (v instanceof Receive_ViewPointAction) {
-      return bind9(get3)(function(state3) {
+      return bind8(get3)(function(state3) {
         var state$prime = initialViewPointStyle(v.value0);
         return when5(notEq1(state$prime)(state3))(put2(state$prime));
       });
@@ -12219,7 +12141,7 @@
     }
     ;
     if (v instanceof Receive_ViewExprAction) {
-      return bind9(get3)(function(state3) {
+      return bind8(get3)(function(state3) {
         var state$prime = initialViewExprState(v.value0);
         return when5(notEq3(state3)(state$prime))(discard13(lift5(traceViewExprM(["Receive"])(column([text6("receive"), list([span5([text6("expr' = "), code3(show13(state$prime.expr))])])]))))(function() {
           return discard13(put2(state$prime))(function() {
@@ -12283,7 +12205,7 @@
     }
     ;
     if (v.value1 instanceof ViewPointQuery_ViewExprQuery) {
-      return bind9(lift5(query1($$Proxy.value)(v.value1.value0)(v.value1.value1)))(function(v1) {
+      return bind8(lift5(query1($$Proxy.value)(v.value1.value0)(v.value1.value1)))(function(v1) {
         if (v1 instanceof Nothing) {
           return throwError3(none3);
         }
@@ -12314,7 +12236,7 @@
         var qs$prime = new ViewExprQuery(mapFlipped3(qs)(function(v2) {
           return new SingleViewExprQuery(v1.value0.value1, v2.value1);
         }), unit);
-        return bind9(lift5(query22($$Proxy.value)(v1.value0.value0)(qs$prime)))(function(v2) {
+        return bind8(lift5(query22($$Proxy.value)(v1.value0.value0)(qs$prime)))(function(v2) {
           if (v2 instanceof Nothing) {
             return throwError3(none3);
           }
@@ -12435,7 +12357,7 @@
   var handleAction = function(v) {
     if (v instanceof Initialize2) {
       return discard13(lift5(trace(["Initialize"])(text6("initialize"))))(function() {
-        return bind9(liftEffect7(bindFlipped9(document)(windowImpl)))(function(doc) {
+        return bind8(liftEffect7(bindFlipped9(document)(windowImpl)))(function(doc) {
           return lift5(subscribe$prime(function(_sub_id) {
             return eventListener2(mouseup)(toEventTarget(doc))(composeKleisli2(fromEvent2)(function(_e) {
               return pure18(new EngineQuery_Action(EndDrag_EngineQuery.create));
@@ -12498,7 +12420,7 @@
     throw new Error("Failed pattern match at Ui.Editor (line 131, column 1 - line 131, column 34): " + [v.constructor.name]);
   };
   var change_handle = function(h) {
-    return bind9(map111(toggleHandleViewPointStyles(false))(gets2(function(v) {
+    return bind8(map111(toggleHandleViewPointStyles(false))(gets2(function(v) {
       return v.handle;
     })))(function(vps1) {
       return discard13(modify_5(function(v) {
@@ -12521,14 +12443,14 @@
     });
   };
   var insert_fragment = function(frag) {
-    return bind9(get3)(function(v) {
-      return bind9(function() {
+    return bind8(get3)(function(v) {
+      return bind8(function() {
         if (v.handle instanceof Point_Handle) {
           var at_h = atPoint(v.handle.value0)(v.expr);
           if (frag instanceof Span_Fragment) {
             return pure17(new Tuple(new Point_Handle({
               path: v.handle.value0.path,
-              j: add3(v.handle.value0.j)(offset_Span(frag.value0))
+              j: add2(v.handle.value0.j)(offset_Span(frag.value0))
             }), unSpanContext(at_h.outside)(frag.value0)));
           }
           ;
@@ -12556,7 +12478,7 @@
               if (v.handle.value1 instanceof Right_SpanFocus) {
                 return new Point_Handle({
                   path: v.handle.value0.path,
-                  j: add3(v.handle.value0.j_L)(offset_Span(frag.value0))
+                  j: add2(v.handle.value0.j_L)(offset_Span(frag.value0))
                 });
               }
               ;
@@ -12595,7 +12517,7 @@
       });
     });
   };
-  var redo = /* @__PURE__ */ bind9(get3)(function(v) {
+  var redo = /* @__PURE__ */ bind8(get3)(function(v) {
     if (v.future instanceof Nil) {
       return pure17(unit);
     }
@@ -12625,7 +12547,7 @@
     ;
     throw new Error("Failed pattern match at Ui.Editor (line 431, column 3 - line 436, column 29): " + [v.future.constructor.name]);
   });
-  var undo = /* @__PURE__ */ bind9(get3)(function(v) {
+  var undo = /* @__PURE__ */ bind8(get3)(function(v) {
     if (v.history instanceof Nil) {
       return pure17(unit);
     }
@@ -12658,8 +12580,8 @@
   var handleEngineAction = function(v) {
     if (v instanceof Initialize_EngineAction) {
       return discard13(lift5(traceEngineM(["Initialize"])(text6("initialize"))))(function() {
-        return bind9(get3)(function(st) {
-          return discard13(bind9(liftEffect7(bindFlipped9(document)(windowImpl)))(function(doc) {
+        return bind8(get3)(function(st) {
+          return discard13(bind8(liftEffect7(bindFlipped9(document)(windowImpl)))(function(doc) {
             return lift5(subscribe$prime(function(_subId) {
               return eventListener2(keydown)(toEventTarget(doc))(function() {
                 var $667 = map27(function($669) {
@@ -12679,7 +12601,7 @@
     ;
     if (v instanceof Receive_EngineAction) {
       return discard13(lift5(traceEngineM(["Receive"])(text6("receive"))))(function() {
-        return bind9(get3)(function(st) {
+        return bind8(get3)(function(st) {
           return put2(function() {
             var v1 = initialEngineState(v.value0);
             return {
@@ -12698,7 +12620,7 @@
     ;
     if (v instanceof Keyboard_EngineAction) {
       return discard13(lift5(traceEngineM(["Keyboard"])(text6("key: " + show32(v.value0)))))(function() {
-        return bind9(get3)(function(v1) {
+        return bind8(get3)(function(v1) {
           return discard13(function() {
             if (matchKeyInfo2(function(v22) {
               return elem3(v22)(["ArrowLeft", "ArrowRight"]);
@@ -12892,7 +12814,7 @@
               if ($607) {
                 return discard13(lift5(traceEngineM(["Clipboard", "Paste"])(list([code3("frag: " + show42(v1.clipboard.value0))]))))(function() {
                   return discard13(insert_fragment(v1.clipboard.value0))(function() {
-                    return bind9(get3)(function(st) {
+                    return bind8(get3)(function(st) {
                       return lift5(traceEngineM(["Clipboard", "Paste"])(code3("handle: " + show23(st.handle))));
                     });
                   });
@@ -12913,10 +12835,10 @@
     throw new Error("Failed pattern match at Ui.Editor (line 280, column 1 - line 280, column 52): " + [v.constructor.name]);
   };
   var updateDragToPoint = function(p2) {
-    return bind9(gets2(function(v) {
+    return bind8(gets2(function(v) {
       return v.expr;
     }))(function(e) {
-      return bind9(gets2(function(v) {
+      return bind8(gets2(function(v) {
         return v.drag_origin_handle;
       }))(function(v) {
         if (v instanceof Nothing) {
@@ -12984,7 +12906,7 @@
               j: getIndexesAroundStep(v1.value0.last)["_L"]
             };
             return discard13(lift5(traceEngineM(["Drag"])(text6("got StartDrag from Expr at " + show52(p2)))))(function() {
-              return bind9(gets2(function(v2) {
+              return bind8(gets2(function(v2) {
                 return v2.handle;
               }))(function(h) {
                 var h$prime = getDragOrigin(h)(p2);
@@ -13041,7 +12963,7 @@
     if (v instanceof ViewPointInteraction_EngineQuery) {
       if (v.value1 instanceof StartDrag_ViewPointInteraction) {
         return discard13(lift5(traceEngineM(["Drag"])(text6("got StartDrag from Point at " + show52(v.value0)))))(function() {
-          return bind9(gets2(function(v1) {
+          return bind8(gets2(function(v1) {
             return v1.handle;
           }))(function(h) {
             var h$prime = getDragOrigin(h)(v.value0);
@@ -13220,7 +13142,7 @@
     }
   })(ordUnit);
   var slot_3 = /* @__PURE__ */ slot_()(ConsoleIsSymbol)(ordUnit);
-  var bind10 = /* @__PURE__ */ bind(bindHalogenM);
+  var bind9 = /* @__PURE__ */ bind(bindHalogenM);
   var get4 = /* @__PURE__ */ get(monadStateHalogenM);
   var discard34 = /* @__PURE__ */ discard7(bindHalogenM);
   var pure110 = /* @__PURE__ */ pure(applicativeHalogenM);
@@ -13301,8 +13223,8 @@
       finalize: defaultEval.finalize,
       initialize: pure(applicativeMaybe)(Initialize3.value),
       handleAction: function(action2) {
-        return bind10(get4)(function(state3) {
-          return discard34(bind10(runExceptT(handleAction2(action2)))(flip(either)(pure110)(function(err) {
+        return bind9(get4)(function(state3) {
+          return discard34(bind9(runExceptT(handleAction2(action2)))(flip(either)(pure110)(function(err) {
             return discard34(put3(state3))(function() {
               return trace2(["App", "Error"])(err);
             });

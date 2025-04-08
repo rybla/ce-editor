@@ -16,14 +16,14 @@
   [
     "Expr drag drag from a Cursor Handle's Right Point to a rightward sibling Point to adjust the Cursor Handle",
     {
-      "timestamp": "1744138314132.0",
+      "timestamp": "1744141187131.0",
       "success": true
     }
   ],
   [
     "Expr drag drag from an Inner Point to an Outer Right Point to make a Zipper Handle, where the innermost span is empty",
     {
-      "timestamp": "1744138314132.0",
+      "timestamp": "1744141187131.0",
       "success": true
     }
   ],
@@ -37,7 +37,7 @@
   [
     "Expr drag drag from an Inner Right Point to an Outer Right Point to make a Zipper Handle",
     {
-      "timestamp": "1744138314132.0",
+      "timestamp": "1744141187131.0",
       "success": true
     }
   ],
@@ -100,15 +100,43 @@
   [
     "Expr move getBottomRightPoint getBottomRightPoint (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) == (Just ([|1] △ .2))",
     {
-      "timestamp": "1744138314132.0",
+      "timestamp": "1744139967892.0",
       "success": true
+    }
+  ],
+  [
+    "Expr move getBottomRightPoint getBottomRightPoint (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) == ([|1 |1] △ .0)",
+    {
+      "timestamp": "1744141187131.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr move getBottomRightPoint getBottomRightPoint (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) == ([|1] △ .2)",
+    {
+      "timestamp": "1744141158842.0",
+      "success": false
     }
   ],
   [
     "Expr move getBottomRightPoint getBottomRightPoint (\"B\" % (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\"))) == (Just ([|1 |1] △ .2))",
     {
-      "timestamp": "1744138314132.0",
+      "timestamp": "1744139967892.0",
       "success": true
+    }
+  ],
+  [
+    "Expr move getBottomRightPoint getBottomRightPoint (\"B\" % (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\"))) == ([|1 |1 |1] △ .0)",
+    {
+      "timestamp": "1744141187131.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr move getBottomRightPoint getBottomRightPoint (\"B\" % (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\"))) == ([|1 |1] △ .2)",
+    {
+      "timestamp": "1744141158842.0",
+      "success": false
     }
   ],
   [
@@ -191,21 +219,21 @@
   [
     "Expr move move_Point (\"B\" % (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\"))) R ([] △ .0) == (Just [[ ([|0] △ .0) ]])",
     {
-      "timestamp": "1744138314132.0",
-      "success": false
+      "timestamp": "1744141187131.0",
+      "success": true
     }
   ],
   [
     "Expr move move_Point (\"B\" % (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\"))) R ([|0 |0] △ .0) == (Just [[ ([|0 |0] △ .1) ]])",
     {
-      "timestamp": "1744138314132.0",
+      "timestamp": "1744141187131.0",
       "success": true
     }
   ],
   [
     "Expr move move_Point (\"B\" % (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\"))) R ([|0] △ .0) == (Just [[ ([|0 |0] △ .0) ]])",
     {
-      "timestamp": "1744138314132.0",
+      "timestamp": "1744141187131.0",
       "success": true
     }
   ]
