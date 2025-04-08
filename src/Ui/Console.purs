@@ -25,7 +25,7 @@ import Type.Proxy (Proxy(..))
 import Ui.Common (classes, style)
 import Ui.Widget (scrollToMe)
 import Ui.Widget as Widget
-import Utility (bug, impossible)
+import Utility (impossible)
 
 data Query a = AddMessage ConsoleMessage a
 
@@ -45,6 +45,7 @@ disabledMessageLabelRegexes = map (\s -> Regex.regex ("^" <> s <> "( / [^/]*)*$"
   , "Engine / Snapshot"
   , "Engine / Insert"
   , "ViewExpr"
+  , "Engine / Move"
   ]
 
 component ∷ forall input output. H.Component Query input output Aff
