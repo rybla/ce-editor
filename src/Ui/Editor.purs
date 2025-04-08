@@ -669,7 +669,7 @@ viewExpr_component = H.mkComponent { initialState: initialViewExprState, eval, r
               ]
             , let
                 renderPoint i =
-                  HH.slot (Proxy @"Point") i point_component
+                  HH.slot (Proxy @"Point") i viewPoint_Component
                     {}
                     (ViewPointOutput_ViewExprAction i)
                 renderKid i e =
@@ -803,8 +803,8 @@ type ViewPointHTML = H.ComponentHTML ViewPointAction ViewPointSlots ViewPointM
 type ViewPointM' = ExceptT (Maybe PlainHTML) ViewPointM
 type ViewPointM = H.HalogenM ViewPointState ViewPointAction ViewPointSlots ViewPointOutput Aff
 
-point_component :: H.Component ViewPointQuery ViewPointInput ViewPointOutput Aff
-point_component = H.mkComponent { initialState, eval, render }
+viewPoint_Component :: H.Component ViewPointQuery ViewPointInput ViewPointOutput Aff
+viewPoint_Component = H.mkComponent { initialState, eval, render }
   where
   initialState = initialViewPointStyle
 
