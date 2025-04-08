@@ -49,30 +49,21 @@ test_drag = Spec.describe "drag" do
 test_move = Spec.describe "move" do
   mkTest_move_Point_R (example_expr 2 3)
     (point [] 0)
-    (point [ 0 ] 0 # Point_Handle # Just)
+    (point [ 0 ] 0 # Just)
   mkTest_move_Point_R (example_expr 2 3)
     (point [ 0 ] 0)
-    (point [ 0, 0 ] 0 # Point_Handle # Just)
+    (point [ 0, 0 ] 0 # Just)
   mkTest_move_Point_R (example_expr 2 3)
     (point [ 0, 0 ] 0)
-    (point [ 0, 0 ] 1 # Point_Handle # Just)
+    (point [ 0, 0, 0 ] 0 # Just)
+  mkTest_move_Point_R (example_expr 2 3)
+    (point [ 0, 0, 0 ] 0)
+    (point [ 0, 0 ] 1 # Just)
   pure unit
   where
   mkTest_move_Point_R e p mb_h =
     Spec.it ("move_Point " <> show e <> " " <> show Expr.Move.R <> " " <> show p <> " == " <> show mb_h) do
       move_Point e Expr.Move.R p `shouldEqual` mb_h
-
--- test_getBottomRightPoint = Spec.describe "getBottomRightPoint" do
---   mkTest
---     (example_expr 2 2)
---     (point [ 1, 1 ] 0)
---   mkTest
---     (example_expr 2 3)
---     (point [ 1, 1, 1 ] 0)
---   where
---   mkTest e mb_p =
---     Spec.it ("getBottomRightPoint " <> show e <> " == " <> show mb_p) do
---       (getBottomRightPoint e) `shouldEqual` mb_p
 
 --------------------------------------------------------------------------------
 -- Utilities

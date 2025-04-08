@@ -16,7 +16,8 @@ import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Expr.Drag (drag, getDragOrigin)
-import Data.Expr.Move (Dir(..), move)
+import Data.Expr.Move (Dir(..), move, move_Point)
+import Data.Expr.Move as Expr.Move
 import Data.Foldable (length, traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -42,7 +43,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
-import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, matchKeyInfo, style, text)
+import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, matchKeyInfo, matchMapKeyInfo, style, text)
 import Ui.Common as Ui
 import Ui.Console as Console
 import Utility (bug, forget, impossible, isAlpha, sortEquivalenceClasses, todo)
@@ -304,24 +305,35 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
   lift $ traceEngineM [ "Keyboard" ] $ text $ "key: " <> show ki
   { handle, clipboard, expr, editor } <- get
   case unit of
-    -- movement
-    _ | KeyInfo ki # matchKeyInfo (_ `Array.elem` [ "ArrowLeft", "ArrowRight" ]) { cmd: pure false, shift: pure false } -> do
-      let
-        dir = case ki.key of
-          "ArrowLeft" -> L
-          "ArrowRight" -> R
-          _ -> bug "impossible"
+    -- move
+    _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false } -> do
       case handle # move expr dir of
         Nothing -> pure unit
-        Just handle' -> do
-          lift $ traceEngineM [ "Move" ] $ code (show handle')
-          change_handle handle'
+        Just p' -> do
+          lift $ traceEngineM [ "Move" ] $ code (show p')
+          change_handle $ Point_Handle $ p'
+    -- move + select
+    _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure true } -> do
+      case handle # move expr dir of
+        Nothing -> pure unit
+        Just p' -> case drag handle p' expr of
+          Nothing -> pure unit
+          Just handle' -> do
+            lift $ traceEngineM [ "Move", "Select" ] $ code (show handle')
+            change_handle handle'
     -- undo/redo
     _ | KeyInfo ki # matchKeyInfo (_ == "z") { cmd: pure true, shift: pure false } -> undo
     _ | KeyInfo ki # matchKeyInfo (_ == "z") { cmd: pure true, shift: pure true } -> redo
     -- escape
     _ | KeyInfo ki # matchKeyInfo (_ == "Escape") {} -> do
-      change_handle $ Point_Handle $ Point { path: mempty, j: Index 0 }
+      case handle of
+        Point_Handle _ -> change_handle $ Point_Handle $ Point { path: mempty, j: Index 0 }
+        SpanH_Handle (SpanH h) Left_SpanFocus -> change_handle $ Point_Handle $ Point { path: h.path, j: h.j_R }
+        SpanH_Handle (SpanH h) Right_SpanFocus -> change_handle $ Point_Handle $ Point { path: h.path, j: h.j_L }
+        ZipperH_Handle (ZipperH h) OuterLeft_ZipperFocus -> change_handle $ SpanH_Handle (SpanH { path: ZipperH h # getTotalInnerPath_ZipperH # fromNePath, j_L: h.j_IL, j_R: h.j_IR }) Right_SpanFocus
+        ZipperH_Handle (ZipperH h) OuterRight_ZipperFocus -> change_handle $ SpanH_Handle (SpanH { path: ZipperH h # getTotalInnerPath_ZipperH # fromNePath, j_L: h.j_IL, j_R: h.j_IR }) Left_SpanFocus
+        ZipperH_Handle (ZipperH h) InnerLeft_ZipperFocus -> change_handle $ SpanH_Handle (SpanH { path: h.path_O, j_L: h.j_OL, j_R: h.j_OR }) Right_SpanFocus
+        ZipperH_Handle (ZipperH h) InnerRight_ZipperFocus -> change_handle $ SpanH_Handle (SpanH { path: h.path_O, j_L: h.j_OL, j_R: h.j_OR }) Left_SpanFocus
       pure unit
     -- copy Fragment
     _ | KeyInfo ki # matchKeyInfo (_ == "c") { cmd: pure true } -> do

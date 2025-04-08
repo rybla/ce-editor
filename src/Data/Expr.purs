@@ -16,7 +16,7 @@ import Data.NonEmpty (NonEmpty, (:|))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
-import Utility (extractAt_Array, extractSpan_Array, impossible, parens, spaces)
+import Utility (extractAt_Array, extractSpan_Array, impossible, parens, spaces, todo)
 
 --------------------------------------------------------------------------------
 
@@ -479,6 +479,15 @@ instance Show ZipperFocus where
   show InnerLeft_ZipperFocus = "IL"
   show InnerRight_ZipperFocus = "IR"
   show OuterRight_ZipperFocus = "OR"
+
+getFocusPoint :: Handle -> Point
+getFocusPoint (Point_Handle p) = p
+getFocusPoint (SpanH_Handle (SpanH h) Left_SpanFocus) = Point { path: h.path, j: h.j_L }
+getFocusPoint (SpanH_Handle (SpanH h) Right_SpanFocus) = Point { path: h.path, j: h.j_R }
+getFocusPoint (ZipperH_Handle (ZipperH h) OuterLeft_ZipperFocus) = Point { path: h.path_O, j: h.j_OL }
+getFocusPoint (ZipperH_Handle (ZipperH h) InnerLeft_ZipperFocus) = Point { path: ZipperH h # getTotalInnerPath_ZipperH # fromNePath, j: h.j_OL }
+getFocusPoint (ZipperH_Handle (ZipperH h) InnerRight_ZipperFocus) = Point { path: ZipperH h # getTotalInnerPath_ZipperH # fromNePath, j: h.j_OL }
+getFocusPoint (ZipperH_Handle (ZipperH h) OuterRight_ZipperFocus) = Point { path: h.path_O, j: h.j_OR }
 
 getOuterLeftPoint_Handle :: Handle -> Point
 getOuterLeftPoint_Handle (Point_Handle p) = p

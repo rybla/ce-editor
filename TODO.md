@@ -27,5 +27,7 @@
 - [x] better console message filtering
 - [x] bug when pasting (a zipper, for example), it goes around teh top level expression rather than the span handle
 - [ ] keyboard movement
+  - [ ] move point around
+  - [ ] shift+move to emulate drag
 - [ ] query textbox
 - [ ] shift-click to emulate dragging from source handle to that target point

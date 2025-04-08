@@ -2,6 +2,7 @@ module Ui.Common where
 
 import Prelude
 
+import Control.Alternative (guard)
 import Control.Monad.Writer (Writer, execWriter)
 import Data.Array as Array
 import Data.Foldable (all, and, intercalate)
@@ -77,12 +78,23 @@ fromKeyboardEventToKeyInfo ke = KeyInfo
 
 mkKeyInfo key r = KeyInfo (Record.merge r { key, cmd: false, shift: false })
 
-matchKeyInfo filter_key r_ (KeyInfo ki') = and
-  [ filter_key ki'.key
+matchKeyInfo f r_ (KeyInfo ki) = and
+  [ f ki.key
   , r.cmd # maybe true (r'.cmd == _)
   , r.shift # maybe true (r'.shift == _)
   ]
   where
   r = Record.merge r_ { cmd: Nothing @Boolean, shift: Nothing @Boolean }
-  r' = Record.delete (Proxy @"key") ki'
+  r' = Record.delete (Proxy @"key") ki
+
+matchMapKeyInfo f r_ (KeyInfo ki) = do
+  a <- f ki.key
+  guard $ and
+    [ r.cmd # maybe true (r'.cmd == _)
+    , r.shift # maybe true (r'.shift == _)
+    ]
+  pure a
+  where
+  r = Record.merge r_ { cmd: Nothing @Boolean, shift: Nothing @Boolean }
+  r' = Record.delete (Proxy @"key") ki
 
