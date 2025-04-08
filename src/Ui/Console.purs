@@ -20,6 +20,7 @@ import Halogen as H
 import Halogen.HTML (fromPlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
+import Halogen.HTML.Events as HE
 import Type.Proxy (Proxy(..))
 import Ui.Common (classes, style)
 import Ui.Widget (scrollToMe)
@@ -32,7 +33,7 @@ type State =
   { messages :: Array ConsoleMessage
   }
 
-data Action
+data Action = Clear
 
 type Output = Void
 
@@ -56,12 +57,16 @@ component = H.mkComponent { initialState, eval, render }
 
   eval = H.mkEval H.defaultEval
     { handleQuery = handleQuery
+    , handleAction = handleAction
     }
 
   handleQuery :: forall a. Query a -> _ (_ a)
   handleQuery (AddMessage m a) = do
-    modify_ \state -> state { messages = state.messages `Array.snoc` m }
+    modify_ \st -> st { messages = st.messages `Array.snoc` m }
     pure (pure a)
+
+  handleAction Clear = do
+    modify_ \st -> st { messages = mempty }
 
   render state =
     HH.div
@@ -76,8 +81,13 @@ component = H.mkComponent { initialState, eval, render }
           , style do
               tell [ "padding: 0.5em" ]
               tell [ "background-color: black", "color: white" ]
+              tell [ "display: flex", "flex-direction: row", "align-items: center", "justify-content: space-between" ]
           ]
-          [ HH.text "Console" ]
+          [ HH.div []
+              [ HH.text "Console" ]
+          , HH.div []
+              [ HH.button [ HE.onClick $ const Clear ] [ HH.text "Clear" ] ]
+          ]
       , HHK.div
           [ classes [ "Body" ]
           , style do

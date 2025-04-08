@@ -330,7 +330,9 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       lift $ traceEngineM [ "Clipboard", "Cut" ] $ Ui.list
         [ Ui.code $ "frag: " <> show frag ]
       modify_ _ { clipboard = pure $ frag }
+      lift $ traceEngineM [ "Clipboard", "Cut" ] $ Ui.text "here 1"
       set_expr expr'
+      lift $ traceEngineM [ "Clipboard", "Cut" ] $ Ui.text "here 2"
       set_handle $ Point_Handle $ handle # getOuterLeftPoint_Handle
     _ | KeyInfo ki # matchKeyInfo (_ == "Backspace") {} -> do
       let
@@ -448,7 +450,7 @@ insert_fragment frag = do
         <$>
           ( pure $ Point_Handle
               ( Point
-                  { path: h.path <> (h.j_L # getStepsAroundIndex)._L : Nil <> (z.inside # getPath_SpanContext)
+                  { path: h.path <> (h.j_L # getStepsAroundIndex)._R : Nil <> (z.inside # getPath_SpanContext)
                   , j: Zipper z # offset_inner_Zipper
                   }
               )

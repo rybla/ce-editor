@@ -149,6 +149,12 @@ offset_Span (Span es) = Index $ es # Array.length
 
 type Path = List Step
 
+show_Path :: Path -> String
+show_Path steps = "[" <> (steps # map show # List.intercalate " ") <> "]"
+
+showNePath :: NePath -> String
+showNePath nepath = show_Path (nepath # fromNePath)
+
 atSubExpr :: Path -> Expr -> { outside :: List Tooth, at :: Expr }
 atSubExpr = go Nil
   where
@@ -190,7 +196,7 @@ derive instance Generic Point _
 derive instance Newtype Point _
 
 instance Show Point where
-  show (Point p) = parens $ show p.path <> " △ " <> show p.j
+  show (Point p) = parens $ show_Path p.path <> " △ " <> show p.j
 
 instance Eq Point where
   eq x = genericEq x
@@ -335,7 +341,7 @@ derive instance Newtype SpanH _
 
 instance Show SpanH where
   show (SpanH h) =
-    spaces [ "[[", show h.path, "|", show h.j_L, "…", show h.j_R, "]]" ]
+    spaces [ "[[", show_Path h.path, "|", show h.j_L, "…", show h.j_R, "]]" ]
 
 instance Eq SpanH where
   eq x = genericEq x
@@ -374,7 +380,7 @@ derive instance Newtype ZipperH _
 
 instance Show ZipperH where
   show (ZipperH h) =
-    spaces [ "[[", show h.path_O, "|", show h.j_OL, "…", show h.j_OR, "|", show h.path_I, "|", show h.j_IL, "…", show h.j_IR, "]]" ]
+    spaces [ "[[", show_Path h.path_O, "|", show h.j_OL, "…", show h.j_OR, "|", showNePath h.path_I, "|", show h.j_IL, "…", show h.j_IR, "]]" ]
 
 instance Eq ZipperH where
   eq x = genericEq x

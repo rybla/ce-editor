@@ -25,4 +25,4 @@
 - [x] Backspace to delete stuff inside handle
 - [x] undo and redo
 - [x] better console message filtering
-- [ ] bug when pasting (a zipper, for example), it goes around teh top level expression rather than the span handle
+- [x] bug when pasting (a zipper, for example), it goes around teh top level expression rather than the span handle
