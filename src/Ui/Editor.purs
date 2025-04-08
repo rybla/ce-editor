@@ -16,11 +16,10 @@ import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Expr.Drag (drag, getDragOrigin)
-import Data.Expr.Move (Dir(..), move, move_Point)
+import Data.Expr.Move (move)
 import Data.Expr.Move as Expr.Move
-import Data.Foldable (length, traverse_)
+import Data.Foldable (traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
-import Data.FunctorWithIndex (mapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
@@ -33,8 +32,6 @@ import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Editor (Editor)
 import Effect.Aff (Aff)
-import Effect.Aff as Aff
-import Effect.Aff.Class (liftAff)
 import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML (PlainHTML)
@@ -46,7 +43,7 @@ import Type.Prelude (Proxy(..))
 import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, matchKeyInfo, matchMapKeyInfo, style, text)
 import Ui.Common as Ui
 import Ui.Console as Console
-import Utility (bug, forget, impossible, isAlpha, sortEquivalenceClasses, todo)
+import Utility (forget, impossible, isAlpha, sortEquivalenceClasses, todo)
 import Web.Event.Event as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
