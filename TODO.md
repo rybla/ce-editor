@@ -26,3 +26,5 @@
 - [x] undo and redo
 - [x] better console message filtering
 - [x] bug when pasting (a zipper, for example), it goes around teh top level expression rather than the span handle
+- [ ] keyboard movement
+- [ ] query textbox

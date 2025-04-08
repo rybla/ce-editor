@@ -336,7 +336,7 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       modify_ _ { clipboard = pure $ frag }
       unset_handle handle
       set_expr expr'
-      -- void $ liftAff $ Aff.delay $ Aff.Milliseconds 100.0
+      -- void $ liftAff $ Aff.delay $ Aff.Milliseconds 100.0 -- TODO: this was an attempt to see if the problem was 
       set_handle $ Point_Handle $ handle # getOuterLeftPoint_Handle
     _ | KeyInfo ki # matchKeyInfo (_ == "Backspace") {} -> do
       let
