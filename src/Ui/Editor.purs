@@ -25,7 +25,7 @@ import Data.List (List(..), (:))
 import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe')
+import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested (type (/\), (/\))
@@ -43,7 +43,7 @@ import Type.Prelude (Proxy(..))
 import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, matchKeyInfo, matchMapKeyInfo, style, text)
 import Ui.Common as Ui
 import Ui.Console as Console
-import Utility (forget, impossible, isAlpha, sortEquivalenceClasses, todo)
+import Utility (forget, isAlpha, sortEquivalenceClasses, todo)
 import Web.Event.Event as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -881,7 +881,11 @@ viewPoint_component = H.mkComponent { initialState, eval, render }
       , HE.onMouseDown (StartDrag_ViewPointInteraction >>> ViewPointInteraction_ViewPointAction)
       , HE.onMouseEnter (MidDrag_ViewPointInteraction >>> ViewPointInteraction_ViewPointAction)
       ]
-      [ text if state.bufferEnabled then "bufferEnabled" else " " ]
+      [ if state.bufferEnabled then
+          text "bufferEnabled"
+        else
+          text " "
+      ]
 
 initialViewPointStyle :: ViewPointInput -> ViewPointState
 initialViewPointStyle _input =
