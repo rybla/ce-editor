@@ -10,34 +10,26 @@ import Data.List as List
 import Data.Maybe (Maybe(..))
 import Editor.Example.Editor1 (example_expr)
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Effect.Ref as Ref
 import Ui.Component (Component)
 import Ui.Component as Component
-import Utility (todo)
 import Web.Event.Event (EventType(..))
 import Web.Event.Event as Event
 import Web.Event.EventTarget as EventTarget
 
 main :: Aff Unit
 main = do
-  Component.root
-    [ editorComponent ]
-    # liftEffect
-  pure unit
-
-editorComponent :: Effect Component
-editorComponent = do
-  rootRef <- Ref.new $ Nothing @Component
+  rootExprComponentRef <- liftEffect do Ref.new $ Nothing @Component
   let
-    getRoot = rootRef # Ref.read >>= case _ of
-      Nothing -> throw "getRoot: root hasn't been created yet"
+    getRootExprComponent = rootExprComponentRef # Ref.read >>= case _ of
+      Nothing -> throw "getRootExprComponent: root hasn't been created yet"
       Just root -> pure root
 
-  handleRef <- Ref.new $ Point { path: Nil, j: Index 0 }
+  handleRef <- liftEffect do Ref.new $ Nothing
 
   let
     fromStepToExprComponentKidIndex :: Step -> Int
@@ -47,7 +39,7 @@ editorComponent = do
     fromIndexToExprComponentKidIndex (Index i) = 1 + (2 * i)
 
     getPointComponent :: Point -> Effect Component
-    getPointComponent p0 = go p0 =<< getRoot
+    getPointComponent p0 = go p0 =<< getRootExprComponent
       where
       go :: Point -> Component -> Effect Component
       go (Point p) c = case p.path of
@@ -57,7 +49,7 @@ editorComponent = do
           kid # go (Point { path: path', j: p.j })
 
     getExprComponent :: Path -> Effect Component
-    getExprComponent path0 = go path0 =<< getRoot
+    getExprComponent path0 = go path0 =<< getRootExprComponent
       where
       go :: Path -> Component -> Effect Component
       go path c = case path of
@@ -66,20 +58,24 @@ editorComponent = do
           kid <- c # Component.getKid (i # fromStepToExprComponentKidIndex)
           kid # go path'
 
-    onClick_PointComponent :: Point -> Effect Unit
-    onClick_PointComponent (Point p) = do
-      -- unset old handle
-      do
-        handle <- handleRef # Ref.read
-        c <- getPointComponent handle
-        c # Component.removeClass "Focus"
+    setHandle :: Point -> Effect Unit
+    setHandle (Point p) = do
+      -- deactivate old handle
+      handleRef # Ref.read >>= case _ of
+        Nothing -> pure unit
+        Just handle -> do
+          c <- getPointComponent handle
+          c # Component.removeClass "Focus"
       -- update handle
-      handleRef # Ref.write (Point p)
-      -- set new handle
+      handleRef # Ref.write (Just (Point p))
+      -- activate new handle
       do
-        handle <- handleRef # Ref.read
-        c <- getPointComponent handle
+        c <- getPointComponent (Point p)
         c # Component.addClass "Focus"
+
+    onClick_PointComponent :: Point -> Effect Unit
+    onClick_PointComponent p = do
+      setHandle p
 
     exprComponent :: Path -> Expr -> Effect Component
     exprComponent path (Expr e) = do
@@ -133,14 +129,24 @@ editorComponent = do
         }
         [ Component.newText {} " " ]
 
-  root <- exprComponent Nil (Expr { l: Root, kids: [ example_expr 2 2 ] })
-  rootRef # Ref.write (Just root)
-  app <- Component.newTree {} [ pure root ]
+  rootExprComponent <- liftEffect do
+    exprComponent
+      Nil
+      (Expr { l: Root, kids: [ example_expr 2 2 ] })
+  liftEffect do rootExprComponentRef # Ref.write (Just rootExprComponent)
 
-  -- do
-  --   handle <- handleRef # Ref.read
-  --   c <- getPointComponent handle
-  --   c # Component.addClass "Focus"
+  editorComponent <- liftEffect do
+    Component.newTree
+      {}
+      [ pure rootExprComponent ]
 
-  pure app
+  liftEffect do
+    Component.root
+      [ pure editorComponent
+      ]
+
+  liftEffect do
+    setHandle $ Point { path: Nil, j: Index 0 }
+
+  pure unit
 

@@ -1046,12 +1046,12 @@
 
   // output/Control.Monad/index.js
   var ap = function(dictMonad) {
-    var bind3 = bind(dictMonad.Bind1());
+    var bind4 = bind(dictMonad.Bind1());
     var pure4 = pure(dictMonad.Applicative0());
     return function(f) {
       return function(a) {
-        return bind3(f)(function(f$prime) {
-          return bind3(a)(function(a$prime) {
+        return bind4(f)(function(f$prime) {
+          return bind4(a)(function(a$prime) {
             return pure4(f$prime(a$prime));
           });
         });
@@ -1575,7 +1575,7 @@
     return _makeFiber(ffiUtil, aff);
   };
   var launchAff = function(aff) {
-    return function __do2() {
+    return function __do() {
       var fiber = makeFiber(aff)();
       fiber.run();
       return fiber;
@@ -2569,7 +2569,7 @@
   var show1 = /* @__PURE__ */ show(showComponent);
   var removeClass = function(cn) {
     return function(v) {
-      return function __do2() {
+      return function __do() {
         var v1 = classList(v.element)();
         return remove(v1)(cn)();
       };
@@ -2579,7 +2579,7 @@
     return function() {
       return function(opts_) {
         return function(content3) {
-          return function __do2() {
+          return function __do() {
             var doc = bindFlipped2(function() {
               var $107 = map5(toDocument);
               return function($108) {
@@ -2601,7 +2601,7 @@
               };
             })(opts.attributes)();
             var eventListeners = traverse2(function(l) {
-              return function __do3() {
+              return function __do2() {
                 var eventListener2 = l.eventListener();
                 addEventListenerWithOptions(l.eventType)(eventListener2)({
                   capture: l.capture,
@@ -2627,7 +2627,7 @@
               ;
               if (content3 instanceof TreeComponentContent) {
                 var cs_kids = traverse2(function(m_kid) {
-                  return function __do3() {
+                  return function __do2() {
                     var v = m_kid();
                     appendChild(toNode(v.element))(toNode(e))();
                     return v;
@@ -2673,7 +2673,7 @@
   };
   var newTree1 = /* @__PURE__ */ newTree()();
   var root = function(kids) {
-    return function __do2() {
+    return function __do() {
       var v = newTree1({
         name: pure1("root"),
         classes: ["root"]
@@ -2695,7 +2695,7 @@
   };
   var getKid = function(i) {
     return function(v) {
-      return function __do2() {
+      return function __do() {
         var kids = bind2(getKidsRef(v))(read)();
         return fromMaybeM2($$throw("getKid " + (show3(i) + (" " + show1(v)))))(index(kids)(i))();
       };
@@ -2703,7 +2703,7 @@
   };
   var addClass = function(cn) {
     return function(v) {
-      return function __do2() {
+      return function __do() {
         var v1 = classList(v.element)();
         return add2(v1)(cn)();
       };
@@ -2718,6 +2718,8 @@
   }
 
   // output/Ui.App/index.js
+  var bind3 = /* @__PURE__ */ bind(bindAff);
+  var liftEffect2 = /* @__PURE__ */ liftEffect(monadEffectAff);
   var pure3 = /* @__PURE__ */ pure(applicativeEffect);
   var bindFlipped3 = /* @__PURE__ */ bindFlipped(bindEffect);
   var discard2 = /* @__PURE__ */ discard(discardUnit);
@@ -2730,157 +2732,174 @@
   var fold3 = /* @__PURE__ */ fold2(monoidArray);
   var show23 = /* @__PURE__ */ show(showLabel);
   var foldMapWithIndex2 = /* @__PURE__ */ foldMapWithIndex(foldableWithIndexArray)(monoidArray);
+  var discard22 = /* @__PURE__ */ discard2(bindAff);
   var pure22 = /* @__PURE__ */ pure(applicativeAff);
-  var editorComponent = function __do() {
-    var rootRef = $$new(Nothing.value)();
-    var getRoot = function __do2() {
-      var v = read(rootRef)();
-      if (v instanceof Nothing) {
-        return $$throw("getRoot: root hasn't been created yet")();
-      }
-      ;
-      if (v instanceof Just) {
-        return v.value0;
-      }
-      ;
-      throw new Error("Failed pattern match at Ui.App (line 36, column 38 - line 38, column 29): " + [v.constructor.name]);
-    };
-    var handleRef = $$new({
-      path: Nil.value,
-      j: 0
-    })();
-    var fromStepToExprComponentKidIndex = function(v) {
-      return (1 + 1 | 0) + (2 * v | 0) | 0;
-    };
-    var getExprComponent = function(path0) {
-      var go2 = function(path) {
-        return function(c) {
-          if (path instanceof Nil) {
-            return pure3(c);
-          }
-          ;
-          if (path instanceof Cons) {
-            return function __do2() {
-              var kid = getKid(fromStepToExprComponentKidIndex(path.value0))(c)();
-              return go2(path.value1)(kid)();
-            };
-          }
-          ;
-          throw new Error("Failed pattern match at Ui.App (line 63, column 19 - line 67, column 25): " + [path.constructor.name]);
+  var main = /* @__PURE__ */ function() {
+    return bind3(liftEffect2($$new(Nothing.value)))(function(rootExprComponentRef) {
+      var getRootExprComponent = function __do() {
+        var v = read(rootExprComponentRef)();
+        if (v instanceof Nothing) {
+          return $$throw("getRootExprComponent: root hasn't been created yet")();
+        }
+        ;
+        if (v instanceof Just) {
+          return v.value0;
+        }
+        ;
+        throw new Error("Failed pattern match at Ui.App (line 28, column 64 - line 30, column 29): " + [v.constructor.name]);
+      };
+      return bind3(liftEffect2($$new(Nothing.value)))(function(handleRef) {
+        var fromStepToExprComponentKidIndex = function(v) {
+          return (1 + 1 | 0) + (2 * v | 0) | 0;
         };
-      };
-      return bindFlipped3(go2(path0))(getRoot);
-    };
-    var fromIndexToExprComponentKidIndex = function(v) {
-      return 1 + (2 * v | 0) | 0;
-    };
-    var getPointComponent = function(p0) {
-      var go2 = function(v) {
-        return function(c) {
-          if (v.path instanceof Nil) {
-            return getKid(fromIndexToExprComponentKidIndex(v.j))(c);
-          }
-          ;
-          if (v.path instanceof Cons) {
-            return function __do2() {
-              var kid = getKid(fromStepToExprComponentKidIndex(v.path.value0))(c)();
-              return go2({
-                path: v.path.value1,
-                j: v.j
-              })(kid)();
+        var getExprComponent = function(path0) {
+          var go2 = function(path) {
+            return function(c) {
+              if (path instanceof Nil) {
+                return pure3(c);
+              }
+              ;
+              if (path instanceof Cons) {
+                return function __do() {
+                  var kid = getKid(fromStepToExprComponentKidIndex(path.value0))(c)();
+                  return go2(path.value1)(kid)();
+                };
+              }
+              ;
+              throw new Error("Failed pattern match at Ui.App (line 55, column 19 - line 59, column 25): " + [path.constructor.name]);
             };
-          }
-          ;
-          throw new Error("Failed pattern match at Ui.App (line 53, column 24 - line 57, column 51): " + [v.path.constructor.name]);
+          };
+          return bindFlipped3(go2(path0))(getRootExprComponent);
         };
-      };
-      return bindFlipped3(go2(p0))(getRoot);
-    };
-    var onClick_PointComponent = function(v) {
-      return function __do2() {
-        (function __do3() {
-          var handle2 = read(handleRef)();
-          var c2 = getPointComponent(handle2)();
-          return removeClass("Focus")(c2)();
-        })();
-        write(v)(handleRef)();
-        var handle = read(handleRef)();
-        var c = getPointComponent(handle)();
-        return addClass("Focus")(c)();
-      };
-    };
-    var pointComponent = function(v) {
-      return newTree2({
-        name: pure12("Point"),
-        classes: ["Point"],
-        eventListeners: [{
-          eventType: "click",
-          eventListener: eventListener(function(event) {
-            return function __do2() {
-              stopPropagation(event)();
-              log3("clicked on Point: " + show4(v))();
-              return onClick_PointComponent(v)();
+        var fromIndexToExprComponentKidIndex = function(v) {
+          return 1 + (2 * v | 0) | 0;
+        };
+        var getPointComponent = function(p0) {
+          var go2 = function(v) {
+            return function(c) {
+              if (v.path instanceof Nil) {
+                return getKid(fromIndexToExprComponentKidIndex(v.j))(c);
+              }
+              ;
+              if (v.path instanceof Cons) {
+                return function __do() {
+                  var kid = getKid(fromStepToExprComponentKidIndex(v.path.value0))(c)();
+                  return go2({
+                    path: v.path.value1,
+                    j: v.j
+                  })(kid)();
+                };
+              }
+              ;
+              throw new Error("Failed pattern match at Ui.App (line 45, column 24 - line 49, column 51): " + [v.path.constructor.name]);
             };
-          }),
-          passive: true,
-          capture: false,
-          once: false
-        }]
-      })([newText2({})(" ")]);
-    };
-    var exprComponent = function(path) {
-      return function(v) {
-        return newTree2({
-          name: pure12("Expr"),
-          classes: ["Expr"],
-          eventListeners: [{
-            eventType: "click",
-            eventListener: eventListener(function(event) {
-              return function __do2() {
-                stopPropagation(event)();
-                return log3("clicked on Expr: " + show12(path))();
-              };
-            }),
-            passive: true,
-            capture: false,
-            once: false
-          }]
-        })(fold3([[newText2({
-          classes: ["Label"]
-        })(show23(v.l))], function() {
-          var $47 = $$null(v.kids);
-          if ($47) {
-            return [pointComponent({
-              path,
-              j: 0
-            })];
-          }
-          ;
-          return fold3([foldMapWithIndex2(function(i) {
-            return function(e$prime) {
-              return [pointComponent({
+          };
+          return bindFlipped3(go2(p0))(getRootExprComponent);
+        };
+        var setHandle = function(v) {
+          return function __do() {
+            (function __do2() {
+              var v1 = read(handleRef)();
+              if (v1 instanceof Nothing) {
+                return unit;
+              }
+              ;
+              if (v1 instanceof Just) {
+                var c2 = getPointComponent(v1.value0)();
+                return removeClass("Focus")(c2)();
+              }
+              ;
+              throw new Error("Failed pattern match at Ui.App (line 64, column 32 - line 68, column 44): " + [v1.constructor.name]);
+            })();
+            write(new Just(v))(handleRef)();
+            var c = getPointComponent(v)();
+            return addClass("Focus")(c)();
+          };
+        };
+        var onClick_PointComponent = function(p) {
+          return setHandle(p);
+        };
+        var pointComponent = function(v) {
+          return newTree2({
+            name: pure12("Point"),
+            classes: ["Point"],
+            eventListeners: [{
+              eventType: "click",
+              eventListener: eventListener(function(event) {
+                return function __do() {
+                  stopPropagation(event)();
+                  log3("clicked on Point: " + show4(v))();
+                  return onClick_PointComponent(v)();
+                };
+              }),
+              passive: true,
+              capture: false,
+              once: false
+            }]
+          })([newText2({})(" ")]);
+        };
+        var exprComponent = function(path) {
+          return function(v) {
+            return newTree2({
+              name: pure12("Expr"),
+              classes: ["Expr"],
+              eventListeners: [{
+                eventType: "click",
+                eventListener: eventListener(function(event) {
+                  return function __do() {
+                    stopPropagation(event)();
+                    return log3("clicked on Expr: " + show12(path))();
+                  };
+                }),
+                passive: true,
+                capture: false,
+                once: false
+              }]
+            })(fold3([[newText2({
+              classes: ["Label"]
+            })(show23(v.l))], function() {
+              var $51 = $$null(v.kids);
+              if ($51) {
+                return [pointComponent({
+                  path,
+                  j: 0
+                })];
+              }
+              ;
+              return fold3([foldMapWithIndex2(function(i) {
+                return function(e$prime) {
+                  return [pointComponent({
+                    path,
+                    j: i
+                  }), exprComponent(snoc(path)(i))(e$prime)];
+                };
+              })(v.kids), [pointComponent({
                 path,
-                j: i
-              }), exprComponent(snoc(path)(i))(e$prime)];
-            };
-          })(v.kids), [pointComponent({
-            path,
-            j: length(v.kids)
-          })]]);
-        }()]));
-      };
-    };
-    var root2 = exprComponent(Nil.value)({
-      l: Root.value,
-      kids: [example_expr(2)(2)]
-    })();
-    write(new Just(root2))(rootRef)();
-    var app = newTree2({})([pure3(root2)])();
-    return app;
-  };
-  var main = /* @__PURE__ */ discard2(bindAff)(/* @__PURE__ */ liftEffect(monadEffectAff)(/* @__PURE__ */ root([editorComponent])))(function() {
-    return pure22(unit);
-  });
+                j: length(v.kids)
+              })]]);
+            }()]));
+          };
+        };
+        return bind3(liftEffect2(exprComponent(Nil.value)({
+          l: Root.value,
+          kids: [example_expr(2)(2)]
+        })))(function(rootExprComponent) {
+          return discard22(liftEffect2(write(new Just(rootExprComponent))(rootExprComponentRef)))(function() {
+            return bind3(liftEffect2(newTree2({})([pure3(rootExprComponent)])))(function(editorComponent) {
+              return discard22(liftEffect2(root([pure3(editorComponent)])))(function() {
+                return discard22(liftEffect2(setHandle({
+                  path: Nil.value,
+                  j: 0
+                })))(function() {
+                  return pure22(unit);
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  }();
 
   // output/Ui/index.js
   var main3 = /* @__PURE__ */ launchAff_(/* @__PURE__ */ function() {
