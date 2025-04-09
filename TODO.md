@@ -32,3 +32,4 @@
     - [ ] there are some weird behaviors
 - [ ] buffer (query textbox)
 - [ ] shift-click to emulate dragging from source handle to that target point
+- [ ] refactor Editor subcomponents into different modules (and a shared Types module)
