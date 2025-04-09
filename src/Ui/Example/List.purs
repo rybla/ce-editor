@@ -75,7 +75,7 @@ main = do
     ----
 
     Component.root
-      [ controls
-      , console
+      [ pure controls
+      , pure console
       ]
 

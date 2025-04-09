@@ -7,3 +7,49 @@
   --handle-point-background-color: color-mix(in hsl, blue, transparent 30%);
   --handle-inner-background-color: color-mix(in hsl, blue, transparent 80%);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Expr */
+/* -------------------------------------------------------------------------- */
+
+.Expr {
+  padding: 0.5em;
+
+  display: Inline-flex;
+  /* display: flex; */
+  flex-direction: row;
+  /* align-items: center; */
+  justify-content: center;
+  align-items: stretch;
+
+  box-shadow: 0 0 0 1px black inset;
+
+  user-select: none;
+  cursor: pointer;
+  font-family: monospace;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Point */
+/* -------------------------------------------------------------------------- */
+
+.Point {
+  white-space: pre;
+  width: 1em;
+  /* height: 100%; */
+  background-color: transparent;
+
+  transition-property: background-color;
+  transition-duration: 0.2s;
+}
+
+.Point.Focus {
+  background-color: green;
+
+  transition-property: background-color;
+  transition-duration: 0.2s;
+}
+
+/* .Point {
+
+} */

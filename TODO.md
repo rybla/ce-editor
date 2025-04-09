@@ -33,3 +33,7 @@
 - [ ] buffer (query textbox)
 - [ ] shift-click to emulate dragging from source handle to that target point
 - [ ] refactor Editor subcomponents into different modules (and a shared Types module)
+
+## direct-dom-manipulation
+
+- [ ] need to allow for initialization stage of component (something run right after it's added to the DOM)

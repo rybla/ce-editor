@@ -129,6 +129,3 @@ isAlpha_regex = Regex.regex "^[a-zA-Z]$" mempty # fromRight' (impossible "isAlph
 
 infixr 2 implies as ==>
 
-throwException ∷ ∀ m a. MonadThrow Exception.Error m ⇒ String → m a
-throwException msg = throwError $ Exception.error msg
-

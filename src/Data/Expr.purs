@@ -94,8 +94,8 @@ data Label
 derive instance Generic Label _
 
 instance Show Label where
-  show Root = "Root"
-  show (String s) = show s
+  show Root = "$Root"
+  show (String s) = s
 
 instance Eq Label where
   eq x = genericEq x
