@@ -25,6 +25,7 @@ package:
     - transformers
     - variant
     - web-dom
+    - web-html
   test:
     main: Test.Main
     dependencies: []

@@ -28,7 +28,8 @@
             "strings",
             "transformers",
             "variant",
-            "web-dom"
+            "web-dom",
+            "web-html"
           ],
           "build_plan": [
             "aff",
@@ -127,6 +128,8 @@
             "web-dom",
             "web-events",
             "web-file",
+            "web-html",
+            "web-storage",
             "web-streams"
           ]
         },
@@ -2011,6 +2014,26 @@
         "foreign",
         "media-types",
         "web-dom"
+      ]
+    },
+    "web-html": {
+      "type": "registry",
+      "version": "4.1.0",
+      "integrity": "sha256-ByqS/h1/yG+hjCOnOQp7L1QpIWzQENNKB1kaHtpEhlE=",
+      "dependencies": [
+        "js-date",
+        "web-dom",
+        "web-file",
+        "web-storage"
+      ]
+    },
+    "web-storage": {
+      "type": "registry",
+      "version": "5.0.0",
+      "integrity": "sha256-q+6lxcnfWxus0/nDeFVtF1V+tLehZvvXQ0cduYPLksY=",
+      "dependencies": [
+        "nullable",
+        "web-events"
       ]
     },
     "web-streams": {

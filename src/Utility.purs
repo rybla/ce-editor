@@ -126,3 +126,4 @@ isAlpha_regex ∷ Regex
 isAlpha_regex = Regex.regex "^[a-zA-Z]$" mempty # fromRight' (impossible "isAlpha_regex: failure")
 
 infixr 2 implies as ==>
+
