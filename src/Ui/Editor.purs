@@ -54,8 +54,8 @@ import Web.UIEvent.MouseEvent.EventTypes as MouseEventType
 -- Editor
 --------------------------------------------------------------------------------
 
-component :: H.Component EditorQuery EditorInput EditorOutput Aff
-component = H.mkComponent { initialState, eval, render }
+editor_component :: H.Component EditorQuery EditorInput EditorOutput Aff
+editor_component = H.mkComponent { initialState, eval, render }
   where
   initialState :: EditorInput -> EditorState
   initialState editor =

@@ -18,34 +18,35 @@ import Type.Prelude (Proxy(..))
 import Ui.Common (code, span, style, text)
 import Ui.Console (Query(..), Output, component) as Console
 import Ui.Editor as Editor
+import Ui.Types as Types
 import Utility (format)
 
 --------------------------------------------------------------------------------
 
-type M' = ExceptT PlainHTML M
+type AppM' = ExceptT PlainHTML AppM
 
-type M = H.HalogenM State Action Slots Output Aff
+type AppM = H.HalogenM AppState AppAction AppSlots AppOutput Aff
 
-type State =
+type AppState =
   { editor :: Editor
   }
 
-data Action
+data AppAction
   = Initialize
   | ClickMe
-  | EditorOutput Editor.Output
+  | EditorOutput Types.EditorOutput
   | OtherAction
 
-type Slots =
-  ( "Editor" :: H.Slot Editor.Query Editor.Output Unit
+type AppSlots =
+  ( "Editor" :: H.Slot Types.EditorQuery Types.EditorOutput Unit
   , "Console" :: H.Slot Console.Query Console.Output Unit
   )
 
-type Output = Void
+type AppOutput = Void
 
 --------------------------------------------------------------------------------
 
-component ∷ ∀ query. H.Component query Editor Output Aff
+component ∷ ∀ query. H.Component query Editor AppOutput Aff
 component = H.mkComponent { initialState, eval, render }
   where
   initialState editor = { editor }
@@ -85,17 +86,17 @@ component = H.mkComponent { initialState, eval, render }
               [ HH.div [] [ HH.button [ HE.onClick $ const ClickMe ] [ text "click me!" ] ]
               ]
           ]
-      , HH.slot (Proxy @"Editor") unit Editor.component state.editor EditorOutput
+      , HH.slot (Proxy @"Editor") unit Editor.editor_component state.editor EditorOutput
       , HH.slot_ (Proxy @"Console") unit Console.component unit
       ]
 
 --------------------------------------------------------------------------------
 
-handleAction :: Action -> M' Unit
+handleAction :: AppAction -> AppM' Unit
 handleAction Initialize = do
   lift $ trace [ "App", "Initialize" ] $ text "initialize"
   pure unit
-handleAction (EditorOutput (Editor.TellConsole q)) =
+handleAction (EditorOutput (Types.TellConsole q)) =
   H.tell (Proxy @"Console") unit q # lift
 handleAction ClickMe = do
   lift $ trace [ "App", "ClickMe" ] $ HH.div []
@@ -109,6 +110,6 @@ handleAction _ =
 
 --------------------------------------------------------------------------------
 
-trace :: Array String -> PlainHTML -> M Unit
+trace :: Array String -> PlainHTML -> AppM Unit
 trace labels content = H.tell (Proxy @"Console") unit $ Console.AddMessage { labels, content }
 
