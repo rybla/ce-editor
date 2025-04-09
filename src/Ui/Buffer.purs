@@ -40,7 +40,7 @@ initialBufferStyle :: BufferInput -> BufferState
 initialBufferStyle {} = {}
 
 handleBufferQuery :: forall a. BufferQuery a -> BufferM' a
-handleBufferQuery (BufferQuery a) = pure a
+handleBufferQuery (Submit_BufferQuery a) = pure a
 
 handleBufferAction :: BufferAction -> BufferM' Unit
 handleBufferAction Initialize_BufferAction = do

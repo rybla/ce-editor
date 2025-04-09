@@ -16,14 +16,14 @@
   [
     "Expr drag drag from a Cursor Handle's Right Point to a rightward sibling Point to adjust the Cursor Handle",
     {
-      "timestamp": "1744170210381.0",
+      "timestamp": "1744205467756.0",
       "success": true
     }
   ],
   [
     "Expr drag drag from an Inner Point to an Outer Right Point to make a Zipper Handle, where the innermost span is empty",
     {
-      "timestamp": "1744170210381.0",
+      "timestamp": "1744205467756.0",
       "success": true
     }
   ],
@@ -37,7 +37,7 @@
   [
     "Expr drag drag from an Inner Right Point to an Outer Right Point to make a Zipper Handle",
     {
-      "timestamp": "1744170210381.0",
+      "timestamp": "1744205467756.0",
       "success": true
     }
   ],
@@ -219,7 +219,7 @@
   [
     "Expr move move_Point (\"B\" % (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\"))) R ([] △ .0) == (Just ([|0] △ .0))",
     {
-      "timestamp": "1744170210381.0",
+      "timestamp": "1744205467756.0",
       "success": true
     }
   ],
@@ -240,14 +240,14 @@
   [
     "Expr move move_Point (\"B\" % (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\"))) R ([|0 |0 |0] △ .0) == (Just ([|0 |0] △ .1))",
     {
-      "timestamp": "1744170210381.0",
+      "timestamp": "1744205467756.0",
       "success": true
     }
   ],
   [
     "Expr move move_Point (\"B\" % (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\"))) R ([|0 |0] △ .0) == (Just ([|0 |0 |0] △ .0))",
     {
-      "timestamp": "1744170210381.0",
+      "timestamp": "1744205467756.0",
       "success": true
     }
   ],
@@ -268,7 +268,7 @@
   [
     "Expr move move_Point (\"B\" % (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\")) (\"B\" % (\"B\" % \"L\" \"L\") (\"B\" % \"L\" \"L\"))) R ([|0] △ .0) == (Just ([|0 |0] △ .0))",
     {
-      "timestamp": "1744170210381.0",
+      "timestamp": "1744205467756.0",
       "success": true
     }
   ],
