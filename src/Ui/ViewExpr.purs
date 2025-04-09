@@ -37,28 +37,13 @@ import Web.UIEvent.MouseEvent as MouseEvent
 viewExpr_component :: H.Component ViewExprQuery ViewExprInput ViewExprOutput Aff
 viewExpr_component = H.mkComponent { initialState: initialViewExprState, eval, render }
   where
-  eval = H.mkEval H.defaultEval
-    { initialize = pure Initialize_ViewExprAction
-    , receive = pure <<< Receive_ViewExprAction
-    , handleQuery = \query -> do
-        state <- get
-        handleViewExprQuery query # runExceptT >>= case _ of
-          Left mb_err -> do
-            put state
-            case mb_err of
-              Nothing -> pure unit
-              Just err -> traceViewExprM [ "Error" ] err
-            pure none
-          Right a -> pure $ pure a
-    , handleAction = \action -> do
-        state <- get
-        handleViewExprAction action # runExceptT >>= case _ of
-          Left mb_err -> do
-            case mb_err of
-              Nothing -> pure unit
-              Just err -> traceViewExprM [ "Error" ] err
-            put state
-          Right it -> pure it
+  eval = mkEval_with_error
+    { initialize: Just Initialize_ViewExprAction
+    , handleQuery: handleViewExprQuery
+    , handleAction: handleViewExprAction
+    , receive: Just <<< Receive_ViewExprAction
+    , finalize: Nothing
+    , trace: traceViewExprM
     }
 
   render state =
@@ -112,7 +97,7 @@ handleViewExprQuery (ViewExprQuery qs_ a) = do
       i : is -> do
         let qs' = ViewExprQuery (qs <#> \(SingleViewExprQuery _ q') -> (SingleViewExprQuery is q')) unit
         H.query (Proxy @"Expr") i qs' # lift >>= case _ of
-          Nothing -> throwError none
+          Nothing -> throwError $ Ui.text $ "handleSingleViewExprQuery: no kid at " <> show i
           Just it -> pure it
   pure a
 
@@ -121,7 +106,7 @@ handleSingleViewExprQuery (SingleViewExprQuery _ (Modify_ViewExprQuery f)) = do
   modify_ f
 handleSingleViewExprQuery (SingleViewExprQuery _ (ViewPointQuery_ViewExprQuery i pq)) = do
   H.query (Proxy @"Point") i pq # lift >>= case _ of
-    Nothing -> throwError none
+    Nothing -> throwError $ Ui.text $ "handleSingleViewExprQuery: no kid at " <> show i
     Just it -> pure it
 
 handleViewExprAction :: ViewExprAction -> ViewExprM' Unit

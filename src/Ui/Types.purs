@@ -3,20 +3,24 @@ module Ui.Types where
 import Data.Expr
 import Prelude
 
-import Control.Monad.Except (ExceptT)
+import Control.Monad.Except (ExceptT, runExceptT)
+import Control.Monad.State (get, put)
 import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.List (List)
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\))
 import Editor (Editor)
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML (PlainHTML)
+import Halogen.HTML as HH
 import Ui.Common (KeyInfo)
 import Ui.Console as Console
+import Utility (todo)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 --------------------------------------------------------------------------------
@@ -142,7 +146,7 @@ data ExprInteraction
   | MidDrag_ViewExprAction MouseEvent
 
 type ViewExprHTML = H.ComponentHTML ViewExprAction ViewExprSlots ViewExprM
-type ViewExprM' = ExceptT (Maybe PlainHTML) ViewExprM
+type ViewExprM' = ExceptT PlainHTML ViewExprM
 type ViewExprM = H.HalogenM ViewExprState ViewExprAction ViewExprSlots ViewExprOutput Aff
 
 --------------------------------------------------------------------------------
@@ -189,8 +193,9 @@ data ViewPointAction
   = Initialize_ViewPointAction
   | Receive_ViewPointAction ViewPointInput
   | ViewPointInteraction_ViewPointAction ViewPointInteraction
+  | BufferOutput_ViewPointAction BufferOutput
 
-type ViewPointSlots = () :: Row Type
+type ViewPointSlots = ("Buffer" :: H.Slot BufferQuery BufferOutput Unit) :: Row Type
 
 data ViewPointOutput
   = Output_ViewPointOutput EditorOutput
@@ -201,5 +206,57 @@ data ViewPointInteraction
   | MidDrag_ViewPointInteraction MouseEvent
 
 type ViewPointHTML = H.ComponentHTML ViewPointAction ViewPointSlots ViewPointM
-type ViewPointM' = ExceptT (Maybe PlainHTML) ViewPointM
+type ViewPointM' = ExceptT PlainHTML ViewPointM
 type ViewPointM = H.HalogenM ViewPointState ViewPointAction ViewPointSlots ViewPointOutput Aff
+
+--------------------------------------------------------------------------------
+-- Buffer
+--------------------------------------------------------------------------------
+
+data BufferQuery a = UpdateQuery_BufferQuery String
+
+type BufferInput = {}
+
+data BufferOutput
+
+data BufferAction
+  = Initialize_BufferAction
+  | Receive_BufferAction BufferInput
+
+--------------------------------------------------------------------------------
+-- utilities
+--------------------------------------------------------------------------------
+
+mkEval_with_error
+  ∷ ∀ state query action slots input output m a
+  . { finalize ∷ Maybe action
+    , handleAction ∷ action -> ExceptT PlainHTML (H.HalogenM state action slots output m) Unit
+    , handleQuery ∷ ∀ a'. query a' -> ExceptT PlainHTML (H.HalogenM state action slots output m) a'
+    , initialize ∷ Maybe action
+    , receive ∷ input -> Maybe action
+    , trace :: Array String -> PlainHTML -> H.HalogenM state action slots output m Unit
+    }
+  → H.HalogenQ query action input a
+  → H.HalogenM state action slots output m a
+mkEval_with_error eval = H.mkEval
+  { initialize: eval.initialize
+  , handleQuery: \q -> do
+      state <- get
+      q # eval.handleQuery # runExceptT >>= case _ of
+        Left err -> do
+          put state
+          eval.trace [ "Error" ] err
+          pure Nothing
+        Right a -> do
+          pure (Just a)
+  , handleAction: \q -> do
+      state <- get
+      q # eval.handleAction # runExceptT >>= case _ of
+        Left err -> do
+          put state
+          eval.trace [ "Error" ] err
+        Right it -> pure it
+  , receive: eval.receive
+  , finalize: eval.finalize
+  }
+

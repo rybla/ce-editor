@@ -15,36 +15,25 @@ import Halogen as H
 import Halogen.HTML (PlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
+import Type.Prelude (Proxy(..))
+import Ui.Buffer (buffer_component)
 import Ui.Common (classes, text)
+import Ui.Common as Ui
 import Ui.Console as Console
+import Utility (todo)
 
 viewPoint_component :: H.Component ViewPointQuery ViewPointInput ViewPointOutput Aff
 viewPoint_component = H.mkComponent { initialState, eval, render }
   where
   initialState = initialViewPointStyle
 
-  eval = H.mkEval H.defaultEval
-    { initialize = pure Initialize_ViewPointAction
-    , receive = pure <<< Receive_ViewPointAction
-    , handleQuery = \query -> do
-        state <- get
-        handleViewPointQuery query # runExceptT >>= case _ of
-          Left mb_err -> do
-            put state
-            case mb_err of
-              Nothing -> pure unit
-              Just err -> traceViewPointM [ "Error" ] err
-            pure none
-          Right a -> pure $ pure a
-    , handleAction = \action -> do
-        state <- get
-        handleViewPointAction action # runExceptT >>= case _ of
-          Left mb_err -> do
-            put state
-            case mb_err of
-              Nothing -> pure unit
-              Just err -> traceViewPointM [ "Error" ] err
-          Right it -> pure it
+  eval = mkEval_with_error
+    { initialize: Just Initialize_ViewPointAction
+    , handleQuery: handleViewPointQuery
+    , handleAction: handleViewPointAction
+    , receive: Just <<< Receive_ViewPointAction
+    , finalize: Nothing
+    , trace: traceViewPointM
     }
 
   render state =
@@ -56,10 +45,10 @@ viewPoint_component = H.mkComponent { initialState, eval, render }
       , HE.onMouseDown (StartDrag_ViewPointInteraction >>> ViewPointInteraction_ViewPointAction)
       , HE.onMouseEnter (MidDrag_ViewPointInteraction >>> ViewPointInteraction_ViewPointAction)
       ]
-      [ if state.bufferEnabled then
-          text "bufferEnabled"
-        else
-          text " "
+      [ HH.div
+          [ Ui.classes [ "BufferContainer" ] ]
+          [ HH.slot (Proxy @"Buffer") unit buffer_component {} BufferOutput_ViewPointAction ]
+      , text " "
       ]
 
 initialViewPointStyle :: ViewPointInput -> ViewPointState
@@ -86,6 +75,7 @@ handleViewPointAction (Receive_ViewPointAction input) = do
     put state'
 handleViewPointAction (ViewPointInteraction_ViewPointAction pi) = do
   H.raise (ViewPointInteraction pi) # lift
+handleViewPointAction (BufferOutput_ViewPointAction o) = todo "handleViewPointAction (BufferOutput_ViewPointAction o)"
 
 --------------------------------------------------------------------------------
 

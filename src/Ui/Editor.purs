@@ -48,7 +48,7 @@ editor_component = H.mkComponent { initialState, eval, render }
         handleAction action # runExceptT >>= case _ of
           Left err -> do
             put state
-            trace [ "Error" ] err
+            traceEditorM [ "Error" ] err
           Right it -> pure it
     }
 
@@ -73,7 +73,7 @@ editor_component = H.mkComponent { initialState, eval, render }
 
 handleAction :: EditorAction -> EditorM' Unit
 handleAction Initialize = do
-  lift $ trace [ "Initialize" ] $ text "initialize"
+  lift $ traceEditorM [ "Initialize" ] $ text "initialize"
   doc <- liftEffect $ HTML.Window.document =<< HTML.window
   lift $ H.subscribe' \_sub_id -> HQE.eventListener MouseEventType.mouseup (HTMLDocument.toEventTarget doc) $ MouseEvent.fromEvent >=> \_e -> do
     pure $ EngineQuery_Action EndDrag_EngineQuery
@@ -95,6 +95,6 @@ handleAction (ViewExprOutput_Action (path /\ eo)) = case eo of
 
 --------------------------------------------------------------------------------
 
-trace :: Array String -> PlainHTML -> EditorM Unit
-trace labels content = H.raise $ TellConsole \a -> Console.AddMessage { labels: [ "Editor" ] <> labels, content } a
+traceEditorM :: Array String -> PlainHTML -> EditorM Unit
+traceEditorM labels content = H.raise $ TellConsole \a -> Console.AddMessage { labels: [ "Editor" ] <> labels, content } a
 
