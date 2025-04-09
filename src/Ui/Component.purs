@@ -18,7 +18,7 @@ import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Prim.Row (class Nub, class Union)
 import Record as Record
-import Ui.Common (getText_Element, setText_Element)
+import Ui.Common (getText_Element, htmlDoc, setText_Element)
 import Utility (fromMaybeM, throwException)
 import Web.DOM as DOM
 import Web.DOM.Document as Document
@@ -29,7 +29,7 @@ import Web.Event.EventTarget as EventTarget
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
 import Web.HTML.HTMLElement as HTMLElement
-import Web.HTML.Window as HTMLWindow
+import Web.HTML.Window as Window
 
 --------------------------------------------------------------------------------
 
@@ -79,24 +79,22 @@ type ComponentEventListener =
 
 root :: Array Component -> Effect Unit
 root kids = do
-  win <- HTML.window
-  doc <- win # HTMLWindow.document
   Component c <-
-    new (doc # HTMLDocument.toDocument)
+    new
       { name: pure "root", classes: [ "root" ] } $
       pure (kids # map pure)
-  body <- doc # HTMLDocument.body >>= fromMaybeM do throwException $ "no body"
+  body <- htmlDoc # HTMLDocument.body >>= fromMaybeM do throwException $ "no body"
   body # HTMLElement.toNode # Node.appendChild (c.element # Element.toNode)
 
 new
   ∷ ∀ (opts ∷ Row Type) (opts' ∷ Row Type)
   . Union opts ComponentOpts opts'
   ⇒ Nub opts' ComponentOpts
-  ⇒ DOM.Document
-  → Record opts
+  ⇒ Record opts
   → String \/ Array (Effect Component)
   → Effect Component
-new doc opts_ content = do
+new opts_ content = do
+  doc <- map HTMLDocument.toDocument <<< Window.document =<< HTML.window
   let
     opts = Record.merge opts_
       { name: Nothing @String
@@ -228,7 +226,7 @@ removeDescendants (Component c) = case c.kids of
 
 --------------------------------------------------------------------------------
 
-component_ex1 doc = new doc
+component_ex1 = new
   { eventListeners:
       [ { eventType: Event.EventType "click"
         , eventListener: EventTarget.eventListener \_event -> do
@@ -240,9 +238,9 @@ component_ex1 doc = new doc
       ]
   }
   ( pure
-      [ new doc {} (pure [])
-      , new doc {} (pure [])
-      , new doc {} (pure [])
+      [ new {} (pure [])
+      , new {} (pure [])
+      , new {} (pure [])
       ]
   )
 

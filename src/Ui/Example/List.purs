@@ -14,21 +14,14 @@ import Ui.Component (getKidsRef)
 import Ui.Component as Component
 import Web.Event.Event as Event
 import Web.Event.EventTarget as EventTarget
-import Web.HTML as HTML
-import Web.HTML.HTMLDocument as HTMLDocument
-import Web.HTML.Window as Window
 
 main :: Aff Unit
 main = do
   Console.log "main"
   liftEffect do
-    win <- HTML.window
-    doc <- Window.document win # map HTMLDocument.toDocument
-
-    ----
 
     console <-
-      Component.new doc
+      Component.new
         { name: pure "console"
         , attributes: Map.fromFoldable
             [ "style" /\ "margin: 1em; border: 1px solid black; padding: 1em; display: flex; flex-direction: column;" ]
@@ -36,13 +29,13 @@ main = do
         Right []
 
     controls <-
-      Component.new doc
+      Component.new
         { name: pure "console"
         , attributes: Map.fromFoldable
             [ "style" /\ "margin: 1em; border: 1px solid black; padding: 1em; display: flex; flex-direction: column;" ]
         } $
         Right
-          [ Component.new doc
+          [ Component.new
               { name: pure "button_addLog"
               , tag: "button"
               , eventListeners:
@@ -50,7 +43,7 @@ main = do
                     , eventListener: EventTarget.eventListener \_event -> do
                         n <- console # (getKidsRef >=> Ref.read >=> (Array.length >>> pure))
                         log <-
-                          Component.new doc
+                          Component.new
                             { name: pure $ "log #" <> show n }
                             $ Left ("log #" <> show n)
                         console # Component.appendKid log
@@ -61,7 +54,7 @@ main = do
                   ]
               } $
               Left "add a log to the console"
-          , Component.new doc
+          , Component.new
               { name: pure "button_addLog"
               , tag: "button"
               , eventListeners:

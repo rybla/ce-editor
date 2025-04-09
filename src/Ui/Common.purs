@@ -4,7 +4,19 @@ import Prelude
 
 import Data.String as String
 import Effect (Effect)
+import Web.DOM (Document)
 import Web.DOM as DOM
+import Web.HTML (HTMLDocument)
+import Web.HTML.HTMLDocument as HTMLDocument
+
+--------------------------------------------------------------------------------
+-- DOM
+--------------------------------------------------------------------------------
+
+foreign import htmlDoc :: HTMLDocument
+
+doc :: Document
+doc = htmlDoc # HTMLDocument.toDocument
 
 --------------------------------------------------------------------------------
 -- ConsoleMessage
