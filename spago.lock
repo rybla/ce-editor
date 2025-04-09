@@ -27,7 +27,8 @@
             "spec-node",
             "strings",
             "transformers",
-            "variant"
+            "variant",
+            "web-dom"
           ],
           "build_plan": [
             "aff",

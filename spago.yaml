@@ -24,6 +24,7 @@ package:
     - strings
     - transformers
     - variant
+    - web-dom
   test:
     main: Test.Main
     dependencies: []
