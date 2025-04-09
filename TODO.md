@@ -30,5 +30,5 @@
   - [x] move point around
   - [ ] shift+move to emulate drag
     - [ ] there are some weird behaviors
-- [ ] query textbox
+- [ ] buffer (query textbox)
 - [ ] shift-click to emulate dragging from source handle to that target point

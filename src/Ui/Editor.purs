@@ -19,6 +19,7 @@ import Data.Expr.Move (move)
 import Data.Expr.Move as Expr.Move
 import Data.Foldable (traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
@@ -137,7 +138,7 @@ handleAction (EngineOutput_Action eo) = case eo of
   Output_EngineOutput output -> H.raise output # lift
   ViewExprQuery_EngineOutput query -> H.tell (Proxy @"Expr") unit query # lift
   SetExpr_EngineOutput expr' -> modify_ _ { expr = expr' }
--- SetBufferEnabled_EngineOutput bufferEnabled' -> do
+-- SetBufferEnabled_ViewPointQuery_EngineOutput bufferEnabled' -> do
 --   todo "tell the appropriate ViewPoint to modify its bufferEnabled"
 handleAction (ViewExprOutput_Action (path /\ eo)) = case eo of
   Output_ViewExprOutput o ->
@@ -231,7 +232,7 @@ initialEngineState input =
 handleEngineQuery :: forall a. EngineQuery a -> EngineM' a
 handleEngineQuery (ExprInteraction_EngineQuery path ei a) = case ei of
   Click_ViewExprAction _event -> do
-    lift $ traceEngineM [ "Engine" ] $ text $ "got Click from Expr at " <> show "TODO: (Array.fromFoldable is)"
+    lift $ traceEngineM [ "Expr", "Click" ] $ text $ "got Click from Expr at " <> show path
     case path # List.unsnoc of
       Nothing -> pure unit -- this really shouldnt happen though...
       Just { init, last } -> do
@@ -362,7 +363,8 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       modify_ _ { clipboard = pure $ frag }
       unset_handle handle
       set_expr expr'
-      -- void $ liftAff $ Aff.delay $ Aff.Milliseconds 100.0 -- TODO: this was an attempt to see if the problem was 
+      -- TODO: this was an attempt to see if the problem was a desync of effects via raising->querying
+      -- void $ liftAff $ Aff.delay $ Aff.Milliseconds 100.0 
       set_handle $ Point_Handle $ handle # getOuterLeftPoint_Handle
     _ | KeyInfo ki # matchKeyInfo (_ == "Backspace") {} -> do
       let
@@ -387,6 +389,7 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
     -- toggle Buffer
     _ | KeyInfo ki # matchKeyInfo (_ == "Enter") { cmd: pure false } -> do
       lift $ traceEngineM [ "Buffer" ] $ text "toggle"
+      doSingleViewExprQueries =<< do modify_bufferEnabled not
     -- insert example Fragment 
     _ | Just frag <- editor.example_fragment ki.key, KeyInfo ki # matchKeyInfo isAlpha {} -> do
       lift $ traceEngineM [ "Insert" ] $ Ui.list
@@ -537,25 +540,35 @@ updateDragToPoint p = do
 -- | the expr, and then setting the new handle.
 unset_handle :: Handle -> EngineM' Unit
 unset_handle h = do
-  -- TODO: disabled buffer. 
-  toggleViewPointStyles $ toggleHandleViewPointStyles false h
+  unset_bufferEnabled
+  doSingleViewExprQueries do
+    toggleViewPointStyles $ toggleHandleViewPointStyles false h
 
 -- | Sets the handle. Assumes that the old handle has already been unset. This
 -- | is used in unsetting the old handle before updating the expr, and then
 -- | setting the new handle.
 set_handle :: Handle -> EngineM' Unit
 set_handle h = do
-  toggleViewPointStyles $ toggleHandleViewPointStyles true h
+  doSingleViewExprQueries do
+    toggleViewPointStyles $ toggleHandleViewPointStyles true h
 
 -- | Unsets the old handle and sets the new handle at the same time.
 change_handle :: Handle -> EngineM' Unit
 change_handle h = do
-  -- TODO: disabled buffer
-  vps1 <- toggleHandleViewPointStyles false <$> gets _.handle
-  modify_ _ { handle = h }
-  lift $ traceEngineM [ "Drag" ] $ Ui.span [ text "new handle: ", code (show h) ]
-  let vps2 = toggleHandleViewPointStyles true h
-  toggleViewPointStyles $ Map.unionWith forget vps1 vps2
+  unset_bufferEnabled
+  doSingleViewExprQueries =<< do
+    vps1 <- toggleHandleViewPointStyles false <$> gets _.handle
+    modify_ _ { handle = h }
+    lift $ traceEngineM [ "Drag" ] $ Ui.span [ text "new handle: ", code (show h) ]
+    let vps2 = toggleHandleViewPointStyles true h
+    pure $ toggleViewPointStyles $ Map.unionWith forget vps1 vps2
+
+--------------------------------------------------------------------------------
+
+doSingleViewExprQueries :: Array SingleViewExprQuery -> EngineM' Unit
+doSingleViewExprQueries qs = case qs # NEArray.fromArray of
+  Nothing -> pure unit
+  Just qs' -> lift $ H.raise $ ViewExprQuery_EngineOutput (ViewExprQuery qs')
 
 toggleHandleViewPointStyles :: Boolean -> Handle -> Map Point ViewPointStyle
 toggleHandleViewPointStyles active (Point_Handle p) = Map.fromFoldable [ p /\ toggleViewPointStyle active Point_ViewPointStyle ]
@@ -573,26 +586,27 @@ toggleHandleViewPointStyles active (ZipperH_Handle (ZipperH h) _focus) = case un
   where
   hp = getEndPoints_ZipperH (ZipperH h)
 
-toggleViewPointStyles :: Map Point ViewPointStyle -> EngineM' Unit
-toggleViewPointStyles xs =
-  case xs # Map.toUnfoldable # NEArray.fromArray of
-    Nothing -> pure unit
-    Just xs' ->
-      lift $ H.raise $ ViewExprQuery_EngineOutput do
-        ViewExprQuery (xs' # map (\(p /\ s) -> mkViewPointQuery_SingleViewExprQuery p $ ModifyViewPointState (_ { style = s }) unit))
+toggleViewPointStyles :: Map Point ViewPointStyle -> Array SingleViewExprQuery
+toggleViewPointStyles xs = xs
+  # mapWithIndex (\p s -> mkViewPointQuery_SingleViewExprQuery p $ SetViewPointStyle_ViewPointQuery s unit)
+  # Array.fromFoldable
 
 toggleViewPointStyle :: Boolean -> ViewPointStyle -> ViewPointStyle
 toggleViewPointStyle false = const Plain_ViewPointStyle
 toggleViewPointStyle true = identity
 
+unset_bufferEnabled :: EngineM' Unit
+unset_bufferEnabled = modify_ _ { bufferEnabled = false }
+
 modify_bufferEnabled :: (Boolean -> Boolean) -> EngineM' (Array SingleViewExprQuery)
 modify_bufferEnabled f = do
   { handle, bufferEnabled } <- get
   let bufferEnabled' = f bufferEnabled
-  if bufferEnabled == bufferEnabled' then
+  if bufferEnabled /= bufferEnabled' then do
+    modify_ _ { bufferEnabled = bufferEnabled' }
     pure $ Array.singleton
       $ mkViewPointQuery_SingleViewExprQuery (getOuterLeftPoint_Handle handle)
-      $ ModifyViewPointState (_ { bufferEnabled = bufferEnabled' }) unit
+      $ SetBufferEnabled_ViewPointQuery bufferEnabled' unit
   else
     pure []
 
@@ -692,7 +706,7 @@ viewExpr_component = H.mkComponent { initialState: initialViewExprState, eval, r
               ]
             , let
                 renderPoint i =
-                  HH.slot (Proxy @"Point") i viewPoint_Component
+                  HH.slot (Proxy @"Point") i viewPoint_component
                     {}
                     (ViewPointOutput_ViewExprAction i)
                 renderKid i e =
@@ -774,8 +788,9 @@ handleViewExprAction (ViewPointOutput_ViewExprAction i (ViewPointInteraction pi)
 -- Point
 --------------------------------------------------------------------------------
 
-data ViewPointQuery a =
-  ModifyViewPointState (ViewPointState -> ViewPointState) a
+data ViewPointQuery a
+  = SetViewPointStyle_ViewPointQuery ViewPointStyle a
+  | SetBufferEnabled_ViewPointQuery Boolean a
 
 type ViewPointInput =
   {}
@@ -828,8 +843,8 @@ type ViewPointHTML = H.ComponentHTML ViewPointAction ViewPointSlots ViewPointM
 type ViewPointM' = ExceptT (Maybe PlainHTML) ViewPointM
 type ViewPointM = H.HalogenM ViewPointState ViewPointAction ViewPointSlots ViewPointOutput Aff
 
-viewPoint_Component :: H.Component ViewPointQuery ViewPointInput ViewPointOutput Aff
-viewPoint_Component = H.mkComponent { initialState, eval, render }
+viewPoint_component :: H.Component ViewPointQuery ViewPointInput ViewPointOutput Aff
+viewPoint_component = H.mkComponent { initialState, eval, render }
   where
   initialState = initialViewPointStyle
 
@@ -866,7 +881,7 @@ viewPoint_Component = H.mkComponent { initialState, eval, render }
       , HE.onMouseDown (StartDrag_ViewPointInteraction >>> ViewPointInteraction_ViewPointAction)
       , HE.onMouseEnter (MidDrag_ViewPointInteraction >>> ViewPointInteraction_ViewPointAction)
       ]
-      [ text " " ]
+      [ text if state.bufferEnabled then "bufferEnabled" else " " ]
 
 initialViewPointStyle :: ViewPointInput -> ViewPointState
 initialViewPointStyle _input =
@@ -875,8 +890,11 @@ initialViewPointStyle _input =
   }
 
 handleViewPointQuery :: forall a. ViewPointQuery a -> ViewPointM' a
-handleViewPointQuery (ModifyViewPointState f a) = do
-  modify_ f
+handleViewPointQuery (SetViewPointStyle_ViewPointQuery style a) = do
+  modify_ _ { style = style, bufferEnabled = false }
+  pure a
+handleViewPointQuery (SetBufferEnabled_ViewPointQuery bufferEnabled a) = do
+  modify_ _ { bufferEnabled = bufferEnabled }
   pure a
 
 handleViewPointAction :: ViewPointAction -> ViewPointM' Unit
