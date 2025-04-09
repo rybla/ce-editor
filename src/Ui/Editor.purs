@@ -12,7 +12,6 @@ import Data.Array (fold)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEArray
-import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Expr.Drag (drag, getDragOrigin)
@@ -138,6 +137,8 @@ handleAction (EngineOutput_Action eo) = case eo of
   Output_EngineOutput output -> H.raise output # lift
   ViewExprQuery_EngineOutput query -> H.tell (Proxy @"Expr") unit query # lift
   SetExpr_EngineOutput expr' -> modify_ _ { expr = expr' }
+-- SetBufferEnabled_EngineOutput bufferEnabled' -> do
+--   todo "tell the appropriate ViewPoint to modify its bufferEnabled"
 handleAction (ViewExprOutput_Action (path /\ eo)) = case eo of
   Output_ViewExprOutput o ->
     H.raise o # lift
@@ -167,9 +168,9 @@ type EngineState =
   , handle :: Handle
   , history :: List Snapshot
   , future :: List Snapshot
-  , -- when dragging, this is the handle where the drag originated from
-    drag_origin_handle :: Maybe Handle
+  , drag_origin_handle :: Maybe Handle -- when dragging, this is the handle where the drag originated from
   , clipboard :: Maybe Fragment
+  , bufferEnabled :: Boolean
   }
 
 type Snapshot = { handle :: Handle, expr :: Expr }
@@ -224,6 +225,7 @@ initialEngineState input =
   , future: mempty
   , drag_origin_handle: Nothing
   , clipboard: Nothing
+  , bufferEnabled: false
   }
 
 handleEngineQuery :: forall a. EngineQuery a -> EngineM' a
@@ -382,6 +384,9 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       do
         st <- get
         lift $ traceEngineM [ "Clipboard", "Paste" ] $ Ui.code $ "handle: " <> show st.handle
+    -- toggle Buffer
+    _ | KeyInfo ki # matchKeyInfo (_ == "Enter") { cmd: pure false } -> do
+      lift $ traceEngineM [ "Buffer" ] $ text "toggle"
     -- insert example Fragment 
     _ | Just frag <- editor.example_fragment ki.key, KeyInfo ki # matchKeyInfo isAlpha {} -> do
       lift $ traceEngineM [ "Insert" ] $ Ui.list
@@ -528,14 +533,24 @@ updateDragToPoint p = do
             ]
         change_handle h'
 
+-- | Unsets the handle. This is used in unsetting the old handle before updating
+-- | the expr, and then setting the new handle.
 unset_handle :: Handle -> EngineM' Unit
-unset_handle h = toggleViewPointStyles $ toggleHandleViewPointStyles false h
+unset_handle h = do
+  -- TODO: disabled buffer. 
+  toggleViewPointStyles $ toggleHandleViewPointStyles false h
 
+-- | Sets the handle. Assumes that the old handle has already been unset. This
+-- | is used in unsetting the old handle before updating the expr, and then
+-- | setting the new handle.
 set_handle :: Handle -> EngineM' Unit
-set_handle h = toggleViewPointStyles $ toggleHandleViewPointStyles true h
+set_handle h = do
+  toggleViewPointStyles $ toggleHandleViewPointStyles true h
 
+-- | Unsets the old handle and sets the new handle at the same time.
 change_handle :: Handle -> EngineM' Unit
 change_handle h = do
+  -- TODO: disabled buffer
   vps1 <- toggleHandleViewPointStyles false <$> gets _.handle
   modify_ _ { handle = h }
   lift $ traceEngineM [ "Drag" ] $ Ui.span [ text "new handle: ", code (show h) ]
@@ -560,18 +575,26 @@ toggleHandleViewPointStyles active (ZipperH_Handle (ZipperH h) _focus) = case un
 
 toggleViewPointStyles :: Map Point ViewPointStyle -> EngineM' Unit
 toggleViewPointStyles xs =
-  lift $ H.raise $
-    ViewExprQuery_EngineOutput do
-      ViewExprQuery $
-        xs
-          # Map.toUnfoldable
-          # NonEmptyArray.fromArray
-          # fromMaybe' (impossible "toggleViewPointStyles: xs is empty")
-          # map (\(Point p /\ s) -> SingleViewExprQuery p.path $ ViewPointQuery_ViewExprQuery p.j $ ModifyViewPointState (_ { style = s }) unit)
+  case xs # Map.toUnfoldable # NEArray.fromArray of
+    Nothing -> pure unit
+    Just xs' ->
+      lift $ H.raise $ ViewExprQuery_EngineOutput do
+        ViewExprQuery (xs' # map (\(p /\ s) -> mkViewPointQuery_SingleViewExprQuery p $ ModifyViewPointState (_ { style = s }) unit))
 
 toggleViewPointStyle :: Boolean -> ViewPointStyle -> ViewPointStyle
 toggleViewPointStyle false = const Plain_ViewPointStyle
 toggleViewPointStyle true = identity
+
+modify_bufferEnabled :: (Boolean -> Boolean) -> EngineM' (Array SingleViewExprQuery)
+modify_bufferEnabled f = do
+  { handle, bufferEnabled } <- get
+  let bufferEnabled' = f bufferEnabled
+  if bufferEnabled == bufferEnabled' then
+    pure $ Array.singleton
+      $ mkViewPointQuery_SingleViewExprQuery (getOuterLeftPoint_Handle handle)
+      $ ModifyViewPointState (_ { bufferEnabled = bufferEnabled' }) unit
+  else
+    pure []
 
 --------------------------------------------------------------------------------
 -- Expr
@@ -584,6 +607,9 @@ data SingleViewExprQuery = SingleViewExprQuery Path ViewExprQuery'
 data ViewExprQuery'
   = Modify_ViewExprQuery (ViewExprState -> ViewExprState)
   | ViewPointQuery_ViewExprQuery Index (ViewPointQuery Unit)
+
+mkViewPointQuery_SingleViewExprQuery ∷ Point → ViewPointQuery Unit → SingleViewExprQuery
+mkViewPointQuery_SingleViewExprQuery (Point p) q = SingleViewExprQuery p.path $ ViewPointQuery_ViewExprQuery p.j q
 
 type ViewExprInput =
   { expr :: Expr
@@ -748,13 +774,15 @@ handleViewExprAction (ViewPointOutput_ViewExprAction i (ViewPointInteraction pi)
 -- Point
 --------------------------------------------------------------------------------
 
-data ViewPointQuery a = ModifyViewPointState (ViewPointState -> ViewPointState) a
+data ViewPointQuery a =
+  ModifyViewPointState (ViewPointState -> ViewPointState) a
 
 type ViewPointInput =
   {}
 
 type ViewPointState =
   { style :: ViewPointStyle
+  , bufferEnabled :: Boolean
   }
 
 data ViewPointStyle
@@ -843,6 +871,7 @@ viewPoint_Component = H.mkComponent { initialState, eval, render }
 initialViewPointStyle :: ViewPointInput -> ViewPointState
 initialViewPointStyle _input =
   { style: Plain_ViewPointStyle
+  , bufferEnabled: false
   }
 
 handleViewPointQuery :: forall a. ViewPointQuery a -> ViewPointM' a
