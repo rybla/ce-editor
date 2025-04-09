@@ -10,7 +10,6 @@ package:
     - effect
     - either
     - fetch
-    - halogen
     - lists
     - maybe
     - node-child-process
