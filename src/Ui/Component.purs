@@ -2,7 +2,6 @@ module Ui.Component where
 
 import Prelude
 
-import Control.Monad.Error.Class (throwError)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Either.Nested (type (\/))
@@ -15,13 +14,12 @@ import Data.String as String
 import Data.Traversable (traverse, traverse_)
 import Effect (Effect)
 import Effect.Class.Console as Console
-import Effect.Exception as Exception
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Prim.Row (class Nub, class Union)
 import Record as Record
 import Ui.Common (getText_Element, setText_Element)
-import Utility (fromMaybeM)
+import Utility (fromMaybeM, throwException)
 import Web.DOM as DOM
 import Web.DOM.Document as Document
 import Web.DOM.Element as Element
@@ -87,7 +85,7 @@ root kids = do
     new (doc # HTMLDocument.toDocument)
       { name: pure "root", classes: [ "root" ] } $
       pure (kids # map pure)
-  body <- doc # HTMLDocument.body >>= fromMaybeM do throwError $ Exception.error $ "no body"
+  body <- doc # HTMLDocument.body >>= fromMaybeM do throwException $ "no body"
   body # HTMLElement.toNode # Node.appendChild (c.element # Element.toNode)
 
 new
@@ -142,32 +140,32 @@ new doc opts_ content = do
 
 getKidsRef :: Component -> Effect (Ref (Array Component))
 getKidsRef (Component c) = case c.kids of
-  Nothing -> throwError $ Exception.error $ "getKidsRef " <> show (Component c)
+  Nothing -> throwException $ "getKidsRef " <> show (Component c)
   Just kids -> pure kids
 
 getText :: Component -> Effect String
 getText (Component c) = case c.kids of
   Nothing -> c.element # getText_Element
-  Just _ -> throwError $ Exception.error $ "getText " <> show (Component c)
+  Just _ -> throwException $ "getText " <> show (Component c)
 
 setText :: String -> Component -> Effect Unit
 setText str (Component c) = case c.kids of
   Nothing -> c.element # setText_Element str
-  Just _ -> throwError $ Exception.error $ "setText " <> show (Component c)
+  Just _ -> throwException $ "setText " <> show (Component c)
 
 addKid :: Int -> Component -> Component -> Effect Unit
 addKid i (Component c_kid) (Component c) = do
   kidsRef <- Component c # getKidsRef
   kids <- kidsRef # Ref.read
   if i < Array.length kids - 1 then do
-    Component c_kid_after <- kids Array.!! (i + 1) # fromMaybeM do throwError $ Exception.error $ "addKid " <> show i <> " " <> show (Component c)
+    Component c_kid_after <- kids Array.!! (i + 1) # fromMaybeM do throwException $ "addKid " <> show i <> " " <> show (Component c)
     -- add kid as child of this component's element
     c.element
       # Element.toNode
       # Node.insertBefore (c_kid.element # Element.toNode) (c_kid_after.element # Element.toNode)
     -- add kid to this component's kids
     kids' <- kids # Array.insertAt i (Component c_kid) # fromMaybeM do
-      throwError $ Exception.error $ "addKid " <> show i <> " " <> show (Component c)
+      throwException $ "addKid " <> show i <> " " <> show (Component c)
     kidsRef # Ref.write kids'
   else {- i == Array.length kids -}  do
     -- add kid as child of this component's element
@@ -187,7 +185,7 @@ replaceKid i adopt (Component c) = do
   kids <- kidsRef # Ref.read
   -- get kid
   Component c_kid <- kids Array.!! i # fromMaybeM do
-    throwError $ Exception.error $ "removeKid " <> show i <> " " <> show (Component c)
+    throwException $ "removeKid " <> show i <> " " <> show (Component c)
   -- kid' adopts kid's kids
   kid' <- adopt =<< (Component c_kid # (getKidsRef >=> Ref.read))
   -- remove kid's eventListeners
@@ -197,7 +195,7 @@ replaceKid i adopt (Component c) = do
   c.element # Element.toNode # Node.removeChild (c_kid.element # Element.toNode)
   -- replace kid with kid' in this component's kids
   kids' <- kids # Array.modifyAt i (const kid') # fromMaybeM do
-    throwError $ Exception.error $ "replaceKid " <> show i <> " " <> show (Component c)
+    throwException $ "replaceKid " <> show i <> " " <> show (Component c)
   kidsRef # Ref.write kids'
 
 removeKid :: Int -> Component -> Effect Unit
@@ -207,7 +205,7 @@ removeKid i (Component c) = do
   kids <- kidsRef # Ref.read
   -- get kid
   Component c_kid <- kids Array.!! i # fromMaybeM do
-    throwError $ Exception.error $ "removeKid " <> show i <> " " <> show (Component c)
+    throwException $ "removeKid " <> show i <> " " <> show (Component c)
   -- remove kid's descendants
   Component c_kid # removeDescendants
   -- remove kid's eventListeners
@@ -218,7 +216,7 @@ removeKid i (Component c) = do
   c.element # Element.toNode # Node.removeChild (c_kid.element # Element.toNode)
   -- remove kid from this component's kids
   kids' <- kids # Array.deleteAt i # fromMaybeM do
-    throwError $ Exception.error $ "replaceKid " <> show i <> " " <> show (Component c)
+    throwException $ "replaceKid " <> show i <> " " <> show (Component c)
   kidsRef # Ref.write kids'
 
 removeDescendants :: Component -> Effect Unit

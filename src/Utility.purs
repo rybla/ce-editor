@@ -2,6 +2,7 @@ module Utility where
 
 import Prelude
 
+import Control.Monad.Error.Class (class MonadThrow, throwError)
 import Control.Monad.ST.Internal as STRef
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
@@ -20,6 +21,7 @@ import Data.String.Regex (Regex)
 import Data.String.Regex as Regex
 import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
+import Effect.Exception as Exception
 import Foreign.Object as Object
 import Partial.Unsafe (unsafeCrashWith)
 import Prim.TypeError (class Warn, Text)
@@ -126,4 +128,7 @@ isAlpha_regex ∷ Regex
 isAlpha_regex = Regex.regex "^[a-zA-Z]$" mempty # fromRight' (impossible "isAlpha_regex: failure")
 
 infixr 2 implies as ==>
+
+throwException ∷ ∀ m a. MonadThrow Exception.Error m ⇒ String → m a
+throwException msg = throwError $ Exception.error msg
 
