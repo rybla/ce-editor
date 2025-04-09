@@ -80,18 +80,27 @@ type ComponentEventListener =
 root :: Array Component -> Effect Unit
 root kids = do
   Component c <-
-    new
+    newTree
       { name: pure "root", classes: [ "root" ] } $
-      pure (kids # map pure)
+      (kids # map pure)
   body <- htmlDoc # HTMLDocument.body >>= fromMaybeM do throwException $ "no body"
   body # HTMLElement.toNode # Node.appendChild (c.element # Element.toNode)
+
+data ComponentContent
+  = TreeComponentContent (Array (Effect Component))
+  | TextComponentContent String
+  | NoComponentContent
+
+newTree opts kids = new opts $ TreeComponentContent kids
+newText opts str = new opts $ TextComponentContent str
+newEmpty opts = new opts NoComponentContent
 
 new
   ∷ ∀ (opts ∷ Row Type) (opts' ∷ Row Type)
   . Union opts ComponentOpts opts'
   ⇒ Nub opts' ComponentOpts
   ⇒ Record opts
-  → String \/ Array (Effect Component)
+  → ComponentContent
   → Effect Component
 new opts_ content = do
   doc <- map HTMLDocument.toDocument <<< Window.document =<< HTML.window
@@ -119,10 +128,12 @@ new opts_ content = do
     pure { eventType: l.eventType, eventListener, capture: l.capture }
   -- kids
   kids' <- case content of
-    Left str -> do
+    NoComponentContent ->
+      pure Nothing
+    TextComponentContent str -> do
       Node.setTextContent str (e # Element.toNode)
       pure Nothing
-    Right es_kids -> do
+    TreeComponentContent es_kids -> do
       cs_kids <- es_kids # traverse \m_kid -> do
         Component c_kid <- m_kid
         e # Element.toNode # Node.appendChild (c_kid.element # Element.toNode)
@@ -226,21 +237,20 @@ removeDescendants (Component c) = case c.kids of
 
 --------------------------------------------------------------------------------
 
-component_ex1 = new
-  { eventListeners:
-      [ { eventType: Event.EventType "click"
-        , eventListener: EventTarget.eventListener \_event -> do
-            pure unit
-        , capture: false
-        , once: false
-        , passive: false
-        }
-      ]
-  }
-  ( pure
-      [ new {} (pure [])
-      , new {} (pure [])
-      , new {} (pure [])
-      ]
-  )
+component_ex1 =
+  newTree
+    { eventListeners:
+        [ { eventType: Event.EventType "click"
+          , eventListener: EventTarget.eventListener \_event -> do
+              pure unit
+          , capture: false
+          , once: false
+          , passive: false
+          }
+        ]
+    }
+    [ newTree {} []
+    , newTree {} []
+    , newTree {} []
+    ]
 

@@ -1,3 +1,5 @@
+-- | Importing this module means you **must** be in the browser environment
+-- | (since the Javascript value `document` must be defined).
 module Ui.Common where
 
 import Prelude
