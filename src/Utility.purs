@@ -9,6 +9,7 @@ import Data.Array.NonEmpty as NEArray
 import Data.Array.ST as STArray
 import Data.Either (fromRight')
 import Data.FoldableWithIndex (traverseWithIndex_)
+import Data.HeytingAlgebra (implies)
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Map (Map)
@@ -124,3 +125,4 @@ isAlpha = Regex.test isAlpha_regex
 isAlpha_regex ∷ Regex
 isAlpha_regex = Regex.regex "^[a-zA-Z]$" mempty # fromRight' (impossible "isAlpha_regex: failure")
 
+infixr 2 implies as ==>

@@ -5,8 +5,7 @@ import Prelude
 import Control.Alternative (guard)
 import Control.Monad.Writer (Writer, execWriter)
 import Data.Array as Array
-import Data.Foldable (all, and, intercalate)
-import Data.HeytingAlgebra (implies)
+import Data.Foldable (and, intercalate)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
 import Effect (Effect)
@@ -21,9 +20,7 @@ import Web.UIEvent.KeyboardEvent (KeyboardEvent)
 import Web.UIEvent.KeyboardEvent as KeyboardEvent
 
 --------------------------------------------------------------------------------
-
-infixr 2 implies as ==>
-
+-- Utilities
 --------------------------------------------------------------------------------
 
 span kids = HH.span [] kids

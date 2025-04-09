@@ -1,36 +1,32 @@
 module Ui.Editor where
 
-import Data.Expr
+import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Label(..), Point(..), Span(..), SpanFocus(..), SpanH(..), Step(..), Zipper(..), ZipperFocus(..), ZipperH(..), atPoint, atSpan, atZipper, fromNePath, getEndPoints_SpanH, getEndPoints_ZipperH, getIndexesAroundStep, getOuterLeftPoint_Handle, getPath_SpanContext, getStepsAroundIndex, getTotalInnerPath_ZipperH, offset_Span, offset_inner_Zipper, unSpanContext, unZipper, (%))
+import Ui.Types (EditorAction(..), EditorInput, EditorM, EditorM', EditorOutput(..), EditorQuery, EditorState, EngineAction(..), EngineInput, EngineM, EngineM', EngineOutput(..), EngineQuery(..), EngineState, ExprInteraction(..), SingleViewExprQuery(..), ViewExprAction(..), ViewExprInput, ViewExprM, ViewExprM', ViewExprOutput, ViewExprOutput'(..), ViewExprQuery(..), ViewExprQuery'(..), ViewExprState, ViewPointAction(..), ViewPointInput, ViewPointInteraction(..), ViewPointM, ViewPointM', ViewPointOutput(..), ViewPointQuery(..), ViewPointState, ViewPointStyle(..), mkViewPointQuery_SingleViewExprQuery)
 import Prelude
 
 import Control.Monad.Error.Class (throwError)
-import Control.Monad.Except (ExceptT, runExceptT)
+import Control.Monad.Except (runExceptT)
 import Control.Monad.State (get, gets, modify_, put)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (tell)
 import Data.Array (fold)
 import Data.Array as Array
-import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEArray
 import Data.Either (Either(..))
-import Data.Eq.Generic (genericEq)
 import Data.Expr.Drag (drag, getDragOrigin)
 import Data.Expr.Move (move)
 import Data.Expr.Move as Expr.Move
 import Data.Foldable (traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.FunctorWithIndex (mapWithIndex)
-import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested (type (/\), (/\))
+import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor (Editor)
 import Effect.Aff (Aff)
 import Halogen (liftEffect)
 import Halogen as H
@@ -51,7 +47,6 @@ import Web.HTML.Window as HTML.Window
 import Web.HTML.Window as Window
 import Web.UIEvent.KeyboardEvent as KeyboardEvent
 import Web.UIEvent.KeyboardEvent.EventTypes as KeyboardEvent.EventType
-import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
 import Web.UIEvent.MouseEvent.EventTypes as MouseEventType
 
@@ -59,37 +54,10 @@ import Web.UIEvent.MouseEvent.EventTypes as MouseEventType
 -- Editor
 --------------------------------------------------------------------------------
 
-data Query a = OtherQuery a
-
-type Input = Editor
-
-type State =
-  { editor :: Editor
-  , expr :: Expr
-  , max_history_length :: Int
-  }
-
-data Action
-  = Initialize
-  | ViewExprOutput_Action ViewExprOutput
-  | EngineOutput_Action EngineOutput
-  | EngineQuery_Action (forall a. a -> EngineQuery a)
-
-type Slots =
-  ( "Engine" :: H.Slot EngineQuery EngineOutput Unit
-  , "Expr" :: H.Slot ViewExprQuery ViewExprOutput Unit
-  )
-
-data Output = TellConsole (forall a. a -> Console.Query a)
-
-type M' = ExceptT PlainHTML M
-type M = H.HalogenM State Action Slots Output Aff
-type Html = H.ComponentHTML Action Slots M
-
-component :: H.Component Query Input Output Aff
+component :: H.Component EditorQuery EditorInput EditorOutput Aff
 component = H.mkComponent { initialState, eval, render }
   where
-  initialState :: Input -> State
+  initialState :: EditorInput -> EditorState
   initialState editor =
     { editor
     , expr: Root % editor.initial_exprs
@@ -126,7 +94,7 @@ component = H.mkComponent { initialState, eval, render }
           ViewExprOutput_Action
       ]
 
-handleAction :: Action -> M' Unit
+handleAction :: EditorAction -> EditorM' Unit
 handleAction Initialize = do
   lift $ trace [ "Initialize" ] $ text "initialize"
   doc <- liftEffect $ HTML.Window.document =<< HTML.window
@@ -151,46 +119,6 @@ handleAction (ViewExprOutput_Action (path /\ eo)) = case eo of
 --------------------------------------------------------------------------------
 -- Engine
 --------------------------------------------------------------------------------
-
-data EngineQuery a
-  = ExprInteraction_EngineQuery Path ExprInteraction a
-  | ViewPointInteraction_EngineQuery Point ViewPointInteraction a
-  | EndDrag_EngineQuery a
-
-type EngineInput =
-  { editor :: Editor
-  , expr :: Expr
-  , handle :: Handle
-  }
-
-type EngineState =
-  { editor :: Editor
-  , expr :: Expr
-  , handle :: Handle
-  , history :: List Snapshot
-  , future :: List Snapshot
-  , drag_origin_handle :: Maybe Handle -- when dragging, this is the handle where the drag originated from
-  , clipboard :: Maybe Fragment
-  , bufferEnabled :: Boolean
-  }
-
-type Snapshot = { handle :: Handle, expr :: Expr }
-
-data EngineAction
-  = Initialize_EngineAction
-  | Receive_EngineAction EngineInput
-  | Keyboard_EngineAction KeyInfo
-
-type EngineSlots = () :: Row Type
-
-data EngineOutput
-  = Output_EngineOutput Output
-  | ViewExprQuery_EngineOutput (forall a. a -> ViewExprQuery a)
-  | SetExpr_EngineOutput Expr
-
-type EngineHTML = H.ComponentHTML EngineAction EngineSlots EngineM
-type EngineM' = ExceptT PlainHTML EngineM
-type EngineM = H.HalogenM EngineState EngineAction EngineSlots EngineOutput Aff
 
 engine_component :: H.Component EngineQuery EngineInput EngineOutput Aff
 engine_component = H.mkComponent { initialState: initialEngineState, eval, render }
@@ -614,53 +542,6 @@ modify_bufferEnabled f = do
 -- Expr
 --------------------------------------------------------------------------------
 
-data ViewExprQuery a = ViewExprQuery (NonEmptyArray SingleViewExprQuery) a
-
-data SingleViewExprQuery = SingleViewExprQuery Path ViewExprQuery'
-
-data ViewExprQuery'
-  = Modify_ViewExprQuery (ViewExprState -> ViewExprState)
-  | ViewPointQuery_ViewExprQuery Index (ViewPointQuery Unit)
-
-mkViewPointQuery_SingleViewExprQuery ∷ Point → ViewPointQuery Unit → SingleViewExprQuery
-mkViewPointQuery_SingleViewExprQuery (Point p) q = SingleViewExprQuery p.path $ ViewPointQuery_ViewExprQuery p.j q
-
-type ViewExprInput =
-  { expr :: Expr
-  }
-
-type ViewExprState =
-  { expr :: Expr
-  }
-
-data ViewExprAction
-  = Initialize_ViewExprAction
-  | Receive_ViewExprAction ViewExprInput
-  | ViewExprOutput_ViewExprAction Step ViewExprOutput
-  | ExprInteraction_ViewExprAction ExprInteraction
-  | ViewPointOutput_ViewExprAction Index ViewPointOutput
-
-type ViewExprSlots =
-  ( "Expr" :: H.Slot ViewExprQuery ViewExprOutput Step
-  , "Point" :: H.Slot ViewPointQuery ViewPointOutput Index
-  )
-
-type ViewExprOutput = Path /\ ViewExprOutput'
-
-data ViewExprOutput'
-  = Output_ViewExprOutput Output
-  | ExprInteraction ExprInteraction
-  | ViewPointInteraction_ViewExprOutput Index ViewPointInteraction
-
-data ExprInteraction
-  = Click_ViewExprAction MouseEvent
-  | StartDrag_ViewExprAction MouseEvent
-  | MidDrag_ViewExprAction MouseEvent
-
-type ViewExprHTML = H.ComponentHTML ViewExprAction ViewExprSlots ViewExprM
-type ViewExprM' = ExceptT (Maybe PlainHTML) ViewExprM
-type ViewExprM = H.HalogenM ViewExprState ViewExprAction ViewExprSlots ViewExprOutput Aff
-
 viewExpr_component :: H.Component ViewExprQuery ViewExprInput ViewExprOutput Aff
 viewExpr_component = H.mkComponent { initialState: initialViewExprState, eval, render }
   where
@@ -788,61 +669,6 @@ handleViewExprAction (ViewPointOutput_ViewExprAction i (ViewPointInteraction pi)
 -- Point
 --------------------------------------------------------------------------------
 
-data ViewPointQuery a
-  = SetViewPointStyle_ViewPointQuery ViewPointStyle a
-  | SetBufferEnabled_ViewPointQuery Boolean a
-
-type ViewPointInput =
-  {}
-
-type ViewPointState =
-  { style :: ViewPointStyle
-  , bufferEnabled :: Boolean
-  }
-
-data ViewPointStyle
-  = Plain_ViewPointStyle
-  | Point_ViewPointStyle
-  | Span_Left_ViewPointStyle
-  | Span_Right_ViewPointStyle
-  | Zipper_OuterLeft_ViewPointStyle
-  | Zipper_InnerLeft_ViewPointStyle
-  | Zipper_InnerRight_ViewPointStyle
-  | Zipper_OuterRight_ViewPointStyle
-  | Zipper_Inline_InnerLeft_And_InnerRight_ViewPointStyle
-  | Zipper_Inline_OuterLeft_And_InnerLeft_ViewPointStyle
-  | Zipper_Inline_InnerRight_And_OuterRight_ViewPointStyle
-  | Zipper_OuterLeft_And_InnerLeft_ViewPointStyle
-  | Zipper_InnerRight_And_OuterRight_ViewPointStyle
-  | Zipper_InnerLeft_And_InnerRight_ViewPointStyle
-
-derive instance Generic ViewPointStyle _
-
-instance Show ViewPointStyle where
-  show x = genericShow x
-
-instance Eq ViewPointStyle where
-  eq x = genericEq x
-
-data ViewPointAction
-  = Initialize_ViewPointAction
-  | Receive_ViewPointAction ViewPointInput
-  | ViewPointInteraction_ViewPointAction ViewPointInteraction
-
-type ViewPointSlots = () :: Row Type
-
-data ViewPointOutput
-  = Output_ViewPointOutput Output
-  | ViewPointInteraction ViewPointInteraction
-
-data ViewPointInteraction
-  = StartDrag_ViewPointInteraction MouseEvent
-  | MidDrag_ViewPointInteraction MouseEvent
-
-type ViewPointHTML = H.ComponentHTML ViewPointAction ViewPointSlots ViewPointM
-type ViewPointM' = ExceptT (Maybe PlainHTML) ViewPointM
-type ViewPointM = H.HalogenM ViewPointState ViewPointAction ViewPointSlots ViewPointOutput Aff
-
 viewPoint_component :: H.Component ViewPointQuery ViewPointInput ViewPointOutput Aff
 viewPoint_component = H.mkComponent { initialState, eval, render }
   where
@@ -914,7 +740,7 @@ handleViewPointAction (ViewPointInteraction_ViewPointAction pi) = do
 
 --------------------------------------------------------------------------------
 
-trace :: Array String -> PlainHTML -> M Unit
+trace :: Array String -> PlainHTML -> EditorM Unit
 trace labels content = H.raise $ TellConsole \a -> Console.AddMessage { labels: [ "Editor" ] <> labels, content } a
 
 traceEngineM :: Array String -> PlainHTML -> EngineM Unit
