@@ -62,6 +62,7 @@ data EngineQuery a
   = ExprInteraction_EngineQuery Path ExprInteraction a
   | ViewPointInteraction_EngineQuery Point ViewPointInteraction a
   | EndDrag_EngineQuery a
+  | BufferOutput_EngineQuery BufferOutput' a
 
 type EngineInput =
   { editor :: Editor
@@ -133,7 +134,9 @@ type ViewExprSlots =
   , "Point" :: H.Slot ViewPointQuery ViewPointOutput Index
   )
 
-type ViewExprOutput = Path /\ ViewExprOutput'
+data ViewExprOutput
+  = ViewExprOutput (Path /\ ViewExprOutput')
+  | BufferOutput_ViewExprOutput BufferOutput'
 
 data ViewExprOutput'
   = Output_ViewExprOutput EditorOutput
@@ -200,6 +203,7 @@ type ViewPointSlots = ("Buffer" :: H.Slot BufferQuery BufferOutput Unit) :: Row 
 data ViewPointOutput
   = Output_ViewPointOutput EditorOutput
   | ViewPointInteraction ViewPointInteraction
+  | BufferOutput_ViewPointOutput BufferOutput'
 
 data ViewPointInteraction
   = StartDrag_ViewPointInteraction MouseEvent
@@ -213,15 +217,27 @@ type ViewPointM = H.HalogenM ViewPointState ViewPointAction ViewPointSlots ViewP
 -- Buffer
 --------------------------------------------------------------------------------
 
-data BufferQuery a = UpdateQuery_BufferQuery String
+data BufferQuery a = Submit_BufferQuery a
 
 type BufferInput = {}
 
+type BufferState = {}
+
 data BufferOutput
+  = EditorOutput_BufferOutput EditorOutput
+  | BufferOutput BufferOutput'
+
+data BufferOutput' = UpdateQuery_BufferOutput String
 
 data BufferAction
   = Initialize_BufferAction
   | Receive_BufferAction BufferInput
+
+type BufferSlots = () :: Row Type
+
+type BufferHTML = H.ComponentHTML BufferAction BufferSlots BufferM
+type BufferM' = ExceptT PlainHTML BufferM
+type BufferM = H.HalogenM BufferState BufferAction BufferSlots BufferOutput Aff
 
 --------------------------------------------------------------------------------
 -- utilities

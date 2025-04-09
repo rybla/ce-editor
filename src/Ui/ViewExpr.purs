@@ -5,20 +5,17 @@ import Prelude
 import Ui.Types
 
 import Control.Monad.Error.Class (throwError)
-import Control.Monad.Except (runExceptT)
 import Control.Monad.State (get, modify_, put)
 import Control.Monad.Trans.Class (lift)
 import Data.Array (fold)
 import Data.Array as Array
 import Data.Array.NonEmpty as NEArray
-import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Data.Unfoldable (none)
 import Effect.Aff (Aff)
 import Halogen (liftEffect)
 import Halogen as H
@@ -110,8 +107,10 @@ handleSingleViewExprQuery (SingleViewExprQuery _ (ViewPointQuery_ViewExprQuery i
     Just it -> pure it
 
 handleViewExprAction :: ViewExprAction -> ViewExprM' Unit
-handleViewExprAction Initialize_ViewExprAction = pure unit
+handleViewExprAction Initialize_ViewExprAction = do
+  lift $ traceViewExprM [ "Initialize" ] $ text "initialize"
 handleViewExprAction (Receive_ViewExprAction input) = do
+  lift $ traceViewExprM [ "Receive" ] $ text "receive"
   state <- get
   let state' = initialViewExprState input
   when (state /= state') do
@@ -122,28 +121,26 @@ handleViewExprAction (Receive_ViewExprAction input) = do
           ]
       ]
     put state'
-    pure unit
 -- kid Expr stuff
-handleViewExprAction (ViewExprOutput_ViewExprAction i (is /\ o)) = do
-  H.raise ((i : is) /\ o) # lift
+handleViewExprAction (ViewExprOutput_ViewExprAction i (ViewExprOutput (is /\ o))) = lift $ H.raise $ ViewExprOutput ((i : is) /\ o)
 handleViewExprAction (ExprInteraction_ViewExprAction ei) = do
   case ei of
-    Click_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-    StartDrag_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-    MidDrag_ViewExprAction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-  H.raise (Nil /\ ExprInteraction ei) # lift
-  pure unit
+    Click_ViewExprAction event -> liftEffect $ event # MouseEvent.toEvent # Event.stopPropagation
+    StartDrag_ViewExprAction event -> liftEffect $ event # MouseEvent.toEvent # Event.stopPropagation
+    MidDrag_ViewExprAction event -> liftEffect $ event # MouseEvent.toEvent # Event.stopPropagation
+  lift $ H.raise $ ViewExprOutput (Nil /\ ExprInteraction ei)
 -- Point stuff
-handleViewExprAction (ViewPointOutput_ViewExprAction _i (Output_ViewPointOutput o)) =
-  H.raise (Nil /\ Output_ViewExprOutput o) # lift
+handleViewExprAction (ViewPointOutput_ViewExprAction _i (Output_ViewPointOutput o)) = lift $ H.raise $ ViewExprOutput (Nil /\ Output_ViewExprOutput o)
 handleViewExprAction (ViewPointOutput_ViewExprAction i (ViewPointInteraction pi)) = do
   case pi of
-    StartDrag_ViewPointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-    MidDrag_ViewPointInteraction event -> event # MouseEvent.toEvent # Event.stopPropagation # liftEffect
-  H.raise (Nil /\ ViewPointInteraction_ViewExprOutput i pi) # lift
+    StartDrag_ViewPointInteraction event -> liftEffect $ event # MouseEvent.toEvent # Event.stopPropagation
+    MidDrag_ViewPointInteraction event -> liftEffect $ event # MouseEvent.toEvent # Event.stopPropagation
+  lift $ H.raise $ ViewExprOutput (Nil /\ ViewPointInteraction_ViewExprOutput i pi)
+handleViewExprAction (ViewExprOutput_ViewExprAction _ (BufferOutput_ViewExprOutput o)) = lift $ H.raise $ BufferOutput_ViewExprOutput o
+handleViewExprAction (ViewPointOutput_ViewExprAction _ (BufferOutput_ViewPointOutput o)) = lift $ H.raise $ BufferOutput_ViewExprOutput o
 
 --------------------------------------------------------------------------------
 
 traceViewExprM :: Array String -> PlainHTML -> ViewExprM Unit
-traceViewExprM labels content = H.raise $ Tuple Nil $ Output_ViewExprOutput $ TellConsole \a -> Console.AddMessage { labels: [ "ViewExpr" ] <> labels, content } a
+traceViewExprM labels content = H.raise $ ViewExprOutput $ Tuple Nil $ Output_ViewExprOutput $ TellConsole \a -> Console.AddMessage { labels: [ "ViewExpr" ] <> labels, content } a
 

@@ -4,20 +4,16 @@ import Data.Expr
 import Ui.Types
 import Prelude
 
-import Control.Monad.Error.Class (throwError)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.State (get, gets, modify_, put)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (tell)
-import Data.Array (fold)
 import Data.Array as Array
 import Data.Array.NonEmpty as NEArray
 import Data.Either (Either(..))
 import Data.Expr.Drag (drag, getDragOrigin)
 import Data.Expr.Move (move)
 import Data.Expr.Move as Expr.Move
-import Data.Foldable (traverse_)
-import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..), (:))
 import Data.List as List
@@ -32,23 +28,16 @@ import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML (PlainHTML)
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
-import Type.Prelude (Proxy(..))
-import Ui.Common (KeyInfo(..), classes, code, column, fromKeyboardEventToKeyInfo, list, matchKeyInfo, matchMapKeyInfo, style, text)
+import Ui.Common (KeyInfo(..), code, column, fromKeyboardEventToKeyInfo, list, matchKeyInfo, matchMapKeyInfo, style, text)
 import Ui.Common as Ui
 import Ui.Console as Console
-import Utility (forget, isAlpha, sortEquivalenceClasses, todo)
-import Web.Event.Event as Event
+import Utility (forget, isAlpha, todo)
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
-import Web.HTML.Window as HTML.Window
 import Web.HTML.Window as Window
 import Web.UIEvent.KeyboardEvent as KeyboardEvent
 import Web.UIEvent.KeyboardEvent.EventTypes as KeyboardEvent.EventType
-import Web.UIEvent.MouseEvent as MouseEvent
-import Web.UIEvent.MouseEvent.EventTypes as MouseEventType
 
 engine_component :: H.Component EngineQuery EngineInput EngineOutput Aff
 engine_component = H.mkComponent { initialState: initialEngineState, eval, render }
@@ -136,6 +125,13 @@ handleEngineQuery (EndDrag_EngineQuery a) = do
   modify_ _ { drag_origin_handle = Nothing }
   pure a
 
+handleEngineQuery (BufferOutput_EngineQuery o a) = do
+  case o of
+    UpdateQuery_BufferOutput str -> do
+      lift $ traceEngineM [ "Buffer" ] $ code $ "str = " <> show str
+      pure unit -- TODO
+  pure a
+
 handleEngineAction :: EngineAction -> EngineM' Unit
 handleEngineAction Initialize_EngineAction = do
   lift $ traceEngineM [ "Initialize" ] $ text "initialize"
@@ -161,8 +157,31 @@ handleEngineAction (Receive_EngineAction input) = do
       }
 handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
   lift $ traceEngineM [ "Keyboard" ] $ text $ "key: " <> show ki
-  { handle, clipboard, expr, editor } <- get
+  { handle, clipboard, expr, editor, bufferEnabled } <- get
   case unit of
+
+    -- when bufferEnabled
+
+    _ | bufferEnabled -> case unit of
+
+      _ | KeyInfo ki # matchKeyInfo (_ == "Escape") { cmd: pure false } -> do
+        lift $ traceEngineM [ "Buffer" ] $ text "disable"
+        doSingleViewExprQueries =<< do modify_bufferEnabled not
+
+      _ | KeyInfo ki # matchKeyInfo (_ == "Enter") { cmd: pure false } -> do
+        lift $ traceEngineM [ "Buffer" ] $ text "submit"
+        -- send Submit_BufferQuery query through ViewExpr and ViewPoint (need to modify types and add propagations)
+        -- lift $ H.tell ?a
+        pure unit
+
+      _ -> pure unit
+
+    -- when not bufferEnabled
+
+    -- enable buffer
+    _ | KeyInfo ki # matchKeyInfo (_ == "Enter") { cmd: pure false } -> do
+      lift $ traceEngineM [ "Buffer" ] $ text "enable"
+      doSingleViewExprQueries =<< do modify_bufferEnabled not
     -- move
     _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false } -> do
       case handle # move expr dir of
@@ -244,10 +263,6 @@ handleEngineAction (Keyboard_EngineAction (KeyInfo ki)) = do
       do
         st <- get
         lift $ traceEngineM [ "Clipboard", "Paste" ] $ Ui.code $ "handle: " <> show st.handle
-    -- toggle Buffer
-    _ | KeyInfo ki # matchKeyInfo (_ == "Enter") { cmd: pure false } -> do
-      lift $ traceEngineM [ "Buffer" ] $ text "toggle"
-      doSingleViewExprQueries =<< do modify_bufferEnabled not
     -- insert example Fragment 
     _ | Just frag <- editor.example_fragment ki.key, KeyInfo ki # matchKeyInfo isAlpha {} -> do
       lift $ traceEngineM [ "Insert" ] $ Ui.list

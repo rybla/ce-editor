@@ -44,8 +44,9 @@ disabledMessageLabelRegexes = map (\s -> Regex.regex ("^" <> s <> "( / [^/]*)*$"
   , "Engine / Drag"
   , "Engine / Snapshot"
   , "Engine / Insert"
-  , "ViewExpr"
   , "Engine / Move"
+  , "ViewExpr"
+  , "ViewPoint"
   ]
 
 component ∷ forall input output. H.Component Query input output Aff

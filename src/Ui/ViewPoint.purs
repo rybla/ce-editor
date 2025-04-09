@@ -3,13 +3,11 @@ module Ui.ViewPoint where
 import Prelude
 import Ui.Types
 
-import Control.Monad.Except (runExceptT)
 import Control.Monad.State (get, modify_, put)
 import Control.Monad.Trans.Class (lift)
 import Data.Array (fold)
-import Data.Either (Either(..))
+import Data.Array as Array
 import Data.Maybe (Maybe(..))
-import Data.Unfoldable (none)
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML (PlainHTML)
@@ -20,7 +18,6 @@ import Ui.Buffer (buffer_component)
 import Ui.Common (classes, text)
 import Ui.Common as Ui
 import Ui.Console as Console
-import Utility (todo)
 
 viewPoint_component :: H.Component ViewPointQuery ViewPointInput ViewPointOutput Aff
 viewPoint_component = H.mkComponent { initialState, eval, render }
@@ -44,11 +41,14 @@ viewPoint_component = H.mkComponent { initialState, eval, render }
           ]
       , HE.onMouseDown (StartDrag_ViewPointInteraction >>> ViewPointInteraction_ViewPointAction)
       , HE.onMouseEnter (MidDrag_ViewPointInteraction >>> ViewPointInteraction_ViewPointAction)
-      ]
-      [ HH.div
-          [ Ui.classes [ "BufferContainer" ] ]
-          [ HH.slot (Proxy @"Buffer") unit buffer_component {} BufferOutput_ViewPointAction ]
-      , text " "
+      ] $ Array.fold
+      [ if not state.bufferEnabled then []
+        else
+          [ HH.div
+              [ Ui.classes [ "BufferContainer" ] ]
+              [ HH.slot (Proxy @"Buffer") unit buffer_component {} BufferOutput_ViewPointAction ]
+          ]
+      , [ text " " ]
       ]
 
 initialViewPointStyle :: ViewPointInput -> ViewPointState
@@ -74,8 +74,11 @@ handleViewPointAction (Receive_ViewPointAction input) = do
   when (state' /= state) do
     put state'
 handleViewPointAction (ViewPointInteraction_ViewPointAction pi) = do
-  H.raise (ViewPointInteraction pi) # lift
-handleViewPointAction (BufferOutput_ViewPointAction o) = todo "handleViewPointAction (BufferOutput_ViewPointAction o)"
+  lift $ H.raise $ ViewPointInteraction pi
+handleViewPointAction (BufferOutput_ViewPointAction o) = do
+  case o of
+    EditorOutput_BufferOutput o -> lift $ H.raise $ Output_ViewPointOutput o
+    BufferOutput o -> lift $ H.raise $ BufferOutput_ViewPointOutput o
 
 --------------------------------------------------------------------------------
 

@@ -83,15 +83,15 @@ handleAction (EngineOutput_Action eo) = case eo of
   Output_EngineOutput output -> H.raise output # lift
   ViewExprQuery_EngineOutput query -> H.tell (Proxy @"Expr") unit query # lift
   SetExpr_EngineOutput expr' -> modify_ _ { expr = expr' }
--- SetBufferEnabled_ViewPointQuery_EngineOutput bufferEnabled' -> do
---   todo "tell the appropriate ViewPoint to modify its bufferEnabled"
-handleAction (ViewExprOutput_Action (path /\ eo)) = case eo of
+handleAction (ViewExprOutput_Action (ViewExprOutput (path /\ eo))) = case eo of
   Output_ViewExprOutput o ->
     H.raise o # lift
   ExprInteraction pi -> do
-    lift $ H.tell (Proxy @"Engine") unit (ExprInteraction_EngineQuery path pi)
+    lift $ H.tell (Proxy @"Engine") unit $ ExprInteraction_EngineQuery path pi
   ViewPointInteraction_ViewExprOutput j pi ->
-    lift $ H.tell (Proxy @"Engine") unit (ViewPointInteraction_EngineQuery (Point { path, j }) pi)
+    lift $ H.tell (Proxy @"Engine") unit $ ViewPointInteraction_EngineQuery (Point { path, j }) pi
+handleAction (ViewExprOutput_Action (BufferOutput_ViewExprOutput o)) = do
+  lift $ H.tell (Proxy @"Engine") unit $ BufferOutput_EngineQuery o
 
 --------------------------------------------------------------------------------
 
