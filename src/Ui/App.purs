@@ -12,6 +12,7 @@ import Editor.Example.Editor1 (example_expr)
 import Effect (Effect)
 import Effect.Class.Console as Console
 import Effect.Exception (throw)
+import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Ui.Component (Component)
 import Ui.Component as Component
@@ -19,17 +20,26 @@ import Web.Event.Event (EventType(..))
 import Web.Event.Event as Event
 import Web.Event.EventTarget as EventTarget
 
+type State =
+  { rootExprComponent :: Ref (Maybe Component)
+  , handle :: Ref (Maybe Point)
+  }
+
 main :: Effect Unit
 main = do
-  -- rootExprComponentRef
-  rootExprComponentRef <- Ref.new $ Nothing @Component
+
+  state :: State <- do
+    rootExprComponent <- Ref.new $ Nothing @Component
+    handle <- Ref.new $ Nothing
+    pure
+      { rootExprComponent
+      , handle
+      }
+
   let
-    getRootExprComponent = rootExprComponentRef # Ref.read >>= case _ of
+    getRootExprComponent = state.rootExprComponent # Ref.read >>= case _ of
       Nothing -> throw "getRootExprComponent: root hasn't been created yet"
       Just root -> pure root
-
-  -- handleRef
-  handleRef <- Ref.new $ Nothing
 
   let
     getExprComponent :: Path -> Effect Component
@@ -55,13 +65,13 @@ main = do
     setHandle :: Point -> Effect Unit
     setHandle (Point p) = do
       -- deactivate old handle
-      handleRef # Ref.read >>= case _ of
+      state.handle # Ref.read >>= case _ of
         Nothing -> pure unit
         Just handle -> do
           c <- getPointComponent handle
           c # Component.removeClass "Focus"
       -- update handle
-      handleRef # Ref.write (Just (Point p))
+      state.handle # Ref.write (Just (Point p))
       -- activate new handle
       do
         c <- getPointComponent (Point p)
@@ -126,7 +136,7 @@ main = do
     rootExprComponent <- exprComponent
       Nil
       (Expr { l: Root, kids: [ example_expr 2 2 ] })
-    rootExprComponentRef # Ref.write (Just rootExprComponent)
+    state.rootExprComponent # Ref.write (Just rootExprComponent)
     pure rootExprComponent
 
   -- editorComponent
