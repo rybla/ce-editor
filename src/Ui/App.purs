@@ -10,8 +10,6 @@ import Data.List as List
 import Data.Maybe (Maybe(..))
 import Editor.Example.Editor1 (example_expr)
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
-import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Effect.Ref as Ref
@@ -21,22 +19,28 @@ import Web.Event.Event (EventType(..))
 import Web.Event.Event as Event
 import Web.Event.EventTarget as EventTarget
 
-main :: Aff Unit
+main :: Effect Unit
 main = do
-  rootExprComponentRef <- liftEffect do Ref.new $ Nothing @Component
+  -- rootExprComponentRef
+  rootExprComponentRef <- Ref.new $ Nothing @Component
   let
     getRootExprComponent = rootExprComponentRef # Ref.read >>= case _ of
       Nothing -> throw "getRootExprComponent: root hasn't been created yet"
       Just root -> pure root
 
-  handleRef <- liftEffect do Ref.new $ Nothing
+  -- handleRef
+  handleRef <- Ref.new $ Nothing
 
   let
-    fromStepToExprComponentKidIndex :: Step -> Int
-    fromStepToExprComponentKidIndex (Step i) = 1 + 1 + (2 * i)
-
-    fromIndexToExprComponentKidIndex :: Index -> Int
-    fromIndexToExprComponentKidIndex (Index i) = 1 + (2 * i)
+    getExprComponent :: Path -> Effect Component
+    getExprComponent path0 = go path0 =<< getRootExprComponent
+      where
+      go :: Path -> Component -> Effect Component
+      go path c = case path of
+        Nil -> pure c
+        Cons i path' -> do
+          kid <- c # Component.getKid (i # fromStepToExprComponentKidIndex)
+          kid # go path'
 
     getPointComponent :: Point -> Effect Component
     getPointComponent p0 = go p0 =<< getRootExprComponent
@@ -47,16 +51,6 @@ main = do
         Cons i path' -> do
           kid <- c # Component.getKid (i # fromStepToExprComponentKidIndex)
           kid # go (Point { path: path', j: p.j })
-
-    getExprComponent :: Path -> Effect Component
-    getExprComponent path0 = go path0 =<< getRootExprComponent
-      where
-      go :: Path -> Component -> Effect Component
-      go path c = case path of
-        Nil -> pure c
-        Cons i path' -> do
-          kid <- c # Component.getKid (i # fromStepToExprComponentKidIndex)
-          kid # go path'
 
     setHandle :: Point -> Effect Unit
     setHandle (Point p) = do
@@ -73,10 +67,7 @@ main = do
         c <- getPointComponent (Point p)
         c # Component.addClass "Focus"
 
-    onClick_PointComponent :: Point -> Effect Unit
-    onClick_PointComponent p = do
-      setHandle p
-
+  let
     exprComponent :: Path -> Expr -> Effect Component
     exprComponent path (Expr e) = do
       Component.newTree
@@ -120,7 +111,7 @@ main = do
               , eventListener: EventTarget.eventListener \event -> do
                   event # Event.stopPropagation
                   Console.log $ "clicked on Point: " <> show (Point p)
-                  onClick_PointComponent (Point p)
+                  setHandle (Point p)
               , passive: true
               , capture: false
               , once: false
@@ -129,24 +120,40 @@ main = do
         }
         [ Component.newText {} " " ]
 
-  rootExprComponent <- liftEffect do
-    exprComponent
+  -- rootExprComponent
+
+  rootExprComponent <- do
+    rootExprComponent <- exprComponent
       Nil
       (Expr { l: Root, kids: [ example_expr 2 2 ] })
-  liftEffect do rootExprComponentRef # Ref.write (Just rootExprComponent)
+    rootExprComponentRef # Ref.write (Just rootExprComponent)
+    pure rootExprComponent
 
-  editorComponent <- liftEffect do
+  -- editorComponent
+
+  editorComponent <-
     Component.newTree
       {}
       [ pure rootExprComponent ]
 
-  liftEffect do
-    Component.root
-      [ pure editorComponent
-      ]
+  -- Component.root
 
-  liftEffect do
-    setHandle $ Point { path: Nil, j: Index 0 }
+  Component.root
+    [ pure editorComponent ]
+
+  -- initialize
+
+  setHandle $ Point { path: Nil, j: Index 0 }
 
   pure unit
+
+--------------------------------------------------------------------------------
+-- Utilities
+--------------------------------------------------------------------------------
+
+fromStepToExprComponentKidIndex :: Step -> Int
+fromStepToExprComponentKidIndex (Step i) = 1 + 1 + (2 * i)
+
+fromIndexToExprComponentKidIndex :: Index -> Int
+fromIndexToExprComponentKidIndex (Index i) = 1 + (2 * i)
 
