@@ -10,6 +10,7 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.String as String
 import Data.Traversable (traverse, traverse_)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Class.Console as Console
 import Effect.Exception (throw)
@@ -55,7 +56,6 @@ instance Show Component where
 type ComponentOpts =
   ( name :: Maybe String
   , tag :: String
-  , classes :: Array String
   , attributes :: ComponentAttributes
   , eventListeners :: Array { capture :: Boolean, eventListener :: Effect EventTarget.EventListener, eventType :: Event.EventType, once :: Boolean, passive :: Boolean }
   )
@@ -81,7 +81,10 @@ root :: Array (Effect Component) -> Effect Unit
 root kids = do
   Component c <-
     newTree
-      { name: pure "root", classes: [ "root" ] } $
+      { name: pure "root"
+      , attributes: Map.fromFoldable
+          [ "class" /\ "root" ]
+      } $
       kids
   body <- htmlDoc # HTMLDocument.body >>= fromMaybeM do throw $ "no body"
   body # HTMLElement.toNode # Node.appendChild (c.element # Element.toNode)
@@ -108,14 +111,11 @@ new opts_ content = do
     opts = Record.merge opts_
       { name: Nothing @String
       , tag: "div"
-      , classes: [] :: Array String
       , attributes: Map.empty :: ComponentAttributes
       , eventListeners: [] :: Array ComponentEventListener
       }
   -- create
   e <- doc # Document.createElement opts.tag
-  -- classes
-  e # Element.setClassName (opts.classes # String.joinWith " ")
   -- attributes
   opts.attributes # traverseWithIndex_ \k v -> do
     e # Element.setAttribute k v
