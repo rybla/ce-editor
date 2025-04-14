@@ -65,7 +65,8 @@ type ComponentAttributes = Map String String
 type ComponentEventListener =
   { eventType :: Event.EventType
   , eventListener :: Effect EventTarget.EventListener
-  -- Whether or not to dispatch event to this listener before dispatching to listeners below this node in the DOM tree.
+  -- Whether or not to dispatch event to this listener before dispatching to 
+  -- listeners below this node in the DOM tree.
   -- Default is `false`.
   , capture :: Boolean
   -- Whether or not this listener can be invoked at most once.

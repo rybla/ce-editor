@@ -3,25 +3,38 @@ module Ui.App where
 import Prelude
 
 import Data.Array as Array
-import Data.Expr (Expr(..), Index(..), Path, Point(..), Step(..))
+import Data.Expr (Expr(..), Index(..), Path, Point(..), Step(..), atSteps, getExtremeIndexes, getIndexesAroundStep, getStep)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.List (List(..))
 import Data.List as List
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
+import Data.Newtype (unwrap)
+import Data.Newtype as Newtype
+import Data.Traversable (sequence, traverse, traverse_)
+import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested ((/\))
-import Editor.Example.Editor1 (L(..), L'(..), example_expr)
+import Editor.Example.Editor1 (L(..), example_expr)
 import Effect (Effect)
 import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
+import Ui.Common (doc)
 import Ui.Component (Component)
 import Ui.Component as Component
+import Utility (todo)
 import Web.DOM (Element)
+import Web.DOM.Document as Document
+import Web.DOM.Element as Element
+import Web.DOM.Node as Node
 import Web.Event.Event (EventType(..))
 import Web.Event.Event as Event
+import Web.Event.EventTarget (EventListener, addEventListenerWithOptions, eventListener)
 import Web.Event.EventTarget as EventTarget
+import Web.HTML as HTML
+import Web.HTML.HTMLDocument as HTMLDocument
+import Web.HTML.Window as Window
 
 --------------------------------------------------------------------------------
 -- Config
@@ -37,181 +50,93 @@ config =
 
 type PreLabel = L {}
 
-type UiLabel = L { elem :: Element }
+type UiLabel = L
+  { elem :: Element
+  , eventListeners :: Array { eventType :: EventType, eventListener :: EventListener, capture :: Boolean }
+  }
 
 --------------------------------------------------------------------------------
 -- main
 --------------------------------------------------------------------------------
 
 type State =
-  { rootExprComponent :: Ref (Maybe Component)
+  { expr :: Expr UiLabel
   , handle :: Ref (Maybe Point)
   }
 
+newState :: Effect State
+newState = todo "newState"
+
 main :: Effect Unit
 main = do
+
   state <- newState
 
-  rootExprComponent <-
-    newExprComponent state
-      Nil
-      (Expr { l: L Root {}, kids: [ config.initialExpr ] })
-  state.rootExprComponent # Ref.write (Just rootExprComponent)
+  pure unit
 
-  editorComponent <-
-    newEditorComponent state rootExprComponent
+renderExpr :: Path -> Expr PreLabel -> Effect (Expr UiLabel)
+renderExpr path (Expr expr) = do
+  -- create element
+  elem <- doc # Document.createElement "div"
 
-  Component.root
-    [ pure editorComponent ]
+  -- attributes
+  elem # Element.setAttribute "class" "Expr"
 
-  initialize state
+  -- eventListeners
+  eventListeners <- sequence
+    [ do
+        let eventType = EventType "click"
+        let opts = { capture: true, once: false, passive: true }
+        eventListener <- eventListener \_event -> do
+          Console.log $ "clicked on Expr: " <> show path
+        elem # Element.toEventTarget # addEventListenerWithOptions eventType eventListener opts
+        pure { eventType, eventListener, capture: opts.capture }
+    ]
 
---------------------------------------------------------------------------------
--- EditorComponent
---------------------------------------------------------------------------------
+  let meta = { elem, eventListeners }
 
-newEditorComponent :: State -> Component -> Effect Component
-newEditorComponent _state rootExprComponent = do
-  Component.newTree
-    { name: pure "Editor"
-    , attributes: Map.fromFoldable
-        [ "class" /\ "Editor" ]
-    }
-    [ pure rootExprComponent ]
+  -- -- kids
+  -- kids <- Expr expr # atSteps # traverse \{ outside: t, at: e } ->
+  --   renderExpr (List.snoc path (t # getStep)) e
 
---------------------------------------------------------------------------------
--- ExprComponent
---------------------------------------------------------------------------------
+  -- -- append label
+  -- do
+  --   elem' <- createElement "div"
+  --   elem' # Element.toNode # Node.setTextContent (show label)
+  --   elem # appendChild elem'
 
-newExprComponent :: State -> Path -> Expr PreLabel -> Effect Component
-newExprComponent state path (Expr e) = do
-  Component.newTree
-    { name: pure "Expr"
-    , attributes: Map.fromFoldable
-        [ "class" /\ "Expr" ]
-    , eventListeners:
-        [ { eventType: EventType "click"
-          , eventListener: EventTarget.eventListener \event -> do
-              event # Event.stopPropagation
-              Console.log $ "clicked on Expr: " <> show path
-          , passive: true
-          , capture: false
-          , once: false
-          }
-        ]
-    }
-    ( Array.fold
-        [ [ Component.newText
-              { name: pure "Label"
-              , attributes: Map.fromFoldable
-                  [ "class" /\ "Label" ]
-              }
-              (show e.l)
-          ]
-        , if Array.null e.kids then
-            [ newPointComponent state (Point { path, j: Index 0 }) ]
-          else Array.fold
-            [ e.kids # foldMapWithIndex \i e' ->
-                [ newPointComponent state (Point { path, j: Index i })
-                , newExprComponent state (path `List.snoc` Step i) e'
-                ]
-            , [ newPointComponent state (Point { path, j: Index (e.kids # Array.length) }) ]
-            ]
-        ]
-    )
+  -- -- append points and kids
+  -- kids # traverseWithIndex \(Expr { l: L _ meta' }) -> do
+  --   elem_point <- renderPoint $ Point { path, j: ?a }
+  --   elem # appendChild meta'.elem
 
---------------------------------------------------------------------------------
--- PointComponent
---------------------------------------------------------------------------------
+  -- kids
+  kids' <- Expr expr # atSteps # traverse \{ outside: t, at: kid } -> do
+    let i = t # getStep
+    let j = (i # getIndexesAroundStep)._L
 
-newPointComponent :: State -> Point -> Effect Component
-newPointComponent state (Point p) = do
-  Component.newTree
-    { name: pure "Point"
-    , attributes: Map.fromFoldable
-        [ "class" /\ "Point" ]
-    , eventListeners:
-        [ { eventType: EventType "click"
-          , eventListener: EventTarget.eventListener \event -> do
-              event # Event.stopPropagation
-              Console.log $ "clicked on Point: " <> show (Point p)
-              setHandle state (Point p)
-          , passive: true
-          , capture: false
-          , once: false
-          }
-        ]
-    }
-    [ Component.newText {} " " ]
+    kid' <- renderExpr (List.snoc path i) kid
+    elem # appendChild (((kid' # unwrap).l # unwrap).meta.elem)
 
---------------------------------------------------------------------------------
--- State
---------------------------------------------------------------------------------
+    elem_point <- renderPoint $ Point { path, j }
+    elem # appendChild elem_point
 
-newState :: Effect State
-newState = do
-  rootExprComponent <- Ref.new $ Nothing @Component
-  handle <- Ref.new $ Nothing
-  pure
-    { rootExprComponent
-    , handle
+    pure kid'
+
+  -- last point
+  elem_point <- renderPoint $ Point { path, j: (Expr expr # getExtremeIndexes)._R }
+  elem # appendChild elem_point
+
+  pure $ Expr
+    { l: expr.l # Newtype.over L _ { meta = meta }
+    , kids: kids'
     }
 
-initialize :: State -> Effect Unit
-initialize state = do
-  setHandle state $ Point { path: Nil, j: Index 0 }
+renderPoint :: Point -> Effect Element
+renderPoint = todo "renderPoint"
 
-getRootExprComponent :: State -> Effect Component
-getRootExprComponent state = state.rootExprComponent # Ref.read >>= case _ of
-  Nothing -> throw "getRootExprComponent: root hasn't been created yet"
-  Just root -> pure root
+appendChild :: Element -> Element -> Effect Unit
+appendChild child parent = parent # Element.toNode # Node.appendChild (child # Element.toNode)
 
-getExprComponent :: State -> Path -> Effect Component
-getExprComponent state path0 = go path0 =<< getRootExprComponent state
-  where
-  go :: Path -> Component -> Effect Component
-  go path c = case path of
-    Nil -> pure c
-    Cons i path' -> do
-      kid <- c # Component.getKid (i # fromStepToExprComponentKidIndex)
-      kid # go path'
-
-getPointComponent :: State -> Point -> Effect Component
-getPointComponent state p0 = go p0 =<< getRootExprComponent state
-  where
-  go :: Point -> Component -> Effect Component
-  go (Point p) c = case p.path of
-    Nil -> c # Component.getKid (p.j # fromIndexToExprComponentKidIndex)
-    Cons i path' -> do
-      kid <- c # Component.getKid (i # fromStepToExprComponentKidIndex)
-      kid # go (Point { path: path', j: p.j })
-
-setHandle :: State -> Point -> Effect Unit
-setHandle state (Point p) = do
-  -- deactivate old handle
-  state.handle # Ref.read >>= case _ of
-    Nothing -> pure unit
-    Just handle -> do
-      c <- getPointComponent state handle
-      c # Component.removeClass "Focus"
-  -- update handle
-  state.handle # Ref.write (Just (Point p))
-  -- activate new handle
-  do
-    c <- getPointComponent state (Point p)
-    c # Component.addClass "Focus"
-
---------------------------------------------------------------------------------
--- Operations
---------------------------------------------------------------------------------
-
-fromStepToExprComponentKidIndex :: Step -> Int
-fromStepToExprComponentKidIndex (Step i) = 1 + 1 + (2 * i)
-
-fromIndexToExprComponentKidIndex :: Index -> Int
-fromIndexToExprComponentKidIndex (Index i) = 1 + (2 * i)
-
---------------------------------------------------------------------------------
--- Utilities
---------------------------------------------------------------------------------
-
+createElement ∷ String → Effect Element
+createElement tag = doc # Document.createElement tag

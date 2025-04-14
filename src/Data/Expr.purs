@@ -7,6 +7,7 @@ import Control.Plus (empty)
 import Data.Array as Array
 import Data.Eq.Generic (genericEq)
 import Data.Foldable (class Foldable, foldr)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
@@ -41,6 +42,9 @@ atStep i (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, at }
   where
   { before: kids_L, at, after: kids_R } = e.kids # extractAt_Array (unwrap i)
     # fromMaybe' (impossible $ "atStep " <> show i <> " " <> show (Expr e))
+
+atSteps ∷ ∀ l. Show l ⇒ Expr l → Array { at ∷ Expr l, outside ∷ Tooth l }
+atSteps e = e # getSteps # map \i -> e # atStep i
 
 --------------------------------------------------------------------------------
 
@@ -119,6 +123,9 @@ getExtremeIndexes (Expr e) = { _L: Index 0, _R: Index (Array.length e.kids) }
 getExtremeSteps :: forall l. Expr l -> Maybe { _L :: Step, _R :: Step }
 getExtremeSteps (Expr e) | Array.null e.kids = Nothing
 getExtremeSteps (Expr e) = Just { _L: Step 0, _R: Step (Array.length e.kids - 1) }
+
+getSteps :: forall l. Expr l -> Array Step
+getSteps (Expr e) = e.kids # mapWithIndex \i _ -> Step i
 
 --------------------------------------------------------------------------------
 
@@ -228,14 +235,14 @@ showTooth' (Tooth t) s = parens $ Array.intercalate " " $ [ show t.l, "%" ] <> (
 -- isRoot_Tooth :: forall l. (Tooth l) -> Boolean
 -- isRoot_Tooth (Tooth t) = t.l == Root
 
-unTooth :: forall l. (Tooth l) -> Expr l -> Expr l
+unTooth :: forall l. Tooth l -> Expr l -> Expr l
 unTooth (Tooth t) e = Expr { l: t.l, kids: t.kids_L <> [ e ] <> t.kids_R }
 
-offset_Tooth :: forall l. (Tooth l) -> Index
+offset_Tooth :: forall l. Tooth l -> Index
 offset_Tooth (Tooth t) = Index $ t.kids_L # Array.length
 
-getStep_Tooth :: forall l. (Tooth l) -> Step
-getStep_Tooth (Tooth t) = Step $ t.kids_L # Array.length
+getStep :: forall l. Tooth l -> Step
+getStep (Tooth t) = Step $ t.kids_L # Array.length
 
 --------------------------------------------------------------------------------
 
@@ -289,7 +296,7 @@ offset_inner_ExprContext :: forall l. (ExprContext l) -> Index
 offset_inner_ExprContext (ExprContext ts) = ts # List.last # maybe (Index 0) offset_Tooth
 
 getPath_ExprContext :: forall l. (ExprContext l) -> Path
-getPath_ExprContext (ExprContext ts) = ts # map getStep_Tooth
+getPath_ExprContext (ExprContext ts) = ts # map getStep
 
 --------------------------------------------------------------------------------
 
