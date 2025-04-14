@@ -5,7 +5,28 @@
   --background-color: rgb(214, 214, 214);
 
   --handle-point-background-color: color-mix(in hsl, blue, transparent 30%);
+  --handle-point-focus-background-color: color-mix(in hsl, green, transparent 30%);
   --handle-inner-background-color: color-mix(in hsl, blue, transparent 80%);
+}
+
+/* -------------------------------------------------------------------------- */
+/* html */
+/* -------------------------------------------------------------------------- */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+
+  background-color: var(--background-color);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Editor */
+/* -------------------------------------------------------------------------- */
+
+.Editor {
+  padding: 1em;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -13,20 +34,27 @@
 /* -------------------------------------------------------------------------- */
 
 .Expr {
-  padding: 0.5em;
+  user-select: none;
+  cursor: pointer;
+  font-family: monospace;
+}
 
-  display: Inline-flex;
-  /* display: flex; */
+.Expr.Inline {
+  display: inline-flex;
   flex-direction: row;
   /* align-items: center; */
+  /* justify-content: center; */
+}
+
+.Expr.Nested {
+  padding: 0.5em;
+
+  display: inline-flex;
+  flex-direction: row;
   justify-content: center;
   align-items: stretch;
 
   box-shadow: 0 0 0 1px black inset;
-
-  user-select: none;
-  cursor: pointer;
-  font-family: monospace;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -39,23 +67,75 @@
   /* height: 100%; */
   background-color: transparent;
 
-  transition-property: background-color;
+  transition-property: background-color, box-shadow;
   transition-duration: 0.2s;
 }
 
-.Point.Point_Handle,
-.Point.SpanH_Handle_L,
-.Point.SpanH_Handle_R,
-.Point.ZipperH_Handle_OL,
-.Point.ZipperH_Handle_IL,
-.Point.ZipperH_Handle_IR,
-.Point.ZipperH_Handle_OR {
-  background-color: green;
+/* Point */
 
-  transition-property: background-color;
-  transition-duration: 0.2s;
+.Point.Point_Handle {
+  background-color: var(--handle-point-background-color);
 }
 
-/* .Point {
+/* Span_* */
 
-} */
+.Point.SpanH_Handle_Left {
+  background-color: var(--handle-point-background-color);
+}
+
+.Point.SpanH_Handle_Left~* {
+  background-color: var(--handle-inner-background-color);
+}
+
+.Point.SpanH_Handle_Right {
+  background-color: var(--handle-point-background-color);
+}
+
+.Point.SpanH_Handle_Right~* {
+  background-color: var(--background-color);
+}
+
+/* Zipper_* */
+
+.Point.ZipperH_Handle_OuterLeft {
+  background-color: var(--handle-point-background-color);
+}
+
+.Point.ZipperH_Handle_OuterLeft~* {
+  background-color: var(--handle-inner-background-color);
+}
+
+.Point.ZipperH_Handle_InnerLeft {
+  background-color: var(--handle-point-background-color);
+}
+
+.Point.ZipperH_Handle_InnerLeft~* {
+  background-color: var(--background-color);
+}
+
+.Point.ZipperH_Handle_InnerRight {
+  background-color: var(--handle-point-background-color);
+}
+
+.Point.ZipperH_Handle_InnerRight~* {
+  background-color: transparent;
+}
+
+.Point.ZipperH_Handle_OuterRight {
+  background-color: var(--handle-point-background-color);
+}
+
+.Point.ZipperH_Handle_OuterRight~* {
+  background-color: var(--background-color);
+}
+
+/* -------------------------------------------------------------------------- */
+/* HandleFocus */
+/* -------------------------------------------------------------------------- */
+
+.HandleFocus {
+  /* background-color: var(--handle-point-focus-background-color) !important; */
+  box-shadow:
+    0 -0.5em 0 0 var(--handle-point-background-color),
+    0 0.5em 0 0 var(--handle-point-background-color);
+}

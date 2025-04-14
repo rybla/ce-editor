@@ -134,5 +134,5 @@ infixr 2 implies as ==>
 writeFlipped ∷ ∀ (a ∷ Type). Ref a → a → Effect Unit
 writeFlipped = flip Ref.write
 
-infix 4 writeFlipped as .=
+infix 4 writeFlipped as :=
 

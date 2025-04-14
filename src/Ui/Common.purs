@@ -6,12 +6,18 @@ import Prelude
 
 import Data.String as String
 import Effect (Effect)
+import Prim.Row (class Nub, class Union)
+import Record as Record
+import Utility (todo)
 import Web.DOM (Document, Element)
 import Web.DOM as DOM
 import Web.DOM.DOMTokenList as DOMTokenList
 import Web.DOM.Document as Document
 import Web.DOM.Element as Element
 import Web.DOM.Node as Node
+import Web.Event.Event (Event, EventType)
+import Web.Event.EventTarget (EventListener, EventTarget)
+import Web.Event.EventTarget as EventTarget
 import Web.HTML (HTMLBodyElement, HTMLDocument)
 import Web.HTML.HTMLBodyElement as HTMLBodyElement
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -61,4 +67,39 @@ removeClass c elem = elem # Element.classList >>= (_ `DOMTokenList.remove` c)
 
 addClass :: String -> Element -> Effect Unit
 addClass c elem = elem # Element.classList >>= (_ `DOMTokenList.add` c)
+
+type EventListenerInfo =
+  { eventType :: EventType
+  , eventListener :: EventListener
+  , options :: EventListenerOptions
+  }
+
+type EventListenerOptions = Record EventListenerOptions_Row
+type EventListenerOptions_Row =
+  ( -- Whether or not to dispatch event to this listener before dispatching to 
+    -- listeners below this node in the DOM tree.
+    capture :: Boolean
+  -- Whether or not this listener can be invoked at most once.
+  -- If true, then is automatically removed after first invokation).
+  -- Default is `false`.
+  , once :: Boolean
+  -- Whether or not the listener cannot call `preventDefault`.
+  -- Default is `false`.
+  , passive :: Boolean
+  )
+
+addEventListenerWithOptions
+  ∷ ∀ opts opts'
+  . Union opts EventListenerOptions_Row opts'
+  ⇒ Nub opts' EventListenerOptions_Row
+  ⇒ EventType
+  → Record opts
+  → (Event -> Effect Unit)
+  → EventTarget
+  → Effect EventListenerInfo
+addEventListenerWithOptions eventType options callback target = do
+  let options' = options `Record.merge` { capture: false, once: false, passive: false }
+  eventListener <- EventTarget.eventListener callback
+  target # EventTarget.addEventListenerWithOptions eventType eventListener options'
+  pure { eventType, eventListener, options: options' }
 
