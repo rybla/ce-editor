@@ -1,4 +1,5 @@
 export const htmlDoc = document;
+export const htmlBody = document.body;
 
 export const setText_Element = (text) => (e) => () => {
   e.innerText = text;

@@ -43,7 +43,13 @@
   transition-duration: 0.2s;
 }
 
-.Point.Focus {
+.Point.Point_Handle,
+.Point.SpanH_Handle_L,
+.Point.SpanH_Handle_R,
+.Point.ZipperH_Handle_OL,
+.Point.ZipperH_Handle_IL,
+.Point.ZipperH_Handle_IR,
+.Point.ZipperH_Handle_OR {
   background-color: green;
 
   transition-property: background-color;
