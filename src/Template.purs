@@ -2,7 +2,7 @@ module Template where
 
 import Prelude
 
-import Editor.Example (editor)
+import Editor.Example as Example
 import Effect (Effect)
 import Node.ChildProcess (execSync)
 import Node.Encoding (Encoding(..))
@@ -21,6 +21,7 @@ main = do
 
   -- index.html
   do
+    let editor = Example.mkEditor {}
     content <- readTextFile UTF8 (assets_dirpath <> "index.html")
     writeTextFile UTF8 (dist_dirpath <> "index.html") $ content
       # format

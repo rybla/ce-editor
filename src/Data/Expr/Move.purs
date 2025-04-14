@@ -29,10 +29,10 @@ fromKeyToDir "ArrowLeft" = Just L
 fromKeyToDir "ArrowRight" = Just R
 fromKeyToDir _ = Nothing
 
-move :: Expr -> Dir -> Handle -> Maybe Point
+move :: forall l. Show l => Expr l -> Dir -> Handle -> Maybe Point
 move e dir h = h # getFocusPoint # move_Point e dir
 
-move_Point :: Expr -> Dir -> Point -> Maybe Point
+move_Point :: forall l. Show l => Expr l -> Dir -> Point -> Maybe Point
 move_Point e dir (Point p) = case dir of
   L | extreme_j._L == p.j, Just { init: path', last: i } <- p.path # List.unsnoc ->
     Just $ Point { path: path', j: (i # getIndexesAroundStep)._L }

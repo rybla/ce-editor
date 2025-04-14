@@ -17,7 +17,7 @@ getDragOrigin (ZipperH_Handle h _) p | hp <- getEndPoints_ZipperH h, p == hp._IR
 getDragOrigin (ZipperH_Handle h _) p | hp <- getEndPoints_ZipperH h, p == hp._OR = ZipperH_Handle h OuterRight_ZipperFocus
 getDragOrigin _ p = Point_Handle p
 
-drag :: Handle -> Point -> Expr -> Maybe Handle
+drag :: forall l. Show l => Handle -> Point -> Expr l -> Maybe Handle
 
 drag (Point_Handle (Point p)) (Point p') e = case unit of
   _ | Point p == Point p' -> pure $ Point_Handle (Point p')

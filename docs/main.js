@@ -36,20 +36,6 @@
     ) + '"';
   };
 
-  // output/Type.Proxy/index.js
-  var $$Proxy = /* @__PURE__ */ function() {
-    function $$Proxy2() {
-    }
-    ;
-    $$Proxy2.value = new $$Proxy2();
-    return $$Proxy2;
-  }();
-
-  // output/Data.Symbol/index.js
-  var reflectSymbol = function(dict) {
-    return dict.reflectSymbol;
-  };
-
   // output/Data.Show/index.js
   var showString = {
     show: showStringImpl
@@ -396,38 +382,6 @@
     return dict.compare;
   };
 
-  // output/Data.Generic.Rep/index.js
-  var Inl = /* @__PURE__ */ function() {
-    function Inl2(value0) {
-      this.value0 = value0;
-    }
-    ;
-    Inl2.create = function(value0) {
-      return new Inl2(value0);
-    };
-    return Inl2;
-  }();
-  var Inr = /* @__PURE__ */ function() {
-    function Inr2(value0) {
-      this.value0 = value0;
-    }
-    ;
-    Inr2.create = function(value0) {
-      return new Inr2(value0);
-    };
-    return Inr2;
-  }();
-  var NoArguments = /* @__PURE__ */ function() {
-    function NoArguments2() {
-    }
-    ;
-    NoArguments2.value = new NoArguments2();
-    return NoArguments2;
-  }();
-  var from = function(dict) {
-    return dict.from;
-  };
-
   // output/Data.Maybe/index.js
   var Nothing = /* @__PURE__ */ function() {
     function Nothing2() {
@@ -604,7 +558,7 @@
   var intercalate = function(dictFoldable) {
     var foldl2 = foldl(dictFoldable);
     return function(dictMonoid) {
-      var append3 = append(dictMonoid.Semigroup0());
+      var append2 = append(dictMonoid.Semigroup0());
       var mempty2 = mempty(dictMonoid);
       return function(sep) {
         return function(xs) {
@@ -619,7 +573,7 @@
               ;
               return {
                 init: false,
-                acc: append3(v.acc)(append3(sep)(v1))
+                acc: append2(v.acc)(append2(sep)(v1))
               };
             };
           };
@@ -634,12 +588,12 @@
   var foldMapDefaultR = function(dictFoldable) {
     var foldr22 = foldr(dictFoldable);
     return function(dictMonoid) {
-      var append3 = append(dictMonoid.Semigroup0());
+      var append2 = append(dictMonoid.Semigroup0());
       var mempty2 = mempty(dictMonoid);
       return function(f) {
         return foldr22(function(x) {
           return function(acc) {
-            return append3(f(x))(acc);
+            return append2(f(x))(acc);
           };
         })(mempty2);
       };
@@ -820,13 +774,13 @@
   var foldMapWithIndexDefaultR = function(dictFoldableWithIndex) {
     var foldrWithIndex1 = foldrWithIndex(dictFoldableWithIndex);
     return function(dictMonoid) {
-      var append3 = append(dictMonoid.Semigroup0());
+      var append2 = append(dictMonoid.Semigroup0());
       var mempty2 = mempty(dictMonoid);
       return function(f) {
         return foldrWithIndex1(function(i) {
           return function(x) {
             return function(acc) {
-              return append3(f(i)(x))(acc);
+              return append2(f(i)(x))(acc);
             };
           };
         })(mempty2);
@@ -1026,11 +980,11 @@
       return go2;
     },
     foldMap: function(dictMonoid) {
-      var append22 = append(dictMonoid.Semigroup0());
+      var append2 = append(dictMonoid.Semigroup0());
       var mempty2 = mempty(dictMonoid);
       return function(f) {
         return foldl(foldableList)(function(acc) {
-          var $286 = append22(acc);
+          var $286 = append2(acc);
           return function($287) {
             return $286(f($287));
           };
@@ -1040,14 +994,14 @@
   };
   var intercalate2 = /* @__PURE__ */ intercalate(foldableList)(monoidString);
   var showList = function(dictShow) {
-    var show6 = show(dictShow);
+    var show7 = show(dictShow);
     return {
       show: function(v) {
         if (v instanceof Nil) {
           return "Nil";
         }
         ;
-        return "(" + (intercalate2(" : ")(map3(show6)(v)) + " : Nil)");
+        return "(" + (intercalate2(" : ")(map3(show7)(v)) + " : Nil)");
       }
     };
   };
@@ -1057,80 +1011,6 @@
   var snoc = function(xs) {
     return function(x) {
       return foldr2(Cons.create)(new Cons(x, Nil.value))(xs);
-    };
-  };
-
-  // output/Data.Show.Generic/foreign.js
-  var intercalate3 = function(separator) {
-    return function(xs) {
-      return xs.join(separator);
-    };
-  };
-
-  // output/Data.Show.Generic/index.js
-  var append2 = /* @__PURE__ */ append(semigroupArray);
-  var genericShowArgsNoArguments = {
-    genericShowArgs: function(v) {
-      return [];
-    }
-  };
-  var genericShowArgsArgument = function(dictShow) {
-    var show6 = show(dictShow);
-    return {
-      genericShowArgs: function(v) {
-        return [show6(v)];
-      }
-    };
-  };
-  var genericShowArgs = function(dict) {
-    return dict.genericShowArgs;
-  };
-  var genericShowConstructor = function(dictGenericShowArgs) {
-    var genericShowArgs1 = genericShowArgs(dictGenericShowArgs);
-    return function(dictIsSymbol) {
-      var reflectSymbol2 = reflectSymbol(dictIsSymbol);
-      return {
-        "genericShow'": function(v) {
-          var ctor = reflectSymbol2($$Proxy.value);
-          var v1 = genericShowArgs1(v);
-          if (v1.length === 0) {
-            return ctor;
-          }
-          ;
-          return "(" + (intercalate3(" ")(append2([ctor])(v1)) + ")");
-        }
-      };
-    };
-  };
-  var genericShow$prime = function(dict) {
-    return dict["genericShow'"];
-  };
-  var genericShowSum = function(dictGenericShow) {
-    var genericShow$prime1 = genericShow$prime(dictGenericShow);
-    return function(dictGenericShow1) {
-      var genericShow$prime2 = genericShow$prime(dictGenericShow1);
-      return {
-        "genericShow'": function(v) {
-          if (v instanceof Inl) {
-            return genericShow$prime1(v.value0);
-          }
-          ;
-          if (v instanceof Inr) {
-            return genericShow$prime2(v.value0);
-          }
-          ;
-          throw new Error("Failed pattern match at Data.Show.Generic (line 26, column 1 - line 28, column 40): " + [v.constructor.name]);
-        }
-      };
-    };
-  };
-  var genericShow = function(dictGeneric) {
-    var from2 = from(dictGeneric);
-    return function(dictGenericShow) {
-      var genericShow$prime1 = genericShow$prime(dictGenericShow);
-      return function(x) {
-        return genericShow$prime1(from2(x));
-      };
     };
   };
 
@@ -1493,25 +1373,8 @@
 
   // output/Data.Expr/index.js
   var show2 = /* @__PURE__ */ show(showInt);
-  var intercalate1 = /* @__PURE__ */ intercalate(foldableList)(monoidString);
   var map1 = /* @__PURE__ */ map(functorList);
-  var Root = /* @__PURE__ */ function() {
-    function Root2() {
-    }
-    ;
-    Root2.value = new Root2();
-    return Root2;
-  }();
-  var $$String = /* @__PURE__ */ function() {
-    function $$String2(value0) {
-      this.value0 = value0;
-    }
-    ;
-    $$String2.create = function(value0) {
-      return new $$String2(value0);
-    };
-    return $$String2;
-  }();
+  var intercalate1 = /* @__PURE__ */ intercalate(foldableList)(monoidString);
   var showStep = {
     show: function(v) {
       return "|" + show2(v);
@@ -1524,48 +1387,6 @@
     }
   };
   var show4 = /* @__PURE__ */ show(showIndex);
-  var genericLabel_ = {
-    to: function(x) {
-      if (x instanceof Inl) {
-        return Root.value;
-      }
-      ;
-      if (x instanceof Inr) {
-        return new $$String(x.value0);
-      }
-      ;
-      throw new Error("Failed pattern match at Data.Expr (line 94, column 1 - line 94, column 32): " + [x.constructor.name]);
-    },
-    from: function(x) {
-      if (x instanceof Root) {
-        return new Inl(NoArguments.value);
-      }
-      ;
-      if (x instanceof $$String) {
-        return new Inr(x.value0);
-      }
-      ;
-      throw new Error("Failed pattern match at Data.Expr (line 94, column 1 - line 94, column 32): " + [x.constructor.name]);
-    }
-  };
-  var genericShow2 = /* @__PURE__ */ genericShow(genericLabel_)(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor(genericShowArgsNoArguments)({
-    reflectSymbol: function() {
-      return "Root";
-    }
-  }))(/* @__PURE__ */ genericShowConstructor(/* @__PURE__ */ genericShowArgsArgument(showString))({
-    reflectSymbol: function() {
-      return "String";
-    }
-  })));
-  var showLabel = {
-    show: function(v) {
-      if (v instanceof $$String) {
-        return v.value0;
-      }
-      ;
-      return "#" + genericShow2(v);
-    }
-  };
   var show_Path = function(steps) {
     return "[" + (intercalate1(" ")(map1(show22)(steps)) + "]");
   };
@@ -1585,15 +1406,66 @@
 
   // output/Editor.Example.Editor1/index.js
   var mapFlipped2 = /* @__PURE__ */ mapFlipped(functorArray);
-  var example_expr = function(v) {
-    return function(v1) {
-      if (v1 === 0) {
-        return mkExpr(new $$String("L"))([]);
+  var Root = /* @__PURE__ */ function() {
+    function Root2() {
+    }
+    ;
+    Root2.value = new Root2();
+    return Root2;
+  }();
+  var $$String = /* @__PURE__ */ function() {
+    function $$String2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    $$String2.create = function(value0) {
+      return new $$String2(value0);
+    };
+    return $$String2;
+  }();
+  var L = /* @__PURE__ */ function() {
+    function L2(value0, value1) {
+      this.value0 = value0;
+      this.value1 = value1;
+    }
+    ;
+    L2.create = function(value0) {
+      return function(value1) {
+        return new L2(value0, value1);
+      };
+    };
+    return L2;
+  }();
+  var showL$prime = {
+    show: function(v) {
+      if (v instanceof Root) {
+        return "#Root";
       }
       ;
-      return mkExpr(new $$String("B"))(mapFlipped2(range2(0)(v - 1 | 0))(function(v2) {
-        return example_expr(v)(v1 - 1 | 0);
-      }));
+      if (v instanceof $$String) {
+        return v.value0;
+      }
+      ;
+      throw new Error("Failed pattern match at Editor.Example.Editor1 (line 28, column 1 - line 30, column 22): " + [v.constructor.name]);
+    }
+  };
+  var show3 = /* @__PURE__ */ show(showL$prime);
+  var showL = {
+    show: function(v) {
+      return show3(v.value0);
+    }
+  };
+  var example_expr = function(v) {
+    return function(v1) {
+      return function(v2) {
+        if (v2 === 0) {
+          return mkExpr(new L(new $$String("L"), v))([]);
+        }
+        ;
+        return mkExpr(new L(new $$String("B"), v))(mapFlipped2(range2(0)(v1 - 1 | 0))(function(v3) {
+          return example_expr(v)(v1)(v2 - 1 | 0);
+        }));
+      };
     };
   };
 
@@ -1828,7 +1700,7 @@
   var pure1 = /* @__PURE__ */ pure(applicativeMaybe);
   var fromFoldable4 = /* @__PURE__ */ fromFoldable2(ordString)(foldableArray);
   var fromMaybeM2 = /* @__PURE__ */ fromMaybeM(applicativeEffect);
-  var show3 = /* @__PURE__ */ show(showInt);
+  var show5 = /* @__PURE__ */ show(showInt);
   var TreeComponentContent = /* @__PURE__ */ function() {
     function TreeComponentContent2(value0) {
       this.value0 = value0;
@@ -2012,7 +1884,7 @@
     return function(v) {
       return function __do3() {
         var kids = bind2(getKidsRef(v))(read)();
-        return fromMaybeM2($$throw("getKid " + (show3(i) + (" " + show1(v)))))(index(kids)(i))();
+        return fromMaybeM2($$throw("getKid " + (show5(i) + (" " + show1(v)))))(index(kids)(i))();
       };
     };
   };
@@ -2039,11 +1911,11 @@
   var fromFoldable5 = /* @__PURE__ */ fromFoldable2(ordString)(foldableArray);
   var bindFlipped3 = /* @__PURE__ */ bindFlipped(bindEffect);
   var log3 = /* @__PURE__ */ log2(monadEffectEffect);
-  var show5 = /* @__PURE__ */ show(showPoint);
+  var show6 = /* @__PURE__ */ show(showPoint);
   var newText2 = /* @__PURE__ */ newText()();
   var show12 = /* @__PURE__ */ show(/* @__PURE__ */ showList(showStep));
   var fold3 = /* @__PURE__ */ fold2(monoidArray);
-  var show23 = /* @__PURE__ */ show(showLabel);
+  var show23 = /* @__PURE__ */ show(showL);
   var foldMapWithIndex2 = /* @__PURE__ */ foldMapWithIndex(foldableWithIndexArray)(monoidArray);
   var newState = function __do() {
     var rootExprComponent = $$new(Nothing.value)();
@@ -2072,7 +1944,7 @@
         return v.value0;
       }
       ;
-      throw new Error("Failed pattern match at Ui.App (line 156, column 69 - line 158, column 25): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App (line 165, column 69 - line 167, column 25): " + [v.constructor.name]);
     };
   };
   var fromStepToExprComponentKidIndex = function(v) {
@@ -2099,7 +1971,7 @@
             };
           }
           ;
-          throw new Error("Failed pattern match at Ui.App (line 174, column 20 - line 178, column 47): " + [v.path.constructor.name]);
+          throw new Error("Failed pattern match at Ui.App (line 183, column 20 - line 187, column 47): " + [v.path.constructor.name]);
         };
       };
       return bindFlipped3(go2(p0))(getRootExprComponent(state2));
@@ -2119,7 +1991,7 @@
             return removeClass("Focus")(c2)();
           }
           ;
-          throw new Error("Failed pattern match at Ui.App (line 183, column 31 - line 187, column 40): " + [v1.constructor.name]);
+          throw new Error("Failed pattern match at Ui.App (line 192, column 31 - line 196, column 40): " + [v1.constructor.name]);
         })();
         write(new Just(v))(state2.handle)();
         var c = getPointComponent(state2)(v)();
@@ -2143,7 +2015,7 @@
           eventListener: eventListener(function(event) {
             return function __do3() {
               stopPropagation(event)();
-              log3("clicked on Point: " + show5(v))();
+              log3("clicked on Point: " + show6(v))();
               return setHandle(state2)(v)();
             };
           }),
@@ -2200,12 +2072,12 @@
     };
   };
   var config = {
-    initialExpr: /* @__PURE__ */ example_expr(2)(2)
+    initialExpr: /* @__PURE__ */ example_expr({})(2)(2)
   };
   var main = function __do2() {
     var state2 = newState();
     var rootExprComponent = newExprComponent(state2)(Nil.value)({
-      l: Root.value,
+      l: new L(Root.value, {}),
       kids: [config.initialExpr]
     })();
     write(new Just(rootExprComponent))(state2.rootExprComponent)();

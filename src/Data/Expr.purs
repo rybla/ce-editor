@@ -6,7 +6,7 @@ import Control.Alternative (guard)
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Eq.Generic (genericEq)
-import Data.Foldable (foldr)
+import Data.Foldable (class Foldable, foldr)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
@@ -15,6 +15,7 @@ import Data.Newtype (class Newtype, unwrap)
 import Data.NonEmpty (NonEmpty, (:|))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
+import Data.Traversable (class Traversable)
 import Data.Tuple.Nested (type (/\), (/\))
 import Utility (extractAt_Array, extractSpan_Array, impossible, parens, spaces)
 
@@ -35,7 +36,7 @@ derive newtype instance Semiring Step
 
 derive newtype instance Ring Step
 
-atStep :: Step -> Expr -> { outside :: Tooth, at :: Expr }
+atStep :: forall l. Show l => Step -> Expr l -> { outside :: Tooth l, at :: Expr l }
 atStep i (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, at }
   where
   { before: kids_L, at, after: kids_R } = e.kids # extractAt_Array (unwrap i)
@@ -58,7 +59,7 @@ derive newtype instance Semiring Index
 
 derive newtype instance Ring Index
 
-atIndexSpan_Expr :: Index -> Index -> Expr -> { outside :: SpanTooth, at :: Span }
+atIndexSpan_Expr :: forall l. Index -> Index -> Expr l -> { outside :: SpanTooth l, at :: Span l }
 atIndexSpan_Expr i_L i_R (Expr e) = { outside: SpanTooth { l: e.l, kids_L, kids_R }, at: Span es }
   where
   { before: kids_L, at: es, after: kids_R } = extractSpan_Array (unwrap i_L) (unwrap i_R) e.kids
@@ -87,69 +88,62 @@ getStepsAroundIndex (Index i) = { _L: Step (i - 1), _R: Step i }
 
 --------------------------------------------------------------------------------
 
-data Label
-  = Root
-  | String String
+newtype Expr l = Expr { l :: l, kids :: Array (Expr l) }
 
-derive instance Generic Label _
+derive instance Generic (Expr l) _
 
-instance Show Label where
-  show (String s) = s
-  show l = "#" <> genericShow l
+derive instance Newtype (Expr l) _
 
-instance Eq Label where
-  eq x = genericEq x
-
---------------------------------------------------------------------------------
-
-newtype Expr = Expr { l :: Label, kids :: Array Expr }
-
-derive instance Generic Expr _
-
-derive instance Newtype Expr _
-
-instance Show Expr where
+instance Show l => Show (Expr l) where
   show (Expr e) | Array.null e.kids = show e.l
   show (Expr e) = parens $ Array.intercalate " " ([ show e.l, "%" ] <> (e.kids # map show))
 
-instance Eq Expr where
+instance Eq l => Eq (Expr l) where
   eq x = genericEq x
 
-mkExpr ∷ Label → Array Expr → Expr
+derive instance Functor Expr
+derive instance Foldable Expr
+derive instance Traversable Expr
+
+mkExpr ∷ forall l. l → Array (Expr l) → Expr l
 mkExpr l kids = Expr { l, kids }
 
 infix 0 mkExpr as %
 
-getKid_Expr :: Step -> Expr -> Expr
+getKid_Expr :: forall l. Show l => Step -> Expr l -> Expr l
 getKid_Expr (Step i) (Expr e) = e.kids Array.!! i # fromMaybe' (impossible $ "getKid_Expr " <> show (Expr e) <> " " <> show (Step i))
 
-getExtremeIndexes :: Expr -> { _L :: Index, _R :: Index }
+getExtremeIndexes :: forall l. Expr l -> { _L :: Index, _R :: Index }
 getExtremeIndexes (Expr e) = { _L: Index 0, _R: Index (Array.length e.kids) }
 
-getExtremeSteps :: Expr -> Maybe { _L :: Step, _R :: Step }
-getExtremeSteps (Expr e) | e.kids == [] = Nothing
+getExtremeSteps :: forall l. Expr l -> Maybe { _L :: Step, _R :: Step }
+getExtremeSteps (Expr e) | Array.null e.kids = Nothing
 getExtremeSteps (Expr e) = Just { _L: Step 0, _R: Step (Array.length e.kids - 1) }
 
 --------------------------------------------------------------------------------
 
-newtype Span = Span (Array Expr)
+newtype Span l = Span (Array (Expr l))
 
-derive instance Generic Span _
+derive instance Generic (Span l) _
 
-derive instance Newtype Span _
+derive instance Newtype (Span l) _
 
-instance Show Span where
+instance Show l => Show (Span l) where
   show x = genericShow x
 
-getKid_Span :: Step -> Span -> Expr
+derive instance Functor Span
+derive instance Foldable Span
+derive instance Traversable Span
+
+getKid_Span :: forall l. Show l => Step -> Span l -> Expr l
 getKid_Span i (Span es) = es Array.!! unwrap i # fromMaybe' (impossible $ "getKid_Span " <> show i <> " " <> show (Span es))
 
-atIndexSpan_Span :: Index -> Index -> Span -> { _L :: Span, _R :: Span, at :: Span }
+atIndexSpan_Span :: forall l. Index -> Index -> Span l -> { _L :: Span l, _R :: Span l, at :: Span l }
 atIndexSpan_Span i_L i_R (Span es) = { _L: Span left, _R: Span right, at: Span es }
   where
   { before: left, at: es, after: right } = extractSpan_Array (unwrap i_L) (unwrap i_R) es
 
-offset_Span :: Span -> Index
+offset_Span :: forall l. Span l -> Index
 offset_Span (Span es) = Index $ es # Array.length
 
 --------------------------------------------------------------------------------
@@ -162,7 +156,7 @@ show_Path steps = "[" <> (steps # map show # List.intercalate " ") <> "]"
 showNePath :: NePath -> String
 showNePath nepath = show_Path (nepath # fromNePath)
 
-atSubExpr :: Path -> Expr -> { outside :: List Tooth, at :: Expr }
+atSubExpr :: forall l. Show l => Path -> Expr l -> { outside :: List (Tooth l), at :: Expr l }
 atSubExpr = go Nil
   where
   go ts path e = case path of
@@ -213,108 +207,124 @@ instance Ord Point where
 
 --------------------------------------------------------------------------------
 
-newtype Tooth = Tooth { l :: Label, kids_L :: Array Expr, kids_R :: Array Expr }
+newtype Tooth l = Tooth { l :: l, kids_L :: Array (Expr l), kids_R :: Array (Expr l) }
 
 mkTooth l kids_L kids_R = Tooth { l, kids_L, kids_R }
 
-derive instance Generic Tooth _
+derive instance Generic (Tooth l) _
 
-derive instance Newtype Tooth _
+derive instance Newtype (Tooth l) _
 
-instance Show Tooth where
+instance Show l => Show (Tooth l) where
   show t = "{{ " <> showTooth' t "{{}}" <> " }}"
 
-showTooth' :: Tooth -> String -> String
+derive instance Functor Tooth
+derive instance Foldable Tooth
+derive instance Traversable Tooth
+
+showTooth' :: forall l. Show l => (Tooth l) -> String -> String
 showTooth' (Tooth t) s = parens $ Array.intercalate " " $ [ show t.l, "%" ] <> (t.kids_L # map show) <> [ s ] <> (t.kids_R # map show)
 
-isRoot_Tooth :: Tooth -> Boolean
-isRoot_Tooth (Tooth t) = t.l == Root
+-- isRoot_Tooth :: forall l. (Tooth l) -> Boolean
+-- isRoot_Tooth (Tooth t) = t.l == Root
 
-unTooth :: Tooth -> Expr -> Expr
+unTooth :: forall l. (Tooth l) -> Expr l -> Expr l
 unTooth (Tooth t) e = Expr { l: t.l, kids: t.kids_L <> [ e ] <> t.kids_R }
 
-offset_Tooth :: Tooth -> Index
+offset_Tooth :: forall l. (Tooth l) -> Index
 offset_Tooth (Tooth t) = Index $ t.kids_L # Array.length
 
-getStep_Tooth :: Tooth -> Step
+getStep_Tooth :: forall l. (Tooth l) -> Step
 getStep_Tooth (Tooth t) = Step $ t.kids_L # Array.length
 
 --------------------------------------------------------------------------------
 
-newtype SpanTooth = SpanTooth { l :: Label, kids_L :: Array Expr, kids_R :: Array Expr }
+newtype SpanTooth l = SpanTooth { l :: l, kids_L :: Array (Expr l), kids_R :: Array (Expr l) }
 
-derive instance Generic SpanTooth _
+derive instance Generic (SpanTooth l) _
 
-derive instance Newtype SpanTooth _
+derive instance Newtype (SpanTooth l) _
 
-instance Show SpanTooth where
+instance Show l => Show (SpanTooth l) where
   show st = "{{ " <> showSpanTooth' st "{{}}" <> " }}"
 
-showSpanTooth' :: SpanTooth -> String -> String
+derive instance Functor SpanTooth
+derive instance Foldable SpanTooth
+derive instance Traversable SpanTooth
+
+showSpanTooth' :: forall l. Show l => (SpanTooth l) -> String -> String
 showSpanTooth' (SpanTooth st) s = parens $ Array.intercalate " " $ [ show st.l, "%" ] <> (st.kids_L # map show) <> [ s ] <> (st.kids_R # map show)
 
-unSpanTooth :: SpanTooth -> Span -> Expr
+unSpanTooth :: forall l. (SpanTooth l) -> Span l -> Expr l
 unSpanTooth (SpanTooth b) s = Expr { l: b.l, kids: b.kids_L <> unwrap s <> b.kids_R }
 
-offset_outer_SpanTooth :: SpanTooth -> { _L :: Index, _R :: Index }
+offset_outer_SpanTooth :: forall l. (SpanTooth l) -> { _L :: Index, _R :: Index }
 offset_outer_SpanTooth (SpanTooth st) = { _L: Index $ st.kids_L # Array.length, _R: Index $ st.kids_R # Array.length }
 
-offset_inner_SpanTooth :: SpanTooth -> Index
+offset_inner_SpanTooth :: forall l. (SpanTooth l) -> Index
 offset_inner_SpanTooth (SpanTooth st) = Index $ st.kids_L # Array.length
 
 --------------------------------------------------------------------------------
 
-newtype ExprContext = ExprContext (List Tooth)
+newtype ExprContext l = ExprContext (List (Tooth l))
 
-derive instance Generic ExprContext _
+derive instance Generic (ExprContext l) _
 
-derive instance Newtype ExprContext _
+derive instance Newtype (ExprContext l) _
 
-instance Show ExprContext where
+instance Show l => Show (ExprContext l) where
   show ec = "{{ " <> showExprContext' ec "{{}}" <> " }}"
 
-showExprContext' :: ExprContext -> String -> String
+derive instance Functor ExprContext
+derive instance Foldable ExprContext
+derive instance Traversable ExprContext
+
+showExprContext' :: forall l. Show l => (ExprContext l) -> String -> String
 showExprContext' (ExprContext ts) s = foldr showTooth' s ts
 
-unExprContext :: ExprContext -> Expr -> Expr
+unExprContext :: forall l. (ExprContext l) -> Expr l -> Expr l
 unExprContext (ExprContext ts) e = foldr unTooth e ts
 
-offset_inner_ExprContext :: ExprContext -> Index
+offset_inner_ExprContext :: forall l. (ExprContext l) -> Index
 offset_inner_ExprContext (ExprContext ts) = ts # List.last # maybe (Index 0) offset_Tooth
 
-getPath_ExprContext :: ExprContext -> Path
+getPath_ExprContext :: forall l. (ExprContext l) -> Path
 getPath_ExprContext (ExprContext ts) = ts # map getStep_Tooth
 
 --------------------------------------------------------------------------------
 
-newtype SpanContext = SpanContext { _O :: ExprContext, _I :: SpanTooth }
+newtype SpanContext l = SpanContext { _O :: ExprContext l, _I :: SpanTooth l }
 
-derive instance Generic SpanContext _
+derive instance Generic (SpanContext l) _
 
-derive instance Newtype SpanContext _
+derive instance Newtype (SpanContext l) _
 
-instance Show SpanContext where
+instance Show l => Show (SpanContext l) where
   show (SpanContext sc@{ _O: ExprContext ts }) = "{{ " <> foldr showTooth' (show sc._I) ts <> " }}"
 
-showSpanContext' :: SpanContext -> String -> String
+derive instance Functor SpanContext
+derive instance Foldable SpanContext
+derive instance Traversable SpanContext
+
+showSpanContext' :: forall l. Show l => (SpanContext l) -> String -> String
 showSpanContext' (SpanContext sc) s = showExprContext' sc._O $ showSpanTooth' sc._I s
 
-unSpanContext :: SpanContext -> Span -> Expr
+unSpanContext :: forall l. (SpanContext l) -> Span l -> Expr l
 unSpanContext (SpanContext sc) s = unExprContext sc._O $ unSpanTooth sc._I s
 
-offset_inner_SpanContext :: SpanContext -> Index
+offset_inner_SpanContext :: forall l. (SpanContext l) -> Index
 offset_inner_SpanContext (SpanContext sc) = sc._I # offset_inner_SpanTooth
 
-getPath_SpanContext :: SpanContext -> Path
+getPath_SpanContext :: forall l. (SpanContext l) -> Path
 getPath_SpanContext (SpanContext sc) = sc._O # getPath_ExprContext
 
 --------------------------------------------------------------------------------
 
-newtype Zipper = Zipper { kids_L :: Array Expr, kids_R :: Array Expr, inside :: SpanContext }
+newtype Zipper l = Zipper { kids_L :: Array (Expr l), kids_R :: Array (Expr l), inside :: SpanContext l }
 
-derive instance Newtype Zipper _
+derive instance Newtype (Zipper l) _
 
-instance Show Zipper where
+instance Show l => Show (Zipper l) where
   show (Zipper z) =
     "{{ "
       <>
@@ -325,13 +335,17 @@ instance Show Zipper where
         )
       <> " }}"
 
-unZipper :: Zipper -> Span -> Span
+derive instance Functor Zipper
+derive instance Foldable Zipper
+derive instance Traversable Zipper
+
+unZipper :: forall l. (Zipper l) -> Span l -> Span l
 unZipper (Zipper z) s = Span $ z.kids_L <> [ unSpanContext z.inside s ] <> z.kids_R
 
-offset_outer_Zipper :: Zipper -> { _L :: Index, _R :: Index }
+offset_outer_Zipper :: forall l. (Zipper l) -> { _L :: Index, _R :: Index }
 offset_outer_Zipper (Zipper z) = { _L: Index $ z.kids_L # Array.length, _R: Index $ z.kids_R # Array.length }
 
-offset_inner_Zipper :: Zipper -> Index
+offset_inner_Zipper :: forall l. (Zipper l) -> Index
 offset_inner_Zipper (Zipper z) = z.inside # offset_inner_SpanContext
 
 --------------------------------------------------------------------------------
@@ -359,12 +373,12 @@ getEndPoints_SpanH (SpanH h) =
   , _R: Point { path: h.path, j: h.j_R }
   }
 
-atPoint :: Point -> Expr -> { outside :: SpanContext }
+atPoint :: forall l. Show l => Point -> Expr l -> { outside :: SpanContext l }
 atPoint (Point p) e = { outside: at_span.outside }
   where
   at_span = atSpan (SpanH { path: p.path, j_L: p.j, j_R: p.j }) e
 
-atSpan :: SpanH -> Expr -> { outside :: SpanContext, at :: Span }
+atSpan :: forall l. Show l => SpanH -> Expr l -> { outside :: SpanContext l, at :: Span l }
 atSpan (SpanH h) e = { outside: SpanContext { _O: ExprContext at_path.outside, _I: at_span.outside }, at: at_span.at }
   where
   at_path = e # atSubExpr h.path
@@ -405,7 +419,7 @@ getTotalInnerPath_ZipperH (ZipperH h) = case h.path_O of
   Nil -> h.path_I
   i : path_O -> (i :| path_O) <> h.path_I
 
-atZipper :: ZipperH -> Expr -> { outside :: SpanContext, at :: Zipper, inside :: Span }
+atZipper :: forall l. Show l => ZipperH -> Expr l -> { outside :: SpanContext l, at :: Zipper l, inside :: Span l }
 atZipper (ZipperH h) e =
   case h.path_I of
     -- Nil ->
@@ -496,14 +510,18 @@ getOuterLeftPoint_Handle (ZipperH_Handle zh _) = (zh # getEndPoints_ZipperH)._OL
 
 --------------------------------------------------------------------------------
 
-data Fragment
-  = Span_Fragment Span
-  | Zipper_Fragment Zipper
+data Fragment l
+  = Span_Fragment (Span l)
+  | Zipper_Fragment (Zipper l)
 
-derive instance Generic Fragment _
+derive instance Generic (Fragment l) _
 
-instance Show Fragment where
+instance Show l => Show (Fragment l) where
   show x = genericShow x
+
+derive instance Functor Fragment
+derive instance Foldable Fragment
+derive instance Traversable Fragment
 
 --------------------------------------------------------------------------------
 -- Utilities

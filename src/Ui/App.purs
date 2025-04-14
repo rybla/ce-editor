@@ -3,14 +3,14 @@ module Ui.App where
 import Prelude
 
 import Data.Array as Array
-import Data.Expr (Expr(..), Index(..), Label(..), Path, Point(..), Step(..))
+import Data.Expr (Expr(..), Index(..), Path, Point(..), Step(..))
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.List (List(..))
 import Data.List as List
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Editor.Example.Editor1 (example_expr)
+import Editor.Example.Editor1 (L(..), L'(..), example_expr)
 import Effect (Effect)
 import Effect.Class.Console as Console
 import Effect.Exception (throw)
@@ -18,6 +18,7 @@ import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Ui.Component (Component)
 import Ui.Component as Component
+import Web.DOM (Element)
 import Web.Event.Event (EventType(..))
 import Web.Event.Event as Event
 import Web.Event.EventTarget as EventTarget
@@ -27,8 +28,16 @@ import Web.Event.EventTarget as EventTarget
 --------------------------------------------------------------------------------
 
 config =
-  { initialExpr: example_expr 2 2
+  { initialExpr: example_expr {} 2 2
   }
+
+--------------------------------------------------------------------------------
+-- types
+--------------------------------------------------------------------------------
+
+type PreLabel = L {}
+
+type UiLabel = L { elem :: Element }
 
 --------------------------------------------------------------------------------
 -- main
@@ -46,7 +55,7 @@ main = do
   rootExprComponent <-
     newExprComponent state
       Nil
-      (Expr { l: Root, kids: [ config.initialExpr ] })
+      (Expr { l: L Root {}, kids: [ config.initialExpr ] })
   state.rootExprComponent # Ref.write (Just rootExprComponent)
 
   editorComponent <-
@@ -74,7 +83,7 @@ newEditorComponent _state rootExprComponent = do
 -- ExprComponent
 --------------------------------------------------------------------------------
 
-newExprComponent :: State -> Path -> Expr -> Effect Component
+newExprComponent :: State -> Path -> Expr PreLabel -> Effect Component
 newExprComponent state path (Expr e) = do
   Component.newTree
     { name: pure "Expr"

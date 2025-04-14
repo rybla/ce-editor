@@ -5,10 +5,10 @@ import Data.Maybe (Maybe)
 
 --------------------------------------------------------------------------------
 
-type Editor =
+type Editor l =
   { name :: String
-  , initial_exprs :: Array Expr
+  , initial_exprs :: Array (Expr l)
   , initial_handle :: Handle
-  , example_fragment :: String -> Maybe Fragment
+  , example_fragment :: String -> Maybe (Fragment l)
   , max_history_length :: Int
   }
