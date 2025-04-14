@@ -103,3 +103,5 @@ addEventListenerWithOptions eventType options callback target = do
   target # EventTarget.addEventListenerWithOptions eventType eventListener options'
   pure { eventType, eventListener, options: options' }
 
+foreign import shiftKey :: Event -> Boolean
+

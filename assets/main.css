@@ -69,6 +69,7 @@ body {
 
   transition-property: background-color, box-shadow;
   transition-duration: 0.2s;
+  /* transition-duration: 0; */
 }
 
 /* Point */

@@ -3,7 +3,7 @@ module Ui.App where
 import Prelude
 
 import Data.Array as Array
-import Data.Expr (Expr(..), Handle(..), Path, Point(..), SpanFocus(..), ZipperFocus(..), atSteps, atSubExpr, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getIndexesAroundStep, getStep, mkExpr)
+import Data.Expr (Expr(..), Handle(..), Path, Point(..), SpanFocus(..), ZipperFocus(..), atSteps, atSubExpr, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, getIndexesAroundStep, getStep, mkExpr)
 import Data.Expr.Drag (drag, getDragOrigin)
 import Data.List (List(..))
 import Data.List as List
@@ -14,13 +14,14 @@ import Data.Traversable (sequence, traverse)
 import Data.Tuple (fst)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
+import Debug as Debug
 import Editor.Example.Editor1 (Dat(..), L(..), example_expr, mkL)
 import Effect (Effect)
 import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
-import Ui.Common (EventListenerInfo, addClass, addEventListenerWithOptions, body, createElement, doc, removeClass)
+import Ui.Common (EventListenerInfo, addClass, addEventListenerWithOptions, body, createElement, doc, removeClass, shiftKey)
 import Utility (fromMaybeM, (:=))
 import Web.DOM (Element)
 import Web.DOM.Document as Document
@@ -167,22 +168,26 @@ renderPoint state (Point point) elem_parent = do
   elem_point <- elem_parent # createElement "div"
   elem_point # addClass "Point"
   eventListeners <- sequence
-    [ elem_point # Element.toEventTarget # addEventListenerWithOptions (EventType "mousedown") { capture: true, passive: true } \_event -> do
+    [ elem_point # Element.toEventTarget # addEventListenerWithOptions (EventType "mousedown") { capture: true, passive: true } \event -> do
         -- Console.log $ "Point: mousedown" <> show (Point point)
-        -- state.mb_focus # Ref.read >>= case _ of
-        --   Nothing -> do
-        --     let h' = Point_Handle (Point point)
-        --     state.mb_dragOrigin := pure h'
-        --     state # setHandle (pure h')
-        --   Just h -> do
-        --     expr <- state # getExpr
-        --     state.mb_dragOrigin := pure (getDragOrigin h (Point point))
-        --     case drag h (Point point) expr of
-        --       Nothing -> pure unit
-        --       Just h' -> state # setHandle (pure h')
-        let h' = Point_Handle (Point point)
-        state.mb_dragOrigin := pure h'
-        state # setHandle (pure h')
+        state.mb_focus # Ref.read >>= case _ of
+          Just h | event # shiftKey -> do
+            expr <- state # getExpr
+            state.mb_dragOrigin := pure h
+            case drag h (Point point) expr of
+              Nothing -> pure unit
+              Just h' -> state # setHandle (pure h')
+          Just h -> do
+            expr <- state # getExpr
+            let dragOrigin = getDragOrigin h (Point point)
+            state.mb_dragOrigin := pure dragOrigin
+            case drag dragOrigin (Point point) expr of
+              Nothing -> pure unit
+              Just h' -> state # setHandle (pure h')
+          _ -> do
+            let h' = Point_Handle (Point point)
+            state.mb_dragOrigin := pure h'
+            state # setHandle (pure h')
     , elem_point # Element.toEventTarget # addEventListenerWithOptions (EventType "mouseenter") { capture: true, passive: true } \_event -> do
         -- Console.log $ "Point: mouseenter" <> show (Point point)
         state.mb_dragOrigin # Ref.read >>= case _ of

@@ -9,3 +9,4 @@ export const getText_Element = (e) => () => {
   return e.innerText;
 }
 
+export const shiftKey = (e) => e.shiftKey
