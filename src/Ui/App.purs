@@ -16,14 +16,14 @@ import Data.Traversable (sequence, traverse, traverse_)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor.Example.Editor1 (Dat(..), L(..), example_expr, mkL)
+import Editor.Example.Editor1 (Dat(..), L(..), mkL)
 import Effect (Effect)
 import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Ui.Common (EventListenerInfo, KeyInfo(..), addClass, addEventListenerWithOptions, body, createElement, doc, fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo, removeChild, removeClass, removeEventListener, replaceChild, shiftKey)
-import Utility (bug, fromMaybeM, todo, (:%=), (:=))
+import Utility (fromMaybeM, todo, (:%=), (:=))
 import Web.DOM (Element)
 import Web.DOM.Document as Document
 import Web.DOM.Element as Element
@@ -34,14 +34,10 @@ import Web.Event.Event (EventType(..))
 -- config
 --------------------------------------------------------------------------------
 
+initialExpr_1 = "B" % [ "L" % [], "L" % [] ]
+
 config =
-  { initialExpr:
-      mkPureExpr Root
-        [ mkPureExpr (String "B")
-            [ mkPureExpr (String "L") []
-            , mkPureExpr (String "L") []
-            ]
-        ]
+  { initialExpr: initialExpr_1
   -- , initialExpr: example_expr {} 2 2
   , displayStyle: Inline_DisplayStyle
   }
@@ -72,7 +68,9 @@ type State =
 
 type PureLabel = L {}
 
-mkPureExpr dat kids = mkExpr (L { dat, meta: {} }) kids
+mkPureExpr s kids = mkExpr (L { dat: String s, meta: {} }) kids
+
+infix 4 mkPureExpr as %
 
 type UiLabel = L UiExprMeta
 
@@ -161,17 +159,17 @@ eventListenerInfo_keyboardAction state = doc # Document.toEventTarget
                 Just handle' -> state # setHandle (Just handle')
         -- test
         _ | KeyInfo ki # matchKeyInfo (_ == "a") {} -> do
-          -- state # applyDiff
-          --   ( Inject_Diff {- Root -}
-          --       [ DeleteTooth_Diff {- B -}  (Step 0)
-          --           (Inject_Diff {- L -}  [])
-          --       ]
-          --   )
           state # applyDiff
             ( Inject_Diff {- Root -}
-                [ Replace_Diff (mkPureExpr (String "A") [])
+                [ DeleteTooth_Diff {- B -}  (Step 0)
+                    (Inject_Diff {- L -}  [])
                 ]
             )
+          -- state # applyDiff
+          --   ( Inject_Diff {- Root -}
+          --       [ Replace_Diff (mkPureExpr (String "A") [])
+          --       ]
+          --   )
           pure unit
         _ -> pure unit
 
@@ -325,16 +323,17 @@ applyDiff diff0 state = do
   go path mb_parent (Expr e) (DeleteTooth_Diff i d) = do
     parent <- mb_parent # fromMaybeM do throw "can't DeleteTooth_Diff at Root"
     -- cleanup all kids around step i
-    e.kids # traverseWithIndex_ \i'_ e' -> do
+    e.kids # traverseWithIndex_ \i'_ e_kid -> do
       let i' = Step i'_
       when (i /= i') do
-        e' # cleanup_uiExpr_deep
-        parent # removeChild (e' # getElem_UiExpr)
-    let e' = Expr e # getKid_Expr i
+        e_kid # cleanup_uiExpr_deep
+        Expr e # getElem_UiExpr # removeChild (e_kid # getElem_UiExpr)
+    let e_kid = Expr e # getKid_Expr i
     -- replace this expr with the kid at step i
     -- this expr's parent is now the kid's parent
-    parent # replaceChild (e' # getElem_UiExpr) (Expr e # getElem_UiExpr)
-    go path (pure parent) e' d
+    Expr e # cleanup_UiExpr_shallow
+    parent # replaceChild (Expr e # getElem_UiExpr) (e_kid # getElem_UiExpr)
+    go path (pure parent) e_kid d
 
   go path mb_parent e (InsertTooth_Diff t d) = do
     todo $ "applyDiff path parent e (InsertTooth_Diff t d)"

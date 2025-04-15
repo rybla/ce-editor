@@ -61,4 +61,3 @@ example_expr default_meta n_branching n_height =
   mkL (String "B") default_meta %
     range 0 (n_branching - 1)
     <#> \_ -> example_expr default_meta n_branching (n_height - 1)
-

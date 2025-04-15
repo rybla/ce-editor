@@ -3575,14 +3575,15 @@
       mb_dragOrigin
     };
   };
-  var mkPureExpr = function(dat) {
+  var mkPureExpr = function(s) {
     return function(kids) {
       return mkExpr({
-        dat,
+        dat: new $$String(s),
         meta: {}
       })(kids);
     };
   };
+  var initialExpr_1 = /* @__PURE__ */ mkPureExpr("B")([/* @__PURE__ */ mkPureExpr("L")([]), /* @__PURE__ */ mkPureExpr("L")([])]);
   var getUiExpr_root = function(state2) {
     return function __do2() {
       var v = read(state2.mb_uiExprRoot)();
@@ -3594,7 +3595,7 @@
         return v.value0;
       }
       ;
-      throw new Error("Failed pattern match at Ui.App (line 429, column 59 - line 431, column 25): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App (line 428, column 59 - line 430, column 25): " + [v.constructor.name]);
     };
   };
   var getUiPoint = function(state2) {
@@ -3643,7 +3644,7 @@
               return modifyClass("HandleFocus")(uiPoint_R.elem)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 402, column 7 - line 404, column 70): " + [mb_handle.value0.value1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 401, column 7 - line 403, column 70): " + [mb_handle.value0.value1.constructor.name]);
           };
         }
         ;
@@ -3674,11 +3675,11 @@
               return modifyClass("HandleFocus")(uiPoint_OR.elem)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 415, column 7 - line 419, column 78): " + [mb_handle.value0.value1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 414, column 7 - line 418, column 78): " + [mb_handle.value0.value1.constructor.name]);
           };
         }
         ;
-        throw new Error("Failed pattern match at Ui.App (line 390, column 3 - line 419, column 78): " + [mb_handle.constructor.name]);
+        throw new Error("Failed pattern match at Ui.App (line 389, column 3 - line 418, column 78): " + [mb_handle.constructor.name]);
       };
     };
   };
@@ -3718,7 +3719,7 @@
                   return setHandle(pure12(v3.value0))(state2)();
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.App (line 260, column 13 - line 262, column 53): " + [v3.constructor.name]);
+                throw new Error("Failed pattern match at Ui.App (line 258, column 13 - line 260, column 53): " + [v3.constructor.name]);
               }
               ;
               if (v2 instanceof Just) {
@@ -3734,7 +3735,7 @@
                   return setHandle(pure12(v3.value0))(state2)();
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.App (line 267, column 13 - line 269, column 53): " + [v3.constructor.name]);
+                throw new Error("Failed pattern match at Ui.App (line 265, column 13 - line 267, column 53): " + [v3.constructor.name]);
               }
               ;
               var h$prime = new Point_Handle(v1);
@@ -3763,10 +3764,10 @@
                   return setHandle(pure12(v3.value0))(state2)();
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.App (line 281, column 13 - line 283, column 53): " + [v3.constructor.name]);
+                throw new Error("Failed pattern match at Ui.App (line 279, column 13 - line 281, column 53): " + [v3.constructor.name]);
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 277, column 44 - line 283, column 53): " + [v2.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 275, column 44 - line 281, column 53): " + [v2.constructor.name]);
             };
           })(toEventTarget2(elem3))])();
           (function __do3() {
@@ -3801,7 +3802,7 @@
   };
   var config = /* @__PURE__ */ function() {
     return {
-      initialExpr: mkPureExpr(Root.value)([mkPureExpr(new $$String("B"))([mkPureExpr(new $$String("L"))([]), mkPureExpr(new $$String("L"))([])])]),
+      initialExpr: initialExpr_1,
       displayStyle: Inline_DisplayStyle.value
     };
   }();
@@ -3823,7 +3824,7 @@
                 return addClass("Nested")(elem_expr)();
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 191, column 3 - line 193, column 57): " + [config.displayStyle.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 189, column 3 - line 191, column 57): " + [config.displayStyle.constructor.name]);
             })();
             (function() {
               if (v.l.dat instanceof Root) {
@@ -3898,6 +3899,19 @@
       return traverse_2(cleanup_uiExpr_deep)(v.kids)();
     };
   };
+  var cleanup_UiExpr_shallow = function(v) {
+    var elem_e = getElem_UiExpr(v);
+    return function __do2() {
+      traverse_2(function(eli) {
+        return removeEventListener2(eli)(toEventTarget2(elem_e));
+      })(unwrap3(v.l).meta.eventListenerInfos)();
+      return traverse_2(function(uiPoint) {
+        return traverse_2(function(eli) {
+          return removeEventListener2(eli)(toEventTarget2(elem_e));
+        })(uiPoint.eventListenerInfos);
+      })(unwrap3(v.l).meta.uiPoints)();
+    };
+  };
   var applyDiff = function(diff0) {
     return function(state2) {
       var go2 = function(v) {
@@ -3937,16 +3951,17 @@
                 return function __do2() {
                   var parent2 = fromMaybeM2($$throw("can't DeleteTooth_Diff at Root"))(v1)();
                   traverseWithIndex_2(function(i$prime_) {
-                    return function(e$prime2) {
+                    return function(e_kid2) {
                       return when2(notEq2(v3.value0)(i$prime_))(function __do3() {
-                        cleanup_uiExpr_deep(e$prime2)();
-                        return removeChild2(getElem_UiExpr(e$prime2))(parent2)();
+                        cleanup_uiExpr_deep(e_kid2)();
+                        return removeChild2(getElem_UiExpr(e_kid2))(getElem_UiExpr(v2))();
                       });
                     };
                   })(v2.kids)();
-                  var e$prime = getKid_Expr2(v3.value0)(v2);
-                  replaceChild2(getElem_UiExpr(e$prime))(getElem_UiExpr(v2))(parent2)();
-                  return go2(v)(pure12(parent2))(e$prime)(v3.value1)();
+                  var e_kid = getKid_Expr2(v3.value0)(v2);
+                  cleanup_UiExpr_shallow(v2)();
+                  replaceChild2(getElem_UiExpr(v2))(getElem_UiExpr(e_kid))(parent2)();
+                  return go2(v)(pure12(parent2))(e_kid)(v3.value1)();
                 };
               }
               ;
@@ -3964,7 +3979,7 @@
                 };
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 315, column 3 - line 315, column 75): " + [v.constructor.name, v1.constructor.name, v2.constructor.name, v3.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 313, column 3 - line 313, column 75): " + [v.constructor.name, v1.constructor.name, v2.constructor.name, v3.constructor.name]);
             };
           };
         };
@@ -3987,7 +4002,7 @@
             return v5 === "a";
           })({})(v)) {
             return function __do2() {
-              applyDiff(new Inject_Diff([new Replace_Diff(mkPureExpr(new $$String("A"))([]))]))(state2)();
+              applyDiff(new Inject_Diff([new DeleteTooth_Diff(0, new Inject_Diff([]))]))(state2)();
               return unit;
             };
           }
@@ -4019,10 +4034,10 @@
                 return setHandle(new Just(v5.value0))(state2)();
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 159, column 15 - line 161, column 65): " + [v5.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 157, column 15 - line 159, column 65): " + [v5.constructor.name]);
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 155, column 42 - line 161, column 65): " + [v4.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 153, column 42 - line 159, column 65): " + [v4.constructor.name]);
           };
         }
         ;
@@ -4051,10 +4066,10 @@
               return setHandle(new Just(new Point_Handle(v3.value0)))(state2)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 150, column 15 - line 152, column 76): " + [v3.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 148, column 15 - line 150, column 76): " + [v3.constructor.name]);
           }
           ;
-          throw new Error("Failed pattern match at Ui.App (line 146, column 42 - line 152, column 76): " + [v2.constructor.name]);
+          throw new Error("Failed pattern match at Ui.App (line 144, column 42 - line 150, column 76): " + [v2.constructor.name]);
         };
       }
       ;
