@@ -4,8 +4,9 @@
   /* --background-color: rgb(146, 146, 146); */
   --background-color: rgb(214, 214, 214);
 
+  --point--width: 1em;
 
-  --handle-point--border-radius: 1em;
+  --handle-point--border-radius: var(--point--width);
   --handle-point-outer-left--border-radius: var(--handle-point--border-radius) 0 0 var(--handle-point--border-radius);
   /* --handle-point-inner-left--border-radius: calc(-1 * var(--handle-point--border-radius)) 0 0 calc(-1 * var(--handle-point--border-radius)); */
   --handle-point-inner-left--border-radius: 0 0 0 0;
@@ -21,11 +22,8 @@
   /* --handle-point--background-color: color-mix(in hsl, rgb(217, 0, 255), transparent 30%); */
   --handle-point--background-color: var(--handle-point-focus--background-color);
 
-
-
   --handle-inner--background-color: color-mix(in hsl, blue, transparent 80%);
 
-  --point--width: 1em;
 }
 
 /* -------------------------------------------------------------------------- */
