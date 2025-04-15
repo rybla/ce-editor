@@ -4,8 +4,9 @@
   /* --background-color: rgb(146, 146, 146); */
   --background-color: rgb(214, 214, 214);
 
+  --point--width: 1em;
 
-  --handle-point--border-radius: 1em;
+  --handle-point--border-radius: var(--point--width);
   --handle-point-outer-left--border-radius: var(--handle-point--border-radius) 0 0 var(--handle-point--border-radius);
   /* --handle-point-inner-left--border-radius: calc(-1 * var(--handle-point--border-radius)) 0 0 calc(-1 * var(--handle-point--border-radius)); */
   --handle-point-inner-left--border-radius: 0 0 0 0;
@@ -21,11 +22,8 @@
   /* --handle-point--background-color: color-mix(in hsl, rgb(217, 0, 255), transparent 30%); */
   --handle-point--background-color: var(--handle-point-focus--background-color);
 
-
-
   --handle-inner--background-color: color-mix(in hsl, blue, transparent 80%);
 
-  --point--width: 1em;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -100,16 +98,27 @@ body {
     position: absolute;
     width: var(--point--width);
     height: 1em;
+    top: -1.1em;
 
     border-radius: var(--point--width);
-    top: -1.1em;
 
     background-color: transparent;
   }
 }
 
+.Point>.BeforeLeft {
+  width: calc(0.5 * var(--point--width));
+  margin-right: calc(-0.5 * var(--point--width));
+
+  background-color: transparent;
+
+  transition-property: background-color, box-shadow;
+  transition-duration: 0.2s;
+}
+
 .Point>.Left {
   width: calc(0.5 * var(--point--width));
+
   background-color: transparent;
 
   transition-property: background-color, box-shadow;
@@ -118,6 +127,17 @@ body {
 
 .Point>.Right {
   width: calc(0.5 * var(--point--width));
+
+  background-color: transparent;
+
+  transition-property: background-color, box-shadow;
+  transition-duration: 0.2s;
+}
+
+.Point>.AfterRight {
+  /* width: calc(0.3 * var(--point--width)); */
+  /* margin-left: calc(-0.3 * var(--point--width)); */
+
   background-color: transparent;
 
   transition-property: background-color, box-shadow;
@@ -216,6 +236,11 @@ body {
   >.Right {
     background-color: var(--handle-point--background-color);
     border-radius: var(--handle-point-inner-left--border-radius);
+  }
+
+  >.AfterRight {
+    background-color: var(--background-color);
+    border-radius: var(--handle-point-outer-left--border-radius);
   }
 
   &.HandleFocus>.Right {

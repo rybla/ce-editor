@@ -2823,7 +2823,7 @@
         return v.value0;
       }
       ;
-      throw new Error("Failed pattern match at Ui.App (line 265, column 43 - line 267, column 25): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App (line 269, column 43 - line 271, column 25): " + [v.constructor.name]);
     };
   };
   var getUiPoint = function(state2) {
@@ -2872,7 +2872,7 @@
               return modifyClass("HandleFocus")(uiPoint_R.elem)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 238, column 7 - line 240, column 70): " + [mb_handle.value0.value1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 242, column 7 - line 244, column 70): " + [mb_handle.value0.value1.constructor.name]);
           };
         }
         ;
@@ -2903,11 +2903,11 @@
               return modifyClass("HandleFocus")(uiPoint_OR.elem)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 251, column 7 - line 255, column 78): " + [mb_handle.value0.value1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 255, column 7 - line 259, column 78): " + [mb_handle.value0.value1.constructor.name]);
           };
         }
         ;
-        throw new Error("Failed pattern match at Ui.App (line 226, column 3 - line 255, column 78): " + [mb_handle.constructor.name]);
+        throw new Error("Failed pattern match at Ui.App (line 230, column 3 - line 259, column 78): " + [mb_handle.constructor.name]);
       };
     };
   };
@@ -3000,12 +3000,16 @@
             return addClass("Focus")(elem_Focus)();
           })();
           (function __do3() {
+            var elem_BL = createElement2("div")(elem3)();
+            addClass("BeforeLeft")(elem_BL)();
             var elem_L = createElement2("div")(elem3)();
             return addClass("Left")(elem_L)();
           })();
           (function __do3() {
             var elem_R = createElement2("div")(elem3)();
-            return addClass("Right")(elem_R)();
+            addClass("Right")(elem_R)();
+            var elem_AR = createElement2("div")(elem3)();
+            return addClass("AfterRight")(elem_AR)();
           })();
           return {
             elem: elem3,
