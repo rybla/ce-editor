@@ -143,3 +143,4 @@ infix 4 modifyFlipped as :%=
 
 lookup_unsafe :: forall a b. String -> a -> b
 lookup_unsafe k a = a # unsafeCoerce # Object.lookup k # fromMaybe' \_ -> bug $ "Object doesn't have property " <> show k
+

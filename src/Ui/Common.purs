@@ -75,6 +75,9 @@ createElement tag parent = do
   parent # appendChild elem
   pure elem
 
+createElement_orphan ∷ String → Effect Element
+createElement_orphan tag = doc # Document.createElement tag
+
 removeClass :: String -> Element -> Effect Unit
 removeClass c elem = elem # Element.classList >>= (_ `DOMTokenList.remove` c)
 

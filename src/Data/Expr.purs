@@ -37,6 +37,9 @@ derive newtype instance Semiring Step
 
 derive newtype instance Ring Step
 
+stepsRange :: { _L :: Step, _R :: Step } -> Array Step
+stepsRange i = Array.range (i._L # unwrap) (i._R # unwrap) # map Step
+
 atStep :: forall l. Show l => Step -> Expr l -> { outside :: Tooth l, at :: Expr l }
 atStep i (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, at }
   where
