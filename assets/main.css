@@ -101,6 +101,9 @@ body {
     border-radius: var(--point--width);
 
     background-color: transparent;
+
+    display: none;
+    visibility: hidden;
   }
 
   >.Left {
@@ -306,9 +309,4 @@ body {
   }
 
   background-color: transparent;
-}
-
-.Point>.Focus {
-  display: none;
-  visibility: hidden;
 }
