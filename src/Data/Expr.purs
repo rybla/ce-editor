@@ -501,6 +501,9 @@ instance Show ZipperFocus where
   show InnerRight_ZipperFocus = "IR"
   show OuterRight_ZipperFocus = "OR"
 
+defaultHandle :: Handle
+defaultHandle = Point_Handle $ Point { path: Nil, j: Index 0 }
+
 getFocusPoint :: Handle -> Point
 getFocusPoint (Point_Handle p) = p
 getFocusPoint (SpanH_Handle (SpanH h) Left_SpanFocus) = Point { path: h.path, j: h.j_L }

@@ -29,6 +29,17 @@ fromKeyToDir "ArrowLeft" = Just L
 fromKeyToDir "ArrowRight" = Just R
 fromKeyToDir _ = Nothing
 
+moveUntil :: forall l a. Show l => Expr l -> Dir -> Handle -> (Point -> Maybe a) -> Maybe a
+moveUntil e dir h f = case move e dir h of
+  Nothing -> Nothing
+  Just p -> go p
+  where
+  go p = case f p of
+    Nothing -> case move e dir (Point_Handle p) of
+      Nothing -> Nothing
+      Just p' -> go p'
+    Just a -> pure a
+
 move :: forall l. Show l => Expr l -> Dir -> Handle -> Maybe Point
 move e dir h = h # getFocusPoint # move_Point e dir
 

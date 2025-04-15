@@ -14,20 +14,20 @@ import Data.List (List(..), (:))
 import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, fromMaybe')
 import Data.String as String
 import Data.String.Regex (Regex)
 import Data.String.Regex as Regex
 import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Exception as Exception
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Foreign.Object as Object
 import Partial.Unsafe (unsafeCrashWith)
 import Prim.TypeError (class Warn, Text)
 import Type.Row.Homogeneous (class Homogeneous)
+import Unsafe.Coerce (unsafeCoerce)
 
 todo :: forall a. Warn (Text "contains TODOs") => String -> a
 todo msg = unsafeCrashWith $ "[[TODO]]\n" <> msg
@@ -136,3 +136,5 @@ writeFlipped = flip Ref.write
 
 infix 4 writeFlipped as :=
 
+lookup_unsafe :: forall a b. String -> a -> b
+lookup_unsafe k a = a # unsafeCoerce # Object.lookup k # fromMaybe' \_ -> bug $ "Object doesn't have property " <> show k

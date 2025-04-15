@@ -3,8 +3,9 @@ module Ui.App where
 import Prelude
 
 import Data.Array as Array
-import Data.Expr (Expr(..), Handle(..), Path, Point(..), SpanFocus(..), ZipperFocus(..), atSteps, atSubExpr, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getIndexesAroundStep, getStep, mkExpr)
-import Data.Expr.Drag (drag, getDragOrigin)
+import Data.Expr (Expr(..), Handle(..), Path, Point(..), SpanFocus(..), ZipperFocus(..), atSteps, atSubExpr, defaultHandle, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getIndexesAroundStep, getStep, mkExpr)
+import Data.Expr.Drag as Expr.Drag
+import Data.Expr.Move as Expr.Move
 import Data.List (List(..))
 import Data.List as List
 import Data.Maybe (Maybe(..))
@@ -19,7 +20,7 @@ import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
-import Ui.Common (EventListenerInfo, addClass, addEventListenerWithOptions, body, createElement, doc, removeClass, shiftKey)
+import Ui.Common (EventListenerInfo, KeyInfo(..), addClass, addEventListenerWithOptions, body, createElement, doc, fromEventToKeyInfo, matchMapKeyInfo, removeClass, shiftKey)
 import Utility (fromMaybeM, (:=))
 import Web.DOM (Element)
 import Web.DOM.Document as Document
@@ -28,7 +29,7 @@ import Web.DOM.Node as Node
 import Web.Event.Event (EventType(..))
 
 --------------------------------------------------------------------------------
--- Config
+-- config
 --------------------------------------------------------------------------------
 
 config =
@@ -43,12 +44,31 @@ data DisplayStyle
 derive instance Eq DisplayStyle
 
 --------------------------------------------------------------------------------
+-- main
+--------------------------------------------------------------------------------
+
+main :: Effect Unit
+main = do
+  void $ body # renderEditor
+
+--------------------------------------------------------------------------------
 -- types
 --------------------------------------------------------------------------------
 
-type PreLabel = L {}
+type State =
+  { mb_expr :: Ref (Maybe (Expr UiLabel))
+  , mb_handle :: Ref (Maybe Handle)
+  , mb_dragOrigin :: Ref (Maybe Handle)
+  }
+
+type PureLabel = L {}
 
 type UiLabel = L UiExpr
+
+type UiEditor =
+  { elem :: Element
+  , eventListenerInfos :: Array EventListenerInfo
+  }
 
 type UiExpr =
   { elem :: Element
@@ -63,44 +83,71 @@ type UiPoint =
   }
 
 --------------------------------------------------------------------------------
--- main
+-- renderEditor
 --------------------------------------------------------------------------------
 
-type State =
-  { expr :: Ref (Maybe (Expr UiLabel))
-  , mb_handle :: Ref (Maybe Handle)
-  , mb_dragOrigin :: Ref (Maybe Handle)
-  }
-
-newState :: Effect State
-newState = do
-  expr <- Ref.new Nothing
-  mb_handle <- Ref.new Nothing
-  mb_dragOrigin <- Ref.new Nothing
-  pure { expr, mb_handle, mb_dragOrigin }
-
-main :: Effect Unit
-main = do
+renderEditor :: Element -> Effect UiEditor
+renderEditor parent = do
   let expr = mkExpr (mkL Root {}) [ config.initialExpr ]
   Console.logShow expr
 
   state <- newState
 
-  elem_editor <- do
-    elem_editor <- body # createElement "div"
-    elem_editor # addClass "Editor"
-    pure elem_editor
+  elem <- parent # createElement "div"
+  elem # addClass "Editor"
 
-  expr' <- elem_editor # renderExpr state Nil expr
-  state.expr := pure expr'
+  expr' <- elem # renderExpr state Nil expr
+  state.mb_expr := pure expr'
 
-  void $ doc # Document.toEventTarget
-    # addEventListenerWithOptions (EventType "mouseup") { capture: true, passive: true } \_event -> do
-        state.mb_dragOrigin := none
+  eventListenerInfos <- sequence
+    [ state # eventListenerInfo_stopDrag
+    , state # eventListenerInfo_keyboardAction
+    ]
 
-  pure unit
+  pure { elem, eventListenerInfos }
 
-renderExpr :: State -> Path -> Expr PreLabel -> Element -> Effect (Expr UiLabel)
+newState :: Effect State
+newState = do
+  mb_expr <- Ref.new Nothing
+  mb_handle <- Ref.new Nothing
+  mb_dragOrigin <- Ref.new Nothing
+  pure { mb_expr, mb_handle, mb_dragOrigin }
+
+eventListenerInfo_stopDrag :: State -> Effect EventListenerInfo
+eventListenerInfo_stopDrag state = doc # Document.toEventTarget
+  # addEventListenerWithOptions (EventType "mouseup") { capture: true, passive: true } \_event -> do
+      state.mb_dragOrigin := none
+
+eventListenerInfo_keyboardAction :: State -> Effect EventListenerInfo
+eventListenerInfo_keyboardAction state = doc # Document.toEventTarget
+  # addEventListenerWithOptions (EventType "keydown") { capture: true } \event -> do
+      let KeyInfo ki = event # fromEventToKeyInfo
+      case unit of
+        -- move
+        _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: Just false, shift: Just false, alt: Just false } -> do
+          state.mb_handle # Ref.read >>= case _ of
+            Nothing -> state # setHandle (Just defaultHandle)
+            Just handle -> do
+              expr <- state # getExpr
+              case Expr.Move.move expr dir handle of
+                Nothing -> pure unit
+                Just point -> state # setHandle (Just (Point_Handle point))
+        -- drag move
+        _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: Just false, shift: Just true, alt: Just false } -> do
+          state.mb_handle # Ref.read >>= case _ of
+            Nothing -> state # setHandle (Just defaultHandle)
+            Just handle -> do
+              expr <- state # getExpr
+              case Expr.Move.moveUntil expr dir handle (\p -> Expr.Drag.drag handle p expr) of
+                Nothing -> pure unit
+                Just handle' -> state # setHandle (Just handle')
+        _ -> pure unit
+
+--------------------------------------------------------------------------------
+-- renderExpr
+--------------------------------------------------------------------------------
+
+renderExpr :: State -> Path -> Expr PureLabel -> Element -> Effect (Expr UiLabel)
 renderExpr state path (Expr expr) elem_parent = do
   Console.log $ "renderExpr: " <> show (Expr expr)
   -- create element
@@ -174,14 +221,14 @@ renderPoint state (Point point) elem_parent = do
           Just h | event # shiftKey -> do
             expr <- state # getExpr
             state.mb_dragOrigin := pure h
-            case drag h (Point point) expr of
+            case Expr.Drag.drag h (Point point) expr of
               Nothing -> pure unit
               Just h' -> state # setHandle (pure h')
           Just h -> do
             expr <- state # getExpr
-            let dragOrigin = getDragOrigin h (Point point)
+            let dragOrigin = Expr.Drag.getDragOrigin h (Point point)
             state.mb_dragOrigin := pure dragOrigin
-            case drag dragOrigin (Point point) expr of
+            case Expr.Drag.drag dragOrigin (Point point) expr of
               Nothing -> pure unit
               Just h' -> state # setHandle (pure h')
           _ -> do
@@ -194,7 +241,7 @@ renderPoint state (Point point) elem_parent = do
           Nothing -> pure unit
           Just h -> do
             expr <- state # getExpr
-            case drag h (Point point) expr of
+            case Expr.Drag.drag h (Point point) expr of
               Nothing -> pure unit
               Just h' -> state # setHandle (pure h')
     ]
@@ -263,7 +310,7 @@ setHandle mb_handle' state = do
   state.mb_handle := mb_handle'
 
 getExpr :: State -> Effect (Expr UiLabel)
-getExpr state = state.expr # Ref.read >>= case _ of
+getExpr state = state.mb_expr # Ref.read >>= case _ of
   Nothing -> throw $ "getExpr: isNothing state.expr!"
   Just expr -> pure expr
 
