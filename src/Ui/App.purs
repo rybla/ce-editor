@@ -3,7 +3,7 @@ module Ui.App where
 import Prelude
 
 import Data.Array as Array
-import Data.Expr (Expr(..), Handle(..), Path, Point(..), SpanFocus(..), ZipperFocus(..), atSteps, atSubExpr, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, getIndexesAroundStep, getStep, mkExpr)
+import Data.Expr (Expr(..), Handle(..), Path, Point(..), SpanFocus(..), ZipperFocus(..), atSteps, atSubExpr, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getIndexesAroundStep, getStep, mkExpr)
 import Data.Expr.Drag (drag, getDragOrigin)
 import Data.List (List(..))
 import Data.List as List
@@ -11,10 +11,8 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Newtype as Newtype
 import Data.Traversable (sequence, traverse)
-import Data.Tuple (fst)
-import Data.Tuple.Nested (type (/\), (/\))
+import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Debug as Debug
 import Editor.Example.Editor1 (Dat(..), L(..), example_expr, mkL)
 import Effect (Effect)
 import Effect.Class.Console as Console
@@ -50,13 +48,18 @@ derive instance Eq DisplayStyle
 
 type PreLabel = L {}
 
-type UiLabel = L UiMeta
+type UiLabel = L UiExpr
 
-type UiMeta =
+type UiExpr =
   { elem :: Element
-  , eventListeners :: Array EventListenerInfo
+  , eventListenerInfos :: Array EventListenerInfo
   -- indexed by each Point Index
-  , points :: Array (Element /\ Array EventListenerInfo)
+  , uiPoints :: Array UiPoint
+  }
+
+type UiPoint =
+  { elem :: Element
+  , eventListenerInfos :: Array EventListenerInfo
   }
 
 --------------------------------------------------------------------------------
@@ -65,16 +68,16 @@ type UiMeta =
 
 type State =
   { expr :: Ref (Maybe (Expr UiLabel))
-  , mb_focus :: Ref (Maybe Handle)
+  , mb_handle :: Ref (Maybe Handle)
   , mb_dragOrigin :: Ref (Maybe Handle)
   }
 
 newState :: Effect State
 newState = do
   expr <- Ref.new Nothing
-  mb_focus <- Ref.new Nothing
+  mb_handle <- Ref.new Nothing
   mb_dragOrigin <- Ref.new Nothing
-  pure { expr, mb_focus, mb_dragOrigin }
+  pure { expr, mb_handle, mb_dragOrigin }
 
 main :: Effect Unit
 main = do
@@ -112,7 +115,7 @@ renderExpr state path (Expr expr) elem_parent = do
     L { dat: Root } -> elem_expr # addClass "Root"
     _ -> pure unit
 
-  eventListeners <- sequence
+  eventListenerInfos <- sequence
     []
 
   -- open
@@ -128,17 +131,14 @@ renderExpr state path (Expr expr) elem_parent = do
     elem_label # Element.toNode # Node.setTextContent (show expr.l)
 
   -- kids
-  kids' /\ points <- map Array.unzip $ Expr expr # atSteps # traverse \{ outside: t, at: kid } -> do
+  kids' /\ uiPoints_init <- map Array.unzip $ Expr expr # atSteps # traverse \{ outside: t, at: kid } -> do
     let i = t # getStep
     let j = (i # getIndexesAroundStep)._L
-    elem_pointoint /\ eventListeners_point <- elem_expr # renderPoint state (Point { path, j })
+    uiPoint <- elem_expr # renderPoint state (Point { path, j })
     kid' <- elem_expr # renderExpr state (List.snoc path i) kid
-    pure $ kid' /\ (elem_pointoint /\ eventListeners_point)
-
-  -- last point
-  lastPoint <- do
-    elem_pointoint /\ eventListeners_points <- elem_expr # renderPoint state (Point { path, j: (Expr expr # getExtremeIndexes)._R })
-    pure $ elem_pointoint /\ eventListeners_points
+    pure $ kid' /\ uiPoint
+  uiPoint_last <- elem_expr # renderPoint state (Point { path, j: (Expr expr # getExtremeIndexes)._R })
+  let uiPoints = uiPoints_init `Array.snoc` uiPoint_last
 
   -- close
   when (config.displayStyle == Inline_DisplayStyle) do
@@ -147,11 +147,11 @@ renderExpr state path (Expr expr) elem_parent = do
     elem_close # Element.toNode # Node.setTextContent ")"
 
   let
-    meta_expr :: UiMeta
+    meta_expr :: UiExpr
     meta_expr =
       { elem: elem_expr
-      , eventListeners
-      , points: points `Array.snoc` lastPoint
+      , eventListenerInfos
+      , uiPoints
       }
 
   pure $ Expr
@@ -163,14 +163,14 @@ renderExpr state path (Expr expr) elem_parent = do
 -- renderPoint
 --------------------------------------------------------------------------------
 
-renderPoint :: State -> Point -> Element -> Effect (Element /\ Array EventListenerInfo)
+renderPoint :: State -> Point -> Element -> Effect UiPoint
 renderPoint state (Point point) elem_parent = do
-  elem_point <- elem_parent # createElement "div"
-  elem_point # addClass "Point"
-  eventListeners <- sequence
-    [ elem_point # Element.toEventTarget # addEventListenerWithOptions (EventType "mousedown") { capture: true, passive: true } \event -> do
+  elem <- elem_parent # createElement "div"
+  elem # addClass "Point"
+  eventListenerInfos <- sequence
+    [ elem # Element.toEventTarget # addEventListenerWithOptions (EventType "mousedown") { capture: true, passive: true } \event -> do
         -- Console.log $ "Point: mousedown" <> show (Point point)
-        state.mb_focus # Ref.read >>= case _ of
+        state.mb_handle # Ref.read >>= case _ of
           Just h | event # shiftKey -> do
             expr <- state # getExpr
             state.mb_dragOrigin := pure h
@@ -188,7 +188,7 @@ renderPoint state (Point point) elem_parent = do
             let h' = Point_Handle (Point point)
             state.mb_dragOrigin := pure h'
             state # setHandle (pure h')
-    , elem_point # Element.toEventTarget # addEventListenerWithOptions (EventType "mouseenter") { capture: true, passive: true } \_event -> do
+    , elem # Element.toEventTarget # addEventListenerWithOptions (EventType "mouseenter") { capture: true, passive: true } \_event -> do
         -- Console.log $ "Point: mouseenter" <> show (Point point)
         state.mb_dragOrigin # Ref.read >>= case _ of
           Nothing -> pure unit
@@ -198,52 +198,68 @@ renderPoint state (Point point) elem_parent = do
               Nothing -> pure unit
               Just h' -> state # setHandle (pure h')
     ]
-  pure $ elem_point /\ eventListeners
+
+  do
+    elem_Focus <- elem # createElement "div"
+    elem_Focus # addClass "Focus"
+
+  do
+    elem_L <- elem # createElement "div"
+    elem_L # addClass "Left"
+
+  do
+    elem_R <- elem # createElement "div"
+    elem_R # addClass "Right"
+
+  pure
+    { elem
+    , eventListenerInfos
+    }
 
 --------------------------------------------------------------------------------
 -- operations
 --------------------------------------------------------------------------------
 
 modifyHandle :: Boolean -> State -> Maybe Handle -> Effect Unit
-modifyHandle b state mb_focus = do
+modifyHandle b state mb_handle = do
   let modifyClass = if b then addClass else removeClass
-  case mb_focus of
+  case mb_handle of
     Nothing -> pure unit
     Just (Point_Handle p) -> do
-      elem_point <- getPointElement state p
-      elem_point # modifyClass "Point_Handle"
-      elem_point # modifyClass "HandleFocus"
+      uiPoint <- getUiPoint state p
+      uiPoint.elem # modifyClass "Point_Handle"
+      uiPoint.elem # modifyClass "HandleFocus"
     Just (SpanH_Handle h f) -> do
       let p = getEndPoints_SpanH h
-      elem_point_L <- getPointElement state p._L
-      elem_point_L # modifyClass "SpanH_Handle_Left"
-      elem_point_R <- getPointElement state p._R
-      elem_point_R # modifyClass "SpanH_Handle_Right"
+      uiPoint_L <- getUiPoint state p._L
+      uiPoint_L.elem # modifyClass "SpanH_Handle_Left"
+      uiPoint_R <- getUiPoint state p._R
+      uiPoint_R.elem # modifyClass "SpanH_Handle_Right"
       case f of
-        Left_SpanFocus -> elem_point_L # modifyClass "HandleFocus"
-        Right_SpanFocus -> elem_point_R # modifyClass "HandleFocus"
+        Left_SpanFocus -> uiPoint_L.elem # modifyClass "HandleFocus"
+        Right_SpanFocus -> uiPoint_R.elem # modifyClass "HandleFocus"
     Just (ZipperH_Handle h f) -> do
       let p = getEndPoints_ZipperH h
-      elem_point_OL <- getPointElement state p._OL
-      elem_point_OL # modifyClass "ZipperH_Handle_OuterLeft"
-      elem_point_IL <- getPointElement state p._IL
-      elem_point_IL # modifyClass "ZipperH_Handle_InnerLeft"
-      elem_point_IR <- getPointElement state p._IR
-      elem_point_IR # modifyClass "ZipperH_Handle_InnerRight"
-      elem_point_OR <- getPointElement state p._OR
-      elem_point_OR # modifyClass "ZipperH_Handle_OuterRight"
+      uiPoint_OL <- getUiPoint state p._OL
+      uiPoint_OL.elem # modifyClass "ZipperH_Handle_OuterLeft"
+      uiPoint_IL <- getUiPoint state p._IL
+      uiPoint_IL.elem # modifyClass "ZipperH_Handle_InnerLeft"
+      uiPoint_IR <- getUiPoint state p._IR
+      uiPoint_IR.elem # modifyClass "ZipperH_Handle_InnerRight"
+      uiPoint_OR <- getUiPoint state p._OR
+      uiPoint_OR.elem # modifyClass "ZipperH_Handle_OuterRight"
       case f of
-        OuterLeft_ZipperFocus -> elem_point_OL # modifyClass "HandleFocus"
-        InnerLeft_ZipperFocus -> elem_point_IL # modifyClass "HandleFocus"
-        InnerRight_ZipperFocus -> elem_point_IR # modifyClass "HandleFocus"
-        OuterRight_ZipperFocus -> elem_point_OR # modifyClass "HandleFocus"
+        OuterLeft_ZipperFocus -> uiPoint_OL.elem # modifyClass "HandleFocus"
+        InnerLeft_ZipperFocus -> uiPoint_IL.elem # modifyClass "HandleFocus"
+        InnerRight_ZipperFocus -> uiPoint_IR.elem # modifyClass "HandleFocus"
+        OuterRight_ZipperFocus -> uiPoint_OR.elem # modifyClass "HandleFocus"
 
 setHandle :: Maybe Handle -> State -> Effect Unit
-setHandle mb_focus' state = do
-  mb_focus <- state.mb_focus # Ref.read
-  modifyHandle false state mb_focus
-  modifyHandle true state mb_focus'
-  state.mb_focus := mb_focus'
+setHandle mb_handle' state = do
+  mb_handle <- state.mb_handle # Ref.read
+  modifyHandle false state mb_handle
+  modifyHandle true state mb_handle'
+  state.mb_handle := mb_handle'
 
 getExpr :: State -> Effect (Expr UiLabel)
 getExpr state = state.expr # Ref.read >>= case _ of
@@ -255,10 +271,10 @@ getExprElement state path = do
   expr <- getExpr state
   pure (((expr # atSubExpr path).at # unwrap).l # unwrap).meta.elem
 
-getPointElement :: State -> Point -> Effect Element
-getPointElement state (Point p) = do
+getUiPoint :: State -> Point -> Effect UiPoint
+getUiPoint state (Point p) = do
   expr <- getExpr state
   let expr' = (expr # atSubExpr p.path).at
-  ((expr' # unwrap).l # unwrap).meta.points Array.!! (unwrap p.j) # map fst
-    # fromMaybeM (throw "getPointElement: p.j out-of-bounds")
+  ((expr' # unwrap).l # unwrap).meta.uiPoints Array.!! (unwrap p.j)
+    # fromMaybeM (throw "getUiPoint: p.j out-of-bounds")
 

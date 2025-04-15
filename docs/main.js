@@ -143,10 +143,10 @@
     return dict.map;
   };
   var mapFlipped = function(dictFunctor) {
-    var map12 = map(dictFunctor);
+    var map1 = map(dictFunctor);
     return function(fa) {
       return function(f) {
-        return map12(f)(fa);
+        return map1(f)(fa);
       };
     };
   };
@@ -2757,7 +2757,6 @@
   var unwrap3 = /* @__PURE__ */ unwrap();
   var atSubExpr2 = /* @__PURE__ */ atSubExpr(showL);
   var fromMaybeM2 = /* @__PURE__ */ fromMaybeM(applicativeEffect);
-  var map7 = /* @__PURE__ */ map(functorMaybe);
   var sequence2 = /* @__PURE__ */ sequence(traversableArray)(applicativeEffect);
   var addEventListenerWithOptions3 = /* @__PURE__ */ addEventListenerWithOptions2()();
   var pure12 = /* @__PURE__ */ pure(applicativeMaybe);
@@ -2767,7 +2766,7 @@
   var show4 = /* @__PURE__ */ show(showExpr2);
   var when2 = /* @__PURE__ */ when(applicativeEffect);
   var show1 = /* @__PURE__ */ show(showL);
-  var map1 = /* @__PURE__ */ map(functorEffect);
+  var map7 = /* @__PURE__ */ map(functorEffect);
   var traverse2 = /* @__PURE__ */ traverse(traversableArray)(applicativeEffect);
   var atSteps2 = /* @__PURE__ */ atSteps(showL);
   var over2 = /* @__PURE__ */ over()();
@@ -2805,11 +2804,11 @@
   var eq4 = /* @__PURE__ */ eq(eqDisplayStyle);
   var newState = function __do() {
     var expr = $$new(Nothing.value)();
-    var mb_focus = $$new(Nothing.value)();
+    var mb_handle = $$new(Nothing.value)();
     var mb_dragOrigin = $$new(Nothing.value)();
     return {
       expr,
-      mb_focus,
+      mb_handle,
       mb_dragOrigin
     };
   };
@@ -2824,21 +2823,21 @@
         return v.value0;
       }
       ;
-      throw new Error("Failed pattern match at Ui.App (line 249, column 43 - line 251, column 25): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App (line 265, column 43 - line 267, column 25): " + [v.constructor.name]);
     };
   };
-  var getPointElement = function(state2) {
+  var getUiPoint = function(state2) {
     return function(v) {
       return function __do2() {
         var expr = getExpr(state2)();
         var expr$prime = atSubExpr2(v.path)(expr).at;
-        return fromMaybeM2($$throw("getPointElement: p.j out-of-bounds"))(map7(fst)(index(unwrap3(unwrap3(expr$prime).l).meta.points)(unwrap3(v.j))))();
+        return fromMaybeM2($$throw("getUiPoint: p.j out-of-bounds"))(index(unwrap3(unwrap3(expr$prime).l).meta.uiPoints)(unwrap3(v.j)))();
       };
     };
   };
   var modifyHandle = function(b) {
     return function(state2) {
-      return function(mb_focus) {
+      return function(mb_handle) {
         var modifyClass = function() {
           if (b) {
             return addClass;
@@ -2846,79 +2845,79 @@
           ;
           return removeClass;
         }();
-        if (mb_focus instanceof Nothing) {
+        if (mb_handle instanceof Nothing) {
           return pure4(unit);
         }
         ;
-        if (mb_focus instanceof Just && mb_focus.value0 instanceof Point_Handle) {
+        if (mb_handle instanceof Just && mb_handle.value0 instanceof Point_Handle) {
           return function __do2() {
-            var elem_point = getPointElement(state2)(mb_focus.value0.value0)();
-            modifyClass("Point_Handle")(elem_point)();
-            return modifyClass("HandleFocus")(elem_point)();
+            var uiPoint = getUiPoint(state2)(mb_handle.value0.value0)();
+            modifyClass("Point_Handle")(uiPoint.elem)();
+            return modifyClass("HandleFocus")(uiPoint.elem)();
           };
         }
         ;
-        if (mb_focus instanceof Just && mb_focus.value0 instanceof SpanH_Handle) {
-          var p = getEndPoints_SpanH(mb_focus.value0.value0);
+        if (mb_handle instanceof Just && mb_handle.value0 instanceof SpanH_Handle) {
+          var p = getEndPoints_SpanH(mb_handle.value0.value0);
           return function __do2() {
-            var elem_point_L = getPointElement(state2)(p["_L"])();
-            modifyClass("SpanH_Handle_Left")(elem_point_L)();
-            var elem_point_R = getPointElement(state2)(p["_R"])();
-            modifyClass("SpanH_Handle_Right")(elem_point_R)();
-            if (mb_focus.value0.value1 instanceof Left_SpanFocus) {
-              return modifyClass("HandleFocus")(elem_point_L)();
+            var uiPoint_L = getUiPoint(state2)(p["_L"])();
+            modifyClass("SpanH_Handle_Left")(uiPoint_L.elem)();
+            var uiPoint_R = getUiPoint(state2)(p["_R"])();
+            modifyClass("SpanH_Handle_Right")(uiPoint_R.elem)();
+            if (mb_handle.value0.value1 instanceof Left_SpanFocus) {
+              return modifyClass("HandleFocus")(uiPoint_L.elem)();
             }
             ;
-            if (mb_focus.value0.value1 instanceof Right_SpanFocus) {
-              return modifyClass("HandleFocus")(elem_point_R)();
+            if (mb_handle.value0.value1 instanceof Right_SpanFocus) {
+              return modifyClass("HandleFocus")(uiPoint_R.elem)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 222, column 7 - line 224, column 68): " + [mb_focus.value0.value1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 238, column 7 - line 240, column 70): " + [mb_handle.value0.value1.constructor.name]);
           };
         }
         ;
-        if (mb_focus instanceof Just && mb_focus.value0 instanceof ZipperH_Handle) {
-          var p = getEndPoints_ZipperH(mb_focus.value0.value0);
+        if (mb_handle instanceof Just && mb_handle.value0 instanceof ZipperH_Handle) {
+          var p = getEndPoints_ZipperH(mb_handle.value0.value0);
           return function __do2() {
-            var elem_point_OL = getPointElement(state2)(p["_OL"])();
-            modifyClass("ZipperH_Handle_OuterLeft")(elem_point_OL)();
-            var elem_point_IL = getPointElement(state2)(p["_IL"])();
-            modifyClass("ZipperH_Handle_InnerLeft")(elem_point_IL)();
-            var elem_point_IR = getPointElement(state2)(p["_IR"])();
-            modifyClass("ZipperH_Handle_InnerRight")(elem_point_IR)();
-            var elem_point_OR = getPointElement(state2)(p["_OR"])();
-            modifyClass("ZipperH_Handle_OuterRight")(elem_point_OR)();
-            if (mb_focus.value0.value1 instanceof OuterLeft_ZipperFocus) {
-              return modifyClass("HandleFocus")(elem_point_OL)();
+            var uiPoint_OL = getUiPoint(state2)(p["_OL"])();
+            modifyClass("ZipperH_Handle_OuterLeft")(uiPoint_OL.elem)();
+            var uiPoint_IL = getUiPoint(state2)(p["_IL"])();
+            modifyClass("ZipperH_Handle_InnerLeft")(uiPoint_IL.elem)();
+            var uiPoint_IR = getUiPoint(state2)(p["_IR"])();
+            modifyClass("ZipperH_Handle_InnerRight")(uiPoint_IR.elem)();
+            var uiPoint_OR = getUiPoint(state2)(p["_OR"])();
+            modifyClass("ZipperH_Handle_OuterRight")(uiPoint_OR.elem)();
+            if (mb_handle.value0.value1 instanceof OuterLeft_ZipperFocus) {
+              return modifyClass("HandleFocus")(uiPoint_OL.elem)();
             }
             ;
-            if (mb_focus.value0.value1 instanceof InnerLeft_ZipperFocus) {
-              return modifyClass("HandleFocus")(elem_point_IL)();
+            if (mb_handle.value0.value1 instanceof InnerLeft_ZipperFocus) {
+              return modifyClass("HandleFocus")(uiPoint_IL.elem)();
             }
             ;
-            if (mb_focus.value0.value1 instanceof InnerRight_ZipperFocus) {
-              return modifyClass("HandleFocus")(elem_point_IR)();
+            if (mb_handle.value0.value1 instanceof InnerRight_ZipperFocus) {
+              return modifyClass("HandleFocus")(uiPoint_IR.elem)();
             }
             ;
-            if (mb_focus.value0.value1 instanceof OuterRight_ZipperFocus) {
-              return modifyClass("HandleFocus")(elem_point_OR)();
+            if (mb_handle.value0.value1 instanceof OuterRight_ZipperFocus) {
+              return modifyClass("HandleFocus")(uiPoint_OR.elem)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 235, column 7 - line 239, column 76): " + [mb_focus.value0.value1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 251, column 7 - line 255, column 78): " + [mb_handle.value0.value1.constructor.name]);
           };
         }
         ;
-        throw new Error("Failed pattern match at Ui.App (line 210, column 3 - line 239, column 76): " + [mb_focus.constructor.name]);
+        throw new Error("Failed pattern match at Ui.App (line 226, column 3 - line 255, column 78): " + [mb_handle.constructor.name]);
       };
     };
   };
-  var setHandle = function(mb_focus$prime) {
+  var setHandle = function(mb_handle$prime) {
     return function(state2) {
       return function __do2() {
-        var mb_focus = read(state2.mb_focus)();
-        modifyHandle(false)(state2)(mb_focus)();
-        modifyHandle(true)(state2)(mb_focus$prime)();
-        return writeFlipped(state2.mb_focus)(mb_focus$prime)();
+        var mb_handle = read(state2.mb_handle)();
+        modifyHandle(false)(state2)(mb_handle)();
+        modifyHandle(true)(state2)(mb_handle$prime)();
+        return writeFlipped(state2.mb_handle)(mb_handle$prime)();
       };
     };
   };
@@ -2926,14 +2925,14 @@
     return function(v) {
       return function(elem_parent) {
         return function __do2() {
-          var elem_point = createElement2("div")(elem_parent)();
-          addClass("Point")(elem_point)();
-          var eventListeners = sequence2([addEventListenerWithOptions3("mousedown")({
+          var elem3 = createElement2("div")(elem_parent)();
+          addClass("Point")(elem3)();
+          var eventListenerInfos = sequence2([addEventListenerWithOptions3("mousedown")({
             capture: true,
             passive: true
           })(function(event) {
             return function __do3() {
-              var v1 = read(state2.mb_focus)();
+              var v1 = read(state2.mb_handle)();
               if (v1 instanceof Just && shiftKey(event)) {
                 var expr = getExpr(state2)();
                 writeFlipped(state2.mb_dragOrigin)(pure12(v1.value0))();
@@ -2969,7 +2968,7 @@
               writeFlipped(state2.mb_dragOrigin)(pure12(h$prime))();
               return setHandle(pure12(h$prime))(state2)();
             };
-          })(toEventTarget2(elem_point)), addEventListenerWithOptions3("mouseenter")({
+          })(toEventTarget2(elem3)), addEventListenerWithOptions3("mouseenter")({
             capture: true,
             passive: true
           })(function(_event) {
@@ -2995,8 +2994,23 @@
               ;
               throw new Error("Failed pattern match at Ui.App (line 193, column 44 - line 199, column 53): " + [v1.constructor.name]);
             };
-          })(toEventTarget2(elem_point))])();
-          return new Tuple(elem_point, eventListeners);
+          })(toEventTarget2(elem3))])();
+          (function __do3() {
+            var elem_Focus = createElement2("div")(elem3)();
+            return addClass("Focus")(elem_Focus)();
+          })();
+          (function __do3() {
+            var elem_L = createElement2("div")(elem3)();
+            return addClass("Left")(elem_L)();
+          })();
+          (function __do3() {
+            var elem_R = createElement2("div")(elem3)();
+            return addClass("Right")(elem_R)();
+          })();
+          return {
+            elem: elem3,
+            eventListenerInfos
+          };
         };
       };
     };
@@ -3024,7 +3038,7 @@
                 return addClass("Nested")(elem_expr)();
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 108, column 3 - line 110, column 57): " + [config.displayStyle.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 111, column 3 - line 113, column 57): " + [config.displayStyle.constructor.name]);
             })();
             (function() {
               if (v.l.dat instanceof Root) {
@@ -3033,7 +3047,7 @@
               ;
               return unit;
             })();
-            var eventListeners = sequence2([])();
+            var eventListenerInfos = sequence2([])();
             when2(eq4(config.displayStyle)(Inline_DisplayStyle.value))(function __do3() {
               var elem_open = createElement2("div")(elem_expr)();
               addClass("Punctuation")(elem_open)();
@@ -3044,25 +3058,23 @@
               addClass("Label")(elem_label)();
               return setTextContent(show1(v.l))(toNode(elem_label))();
             })();
-            var v1 = map1(unzip)(traverse2(function(v12) {
+            var v1 = map7(unzip)(traverse2(function(v12) {
               var i = getStep(v12.outside);
               var j = getIndexesAroundStep(i)["_L"];
               return function __do3() {
-                var v2 = renderPoint(state2)({
+                var uiPoint = renderPoint(state2)({
                   path,
                   j
                 })(elem_expr)();
                 var kid$prime = renderExpr(state2)(snoc2(path)(i))(v12.at)(elem_expr)();
-                return new Tuple(kid$prime, new Tuple(v2.value0, v2.value1));
+                return new Tuple(kid$prime, uiPoint);
               };
             })(atSteps2(v)))();
-            var lastPoint = function __do3() {
-              var v2 = renderPoint(state2)({
-                path,
-                j: getExtremeIndexes(v)["_R"]
-              })(elem_expr)();
-              return new Tuple(v2.value0, v2.value1);
-            }();
+            var uiPoint_last = renderPoint(state2)({
+              path,
+              j: getExtremeIndexes(v)["_R"]
+            })(elem_expr)();
+            var uiPoints = snoc(v1.value1)(uiPoint_last);
             when2(eq4(config.displayStyle)(Inline_DisplayStyle.value))(function __do3() {
               var elem_close = createElement2("div")(elem_expr)();
               addClass("Punctuation")(elem_close)();
@@ -3070,8 +3082,8 @@
             })();
             var meta_expr = {
               elem: elem_expr,
-              eventListeners,
-              points: snoc(v1.value1)(lastPoint)
+              eventListenerInfos,
+              uiPoints
             };
             return {
               l: over2(L)(function(v2) {

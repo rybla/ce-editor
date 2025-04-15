@@ -4,9 +4,28 @@
   /* --background-color: rgb(146, 146, 146); */
   --background-color: rgb(214, 214, 214);
 
-  --handle-point-background-color: color-mix(in hsl, blue, transparent 30%);
-  --handle-point-focus-background-color: color-mix(in hsl, green, transparent 30%);
-  --handle-inner-background-color: color-mix(in hsl, blue, transparent 80%);
+
+  --handle-point--border-radius: 1em;
+  --handle-point-outer-left--border-radius: var(--handle-point--border-radius) 0 0 var(--handle-point--border-radius);
+  /* --handle-point-inner-left--border-radius: calc(-1 * var(--handle-point--border-radius)) 0 0 calc(-1 * var(--handle-point--border-radius)); */
+  --handle-point-inner-left--border-radius: 0 0 0 0;
+  /* --handle-point-inner-right--border-radius: 0 calc(-1 * var(--handle-point--border-radius)) calc(-1 * var(--handle-point--border-radius)) 0; */
+  --handle-point-inner-right--border-radius: 0 0 0 0;
+  --handle-point-outer-right--border-radius: 0 var(--handle-point--border-radius) var(--handle-point--border-radius) 0;
+
+  --handle-point-focus--background-color: color-mix(in hsl, blue, transparent 30%);
+  --handle-point-focus--box-shadow:
+    0 -0.5em 0 0 var(--handle-point--background-color),
+    0 0.5em 0 0 var(--handle-point--background-color);
+
+  /* --handle-point--background-color: color-mix(in hsl, rgb(217, 0, 255), transparent 30%); */
+  --handle-point--background-color: var(--handle-point-focus--background-color);
+
+
+
+  --handle-inner--background-color: color-mix(in hsl, blue, transparent 80%);
+
+  --point--width: 1em;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -62,81 +81,224 @@ body {
 /* -------------------------------------------------------------------------- */
 
 .Point {
-  white-space: pre;
-  width: 1em;
   /* height: 100%; */
+  /* width: var(--point--width); */
+
+  position: relative;
+  display: flex;
+  flex-direction: row;
+
+  background-color: transparent;
+
+  >* {
+    transition-property: background-color, box-shadow;
+    transition-duration: 0.2s;
+    /* transition-duration: 0; */
+  }
+
+  >.Focus {
+    position: absolute;
+    width: var(--point--width);
+    height: 1em;
+    top: -1.1em;
+
+    border-radius: var(--point--width);
+
+    background-color: transparent;
+  }
+}
+
+.Point>.Left {
+  width: calc(0.5 * var(--point--width));
   background-color: transparent;
 
   transition-property: background-color, box-shadow;
   transition-duration: 0.2s;
-  /* transition-duration: 0; */
+}
+
+.Point>.Right {
+  width: calc(0.5 * var(--point--width));
+  background-color: transparent;
+
+  transition-property: background-color, box-shadow;
+  transition-duration: 0.2s;
 }
 
 /* Point */
 
 .Point.Point_Handle {
-  background-color: var(--handle-point-background-color);
+  >.Left {
+    background-color: var(--handle-point-focus--background-color);
+    box-shadow: calc(0.25 * var(--point--width)) 0 0 0 var(--background-color) inset;
+  }
+
+  >.Right {
+    background-color: var(--handle-point-focus--background-color);
+    box-shadow: calc(-0.25 * var(--point--width)) 0 0 0 var(--background-color) inset;
+  }
+
+  &.HandleFocus>.Focus {
+    background-color: var(--handle-point-focus--background-color);
+  }
 }
 
-/* Span_* */
+/* SpanH_* */
 
 .Point.SpanH_Handle_Left {
-  background-color: var(--handle-point-background-color);
-}
+  >.Right {
+    background-color: var(--handle-point--background-color);
+    border-radius: var(--handle-point-outer-left--border-radius);
+  }
 
-.Point.SpanH_Handle_Left~* {
-  background-color: var(--handle-inner-background-color);
-}
+  &.HandleFocus>.Right {
+    /* box-shadow: var(--handle-point-focus--box-shadow); */
+    background-color: var(--handle-point-focus--background-color);
+  }
 
-.Point.SpanH_Handle_Right {
-  background-color: var(--handle-point-background-color);
-}
+  &.HandleFocus>.Focus {
+    background-color: var(--handle-point-focus--background-color);
+  }
 
-.Point.SpanH_Handle_Right~* {
-  background-color: var(--background-color);
-}
+  ~* {
+    background-color: var(--handle-inner--background-color);
+  }
 
-/* Zipper_* */
-
-.Point.ZipperH_Handle_OuterLeft {
-  background-color: var(--handle-point-background-color);
-}
-
-.Point.ZipperH_Handle_OuterLeft~* {
-  background-color: var(--handle-inner-background-color);
-}
-
-.Point.ZipperH_Handle_InnerLeft {
-  background-color: var(--handle-point-background-color);
-}
-
-.Point.ZipperH_Handle_InnerLeft~* {
-  background-color: var(--background-color);
-}
-
-.Point.ZipperH_Handle_InnerRight {
-  background-color: var(--handle-point-background-color);
-}
-
-.Point.ZipperH_Handle_InnerRight~* {
   background-color: transparent;
 }
 
+.Point.SpanH_Handle_Right {
+  >.Left {
+    background-color: var(--handle-point--background-color);
+    border-radius: var(--handle-point-outer-right--border-radius);
+  }
+
+  &.HandleFocus>.Left {
+    /* box-shadow: var(--handle-point-focus--box-shadow); */
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  &.HandleFocus>.Focus {
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  ~* {
+    background-color: var(--background-color);
+  }
+
+  background-color: transparent;
+}
+
+/* ZipperH_* */
+
+.Point.ZipperH_Handle_OuterLeft {
+  >.Right {
+    background-color: var(--handle-point--background-color);
+    border-radius: var(--handle-point-outer-left--border-radius);
+  }
+
+  &.HandleFocus>.Right {
+    /* box-shadow: var(--handle-point-focus--box-shadow); */
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  &.HandleFocus>.Focus {
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  ~* {
+    background-color: var(--handle-inner--background-color);
+  }
+
+  background-color: transparent;
+}
+
+.Point.ZipperH_Handle_InnerLeft {
+  >.Right {
+    background-color: var(--handle-point--background-color);
+    border-radius: var(--handle-point-inner-left--border-radius);
+  }
+
+  &.HandleFocus>.Right {
+    /* box-shadow: var(--handle-point-focus--box-shadow); */
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  &.HandleFocus>.Focus {
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  ~* {
+    background-color: var(--background-color);
+  }
+
+  background-color: transparent;
+}
+
+
+.Point.ZipperH_Handle_InnerRight {
+  >.Left {
+    background-color: var(--handle-point--background-color);
+    border-radius: var(--handle-point-inner-right--border-radius);
+  }
+
+  &.HandleFocus>.Left {
+    /* box-shadow: var(--handle-point-focus--box-shadow); */
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  &.HandleFocus>.Focus {
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  &~* {
+    background-color: transparent;
+  }
+
+  background-color: transparent;
+}
+
+.Point.ZipperH_Handle_InnerLeft.ZipperH_Handle_InnerRight {
+  >.Left {
+    box-shadow: -0.1em 0 0 0 var(--background-color) inset;
+  }
+
+  &.HandleFocus>.Left {
+    /* box-shadow: var(--handle-point-focus--box-shadow), -0.1em 0 0 0 var(--background-color) inset; */
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  &.HandleFocus.Right {
+    /*  box-shadow: var(--handle-point-focus--box-shadow), 0.1em 0 0 0 var(--background-color) inset; */
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  &.HandleFocus>.Focus {
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  >.Right {
+    box-shadow: 0.1em 0 0 0 var(--background-color) inset;
+  }
+}
+
 .Point.ZipperH_Handle_OuterRight {
-  background-color: var(--handle-point-background-color);
-}
+  >.Left {
+    background-color: var(--handle-point--background-color);
+    border-radius: var(--handle-point-outer-right--border-radius);
+  }
 
-.Point.ZipperH_Handle_OuterRight~* {
-  background-color: var(--background-color);
-}
+  &.HandleFocus>.Left {
+    /* box-shadow: var(--handle-point-focus--box-shadow); */
+    background-color: var(--handle-point-focus--background-color);
+  }
 
-/* -------------------------------------------------------------------------- */
-/* HandleFocus */
-/* -------------------------------------------------------------------------- */
+  &.HandleFocus>.Focus {
+    background-color: var(--handle-point-focus--background-color);
+  }
 
-.HandleFocus {
-  /* background-color: var(--handle-point-focus-background-color) !important; */
-  box-shadow:
-    0 -0.5em 0 0 var(--handle-point-background-color),
-    0 0.5em 0 0 var(--handle-point-background-color);
+  ~* {
+    background-color: var(--background-color);
+  }
+
+  background-color: transparent;
 }
