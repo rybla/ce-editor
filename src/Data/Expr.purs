@@ -534,6 +534,19 @@ derive instance Foldable Fragment
 derive instance Traversable Fragment
 
 --------------------------------------------------------------------------------
+
+data Diff l
+  = Inject_Diff (Array (Diff l))
+  | DeleteTooth_Diff Step (Diff l)
+  | InsertTooth_Diff (Tooth l) (Diff l)
+  | Replace_Diff (Expr l)
+
+derive instance Generic (Diff l) _
+
+instance Show l => Show (Diff l) where
+  show x = genericShow x
+
+--------------------------------------------------------------------------------
 -- Utilities
 --------------------------------------------------------------------------------
 

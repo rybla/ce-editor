@@ -60,7 +60,14 @@ foreign import setText_Element :: String -> DOM.Element -> Effect Unit
 foreign import getText_Element :: DOM.Element -> Effect String
 
 appendChild :: Element -> Element -> Effect Unit
-appendChild child elem_parent = elem_parent # Element.toNode # Node.appendChild (child # Element.toNode)
+appendChild child parent = parent # Element.toNode # Node.appendChild (child # Element.toNode)
+
+removeChild ∷ Element → Element → Effect Unit
+removeChild child parent = parent # Element.toNode # Node.removeChild (child # Element.toNode)
+
+-- | replaceChild old_child new_child parent
+replaceChild ∷ Element → Element → Element → Effect Unit
+replaceChild old_child new_child parent = parent # Element.toNode # Node.replaceChild (new_child # Element.toNode) (old_child # Element.toNode)
 
 createElement ∷ String → Element -> Effect Element
 createElement tag parent = do
@@ -93,6 +100,10 @@ type EventListenerOptions_Row =
   -- Default is `false`.
   , passive :: Boolean
   )
+
+removeEventListener :: EventListenerInfo -> EventTarget -> Effect Unit
+removeEventListener { eventType, eventListener, options: { capture } } target = do
+  target # EventTarget.removeEventListener eventType eventListener capture
 
 addEventListenerWithOptions
   ∷ ∀ opts opts'

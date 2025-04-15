@@ -136,5 +136,10 @@ writeFlipped = flip Ref.write
 
 infix 4 writeFlipped as :=
 
+modifyFlipped ∷ ∀ (a ∷ Type). Ref a → (a -> a) → Effect Unit
+modifyFlipped r f = r # Ref.modify f # void
+
+infix 4 modifyFlipped as :%=
+
 lookup_unsafe :: forall a b. String -> a -> b
 lookup_unsafe k a = a # unsafeCoerce # Object.lookup k # fromMaybe' \_ -> bug $ "Object doesn't have property " <> show k
