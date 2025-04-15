@@ -203,17 +203,14 @@ renderPoint state (Point point) elem_parent = do
     elem_Focus <- elem # createElement "div"
     elem_Focus # addClass "Focus"
 
-  do
-    elem_BL <- elem # createElement "div"
-    elem_BL # addClass "BeforeLeft"
     elem_L <- elem # createElement "div"
     elem_L # addClass "Left"
 
-  do
+    elem_M <- elem # createElement "div"
+    elem_M # addClass "Middle"
+
     elem_R <- elem # createElement "div"
     elem_R # addClass "Right"
-    elem_AR <- elem # createElement "div"
-    elem_AR # addClass "AfterRight"
 
   pure
     { elem
