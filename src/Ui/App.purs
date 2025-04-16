@@ -22,7 +22,7 @@ import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Ui.Common (EventListenerInfo, KeyInfo(..), addClass, addEventListenerWithOptions, appendChild, body, createElement, createElement_orphan, doc, fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo, removeChild, removeClass, removeEventListener, replaceChild, setText_Element, shiftKey)
-import Utility (fromMaybeM, todo, (:%=), (:=))
+import Utility (fromMaybeM, isAlpha, todo, (:%=), (:=))
 import Web.DOM (Element)
 import Web.DOM.Document as Document
 import Web.DOM.Element as Element
@@ -56,7 +56,7 @@ main = do
   void $ body # renderEditor
 
 --------------------------------------------------------------------------------
--- types
+-- State
 --------------------------------------------------------------------------------
 
 type State =
@@ -65,24 +65,40 @@ type State =
   , mb_dragOrigin :: Ref (Maybe Handle)
   }
 
-type PureLabel = L {}
+newState :: Effect State
+newState = do
+  mb_uiExprRoot <- Ref.new Nothing
+  mb_handle <- Ref.new Nothing
+  mb_dragOrigin <- Ref.new Nothing
+  pure { mb_uiExprRoot, mb_handle, mb_dragOrigin }
 
-mkPureExpr s kids = mkExpr (L { dat: String s, meta: {} }) kids
-
-infix 4 mkPureExpr as %
-
-type UiLabel = L UiExprMeta
-
-type PureExpr = Expr PureLabel
-type UiExpr = Expr UiLabel
-
-getElem_UiExpr :: UiExpr -> Element
-getElem_UiExpr e = ((e # unwrap).l # unwrap).meta.elem
+--------------------------------------------------------------------------------
+-- UiEditor
+--------------------------------------------------------------------------------
 
 type UiEditor =
   { elem :: Element
   , eventListenerInfos :: Array EventListenerInfo
   }
+
+--------------------------------------------------------------------------------
+-- PureExpr
+--------------------------------------------------------------------------------
+
+type PureExpr = Expr PureLabel
+type PureLabel = L {}
+
+mkPureExpr ∷ String → Array PureExpr → PureExpr
+mkPureExpr s kids = mkExpr (L { dat: String s, meta: {} }) kids
+
+infix 4 mkPureExpr as %
+
+--------------------------------------------------------------------------------
+-- UiExpr
+--------------------------------------------------------------------------------
+
+type UiExpr = Expr UiLabel
+type UiLabel = L UiExprMeta
 
 type UiExprMeta =
   { elem :: Element
@@ -97,6 +113,9 @@ type UiPoint =
   , eventListenerInfos :: Array EventListenerInfo
   , point :: Ref Point
   }
+
+getElem_UiExpr :: UiExpr -> Element
+getElem_UiExpr e = ((e # unwrap).l # unwrap).meta.elem
 
 --------------------------------------------------------------------------------
 -- renderEditor
@@ -121,13 +140,6 @@ renderEditor parent = do
     ]
 
   pure { elem, eventListenerInfos }
-
-newState :: Effect State
-newState = do
-  mb_uiExprRoot <- Ref.new Nothing
-  mb_handle <- Ref.new Nothing
-  mb_dragOrigin <- Ref.new Nothing
-  pure { mb_uiExprRoot, mb_handle, mb_dragOrigin }
 
 eventListenerInfo_stopDrag :: State -> Effect EventListenerInfo
 eventListenerInfo_stopDrag state = doc # Document.toEventTarget
@@ -159,6 +171,9 @@ eventListenerInfo_keyboardAction state = doc # Document.toEventTarget
               case Expr.Move.moveUntil uiExprRoot dir handle (\p -> Expr.Drag.drag handle p uiExprRoot) of
                 Nothing -> pure unit
                 Just handle' -> state # setHandle (Just handle')
+        -- insert
+        _ | KeyInfo ki # matchKeyInfo isAlpha { cmd: pure true } -> do
+          pure unit
         -- test 1
         _ | KeyInfo ki # matchKeyInfo (_ == "1") { cmd: pure true } -> do
           event # preventDefault
