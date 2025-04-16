@@ -40,13 +40,13 @@ derive newtype instance Ring Step
 stepsRange :: { _L :: Step, _R :: Step } -> Array Step
 stepsRange i = Array.range (i._L # unwrap) (i._R # unwrap) # map Step
 
-atStep :: forall l. Show l => Step -> Expr l -> { outside :: Tooth l, at :: Expr l }
-atStep i (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, at }
+atStep :: forall l. Show l => Step -> Expr l -> { outside :: Tooth l, here :: Expr l }
+atStep i (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, here }
   where
-  { before: kids_L, at, after: kids_R } = e.kids # extractAt_Array (unwrap i)
+  { before: kids_L, here, after: kids_R } = e.kids # extractAt_Array (unwrap i)
     # fromMaybe' (impossible $ "atStep " <> show i <> " " <> show (Expr e))
 
-atSteps ∷ ∀ l. Show l ⇒ Expr l → Array { at ∷ Expr l, outside ∷ Tooth l }
+atSteps ∷ ∀ l. Show l ⇒ Expr l → Array { here :: Expr l, outside ∷ Tooth l }
 atSteps e = e # getSteps # map \i -> e # atStep i
 
 --------------------------------------------------------------------------------
@@ -66,10 +66,10 @@ derive newtype instance Semiring Index
 
 derive newtype instance Ring Index
 
-atIndexSpan_Expr :: forall l. Index -> Index -> Expr l -> { outside :: SpanTooth l, at :: Span l }
-atIndexSpan_Expr i_L i_R (Expr e) = { outside: SpanTooth { l: e.l, kids_L, kids_R }, at: Span es }
+atIndexSpan_Expr :: forall l. Index -> Index -> Expr l -> { outside :: SpanTooth l, here :: Span l }
+atIndexSpan_Expr i_L i_R (Expr e) = { outside: SpanTooth { l: e.l, kids_L, kids_R }, here: Span es }
   where
-  { before: kids_L, at: es, after: kids_R } = extractSpan_Array (unwrap i_L) (unwrap i_R) e.kids
+  { before: kids_L, here: es, after: kids_R } = extractSpan_Array (unwrap i_L) (unwrap i_R) e.kids
 
 --------------------------------------------------------------------------------
 -- Step and Index Utilities
@@ -117,8 +117,8 @@ mkExpr l kids = Expr { l, kids }
 
 infix 0 mkExpr as %
 
-getKid_Expr :: forall l. Show l => Step -> Expr l -> Expr l
-getKid_Expr (Step i) (Expr e) = e.kids Array.!! i # fromMaybe' (impossible $ "getKid_Expr " <> show (Expr e) <> " " <> show (Step i))
+getKid_Expr :: forall l. Show l => Step -> Expr l -> Maybe (Expr l)
+getKid_Expr (Step i) (Expr e) = e.kids Array.!! i
 
 getExtremeIndexes :: forall l. Expr l -> { _L :: Index, _R :: Index }
 getExtremeIndexes (Expr e) = { _L: Index 0, _R: Index (Array.length e.kids) }
@@ -148,10 +148,10 @@ derive instance Traversable Span
 getKid_Span :: forall l. Show l => Step -> Span l -> Expr l
 getKid_Span i (Span es) = es Array.!! unwrap i # fromMaybe' (impossible $ "getKid_Span " <> show i <> " " <> show (Span es))
 
-atIndexSpan_Span :: forall l. Index -> Index -> Span l -> { _L :: Span l, _R :: Span l, at :: Span l }
-atIndexSpan_Span i_L i_R (Span es) = { _L: Span left, _R: Span right, at: Span es }
+atIndexSpan_Span :: forall l. Index -> Index -> Span l -> { _L :: Span l, _R :: Span l, here :: Span l }
+atIndexSpan_Span i_L i_R (Span es) = { _L: Span left, _R: Span right, here: Span es }
   where
-  { before: left, at: es, after: right } = extractSpan_Array (unwrap i_L) (unwrap i_R) es
+  { before: left, here: es, after: right } = extractSpan_Array (unwrap i_L) (unwrap i_R) es
 
 offset_Span :: forall l. Span l -> Index
 offset_Span (Span es) = Index $ es # Array.length
@@ -166,14 +166,14 @@ show_Path steps = "[" <> (steps # map show # List.intercalate " ") <> "]"
 showNePath :: NePath -> String
 showNePath nepath = show_Path (nepath # fromNePath)
 
-atSubExpr :: forall l. Show l => Path -> Expr l -> { outside :: List (Tooth l), at :: Expr l }
+atSubExpr :: forall l. Show l => Path -> Expr l -> { outside :: List (Tooth l), here :: Expr l }
 atSubExpr = go Nil
   where
   go ts path e = case path of
     i : path' -> go (t : ts) path' e'
       where
-      { outside: t, at: e' } = e # atStep i
-    Nil -> { outside: List.reverse ts, at: e }
+      { outside: t, here: e' } = e # atStep i
+    Nil -> { outside: List.reverse ts, here: e }
 
 isPrefix_Path :: Path -> Path -> Boolean
 isPrefix_Path Nil _ = true
@@ -388,11 +388,11 @@ atPoint (Point p) e = { outside: at_span.outside }
   where
   at_span = atSpan (SpanH { path: p.path, j_L: p.j, j_R: p.j }) e
 
-atSpan :: forall l. Show l => SpanH -> Expr l -> { outside :: SpanContext l, at :: Span l }
-atSpan (SpanH h) e = { outside: SpanContext { _O: ExprContext at_path.outside, _I: at_span.outside }, at: at_span.at }
+atSpan :: forall l. Show l => SpanH -> Expr l -> { outside :: SpanContext l, here :: Span l }
+atSpan (SpanH h) e = { outside: SpanContext { _O: ExprContext at_path.outside, _I: at_span.outside }, here: at_span.here }
   where
   at_path = e # atSubExpr h.path
-  at_span = at_path.at # atIndexSpan_Expr h.j_L h.j_R
+  at_span = at_path.here # atIndexSpan_Expr h.j_L h.j_R
 
 --------------------------------------------------------------------------------
 
@@ -429,35 +429,35 @@ getTotalInnerPath_ZipperH (ZipperH h) = case h.path_O of
   Nil -> h.path_I
   i : path_O -> (i :| path_O) <> h.path_I
 
-atZipper :: forall l. Show l => ZipperH -> Expr l -> { outside :: SpanContext l, at :: Zipper l, inside :: Span l }
+atZipper :: forall l. Show l => ZipperH -> Expr l -> { outside :: SpanContext l, here :: Zipper l, inside :: Span l }
 atZipper (ZipperH h) e =
   case h.path_I of
     -- Nil ->
     --   { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
-    --   , at: Zipper
+    --   , here: Zipper
     --       { kids_L: unwrap at_kid_M._L
     --       , kids_R: unwrap at_kid_M._R
     --       , inside: Nothing
     --       }
-    --   , inside: at_kid_M.at
+    --   , inside: at_kid_M.here
     --   }
     --   where
-    --   at_kid_M = at_span_O.at # atIndexSpan_Span (h.j_IL - h.j_OL) (h.j_IR - h.j_OL)
+    --   at_kid_M = at_span_O.here # atIndexSpan_Span (h.j_IL - h.j_OL) (h.j_IR - h.j_OL)
     i_I :| path_I ->
       { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
-      , at: Zipper
+      , here: Zipper
           { kids_L: (unwrap at_kid_M.outside).kids_L
           , kids_R: (unwrap at_kid_M.outside).kids_R
           , inside: at_span_I.outside
           }
-      , inside: at_span_I.at
+      , inside: at_span_I.here
       }
       where
-      at_kid_M = at_path_O.at # atStep (i_I - (Step ((unwrap at_span_O.outside).kids_L # Array.length)))
-      at_span_I = at_kid_M.at # atSpan (SpanH { j_L: h.j_IL, j_R: h.j_IR, path: path_I })
+      at_kid_M = at_path_O.here # atStep (i_I - (Step ((unwrap at_span_O.outside).kids_L # Array.length)))
+      at_span_I = at_kid_M.here # atSpan (SpanH { j_L: h.j_IL, j_R: h.j_IR, path: path_I })
   where
   at_path_O = e # atSubExpr h.path_O
-  at_span_O = at_path_O.at # atIndexSpan_Expr h.j_OL h.j_OR
+  at_span_O = at_path_O.here # atIndexSpan_Expr h.j_OL h.j_OR
 
 --------------------------------------------------------------------------------
 

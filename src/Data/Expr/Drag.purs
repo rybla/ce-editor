@@ -35,7 +35,7 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
           , j_OR: i # getIndexesAroundStep # _._R
           , path_I
           , j_IL: p_IL.j
-          , j_IR: e # atSubExpr (path_O <> (path_I # fromNePath)) # _.at # getExtremeIndexes # _._R
+          , j_IR: e # atSubExpr (path_O <> (path_I # fromNePath)) # _.here # getExtremeIndexes # _._R
           }
       )
       OuterLeft_ZipperFocus
@@ -49,7 +49,7 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
           , j_OL: i # getIndexesAroundStep # _._L
           , j_OR: p_OR.j
           , path_I
-          , j_IL: e # atSubExpr (path_O <> (path_I # fromNePath)) # _.at # getExtremeIndexes # _._L
+          , j_IL: e # atSubExpr (path_O <> (path_I # fromNePath)) # _.here # getExtremeIndexes # _._L
           , j_IR: p_IR.j
           }
       )
@@ -65,7 +65,7 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
           , j_OR: i # getIndexesAroundStep # _._R
           , path_I
           , j_IL: p_IL.j
-          , j_IR: e # atSubExpr (path_O <> (path_I # fromNePath)) # _.at # getExtremeIndexes # _._R
+          , j_IR: e # atSubExpr (path_O <> (path_I # fromNePath)) # _.here # getExtremeIndexes # _._R
           }
       )
       InnerLeft_ZipperFocus
@@ -79,7 +79,7 @@ drag (Point_Handle (Point p)) (Point p') e = case unit of
           , j_OL: i # getIndexesAroundStep # _._L
           , j_OR: p_OR.j
           , path_I
-          , j_IL: e # atSubExpr (path_O <> (path_I # fromNePath)) # _.at # getExtremeIndexes # _._L
+          , j_IL: e # atSubExpr (path_O <> (path_I # fromNePath)) # _.here # getExtremeIndexes # _._L
           , j_IR: p_IR.j
           }
       )

@@ -9,7 +9,7 @@ import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe(..))
-import Data.Newtype (unwrap)
+import Data.Newtype (unwrap, wrap)
 import Data.Show.Generic (genericShow)
 import Debug as Debug
 import Utility (todo)
@@ -43,17 +43,17 @@ moveUntil e dir h f = case move e dir h of
 move :: forall l. Show l => Expr l -> Dir -> Handle -> Maybe Point
 move e dir h = h # getFocusPoint # move_Point e dir
 
+-- BUG: during dragging, something messes up here when I move from down-right and it goes down-left instead???
 move_Point :: forall l. Show l => Expr l -> Dir -> Point -> Maybe Point
 move_Point e dir (Point p) = case dir of
-  L | extreme_j._L == p.j, Just { init: path', last: i } <- p.path # List.unsnoc ->
-    Just $ Point { path: path', j: (i # getIndexesAroundStep)._L }
-  L | extreme_j._L < p.j, i <- (getStepsAroundIndex p.j)._L ->
-    Just $ Point { path: p.path <> (i : Nil), j: (at_parent.at # getKid_Expr i # getExtremeIndexes)._R }
-  R | p.j == extreme_j._R, Just { init: path', last: i } <- p.path # List.unsnoc ->
-    Just $ Point { path: path', j: (i # getIndexesAroundStep)._R }
-  R | p.j < extreme_j._R, i <- (getStepsAroundIndex p.j)._R ->
-    Just $ Point { path: p.path <> (i : Nil), j: (at_parent.at # getKid_Expr i # getExtremeIndexes)._L }
+  L | extreme_j._L == p.j, Just { init: path', last: i } <- p.path # List.unsnoc -> Just $ Point { path: path', j: (i # getIndexesAroundStep)._L }
+  L | extreme_j._L < p.j, i <- (getStepsAroundIndex p.j)._L, Just kid <- at_e.here # getKid_Expr i -> Just $ Point { path: p.path <> (i : Nil), j: (kid # getExtremeIndexes)._R }
+  L | extreme_j._L < p.j, i <- (getStepsAroundIndex p.j)._L, Nothing <- at_e.here # getKid_Expr i -> Just $ Point { path: p.path, j: p.j - wrap 1 }
+  R | p.j == extreme_j._R, Just { init: path', last: i } <- p.path # List.unsnoc -> Just $ Point { path: path', j: (i # getIndexesAroundStep)._R }
+  R | p.j < extreme_j._R, i <- (getStepsAroundIndex p.j)._R, Nothing <- at_e.here # getKid_Expr i -> Just $ Point { path: p.path, j: p.j + wrap 1 }
+  R | p.j < extreme_j._R, i <- (getStepsAroundIndex p.j)._R, Just kid <- at_e.here # getKid_Expr i -> Just $ Point { path: p.path <> (i : Nil), j: (kid # getExtremeIndexes)._L }
   _ -> Nothing
   where
-  at_parent = e # atSubExpr p.path
-  extreme_j = at_parent.at # getExtremeIndexes
+  at_e = e # atSubExpr p.path
+  extreme_j = at_e.here # getExtremeIndexes
+

@@ -7,7 +7,8 @@ import Data.Expr (Diff(..), Expr(..), Handle(..), Index(..), Path, Point(..), Sp
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Move as Expr.Move
 import Data.FoldableWithIndex (traverseWithIndex_)
-import Data.List (List(..), (:))
+import Data.List (List(..))
+import Data.List as List
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (unwrap)
 import Data.Newtype as Newtype
@@ -135,87 +136,122 @@ renderEditor parent = do
   state.mb_uiExprRoot := pure expr'
 
   eventListenerInfos <- sequence
-    [ state # eventListenerInfo_stopDrag
-    , state # eventListenerInfo_keyboardAction
+    [ state # eventListenerInfo_stopDrag_Editor
+    , state # eventListenerInfo_keydown_Editor
     ]
 
   pure { elem, eventListenerInfos }
 
-eventListenerInfo_stopDrag :: State -> Effect EventListenerInfo
-eventListenerInfo_stopDrag state = doc # Document.toEventTarget
-  # addEventListenerWithOptions (EventType "mouseup") { capture: true, passive: true } \_event -> do
-      state.mb_dragOrigin := none
+eventListenerInfo_stopDrag_Editor :: State -> Effect EventListenerInfo
+eventListenerInfo_stopDrag_Editor state = doc # Document.toEventTarget # addEventListenerWithOptions (EventType "mouseup") { capture: true, passive: true } \_event -> do
+  state.mb_dragOrigin := none
 
-eventListenerInfo_keyboardAction :: State -> Effect EventListenerInfo
-eventListenerInfo_keyboardAction state = doc # Document.toEventTarget
-  # addEventListenerWithOptions (EventType "keydown") { capture: true } \event -> do
-      let KeyInfo ki = event # fromEventToKeyInfo
-      case unit of
-        -- move
-        _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: Just false, shift: Just false, alt: Just false } -> do
-          event # preventDefault
-          state.mb_handle # Ref.read >>= case _ of
-            Nothing -> state # setHandle (Just defaultHandle)
-            Just handle -> do
-              uiExprRoot <- state # getUiExpr_root
-              case Expr.Move.move uiExprRoot dir handle of
-                Nothing -> pure unit
-                Just point -> state # setHandle (Just (Point_Handle point))
-        -- drag move
-        _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: Just false, shift: Just true, alt: Just false } -> do
-          event # preventDefault
-          state.mb_handle # Ref.read >>= case _ of
-            Nothing -> state # setHandle (Just defaultHandle)
-            Just handle -> do
-              uiExprRoot <- state # getUiExpr_root
-              case Expr.Move.moveUntil uiExprRoot dir handle (\p -> Expr.Drag.drag handle p uiExprRoot) of
-                Nothing -> pure unit
-                Just handle' -> state # setHandle (Just handle')
-        -- insert
-        _ | KeyInfo ki # matchKeyInfo isAlpha { cmd: pure true } -> do
-          pure unit
-        -- test 1
-        _ | KeyInfo ki # matchKeyInfo (_ == "1") { cmd: pure true } -> do
-          event # preventDefault
-          state.mb_dragOrigin := none
-          state # setHandle Nothing
-          state # applyDiff
-            ( Inject_Diff {- Root -}
-                [ DeleteTooth_Diff {- A -}  (Step 0)
-                    (Inject_Diff {- C -}  [])
-                ]
-            )
-        -- test 2
-        _ | KeyInfo ki # matchKeyInfo (_ == "2") { cmd: pure true } -> do
-          event # preventDefault
-          state.mb_dragOrigin := none
-          state # setHandle Nothing
-          state # applyDiff
-            ( Inject_Diff {- Root -}
-                [ Replace_Diff (mkPureExpr "D" [])
-                ]
-            )
-        -- test 3
-        _ | KeyInfo ki # matchKeyInfo (_ == "3") { cmd: pure true } -> do
-          event # preventDefault
-          state.mb_dragOrigin := none
-          state # setHandle Nothing
-          state # applyDiff
-            ( Inject_Diff {- Root -}
-                [ InsertTooth_Diff
-                    ( Tooth
-                        { l: L { dat: String "D", meta: {} }
-                        , kids_L: [ mkPureExpr "E" [] ]
-                        , kids_R: [ mkPureExpr "F" [] ]
-                        }
-                    ) $
-                    Inject_Diff {- A -}
-                      [ Inject_Diff {- B -}  []
-                      , Inject_Diff {- C -}  []
-                      ]
-                ]
-            )
-        _ -> pure unit
+eventListenerInfo_keydown_Editor :: State -> Effect EventListenerInfo
+eventListenerInfo_keydown_Editor state = doc # Document.toEventTarget # addEventListenerWithOptions (EventType "keydown") { capture: true } \event -> do
+  let KeyInfo ki = event # fromEventToKeyInfo
+  mb_dragOrigin <- state.mb_dragOrigin # Ref.read
+  mb_handle <- state.mb_handle # Ref.read
+  case unit of
+    -- start drag move
+    _ | KeyInfo ki # matchKeyInfo (_ == "Shift") {}, Just handle <- mb_handle -> do
+      Console.log "initialize dragOrigin"
+      state.mb_dragOrigin := pure handle
+    -- move
+    _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: Just false, shift: Just false, alt: Just false } -> do
+      event # preventDefault
+      case mb_handle of
+        Nothing -> state # setHandle (Just defaultHandle)
+        Just handle -> do
+          uiExprRoot <- state # getUiExpr_root
+          case Expr.Move.move uiExprRoot dir handle of
+            Nothing -> pure unit
+            Just point -> state # setHandle (Just (Point_Handle point))
+    -- drag move
+    _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: Just false, shift: Just true, alt: Just false } -> do
+      Console.log "drag move"
+      event # preventDefault
+      case mb_handle of
+        Nothing -> do
+          -- initialize dragOrigin
+          case mb_dragOrigin of
+            Nothing -> do
+              state.mb_dragOrigin := pure defaultHandle
+            Just _ -> do
+              pure unit
+          state # setHandle (Just defaultHandle)
+        Just handle -> do
+          uiExprRoot <- state # getUiExpr_root
+          -- initialize dragOrigin
+          dragOrigin <- case mb_dragOrigin of
+            Nothing -> do
+              Console.log "initialize dragOrigin"
+              state.mb_dragOrigin := pure handle
+              pure handle
+            Just dragOrigin -> do
+              pure dragOrigin
+          case Expr.Move.moveUntil uiExprRoot dir handle (\p -> Expr.Drag.drag dragOrigin p uiExprRoot) of
+            Nothing -> pure unit
+            Just handle' -> do
+              state # setHandle (Just handle')
+    -- insert
+    _ | KeyInfo ki # matchKeyInfo isAlpha { cmd: pure true } -> do
+      -- TODO
+      pure unit
+    -- test 1
+    _ | KeyInfo ki # matchKeyInfo (_ == "1") { cmd: pure true } -> do
+      event # preventDefault
+      state.mb_dragOrigin := none
+      state # setHandle Nothing
+      state # applyDiff
+        ( Inject_Diff {- Root -}
+            [ DeleteTooth_Diff {- A -}  (Step 0)
+                (Inject_Diff {- C -}  [])
+            ]
+        )
+    -- test 2
+    _ | KeyInfo ki # matchKeyInfo (_ == "2") { cmd: pure true } -> do
+      event # preventDefault
+      state.mb_dragOrigin := none
+      state # setHandle Nothing
+      state # applyDiff
+        ( Inject_Diff {- Root -}
+            [ Replace_Diff (mkPureExpr "D" [])
+            ]
+        )
+    -- test 3
+    _ | KeyInfo ki # matchKeyInfo (_ == "3") { cmd: pure true } -> do
+      event # preventDefault
+      state.mb_dragOrigin := none
+      state # setHandle Nothing
+      state # applyDiff
+        ( Inject_Diff {- Root -}
+            [ InsertTooth_Diff
+                ( Tooth
+                    { l: L { dat: String "D", meta: {} }
+                    , kids_L: [ mkPureExpr "E" [] ]
+                    , kids_R: [ mkPureExpr "F" [] ]
+                    }
+                ) $
+                Inject_Diff {- A -}
+                  [ Inject_Diff {- B -}  []
+                  , Inject_Diff {- C -}  []
+                  ]
+            ]
+        )
+    _ -> pure unit
+
+eventListenerInfo_keyup_Editor :: State -> Effect EventListenerInfo
+eventListenerInfo_keyup_Editor state = doc # Document.toEventTarget # addEventListenerWithOptions (EventType "keyup") { capture: true } \event -> do
+  let KeyInfo ki = event # fromEventToKeyInfo
+  mb_handle <- state.mb_handle # Ref.read
+  mb_dragOrigin <- state.mb_dragOrigin # Ref.read
+  case unit of
+    -- end drag move
+    _ | KeyInfo ki # matchKeyInfo (_ == "Shift") {}, Just dragOrigin <- mb_dragOrigin -> do
+      Console.log "reset dragOrigin"
+      state.mb_dragOrigin := none
+    _ -> pure unit
+  pure unit
 
 --------------------------------------------------------------------------------
 -- renderExpr
@@ -224,8 +260,9 @@ eventListenerInfo_keyboardAction state = doc # Document.toEventTarget
 renderExpr :: State -> Path -> PureExpr -> Element -> Effect UiExpr
 renderExpr state path (Expr expr) parent = do
   Console.log $ "renderExpr: " <> show (Expr expr)
-  parent # renderExpr' state path expr.l (Expr expr # getExtremeSteps) \i ->
-    renderExpr state (i : path) (Expr expr # getKid_Expr i)
+  parent # renderExpr' state path expr.l (Expr expr # getExtremeSteps) \i elem_expr -> do
+    kid <- Expr expr # getKid_Expr i # fromMaybeM do throw $ "kid index out of bounds"
+    elem_expr # renderExpr state (path `List.snoc` i) kid
 
 renderExpr' :: State -> Path -> PureLabel -> Maybe { _L :: Step, _R :: Step } -> (Step -> Element -> Effect UiExpr) -> Element -> Effect UiExpr
 renderExpr' state path0 label extremeSteps renderKid elem_parent = do
@@ -301,15 +338,15 @@ renderExpr' state path0 label extremeSteps renderKid elem_parent = do
 
 renderPoint :: State -> Point -> Element -> Effect UiPoint
 renderPoint state (Point point0) elem_parent = do
+  Console.log $ "renderPoint " <> show (Point point0)
+  pointRef <- Ref.new (Point point0)
+
   elem <- elem_parent # createElement "div"
   elem # addClass "Point"
-
-  pointRef <- Ref.new (Point point0)
 
   eventListenerInfos <- sequence
     [ elem # Element.toEventTarget # addEventListenerWithOptions (EventType "mousedown") { capture: true, passive: true } \event -> do
         Point point <- pointRef # Ref.read
-        -- Console.log $ "Point: mousedown" <> show (Point point)
         state.mb_handle # Ref.read >>= case _ of
           Just h | event # shiftKey -> do
             expr <- state # getUiExpr_root
@@ -331,7 +368,8 @@ renderPoint state (Point point0) elem_parent = do
     , elem # Element.toEventTarget # addEventListenerWithOptions (EventType "mouseenter") { capture: true, passive: true } \_event -> do
         Point point <- pointRef # Ref.read
         -- Console.log $ "Point: mouseenter" <> show (Point point)
-        state.mb_dragOrigin # Ref.read >>= case _ of
+        mb_dragOrigin <- state.mb_dragOrigin # Ref.read
+        case mb_dragOrigin of
           Nothing -> pure unit
           Just h -> do
             uiExprRoot <- state # getUiExpr_root
@@ -376,7 +414,8 @@ applyDiff diff0 state = do
     (e.l # unwrap).meta.uiPoints # traverse_ \uiPoint -> uiPoint.point :%= Newtype.modify _ { path = path }
     kids' <- ds # traverseWithIndex \i_ d -> do
       let i = Step i_
-      go (i : path) (Just (Expr e # getElem_UiExpr)) (Expr e # getKid_Expr i) d
+      kid <- Expr e # getKid_Expr i # fromMaybeM do throw "kid index out of bounds"
+      go (path `List.snoc` i) (Just (Expr e # getElem_UiExpr)) kid d
     pure $ Expr e { kids = kids' }
 
   go path mb_parent (Expr e) (DeleteTooth_Diff i d) = do
@@ -387,7 +426,7 @@ applyDiff diff0 state = do
       when (i /= i') do
         e_kid # cleanup_uiExpr_deep
         Expr e # getElem_UiExpr # removeChild (e_kid # getElem_UiExpr)
-    let e_kid = Expr e # getKid_Expr i
+    e_kid <- Expr e # getKid_Expr i # fromMaybeM do throw "kid index out of bounds"
     -- replace this expr with the kid at step i
     -- this expr's parent is now the kid's parent
     Expr e # cleanup_UiExpr_shallow
@@ -412,13 +451,13 @@ applyDiff diff0 state = do
         Console.log $ "i = " <> show i
         if i < Step kids_L_length then do
           e'_kid <- tooth.kids_L Array.!! unwrap i # fromMaybeM do throw $ "go InsertTooth_Diff: step out-of-bounds: " <> show i
-          e'_elem # renderExpr state (i : path) e'_kid
+          e'_elem # renderExpr state (path `List.snoc` i) e'_kid
         else if i == Step kids_L_length then do
           e'_elem # appendChild (e # getElem_UiExpr)
-          go (i : path) (Just e'_elem) e d
+          go (path `List.snoc` i) (Just e'_elem) e d
         else do
           e'_kid <- tooth.kids_R Array.!! ((-kids_L_length) + (-1) + unwrap i) # fromMaybeM do throw $ "go InsertTooth_Diff: step out-of-bounds: " <> show i
-          e'_elem # renderExpr state (i : path) e'_kid
+          e'_elem # renderExpr state (path `List.snoc` i) e'_kid
 
     parent # replaceChild placeholder (e' # getElem_UiExpr)
 
@@ -518,12 +557,12 @@ getUiExpr_root state = state.mb_uiExprRoot # Ref.read >>= case _ of
 getUiExpr :: State -> Path -> Effect UiExpr
 getUiExpr state path = do
   uiExprRoot <- state # getUiExpr_root
-  pure (uiExprRoot # atSubExpr path).at
+  pure (uiExprRoot # atSubExpr path).here
 
 getUiPoint :: State -> Point -> Effect UiPoint
 getUiPoint state (Point p) = do
   uiExprRoot <- state # getUiExpr_root
-  let expr = (uiExprRoot # atSubExpr p.path).at
+  let expr = (uiExprRoot # atSubExpr p.path).here
   ((expr # unwrap).l # unwrap).meta.uiPoints Array.!! (unwrap p.j)
     # fromMaybeM (throw "getUiPoint: p.j out-of-bounds")
 

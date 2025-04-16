@@ -86,21 +86,21 @@ sortEquivalenceClasses f xs = STArray.run do
 forget :: forall a b. a -> b -> b
 forget _ b = b
 
-extractAt_Array :: forall a. Int -> Array a -> Maybe { before :: Array a, at :: a, after :: Array a }
+extractAt_Array :: forall a. Int -> Array a -> Maybe { before :: Array a, here :: a, after :: Array a }
 extractAt_Array i xs = do
   { before, after: after_ } <- splitAt_Array i xs
-  { head: at, tail: after } <- Array.uncons after_
-  pure { before, at, after }
+  { head: here, tail: after } <- Array.uncons after_
+  pure { before, here, after }
 
 splitAt_Array :: forall a. Int -> Array a -> Maybe { before :: Array a, after :: Array a }
 splitAt_Array i xs | 0 <= i && i < Array.length xs = Just { before: Array.take i xs, after: Array.drop i xs }
 splitAt_Array _ _ = Nothing
 
-extractAt_List :: forall a. Int -> List a -> Maybe { before :: List a, at :: a, after :: List a }
+extractAt_List :: forall a. Int -> List a -> Maybe { before :: List a, here :: a, after :: List a }
 extractAt_List i xs = do
   { before, after: after_ } <- splitAt_List i xs
-  { head: at, tail: after } <- List.uncons after_
-  pure { before, at, after }
+  { head: here, tail: after } <- List.uncons after_
+  pure { before, here, after }
 
 splitAt_List :: forall a. Int -> List a -> Maybe { before :: List a, after :: List a }
 splitAt_List i xs | 0 <= i && i < List.length xs = Just { before: List.take i xs, after: List.drop i xs }
@@ -115,13 +115,13 @@ insertSpanAt_Array i xs ys = split.before <> xs <> split.after
   where
   split = Array.splitAt i ys
 
-extractSpan_Array :: forall a. Int -> Int -> Array a -> { before :: Array a, at :: Array a, after :: Array a }
+extractSpan_Array :: forall a. Int -> Int -> Array a -> { before :: Array a, here :: Array a, after :: Array a }
 extractSpan_Array i_L i_R xs =
   let
     { before: before_, after } = Array.splitAt i_R xs
-    { before, after: at } = Array.splitAt i_L before_
+    { before, after: here } = Array.splitAt i_L before_
   in
-    { before, at, after }
+    { before, here, after }
 
 isAlpha :: String -> Boolean
 isAlpha = Regex.test isAlpha_regex
