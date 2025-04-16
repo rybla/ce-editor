@@ -512,8 +512,8 @@ getFocusPoint (Point_Handle p) = p
 getFocusPoint (SpanH_Handle (SpanH h) Left_SpanFocus) = Point { path: h.path, j: h.j_L }
 getFocusPoint (SpanH_Handle (SpanH h) Right_SpanFocus) = Point { path: h.path, j: h.j_R }
 getFocusPoint (ZipperH_Handle (ZipperH h) OuterLeft_ZipperFocus) = Point { path: h.path_O, j: h.j_OL }
-getFocusPoint (ZipperH_Handle (ZipperH h) InnerLeft_ZipperFocus) = Point { path: ZipperH h # getTotalInnerPath_ZipperH # fromNePath, j: h.j_OL }
-getFocusPoint (ZipperH_Handle (ZipperH h) InnerRight_ZipperFocus) = Point { path: ZipperH h # getTotalInnerPath_ZipperH # fromNePath, j: h.j_OL }
+getFocusPoint (ZipperH_Handle (ZipperH h) InnerLeft_ZipperFocus) = Point { path: ZipperH h # getTotalInnerPath_ZipperH # fromNePath, j: h.j_IL }
+getFocusPoint (ZipperH_Handle (ZipperH h) InnerRight_ZipperFocus) = Point { path: ZipperH h # getTotalInnerPath_ZipperH # fromNePath, j: h.j_IR }
 getFocusPoint (ZipperH_Handle (ZipperH h) OuterRight_ZipperFocus) = Point { path: h.path_O, j: h.j_OR }
 
 getOuterLeftPoint_Handle :: Handle -> Point
@@ -539,7 +539,8 @@ derive instance Traversable Fragment
 --------------------------------------------------------------------------------
 
 data Diff l
-  = Inject_Diff (Array (Diff l))
+  = Id_Diff
+  | Inject_Diff (Array (Diff l))
   | DeleteTooth_Diff Step (Diff l)
   | InsertTooth_Diff (Tooth l) (Diff l)
   | Replace_Diff (Expr l)
@@ -548,6 +549,11 @@ derive instance Generic (Diff l) _
 
 instance Show l => Show (Diff l) where
   show x = genericShow x
+
+-- atInjectDiff :: forall l. NePath -> Expr l -> Diff l
+-- atInjectDiff (i :| path0) expr = go path0 ?a
+--   where
+--   go path = ?a
 
 --------------------------------------------------------------------------------
 -- Utilities
