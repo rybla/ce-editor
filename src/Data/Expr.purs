@@ -16,7 +16,9 @@ import Data.Newtype (class Newtype, unwrap)
 import Data.NonEmpty (NonEmpty, (:|))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
+import Data.String as String
 import Data.Traversable (class Traversable)
+import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested (type (/\), (/\))
 import Utility (extractAt_Array, extractSpan_Array, impossible, parens, spaces)
 
@@ -129,6 +131,12 @@ getExtremeSteps (Expr e) = Just { _L: Step 0, _R: Step (Array.length e.kids - 1)
 
 getSteps :: forall l. Expr l -> Array Step
 getSteps (Expr e) = e.kids # mapWithIndex \i _ -> Step i
+
+mapStepsAndKids :: forall l a. (Step -> Expr l -> a) -> Expr l -> Array a
+mapStepsAndKids f (Expr e) = e.kids # mapWithIndex \i -> f (Step i)
+
+traverseStepsAndKids :: forall l m a. Applicative m => (Step -> Expr l -> m a) -> Expr l -> m (Array a)
+traverseStepsAndKids f (Expr e) = e.kids # traverseWithIndex \i -> f (Step i)
 
 --------------------------------------------------------------------------------
 
@@ -548,12 +556,23 @@ data Diff l
 derive instance Generic (Diff l) _
 
 instance Show l => Show (Diff l) where
-  show x = genericShow x
+  show Id_Diff = "_"
+  show (Inject_Diff kids) = "(_ % " <> (kids # map show # String.joinWith " ") <> ")"
+  show (DeleteTooth_Diff i d) = "(- _ % ... [" <> show i <> "]: " <> show d <> " ... )"
+  show (InsertTooth_Diff t d) = "(+ _ % ... [" <> show (t # getStep) <> "]: " <> show d <> " ... )"
+  show (Replace_Diff e) = "{" <> show e <> "}"
 
--- atInjectDiff :: forall l. NePath -> Expr l -> Diff l
--- atInjectDiff (i :| path0) expr = go path0 ?a
---   where
---   go path = ?a
+atInjectDiff :: forall l l'. Show l => NePath -> (Expr l -> Diff l') -> Expr l -> Diff l'
+atInjectDiff (i0 :| path0) f = goStep i0 path0
+  where
+  go :: Path -> Expr l -> Diff l'
+  go path e = case path of
+    i : path' -> goStep i path' e
+    Nil -> f e
+
+  goStep :: Step -> Path -> Expr l -> Diff l'
+  goStep i path e = Inject_Diff $ e # mapStepsAndKids \i' e' ->
+    if i /= i' then Id_Diff else go path e'
 
 --------------------------------------------------------------------------------
 -- Utilities
