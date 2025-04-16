@@ -666,6 +666,37 @@
     }
   };
 
+  // output/Data.Either/index.js
+  var Left = /* @__PURE__ */ function() {
+    function Left2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    Left2.create = function(value0) {
+      return new Left2(value0);
+    };
+    return Left2;
+  }();
+  var Right = /* @__PURE__ */ function() {
+    function Right2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    Right2.create = function(value0) {
+      return new Right2(value0);
+    };
+    return Right2;
+  }();
+  var fromRight$prime = function(v) {
+    return function(v1) {
+      if (v1 instanceof Right) {
+        return v1.value0;
+      }
+      ;
+      return v(unit);
+    };
+  };
+
   // output/Effect.Exception/index.js
   var $$throw = function($4) {
     return throwException(error($4));
@@ -1934,6 +1965,105 @@
     return foldr(dictFoldable)(Cons.create)(Nil.value);
   };
 
+  // output/Data.String.Regex/foreign.js
+  var regexImpl = function(left) {
+    return function(right) {
+      return function(s1) {
+        return function(s2) {
+          try {
+            return right(new RegExp(s1, s2));
+          } catch (e) {
+            return left(e.message);
+          }
+        };
+      };
+    };
+  };
+  var test = function(r) {
+    return function(s) {
+      var lastIndex = r.lastIndex;
+      var result = r.test(s);
+      r.lastIndex = lastIndex;
+      return result;
+    };
+  };
+
+  // output/Data.String.Regex.Flags/index.js
+  var semigroupRegexFlags = {
+    append: function(v) {
+      return function(v1) {
+        return {
+          global: v.global || v1.global,
+          ignoreCase: v.ignoreCase || v1.ignoreCase,
+          multiline: v.multiline || v1.multiline,
+          dotAll: v.dotAll || v1.dotAll,
+          sticky: v.sticky || v1.sticky,
+          unicode: v.unicode || v1.unicode
+        };
+      };
+    }
+  };
+  var noFlags = {
+    global: false,
+    ignoreCase: false,
+    multiline: false,
+    dotAll: false,
+    sticky: false,
+    unicode: false
+  };
+  var monoidRegexFlags = {
+    mempty: noFlags,
+    Semigroup0: function() {
+      return semigroupRegexFlags;
+    }
+  };
+
+  // output/Data.String.Regex/index.js
+  var renderFlags = function(v) {
+    return function() {
+      if (v.global) {
+        return "g";
+      }
+      ;
+      return "";
+    }() + (function() {
+      if (v.ignoreCase) {
+        return "i";
+      }
+      ;
+      return "";
+    }() + (function() {
+      if (v.multiline) {
+        return "m";
+      }
+      ;
+      return "";
+    }() + (function() {
+      if (v.dotAll) {
+        return "s";
+      }
+      ;
+      return "";
+    }() + (function() {
+      if (v.sticky) {
+        return "y";
+      }
+      ;
+      return "";
+    }() + function() {
+      if (v.unicode) {
+        return "u";
+      }
+      ;
+      return "";
+    }()))));
+  };
+  var regex = function(s) {
+    return function(f) {
+      return regexImpl(Left.create)(Right.create)(s)(renderFlags(f));
+    };
+  };
+
   // output/Foreign.Object/foreign.js
   function _lookup(no, yes, k, m) {
     return k in m ? yes(m[k]) : no;
@@ -2047,6 +2177,8 @@
       return bug("impossible: " + msg);
     };
   };
+  var isAlpha_regex = /* @__PURE__ */ fromRight$prime(/* @__PURE__ */ impossible("isAlpha_regex: failure"))(/* @__PURE__ */ regex("^[a-zA-Z]$")(/* @__PURE__ */ mempty(monoidRegexFlags)));
+  var isAlpha = /* @__PURE__ */ test(isAlpha_regex);
   var lookup_unsafe = function(k) {
     return function(a) {
       return fromMaybe$prime(function(v) {
@@ -3633,7 +3765,7 @@
         return v.value0;
       }
       ;
-      throw new Error("Failed pattern match at Ui.App (line 499, column 59 - line 501, column 25): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App (line 514, column 59 - line 516, column 25): " + [v.constructor.name]);
     };
   };
   var getUiPoint = function(state2) {
@@ -3682,7 +3814,7 @@
               return modifyClass("HandleFocus")(uiPoint_R.elem)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 472, column 7 - line 474, column 70): " + [mb_handle.value0.value1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 487, column 7 - line 489, column 70): " + [mb_handle.value0.value1.constructor.name]);
           };
         }
         ;
@@ -3713,11 +3845,11 @@
               return modifyClass("HandleFocus")(uiPoint_OR.elem)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 485, column 7 - line 489, column 78): " + [mb_handle.value0.value1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 500, column 7 - line 504, column 78): " + [mb_handle.value0.value1.constructor.name]);
           };
         }
         ;
-        throw new Error("Failed pattern match at Ui.App (line 460, column 3 - line 489, column 78): " + [mb_handle.constructor.name]);
+        throw new Error("Failed pattern match at Ui.App (line 475, column 3 - line 504, column 78): " + [mb_handle.constructor.name]);
       };
     };
   };
@@ -3757,7 +3889,7 @@
                   return setHandle(pure12(v3.value0))(state2)();
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.App (line 302, column 13 - line 304, column 53): " + [v3.constructor.name]);
+                throw new Error("Failed pattern match at Ui.App (line 317, column 13 - line 319, column 53): " + [v3.constructor.name]);
               }
               ;
               if (v2 instanceof Just) {
@@ -3773,7 +3905,7 @@
                   return setHandle(pure12(v3.value0))(state2)();
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.App (line 309, column 13 - line 311, column 53): " + [v3.constructor.name]);
+                throw new Error("Failed pattern match at Ui.App (line 324, column 13 - line 326, column 53): " + [v3.constructor.name]);
               }
               ;
               var h$prime = new Point_Handle(v1);
@@ -3802,10 +3934,10 @@
                   return setHandle(pure12(v3.value0))(state2)();
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.App (line 323, column 13 - line 325, column 53): " + [v3.constructor.name]);
+                throw new Error("Failed pattern match at Ui.App (line 338, column 13 - line 340, column 53): " + [v3.constructor.name]);
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 319, column 44 - line 325, column 53): " + [v2.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 334, column 44 - line 340, column 53): " + [v2.constructor.name]);
             };
           })(toEventTarget2(elem3))])();
           (function __do3() {
@@ -3863,7 +3995,7 @@
                     return addClass("Nested")(elem_expr)();
                   }
                   ;
-                  throw new Error("Failed pattern match at Ui.App (line 223, column 3 - line 225, column 57): " + [config.displayStyle.constructor.name]);
+                  throw new Error("Failed pattern match at Ui.App (line 238, column 3 - line 240, column 57): " + [config.displayStyle.constructor.name]);
                 })();
                 (function() {
                   if (label4.dat instanceof Root) {
@@ -3909,7 +4041,7 @@
                     })(v2.value0))();
                   }
                   ;
-                  throw new Error("Failed pattern match at Ui.App (line 248, column 29 - line 254, column 29): " + [v2.constructor.name]);
+                  throw new Error("Failed pattern match at Ui.App (line 263, column 29 - line 269, column 29): " + [v2.constructor.name]);
                 }();
                 var uiPoint_last = renderPoint(state2)({
                   path: path0,
@@ -4091,7 +4223,7 @@
                 };
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 357, column 3 - line 357, column 75): " + [v.constructor.name, v1.constructor.name, v2.constructor.name, v3.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 372, column 3 - line 372, column 75): " + [v.constructor.name, v1.constructor.name, v2.constructor.name, v3.constructor.name]);
             };
           };
         };
@@ -4110,6 +4242,12 @@
       var v = fromEventToKeyInfo(event);
       var v1 = function(v2) {
         var v3 = function(v4) {
+          if (matchKeyInfo2(isAlpha)({
+            cmd: pure12(true)
+          })(v)) {
+            return pure6(unit);
+          }
+          ;
           if (matchKeyInfo2(function(v5) {
             return v5 === "1";
           })({
@@ -4184,10 +4322,10 @@
                 return setHandle(new Just(v5.value0))(state2)();
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 159, column 15 - line 161, column 65): " + [v5.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 171, column 15 - line 173, column 65): " + [v5.constructor.name]);
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 155, column 42 - line 161, column 65): " + [v4.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 167, column 42 - line 173, column 65): " + [v4.constructor.name]);
           };
         }
         ;
@@ -4217,10 +4355,10 @@
               return setHandle(new Just(new Point_Handle(v3.value0)))(state2)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 149, column 15 - line 151, column 76): " + [v3.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 161, column 15 - line 163, column 76): " + [v3.constructor.name]);
           }
           ;
-          throw new Error("Failed pattern match at Ui.App (line 145, column 42 - line 151, column 76): " + [v2.constructor.name]);
+          throw new Error("Failed pattern match at Ui.App (line 157, column 42 - line 163, column 76): " + [v2.constructor.name]);
         };
       }
       ;
