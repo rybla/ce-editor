@@ -192,6 +192,12 @@ eventListenerInfo_keydown_Editor state = doc # Document.toEventTarget # addEvent
             Nothing -> pure unit
             Just handle' -> do
               state # setHandle (Just handle')
+    -- move handle focus
+    _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: Just false, shift: Just false, alt: Just true } -> do
+      case mb_handle of
+        Nothing -> pure unit
+        Just handle -> do
+          state # setHandle (Just (handle # Expr.Move.moveHandleFocus dir))
     -- insert
     _ | KeyInfo ki # matchKeyInfo isAlpha { cmd: pure false, alt: pure false } -> do
       case mb_handle of

@@ -51,3 +51,22 @@ movePoint e dir (Point p) = case dir of
   at_e = e # atSubExpr p.path
   extreme_j = at_e.here # getExtremeIndexes
 
+moveHandleFocus :: Dir -> Handle -> Handle
+moveHandleFocus _dir (Point_Handle p) = Point_Handle p
+moveHandleFocus dir (SpanH_Handle h f) = SpanH_Handle h (f # moveSpanFocus dir)
+moveHandleFocus dir (ZipperH_Handle h f) = ZipperH_Handle h (f # moveZipperFocus dir)
+
+moveSpanFocus :: Dir -> SpanFocus -> SpanFocus
+moveSpanFocus _dir Left_SpanFocus = Right_SpanFocus
+moveSpanFocus _dir Right_SpanFocus = Left_SpanFocus
+
+moveZipperFocus :: Dir -> ZipperFocus -> ZipperFocus
+moveZipperFocus L OuterLeft_ZipperFocus = OuterRight_ZipperFocus
+moveZipperFocus L OuterRight_ZipperFocus = InnerRight_ZipperFocus
+moveZipperFocus L InnerRight_ZipperFocus = InnerLeft_ZipperFocus
+moveZipperFocus L InnerLeft_ZipperFocus = OuterLeft_ZipperFocus
+moveZipperFocus R OuterLeft_ZipperFocus = InnerLeft_ZipperFocus
+moveZipperFocus R InnerLeft_ZipperFocus = InnerRight_ZipperFocus
+moveZipperFocus R InnerRight_ZipperFocus = OuterRight_ZipperFocus
+moveZipperFocus R OuterRight_ZipperFocus = OuterLeft_ZipperFocus
+
