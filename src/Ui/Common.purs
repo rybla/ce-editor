@@ -71,14 +71,14 @@ foreign import removeAllChildren :: Element -> Effect Unit
 replaceChild ∷ Element → Element → Element → Effect Unit
 replaceChild old_child new_child parent = parent # Element.toNode # Node.replaceChild (new_child # Element.toNode) (old_child # Element.toNode)
 
-createElement ∷ String → Element -> Effect Element
-createElement tag parent = do
+createChildElement ∷ String → Element -> Effect Element
+createChildElement tag parent = do
   elem <- doc # Document.createElement tag
   parent # appendChild elem
   pure elem
 
-createElement_orphan ∷ String → Effect Element
-createElement_orphan tag = doc # Document.createElement tag
+createElement ∷ String → Effect Element
+createElement tag = doc # Document.createElement tag
 
 removeClass :: String -> Element -> Effect Unit
 removeClass c elem = elem # Element.classList >>= (_ `DOMTokenList.remove` c)

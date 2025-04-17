@@ -24,7 +24,7 @@ import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
-import Ui.Common (EventListenerInfo, KeyInfo(..), addClass, addEventListenerWithOptions, appendChild, body, createElement, createElement_orphan, doc, fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo, removeAllChildren, removeChild, removeClass, removeEventListener, replaceChild, setText_Element, shiftKey)
+import Ui.Common (EventListenerInfo, KeyInfo(..), addClass, addEventListenerWithOptions, appendChild, body, createChildElement, createElement, doc, fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo, removeAllChildren, removeChild, removeClass, removeEventListener, replaceChild, setText_Element, shiftKey)
 import Utility (fromMaybeM, isAlpha, todo, (:%=), (:=))
 import Web.DOM (Element)
 import Web.DOM.Document as Document
@@ -134,7 +134,7 @@ renderEditor parent = do
 
   state <- newState
 
-  elem <- parent # createElement "div"
+  elem <- parent # createChildElement "div"
   elem # addClass "Editor"
 
   expr' <- elem # createUiExpr state Nil expr
@@ -303,7 +303,7 @@ assembleUiExpr path_ref elem_expr label kids state = do
 
   -- open
   when (config.displayStyle == Inline_DisplayStyle) do
-    elem_open <- elem_expr # createElement "div"
+    elem_open <- elem_expr # createChildElement "div"
     elem_open # addClass "Punctuation"
     elem_open # Element.toNode # Node.setTextContent case label of
       L { dat: Root } -> ""
@@ -311,7 +311,7 @@ assembleUiExpr path_ref elem_expr label kids state = do
 
   -- label
   do
-    elem_label <- elem_expr # createElement "div"
+    elem_label <- elem_expr # createChildElement "div"
     elem_label # addClass "Label"
     elem_label # Element.toNode # Node.setTextContent (show label)
 
@@ -319,19 +319,21 @@ assembleUiExpr path_ref elem_expr label kids state = do
   uiPoints_init <- kids # traverseWithIndex \i_ _ -> do
     let i = Step i_
     let j = (i # getIndexesAroundStep)._L
-    uiPoint <- elem_expr # createUiPoint state (Point { path, j })
+    uiPoint <- createUiPoint state (Point { path, j })
+    elem_expr # appendChild uiPoint.elem
     pure uiPoint
-  uiPoint_last <- elem_expr # createUiPoint state
+  uiPoint_last <- createUiPoint state
     ( Point
         { path
         , j: kids # Span # offset_Span
         }
     )
+  elem_expr # appendChild uiPoint_last.elem
   let uiPoints = uiPoints_init `Array.snoc` uiPoint_last
 
   -- close
   when (config.displayStyle == Inline_DisplayStyle) do
-    elem_close <- elem_expr # createElement "div"
+    elem_close <- elem_expr # createChildElement "div"
     elem_close # addClass "Punctuation"
     elem_close # Element.toNode # Node.setTextContent case label of
       L { dat: Root } -> ""
@@ -361,7 +363,7 @@ createUiExpr' :: State -> Path -> PureLabel -> Array Step -> (Step -> Element ->
 createUiExpr' state path0 label steps renderKid parent = do
   path_ref <- Ref.new path0
 
-  elem_expr <- parent # createElement "div"
+  elem_expr <- parent # createChildElement "div"
   kids <- steps # traverse \i -> elem_expr # renderKid i
   state # assembleUiExpr path_ref elem_expr label kids
 
@@ -369,13 +371,13 @@ createUiExpr' state path0 label steps renderKid parent = do
 -- createUiPoint
 --------------------------------------------------------------------------------
 
-createUiPoint :: State -> Point -> Element -> Effect UiPoint
-createUiPoint state (Point point0) parent = do
+createUiPoint :: State -> Point -> Effect UiPoint
+createUiPoint state (Point point0) = do
   Console.log $ "createUiPoint " <> show (Point point0)
 
   pointRef <- Ref.new (Point point0)
 
-  elem <- parent # createElement "div"
+  elem <- createElement "div"
   elem # addClass "Point"
 
   eventListenerInfos <- sequence
@@ -413,16 +415,16 @@ createUiPoint state (Point point0) parent = do
     ]
 
   do
-    elem_Focus <- elem # createElement "div"
+    elem_Focus <- elem # createChildElement "div"
     elem_Focus # addClass "Focus"
 
-    elem_L <- elem # createElement "div"
+    elem_L <- elem # createChildElement "div"
     elem_L # addClass "Left"
 
-    elem_M <- elem # createElement "div"
+    elem_M <- elem # createChildElement "div"
     elem_M # addClass "Middle"
 
-    elem_R <- elem # createElement "div"
+    elem_R <- elem # createChildElement "div"
     elem_R # addClass "Right"
 
   pure
@@ -491,7 +493,7 @@ updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) state 
 
   -- replace e with placeholder for now, then replace the placeholder with the
   -- new e' that is rendered from the tooth (which will have e as a child)
-  placeholder <- createElement_orphan "div"
+  placeholder <- createElement "div"
   placeholder # setText_Element "{{placeholder}}"
   parent # replaceChild (e # getElem_UiExpr) placeholder
 
