@@ -9,6 +9,7 @@ import Data.Array.NonEmpty as NEArray
 import Data.Array.ST as STArray
 import Data.Either (fromRight')
 import Data.FoldableWithIndex (traverseWithIndex_)
+import Data.Function (applyFlipped)
 import Data.HeytingAlgebra (implies)
 import Data.List (List(..), (:))
 import Data.List as List
@@ -144,3 +145,4 @@ infix 4 modifyFlipped as :%=
 lookup_unsafe :: forall a b. String -> a -> b
 lookup_unsafe k a = a # unsafeCoerce # Object.lookup k # fromMaybe' \_ -> bug $ "Object doesn't have property " <> show k
 
+infixr 1 applyFlipped as &

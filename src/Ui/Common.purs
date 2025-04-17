@@ -65,6 +65,8 @@ appendChild child parent = parent # Element.toNode # Node.appendChild (child # E
 removeChild ∷ Element → Element → Effect Unit
 removeChild child parent = parent # Element.toNode # Node.removeChild (child # Element.toNode)
 
+foreign import removeAllChildren :: Element -> Effect Unit
+
 -- | replaceChild old_child new_child parent
 replaceChild ∷ Element → Element → Element → Effect Unit
 replaceChild old_child new_child parent = parent # Element.toNode # Node.replaceChild (new_child # Element.toNode) (old_child # Element.toNode)

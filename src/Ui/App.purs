@@ -4,7 +4,7 @@ import Prelude
 
 import Control.Monad.ST as ST
 import Data.Array as Array
-import Data.Expr (Diff(..), Expr(..), Handle(..), Index(..), NePath, Path, Point(..), Span(..), SpanFocus(..), SpanH(..), Step(..), Tooth(..), Zipper(..), ZipperFocus(..), atIndexSpan_Expr, atInjectDiff, atPoint, atSpan, atSubExpr, defaultHandle, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeSteps, getFocusPoint, getIndexesAroundStep, getKid_Expr, mkExpr, stepsRange, toNePath)
+import Data.Expr (Diff(..), Expr(..), Handle(..), Index(..), NePath, Path, Point(..), Span(..), SpanFocus(..), SpanH(..), Step(..), Tooth(..), Zipper(..), ZipperFocus(..), atIndexSpan_Expr, atInjectDiff, atPoint, atSpan, atSubExpr, defaultHandle, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeSteps, getFocusPoint, getIndexesAroundStep, getKid_Expr, mkExpr, offset_Span, rangeKidSteps, rangeSteps, toNePath)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Move as Expr.Move
 import Data.FoldableWithIndex (traverseWithIndex_)
@@ -24,7 +24,7 @@ import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
-import Ui.Common (EventListenerInfo, KeyInfo(..), addClass, addEventListenerWithOptions, appendChild, body, createElement, createElement_orphan, doc, fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo, removeChild, removeClass, removeEventListener, replaceChild, setText_Element, shiftKey)
+import Ui.Common (EventListenerInfo, KeyInfo(..), addClass, addEventListenerWithOptions, appendChild, body, createElement, createElement_orphan, doc, fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo, removeAllChildren, removeChild, removeClass, removeEventListener, replaceChild, setText_Element, shiftKey)
 import Utility (fromMaybeM, isAlpha, todo, (:%=), (:=))
 import Web.DOM (Element)
 import Web.DOM.Document as Document
@@ -120,6 +120,9 @@ type UiPoint =
 getElem_UiExpr :: UiExpr -> Element
 getElem_UiExpr e = ((e # unwrap).l # unwrap).meta.elem
 
+getUiPoints_UiExpr :: UiExpr -> Array UiPoint
+getUiPoints_UiExpr e = ((e # unwrap).l # unwrap).meta.uiPoints
+
 --------------------------------------------------------------------------------
 -- renderEditor
 --------------------------------------------------------------------------------
@@ -134,7 +137,7 @@ renderEditor parent = do
   elem <- parent # createElement "div"
   elem # addClass "Editor"
 
-  expr' <- elem # renderExpr state Nil expr
+  expr' <- elem # createUiExpr state Nil expr
   state.mb_uiExprRoot := pure expr'
 
   eventListenerInfos <- sequence
@@ -273,21 +276,12 @@ eventListenerInfo_keyup_Editor state = doc # Document.toEventTarget # addEventLi
   pure unit
 
 --------------------------------------------------------------------------------
--- renderExpr
+-- createUiExpr
 --------------------------------------------------------------------------------
 
-renderExpr :: State -> Path -> PureExpr -> Element -> Effect UiExpr
-renderExpr state path (Expr expr) parent = do
-  -- Console.log $ "renderExpr: " <> show (Expr expr)
-  parent # renderExpr' state path expr.l (Expr expr # getExtremeSteps) \i elem_expr -> do
-    kid <- Expr expr # getKid_Expr i # fromMaybeM do throw $ "kid index out of bounds"
-    elem_expr # renderExpr state (path `List.snoc` i) kid
-
-renderExpr' :: State -> Path -> PureLabel -> Maybe { _L :: Step, _R :: Step } -> (Step -> Element -> Effect UiExpr) -> Element -> Effect UiExpr
-renderExpr' state path0 label extremeSteps renderKid elem_parent = do
-  pathRef <- Ref.new path0
-  -- create element
-  elem_expr <- elem_parent # createElement "div"
+assembleUiExpr :: Ref Path -> Element -> PureLabel -> Array UiExpr -> State -> Effect UiExpr
+assembleUiExpr path_ref elem_expr label kids_ state = do
+  path <- path_ref # Ref.read
 
   -- attributes
   elem_expr # addClass "Expr"
@@ -316,17 +310,15 @@ renderExpr' state path0 label extremeSteps renderKid elem_parent = do
     elem_label # Element.toNode # Node.setTextContent (show label)
 
   -- kids
-  kids' /\ uiPoints_init <- case extremeSteps <#> stepsRange of
-    Nothing -> pure $ [] /\ []
-    Just steps -> map Array.unzip $ steps # traverse \i -> do
-      let j = (i # getIndexesAroundStep)._L
-      uiPoint <- elem_expr # renderPoint state (Point { path: path0, j })
-      kid' <- elem_expr # renderKid i
-      pure $ kid' /\ uiPoint
-  uiPoint_last <- elem_expr # renderPoint state
+  kids /\ uiPoints_init <- map Array.unzip $ kids_ # traverseWithIndex \i_ kid -> do
+    let i = Step i_
+    let j = (i # getIndexesAroundStep)._L
+    uiPoint <- elem_expr # createUiPoint state (Point { path, j })
+    pure $ kid /\ uiPoint
+  uiPoint_last <- elem_expr # createUiPoint state
     ( Point
-        { path: path0
-        , j: extremeSteps # maybe (Index 0) (\step -> (step._R # getIndexesAroundStep)._R)
+        { path
+        , j: kids_ # Span # offset_Span
         }
     )
   let uiPoints = uiPoints_init `Array.snoc` uiPoint_last
@@ -344,23 +336,40 @@ renderExpr' state path0 label extremeSteps renderKid elem_parent = do
         { meta =
             { elem: elem_expr
             , eventListenerInfos
-            , path: pathRef
+            , path: path_ref
             , uiPoints
             }
         }
-    , kids: kids'
+    , kids
     }
 
+createUiExpr :: State -> Path -> PureExpr -> Element -> Effect UiExpr
+createUiExpr state path (Expr expr) parent = do
+  Console.log $ "createUiExpr: " <> show (Expr expr)
+
+  parent # createUiExpr' state path expr.l (Expr expr # rangeKidSteps) \i elem_expr -> do
+    kid <- Expr expr # getKid_Expr i # fromMaybeM do throw $ "kid index out of bounds"
+    elem_expr # createUiExpr state (path `List.snoc` i) kid
+
+createUiExpr' :: State -> Path -> PureLabel -> Array Step -> (Step -> Element -> Effect UiExpr) -> Element -> Effect UiExpr
+createUiExpr' state path0 label steps renderKid parent = do
+  path_ref <- Ref.new path0
+
+  elem_expr <- parent # createElement "div"
+  kids <- steps # traverse \i -> elem_expr # renderKid i
+  state # assembleUiExpr path_ref elem_expr label kids
+
 --------------------------------------------------------------------------------
--- renderPoint
+-- createUiPoint
 --------------------------------------------------------------------------------
 
-renderPoint :: State -> Point -> Element -> Effect UiPoint
-renderPoint state (Point point0) elem_parent = do
-  -- Console.log $ "renderPoint " <> show (Point point0)
+createUiPoint :: State -> Point -> Element -> Effect UiPoint
+createUiPoint state (Point point0) parent = do
+  Console.log $ "createUiPoint " <> show (Point point0)
+
   pointRef <- Ref.new (Point point0)
 
-  elem <- elem_parent # createElement "div"
+  elem <- parent # createElement "div"
   elem # addClass "Point"
 
   eventListenerInfos <- sequence
@@ -483,27 +492,26 @@ updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) state 
   let kids_L_length = tooth.kids_L # Array.length
   let kids_R_length = tooth.kids_R # Array.length
 
-  e' <- parent # renderExpr' state path tooth.l
-    (Just { _L: Step 0, _R: Step (kids_L_length + kids_R_length) })
+  e' <- parent # createUiExpr' state path tooth.l
+    ({ _L: Step 0, _R: Step $ kids_L_length + kids_R_length } # rangeSteps)
     \i e'_elem -> do
       if i < Step kids_L_length then do
         e'_kid <- tooth.kids_L Array.!! unwrap i # fromMaybeM do throw $ "updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " <> show i
-        e'_elem # renderExpr state (path `List.snoc` i) e'_kid
+        e'_elem # createUiExpr state (path `List.snoc` i) e'_kid
       else if i == Step kids_L_length then do
         e'_elem # appendChild (e # getElem_UiExpr)
         state # updateUiExprViaDiff true (path `List.snoc` i) (Just e'_elem) e d
       else do
         e'_kid <- tooth.kids_R Array.!! ((-kids_L_length) + (-1) + unwrap i) # fromMaybeM do throw $ "updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " <> show i
-        e'_elem # renderExpr state (path `List.snoc` i) e'_kid
+        e'_elem # createUiExpr state (path `List.snoc` i) e'_kid
 
   parent # replaceChild placeholder (e' # getElem_UiExpr)
 
   pure e'
 
 updateUiExprViaDiff isMoved path mb_parent (Expr e) (ReplaceSpan_Diff j0 j1 span) state = do
-  -- update each kid that comes after replaced span
-  -- update each point that comes after replaced span
-
+  let e_elem = Expr e # getElem_UiExpr
+  let e_uiPoints = Expr e # getUiPoints_UiExpr
   let at_diff = Expr e # atIndexSpan_Expr j0 j1
   let
     pre_kids = Array.fold
@@ -512,30 +520,33 @@ updateUiExprViaDiff isMoved path mb_parent (Expr e) (ReplaceSpan_Diff j0 j1 span
       , (at_diff.outside # unwrap).kids_R # map Trident.Third
       ]
 
-  kids_ref <- Ref.new []
-  uiPoints_ref <- Ref.new []
+  e_elem # removeAllChildren
+  -- deep cleanup kids that are permanently removed
+  -- add them back appropriately
 
-  -- kids /\ uiPoints_init <- map Array.unzip $ pre_kids # traverseWithIndex \i_ ->
-  --   let
-  --     i = Step i_
-  --     j = (i # getIndexesAroundStep)._L
-  --   in
-  --     case _ of
-  --       Trident.First kid_L -> do 
-  --         ?a
-  --       Trident.Second kid_M -> todo ""
-  --       Trident.Third kid_R -> todo ""
-  -- kids_L <- pure (at_diff.outside # unwrap).kids_L
-  -- kids_M <- span # unwrap # traverseWithIndex \i e' -> ?a
-  -- kids_R <- pure (at_diff.outside # unwrap).kids_R
+  -- if (span # offset_Span) == (j1 - j0) then
+  --   -- since we're replacing with a span of the same size, don't need to move
+  --   -- anything, we just replace the kids appropriately
+  --   rangeSteps {_L: ?a, _R: ?a} # traverse
+  --   todo ""
+  -- else do
+  --   kids /\ uiPoints_init <- map Array.unzip $ pre_kids # traverseWithIndex \i_ ->
+  --     let
+  --       i = Step i_
+  --       j = (i # getIndexesAroundStep)._L
+  --     in
+  --       case _ of
+  --         Trident.First kid_L -> todo ""
+  --         Trident.Second kid_M -> todo ""
+  --         Trident.Third kid_R -> todo ""
 
-  kids <- kids_ref # Ref.read
-  pure $ Expr { l: todo "l", kids }
+  -- pure $ Expr { l: todo "l", kids: todo "kids" }
+  todo "updateUiExprViaDiff ... (ReplaceSpan_Diff j0 j1 span) ..."
 
 updateUiExprViaDiff _ path mb_parent e (Replace_Diff e'_) state = do
   parent <- mb_parent # fromMaybeM do throw "can't DeleteTooth_Diff at Root"
   e # cleanup_uiExpr_deep
-  e' <- parent # renderExpr state path e'_
+  e' <- parent # createUiExpr state path e'_
   parent # replaceChild (e # getElem_UiExpr) (e' # getElem_UiExpr)
   pure e'
 
@@ -546,8 +557,7 @@ cleanup_UiExpr_shallow (Expr e) = do
   (e.l # unwrap).meta.eventListenerInfos # traverse_ \eli -> do
     elem_e # Element.toEventTarget # removeEventListener eli
   -- remove all Expr's Point's EventListeners
-  (e.l # unwrap).meta.uiPoints # traverse_ \uiPoint -> uiPoint.eventListenerInfos # traverse_ \eli -> do
-    elem_e # Element.toEventTarget # removeEventListener eli
+  (e.l # unwrap).meta.uiPoints # traverse_ cleanup_UiPoint
 
 cleanup_uiExpr_deep :: UiExpr -> Effect Unit
 cleanup_uiExpr_deep (Expr e) = do
@@ -556,9 +566,13 @@ cleanup_uiExpr_deep (Expr e) = do
   (e.l # unwrap).meta.eventListenerInfos # traverse_ \eli -> do
     elem_e # Element.toEventTarget # removeEventListener eli
   -- remove all Expr's Point's EventListeners
-  (e.l # unwrap).meta.uiPoints # traverse_ \uiPoint -> uiPoint.eventListenerInfos # traverse_ \eli -> do
-    elem_e # Element.toEventTarget # removeEventListener eli
+  (e.l # unwrap).meta.uiPoints # traverse_ cleanup_UiPoint
   e.kids # traverse_ cleanup_uiExpr_deep
+
+cleanup_UiPoint :: UiPoint -> Effect Unit
+cleanup_UiPoint uiPoint = do
+  uiPoint.eventListenerInfos # traverse_ \eli -> do
+    uiPoint.elem # Element.toEventTarget # removeEventListener eli
 
 --------------------------------------------------------------------------------
 -- operations

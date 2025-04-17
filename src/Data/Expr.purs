@@ -39,8 +39,11 @@ derive newtype instance Semiring Step
 
 derive newtype instance Ring Step
 
-stepsRange :: { _L :: Step, _R :: Step } -> Array Step
-stepsRange i = Array.range (i._L # unwrap) (i._R # unwrap) # map Step
+rangeKidSteps :: forall l. Expr l -> Array Step
+rangeKidSteps (Expr e) = e.kids # mapWithIndex \i -> const $ Step i
+
+rangeSteps :: { _L :: Step, _R :: Step } -> Array Step
+rangeSteps i = Array.range (i._L # unwrap) (i._R # unwrap) # map Step
 
 atStep :: forall l. Show l => Step -> Expr l -> { outside :: Tooth l, here :: Expr l }
 atStep i (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, here }
@@ -67,6 +70,9 @@ derive instance Ord Index
 derive newtype instance Semiring Index
 
 derive newtype instance Ring Index
+
+rangeIndexes :: { _L :: Index, _R :: Index } -> Array Index
+rangeIndexes i = Array.range (i._L # unwrap) (i._R # unwrap) # map Index
 
 atIndexSpan_Expr :: forall l. Index -> Index -> Expr l -> { outside :: SpanTooth l, here :: Span l }
 atIndexSpan_Expr i_L i_R (Expr e) = { outside: SpanTooth { l: e.l, kids_L, kids_R }, here: Span es }
