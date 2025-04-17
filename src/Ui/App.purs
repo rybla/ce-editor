@@ -279,8 +279,14 @@ eventListenerInfo_keyup_Editor state = doc # Document.toEventTarget # addEventLi
 -- createUiExpr
 --------------------------------------------------------------------------------
 
+-- | Given these components of a UiExpr
+-- |  - path_ref :: Ref Path
+-- |  - elem_expr :: Element
+-- |  - label :: PureLabel
+-- |  - kids :: Array UiExpr
+-- | assembles the UiExpr on the elem_expr and returns the resulting UiExpr.
 assembleUiExpr :: Ref Path -> Element -> PureLabel -> Array UiExpr -> State -> Effect UiExpr
-assembleUiExpr path_ref elem_expr label kids_ state = do
+assembleUiExpr path_ref elem_expr label kids state = do
   path <- path_ref # Ref.read
 
   -- attributes
@@ -310,15 +316,15 @@ assembleUiExpr path_ref elem_expr label kids_ state = do
     elem_label # Element.toNode # Node.setTextContent (show label)
 
   -- kids
-  kids /\ uiPoints_init <- map Array.unzip $ kids_ # traverseWithIndex \i_ kid -> do
+  uiPoints_init <- kids # traverseWithIndex \i_ _ -> do
     let i = Step i_
     let j = (i # getIndexesAroundStep)._L
     uiPoint <- elem_expr # createUiPoint state (Point { path, j })
-    pure $ kid /\ uiPoint
+    pure uiPoint
   uiPoint_last <- elem_expr # createUiPoint state
     ( Point
         { path
-        , j: kids_ # Span # offset_Span
+        , j: kids # Span # offset_Span
         }
     )
   let uiPoints = uiPoints_init `Array.snoc` uiPoint_last

@@ -2,13 +2,15 @@
 
 ## direct-dom-manipulation
 
-- [x] need to allow for initialization stage of Component (something run right after it's added to the DOM)
-  - solved by not using Components
+- [ ] make it so that the `create*` functions don't require the parent element
+  to `appendChild` to -- turns out this doesn't quite work out to.
 - [ ] InsertSpanTooth_Diff
 - [ ] DeleteSpanTooth_Diff
 - [ ] InsertSpan_Diff
 - [ ] DeleteSpan_Diff
 - [ ] refactor out `State` argument into a MonadReader via `ReaderT Effect`
+- [x] need to allow for initialization stage of Component (something run right after it's added to the DOM)
+  - solved by not using Components
 
 
 # halogen
