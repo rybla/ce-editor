@@ -441,7 +441,7 @@ createUiPoint state (Point point0) = do
 updateUiExprViaDiff_root :: Diff PureLabel -> State -> Effect Unit
 updateUiExprViaDiff_root diff0 state = do
   uiExprRoot <- state # getUiExpr_root
-  uiExprRoot' <- state # updateUiExprViaDiff false Nil Nothing uiExprRoot diff0
+  uiExprRoot' <- state # updateUiExprViaDiff false Nil uiExprRoot diff0
   state.mb_uiExprRoot := pure uiExprRoot'
 
 -- | Updates the UiExpr and all of its descendants, which updates each UiExpr's
@@ -457,25 +457,26 @@ updateUiExpr path (Expr e) state = do
 
 -- | Updates the UiExpr and all of its descendants via a Diff, which applies the
 -- | Diff's edit to the Expr and updates Ui elements accordingly.
-updateUiExprViaDiff :: Boolean -> Path -> Maybe Element -> UiExpr -> Diff PureLabel -> State -> Effect UiExpr
+updateUiExprViaDiff :: Boolean -> Path -> UiExpr -> Diff PureLabel -> State -> Effect UiExpr
 
-updateUiExprViaDiff isMoved path _ expr Id_Diff state = do
+updateUiExprViaDiff isMoved path expr Id_Diff state = do
   -- only need to update if has moved
   if not isMoved then pure expr
   else do
     state # updateUiExpr path expr
 
-updateUiExprViaDiff _ path _ (Expr e) (Inject_Diff ds) state = do
+updateUiExprViaDiff _ path (Expr e) (Inject_Diff ds) state = do
   (e.l # unwrap).meta.path := path
   (e.l # unwrap).meta.uiPoints # traverse_ \uiPoint -> uiPoint.point :%= Newtype.modify _ { path = path }
   kids' <- ds # traverseWithIndex \i_ d -> do
     let i = Step i_
     kid <- Expr e # getKid_Expr i # fromMaybeM do throw "kid index out of bounds"
-    state # updateUiExprViaDiff false (path `List.snoc` i) (Just (Expr e # getElem_UiExpr)) kid d
+    -- state # updateUiExprViaDiff false (path `List.snoc` i) (Just (Expr e # getElem_UiExpr)) kid d
+    state # updateUiExprViaDiff false (path `List.snoc` i) kid d
   pure $ Expr e { kids = kids' }
 
-updateUiExprViaDiff _ path mb_parent (Expr e) (DeleteTooth_Diff i d) state = do
-  parent <- mb_parent # fromMaybeM do throw "can't DeleteTooth_Diff at Root"
+updateUiExprViaDiff _ path (Expr e) (DeleteTooth_Diff i d) state = do
+  parent <- todo "mb_parent" # fromMaybeM do throw "can't DeleteTooth_Diff at Root"
   -- cleanup all kids around step i
   e.kids # traverseWithIndex_ \i'_ e_kid -> do
     let i' = Step i'_
@@ -487,10 +488,11 @@ updateUiExprViaDiff _ path mb_parent (Expr e) (DeleteTooth_Diff i d) state = do
   -- this expr's parent is now the kid's parent
   Expr e # cleanup_UiExpr_shallow
   parent # replaceChild (Expr e # getElem_UiExpr) (e_kid # getElem_UiExpr)
-  state # updateUiExprViaDiff true path (pure parent) e_kid d
+  -- state # updateUiExprViaDiff true path (pure parent) e_kid d
+  state # updateUiExprViaDiff true path e_kid d
 
-updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) state = do
-  parent <- mb_parent # fromMaybeM do throw "can't InsertTooth_Diff at Root"
+updateUiExprViaDiff _ path e (InsertTooth_Diff (Tooth tooth) d) state = do
+  parent <- todo "mb_parent" # fromMaybeM do throw "can't InsertTooth_Diff at Root"
 
   -- replace e with placeholder for now, then replace the placeholder with the
   -- new e' that is rendered from the tooth (which will have e as a child)
@@ -511,7 +513,8 @@ updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) state 
         pure uiExpr_kid
       else if i == Step kids_L_length then do
         -- e'_elem # appendChild (e # getElem_UiExpr)
-        state # updateUiExprViaDiff true (path `List.snoc` i) (Just (todo "e'_elem")) e d
+        -- state # updateUiExprViaDiff true (path `List.snoc` i) (Just (todo "e'_elem")) e d
+        state # updateUiExprViaDiff true (path `List.snoc` i) e d
       else do
         kid <- tooth.kids_R Array.!! ((-kids_L_length) + (-1) + unwrap i) # fromMaybeM do throw $ "updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " <> show i
         uiExpr_kid <- createUiExpr state (path `List.snoc` i) kid
@@ -522,7 +525,7 @@ updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) state 
 
   pure e'
 
-updateUiExprViaDiff isMoved path mb_parent (Expr e) (ReplaceSpan_Diff j0 j1 span) state = do
+updateUiExprViaDiff isMoved path (Expr e) (ReplaceSpan_Diff j0 j1 span) state = do
   let e_elem = Expr e # getElem_UiExpr
   let e_uiPoints = Expr e # getUiPoints_UiExpr
   let at_diff = Expr e # atIndexSpan_Expr j0 j1
@@ -556,8 +559,8 @@ updateUiExprViaDiff isMoved path mb_parent (Expr e) (ReplaceSpan_Diff j0 j1 span
   -- pure $ Expr { l: todo "l", kids: todo "kids" }
   todo "updateUiExprViaDiff ... (ReplaceSpan_Diff j0 j1 span) ..."
 
-updateUiExprViaDiff _ path mb_parent e (Replace_Diff e'_) state = do
-  parent <- mb_parent # fromMaybeM do throw "can't DeleteTooth_Diff at Root"
+updateUiExprViaDiff _ path e (Replace_Diff e'_) state = do
+  parent <- todo "mb_parent" # fromMaybeM do throw "can't DeleteTooth_Diff at Root"
   e # cleanup_uiExpr_deep
   e' <- createUiExpr state path e'_
   parent # replaceChild (e # getElem_UiExpr) (e' # getElem_UiExpr)
