@@ -56,7 +56,7 @@ derive instance Eq DisplayStyle
 
 main :: Effect Unit
 main = do
-  void $ body # renderEditor
+  void $ body # createEditor
 
 --------------------------------------------------------------------------------
 -- State
@@ -124,11 +124,11 @@ getUiPoints_UiExpr :: UiExpr -> Array UiPoint
 getUiPoints_UiExpr e = ((e # unwrap).l # unwrap).meta.uiPoints
 
 --------------------------------------------------------------------------------
--- renderEditor
+-- createEditor
 --------------------------------------------------------------------------------
 
-renderEditor :: Element -> Effect UiEditor
-renderEditor parent = do
+createEditor :: Element -> Effect UiEditor
+createEditor parent = do
   let expr = mkExpr (mkL Root {}) [ config.initialExpr ]
   Console.logShow expr
 
