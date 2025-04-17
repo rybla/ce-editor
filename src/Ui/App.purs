@@ -2,8 +2,9 @@ module Ui.App where
 
 import Prelude
 
+import Control.Monad.ST as ST
 import Data.Array as Array
-import Data.Expr (Diff(..), Expr(..), Handle(..), Index(..), NePath, Path, Point(..), Span(..), SpanFocus(..), SpanH(..), Step(..), Tooth(..), Zipper(..), ZipperFocus(..), atInjectDiff, atPoint, atSpan, atSubExpr, defaultHandle, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeSteps, getFocusPoint, getIndexesAroundStep, getKid_Expr, mkExpr, stepsRange, toNePath)
+import Data.Expr (Diff(..), Expr(..), Handle(..), Index(..), NePath, Path, Point(..), Span(..), SpanFocus(..), SpanH(..), Step(..), Tooth(..), Zipper(..), ZipperFocus(..), atIndexSpan_Expr, atInjectDiff, atPoint, atSpan, atSubExpr, defaultHandle, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeSteps, getFocusPoint, getIndexesAroundStep, getKid_Expr, mkExpr, stepsRange, toNePath)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Move as Expr.Move
 import Data.FoldableWithIndex (traverseWithIndex_)
@@ -14,6 +15,7 @@ import Data.Newtype (unwrap)
 import Data.Newtype as Newtype
 import Data.Traversable (sequence, traverse, traverse_)
 import Data.TraversableWithIndex (traverseWithIndex)
+import Data.Trident as Trident
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor.Example.Editor1 (Dat(..), L(..), mkL)
@@ -497,6 +499,38 @@ updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) state 
   parent # replaceChild placeholder (e' # getElem_UiExpr)
 
   pure e'
+
+updateUiExprViaDiff isMoved path mb_parent (Expr e) (ReplaceSpan_Diff j0 j1 span) state = do
+  -- update each kid that comes after replaced span
+  -- update each point that comes after replaced span
+
+  let at_diff = Expr e # atIndexSpan_Expr j0 j1
+  let
+    pre_kids = Array.fold
+      [ (at_diff.outside # unwrap).kids_L # map Trident.First
+      , span # unwrap # map Trident.Second
+      , (at_diff.outside # unwrap).kids_R # map Trident.Third
+      ]
+
+  kids_ref <- Ref.new []
+  uiPoints_ref <- Ref.new []
+
+  -- kids /\ uiPoints_init <- map Array.unzip $ pre_kids # traverseWithIndex \i_ ->
+  --   let
+  --     i = Step i_
+  --     j = (i # getIndexesAroundStep)._L
+  --   in
+  --     case _ of
+  --       Trident.First kid_L -> do 
+  --         ?a
+  --       Trident.Second kid_M -> todo ""
+  --       Trident.Third kid_R -> todo ""
+  -- kids_L <- pure (at_diff.outside # unwrap).kids_L
+  -- kids_M <- span # unwrap # traverseWithIndex \i e' -> ?a
+  -- kids_R <- pure (at_diff.outside # unwrap).kids_R
+
+  kids <- kids_ref # Ref.read
+  pure $ Expr { l: todo "l", kids }
 
 updateUiExprViaDiff _ path mb_parent e (Replace_Diff e'_) state = do
   parent <- mb_parent # fromMaybeM do throw "can't DeleteTooth_Diff at Root"

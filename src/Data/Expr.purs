@@ -551,6 +551,7 @@ data Diff l
   | Inject_Diff (Array (Diff l))
   | DeleteTooth_Diff Step (Diff l)
   | InsertTooth_Diff (Tooth l) (Diff l)
+  | ReplaceSpan_Diff Index Index (Span l)
   | Replace_Diff (Expr l)
 
 derive instance Generic (Diff l) _
@@ -558,9 +559,10 @@ derive instance Generic (Diff l) _
 instance Show l => Show (Diff l) where
   show Id_Diff = "_"
   show (Inject_Diff kids) = "(_ % " <> (kids # map show # String.joinWith " ") <> ")"
-  show (DeleteTooth_Diff i d) = "(- _ % ... [" <> show i <> "]: " <> show d <> " ... )"
-  show (InsertTooth_Diff t d) = "(+ _ % ... [" <> show (t # getStep) <> "]: " <> show d <> " ... )"
-  show (Replace_Diff e) = "{" <> show e <> "}"
+  show (DeleteTooth_Diff i d) = "-(_ % ... -[" <> show i <> "]: " <> show d <> " ... )"
+  show (InsertTooth_Diff t d) = "+(_ % ... +[" <> show (t # getStep) <> "]: " <> show d <> " ... )"
+  show (ReplaceSpan_Diff j0 j1 span) = "//(_ % ... [" <> show j0 <> "] " <> (span # unwrap # map show # String.joinWith " ") <> " [" <> show j1 <> " ... )"
+  show (Replace_Diff e) = "//" <> show e
 
 atInjectDiff :: forall l l'. Show l => NePath -> (Expr l -> Diff l') -> Expr l -> Diff l'
 atInjectDiff (i0 :| path0) f = goStep i0 path0
