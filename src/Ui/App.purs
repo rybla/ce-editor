@@ -129,16 +129,17 @@ getUiPoints_UiExpr e = ((e # unwrap).l # unwrap).meta.uiPoints
 
 createEditor :: Element -> Effect UiEditor
 createEditor parent = do
-  let expr = mkExpr (mkL Root {}) [ config.initialExpr ]
-  Console.logShow expr
+  let expr_ = mkExpr (mkL Root {}) [ config.initialExpr ]
+  Console.logShow expr_
 
   state <- newState
 
   elem <- parent # createChildElement "div"
   elem # addClass "Editor"
 
-  expr' <- elem # createUiExpr state Nil expr
-  state.mb_uiExprRoot := pure expr'
+  expr <- createUiExpr state Nil expr_
+  elem # appendChild (expr # getElem_UiExpr)
+  state.mb_uiExprRoot := pure expr
 
   eventListenerInfos <- sequence
     [ state # eventListenerInfo_stopDrag_Editor
@@ -351,20 +352,20 @@ assembleUiExpr path_ref elem_expr label kids state = do
     , kids
     }
 
-createUiExpr :: State -> Path -> PureExpr -> Element -> Effect UiExpr
-createUiExpr state path (Expr expr) parent = do
+createUiExpr :: State -> Path -> PureExpr -> Effect UiExpr
+createUiExpr state path (Expr expr) = do
   Console.log $ "createUiExpr: " <> show (Expr expr)
 
-  parent # createUiExpr' state path expr.l (Expr expr # rangeKidSteps) \i elem_expr -> do
+  createUiExpr' state path expr.l (Expr expr # rangeKidSteps) \i -> do
     kid <- Expr expr # getKid_Expr i # fromMaybeM do throw $ "kid index out of bounds"
-    elem_expr # createUiExpr state (path `List.snoc` i) kid
+    createUiExpr state (path `List.snoc` i) kid
 
-createUiExpr' :: State -> Path -> PureLabel -> Array Step -> (Step -> Element -> Effect UiExpr) -> Element -> Effect UiExpr
-createUiExpr' state path0 label steps renderKid parent = do
+createUiExpr' :: State -> Path -> PureLabel -> Array Step -> (Step -> Effect UiExpr) -> Effect UiExpr
+createUiExpr' state path0 label steps renderKid = do
   path_ref <- Ref.new path0
 
-  elem_expr <- parent # createChildElement "div"
-  kids <- steps # traverse \i -> elem_expr # renderKid i
+  elem_expr <- createElement "div"
+  kids <- steps # traverse renderKid
   state # assembleUiExpr path_ref elem_expr label kids
 
 --------------------------------------------------------------------------------
@@ -500,18 +501,22 @@ updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) state 
   let kids_L_length = tooth.kids_L # Array.length
   let kids_R_length = tooth.kids_R # Array.length
 
-  e' <- parent # createUiExpr' state path tooth.l
+  e' <- createUiExpr' state path tooth.l
     ({ _L: Step 0, _R: Step $ kids_L_length + kids_R_length } # rangeSteps)
-    \i e'_elem -> do
+    \i -> do
       if i < Step kids_L_length then do
-        e'_kid <- tooth.kids_L Array.!! unwrap i # fromMaybeM do throw $ "updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " <> show i
-        e'_elem # createUiExpr state (path `List.snoc` i) e'_kid
+        kid <- tooth.kids_L Array.!! unwrap i # fromMaybeM do throw $ "updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " <> show i
+        uiExpr_kid <- createUiExpr state (path `List.snoc` i) kid
+        -- e'_elem # appendChild (uiExpr_kid # getElem_UiExpr)
+        pure uiExpr_kid
       else if i == Step kids_L_length then do
-        e'_elem # appendChild (e # getElem_UiExpr)
-        state # updateUiExprViaDiff true (path `List.snoc` i) (Just e'_elem) e d
+        -- e'_elem # appendChild (e # getElem_UiExpr)
+        state # updateUiExprViaDiff true (path `List.snoc` i) (Just (todo "e'_elem")) e d
       else do
-        e'_kid <- tooth.kids_R Array.!! ((-kids_L_length) + (-1) + unwrap i) # fromMaybeM do throw $ "updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " <> show i
-        e'_elem # createUiExpr state (path `List.snoc` i) e'_kid
+        kid <- tooth.kids_R Array.!! ((-kids_L_length) + (-1) + unwrap i) # fromMaybeM do throw $ "updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " <> show i
+        uiExpr_kid <- createUiExpr state (path `List.snoc` i) kid
+        -- e'_elem # appendChild (uiExpr_kid # getElem_UiExpr)
+        pure uiExpr_kid
 
   parent # replaceChild placeholder (e' # getElem_UiExpr)
 
@@ -554,7 +559,7 @@ updateUiExprViaDiff isMoved path mb_parent (Expr e) (ReplaceSpan_Diff j0 j1 span
 updateUiExprViaDiff _ path mb_parent e (Replace_Diff e'_) state = do
   parent <- mb_parent # fromMaybeM do throw "can't DeleteTooth_Diff at Root"
   e # cleanup_uiExpr_deep
-  e' <- parent # createUiExpr state path e'_
+  e' <- createUiExpr state path e'_
   parent # replaceChild (e # getElem_UiExpr) (e' # getElem_UiExpr)
   pure e'
 
