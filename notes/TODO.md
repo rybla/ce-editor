@@ -2,3 +2,4 @@
 - [ ] DeleteSpanTooth_Diff
 - [ ] InsertSpan_Diff
 - [ ] DeleteSpan_Diff
+- [ ] refactored out `State` argument into a MonadReader via `ReaderT Effect`
