@@ -317,18 +317,18 @@ assembleUiExpr path_ref elem_expr label kids state = do
     elem_label # Element.toNode # Node.setTextContent (show label)
 
   -- kids
-  uiPoints_init <- kids # traverseWithIndex \i_ _ -> do
+  uiPoints_init <- kids # traverseWithIndex \i_ uiExpr_kid -> do
     let i = Step i_
     let j = (i # getIndexesAroundStep)._L
     uiPoint <- createUiPoint state (Point { path, j })
     elem_expr # appendChild uiPoint.elem
+    elem_expr # appendChild (uiExpr_kid # getElem_UiExpr)
     pure uiPoint
-  uiPoint_last <- createUiPoint state
-    ( Point
-        { path
-        , j: kids # Span # offset_Span
-        }
-    )
+  uiPoint_last <- createUiPoint state $
+    Point
+      { path
+      , j: kids # Span # offset_Span
+      }
   elem_expr # appendChild uiPoint_last.elem
   let uiPoints = uiPoints_init `Array.snoc` uiPoint_last
 
@@ -365,8 +365,9 @@ createUiExpr' state path0 label steps renderKid = do
   path_ref <- Ref.new path0
 
   elem_expr <- createElement "div"
-  kids <- steps # traverse renderKid
-  state # assembleUiExpr path_ref elem_expr label kids
+  uiExprs_kids <- steps # traverse renderKid
+
+  state # assembleUiExpr path_ref elem_expr label uiExprs_kids
 
 --------------------------------------------------------------------------------
 -- createUiPoint

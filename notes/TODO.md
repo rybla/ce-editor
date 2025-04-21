@@ -2,7 +2,7 @@
 
 ## direct-dom-manipulation
 
-- [ ] make it so that the `create*` functions don't require the parent element
+- [x] make it so that the `create*` functions don't require the parent element
   to `appendChild` to -- turns out this doesn't quite work out to.
 - [ ] InsertSpanTooth_Diff
 - [ ] DeleteSpanTooth_Diff
