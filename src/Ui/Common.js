@@ -15,3 +15,11 @@ export const removeAllChildren = (e) => () => {
   }
 }
 
+
+export const getChildren = (e) => () => {
+  const children = []
+  for (const child of e.children) {
+    children.append(child)
+  }
+  return children
+}

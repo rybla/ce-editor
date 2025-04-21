@@ -4067,7 +4067,7 @@
         return v.value0;
       }
       ;
-      throw new Error("Failed pattern match at Ui.App (line 653, column 59 - line 655, column 25): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App (line 648, column 59 - line 650, column 25): " + [v.constructor.name]);
     };
   };
   var getUiPoint = function(state) {
@@ -4116,7 +4116,7 @@
               return modifyClass("HandleFocus")(uiPoint_R.elem)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 626, column 7 - line 628, column 70): " + [mb_handle.value0.value1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 621, column 7 - line 623, column 70): " + [mb_handle.value0.value1.constructor.name]);
           };
         }
         ;
@@ -4147,11 +4147,11 @@
               return modifyClass("HandleFocus")(uiPoint_OR.elem)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 639, column 7 - line 643, column 78): " + [mb_handle.value0.value1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 634, column 7 - line 638, column 78): " + [mb_handle.value0.value1.constructor.name]);
           };
         }
         ;
-        throw new Error("Failed pattern match at Ui.App (line 614, column 3 - line 643, column 78): " + [mb_handle.constructor.name]);
+        throw new Error("Failed pattern match at Ui.App (line 609, column 3 - line 638, column 78): " + [mb_handle.constructor.name]);
       };
     };
   };
@@ -4202,7 +4202,7 @@
                 return setHandle(pure12(v3.value0))(state)();
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 393, column 13 - line 395, column 53): " + [v3.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 390, column 13 - line 392, column 53): " + [v3.constructor.name]);
             }
             ;
             if (v2 instanceof Just) {
@@ -4218,7 +4218,7 @@
                 return setHandle(pure12(v3.value0))(state)();
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 400, column 13 - line 402, column 53): " + [v3.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 397, column 13 - line 399, column 53): " + [v3.constructor.name]);
             }
             ;
             var h$prime = new Point_Handle(v1);
@@ -4247,10 +4247,10 @@
                 return setHandle(pure12(v2.value0))(state)();
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 415, column 13 - line 417, column 53): " + [v2.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 412, column 13 - line 414, column 53): " + [v2.constructor.name]);
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 411, column 9 - line 417, column 53): " + [mb_dragOrigin.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 408, column 9 - line 414, column 53): " + [mb_dragOrigin.constructor.name]);
           };
         })(toEventTarget2(elem3))])();
         (function __do3() {
@@ -4318,7 +4318,7 @@
                   return addClass("Nested")(elem_expr)();
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.App (line 295, column 3 - line 297, column 57): " + [config.displayStyle.constructor.name]);
+                throw new Error("Failed pattern match at Ui.App (line 293, column 3 - line 295, column 57): " + [config.displayStyle.constructor.name]);
               })();
               (function() {
                 if (label.dat instanceof Root) {
@@ -4431,124 +4431,130 @@
       return function(v2) {
         return function(v3) {
           return function(v4) {
-            if (v3 instanceof Id_Diff) {
-              var $165 = !v;
-              if ($165) {
-                return pure6(v2);
+            return function(v5) {
+              if (v4 instanceof Id_Diff) {
+                var $165 = !v;
+                if ($165) {
+                  return pure6(v3);
+                }
+                ;
+                return updateUiExpr(v1)(v3)(v5);
               }
               ;
-              return updateUiExpr(v1)(v2)(v4);
-            }
-            ;
-            if (v3 instanceof Inject_Diff) {
-              return function __do2() {
-                writeFlipped(unwrap3(v2.l).meta.path)(v1)();
-                traverse_2(function(uiPoint) {
-                  return modifyFlipped(uiPoint.point)(modify5(function(v5) {
-                    var $166 = {};
-                    for (var $167 in v5) {
-                      if ({}.hasOwnProperty.call(v5, $167)) {
-                        $166[$167] = v5[$167];
+              if (v4 instanceof Inject_Diff) {
+                return function __do2() {
+                  writeFlipped(unwrap3(v3.l).meta.path)(v1)();
+                  traverse_2(function(uiPoint) {
+                    return modifyFlipped(uiPoint.point)(modify5(function(v6) {
+                      var $166 = {};
+                      for (var $167 in v6) {
+                        if ({}.hasOwnProperty.call(v6, $167)) {
+                          $166[$167] = v6[$167];
+                        }
+                        ;
                       }
                       ;
+                      $166.path = v1;
+                      return $166;
+                    }));
+                  })(unwrap3(v3.l).meta.uiPoints)();
+                  var kids$prime = traverseWithIndex2(function(i_) {
+                    return function(d) {
+                      return function __do3() {
+                        var kid = fromMaybeM2($$throw("kid index out of bounds"))(getKid_Expr2(i_)(v3))();
+                        return updateUiExprViaDiff(false)(snoc2(v1)(i_))(new Just(getElem_UiExpr(v3)))(kid)(d)(v5)();
+                      };
+                    };
+                  })(v4.value0)();
+                  return {
+                    l: v3.l,
+                    kids: kids$prime
+                  };
+                };
+              }
+              ;
+              if (v4 instanceof DeleteTooth_Diff) {
+                return function __do2() {
+                  var parent = fromMaybeM2($$throw("can't DeleteTooth_Diff at Root"))(v2)();
+                  traverseWithIndex_2(function(i$prime_) {
+                    return function(e_kid2) {
+                      return when2(notEq3(v4.value0)(i$prime_))(function __do3() {
+                        cleanup_uiExpr_deep(e_kid2)();
+                        return removeChild2(getElem_UiExpr(e_kid2))(getElem_UiExpr(v3))();
+                      });
+                    };
+                  })(v3.kids)();
+                  var e_kid = fromMaybeM2($$throw("kid index out of bounds"))(getKid_Expr2(v4.value0)(v3))();
+                  cleanup_UiExpr_shallow(v3)();
+                  replaceChild2(getElem_UiExpr(v3))(getElem_UiExpr(e_kid))(parent)();
+                  return updateUiExprViaDiff(true)(v1)(new Just(parent))(e_kid)(v4.value1)(v5)();
+                };
+              }
+              ;
+              if (v4 instanceof InsertTooth_Diff) {
+                return function __do2() {
+                  var parent = fromMaybeM2($$throw("can't InsertTooth_Diff at Root"))(v2)();
+                  var e$prime_placeholder = createElement2("div")();
+                  setText_Element("{{e'_placeholder}}")(e$prime_placeholder)();
+                  replaceChild2(getElem_UiExpr(v3))(e$prime_placeholder)(parent)();
+                  var kids_L_length = length(v4.value0.kids_L);
+                  var kids_R_length = length(v4.value0.kids_R);
+                  var e$prime = createUiExpr$prime(v5)(v1)(v4.value0.l)(rangeSteps({
+                    "_L": 0,
+                    "_R": kids_L_length + kids_R_length | 0
+                  }))(function(i) {
+                    var $172 = lessThan3(i)(kids_L_length);
+                    if ($172) {
+                      return function __do3() {
+                        var kid = fromMaybeM2($$throw("updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " + show32(i)))(index(v4.value0.kids_L)(unwrap3(i)))();
+                        var uiExpr_kid = createUiExpr(v5)(snoc2(v1)(i))(kid)();
+                        return uiExpr_kid;
+                      };
                     }
                     ;
-                    $166.path = v1;
-                    return $166;
-                  }));
-                })(unwrap3(v2.l).meta.uiPoints)();
-                var kids$prime = traverseWithIndex2(function(i_) {
-                  return function(d) {
+                    var $173 = eq5(i)(kids_L_length);
+                    if ($173) {
+                      return function __do3() {
+                        var e_parent_placeholder = createElement2("div")();
+                        setText_Element("{{e_parent_placeholder}}")(e_parent_placeholder)();
+                        return updateUiExprViaDiff(true)(snoc2(v1)(i))(new Just(e_parent_placeholder))(v3)(v4.value1)(v5)();
+                      };
+                    }
+                    ;
                     return function __do3() {
-                      var kid = fromMaybeM2($$throw("kid index out of bounds"))(getKid_Expr2(i_)(v2))();
-                      return updateUiExprViaDiff(false)(snoc2(v1)(i_))(kid)(d)(v4)();
-                    };
-                  };
-                })(v3.value0)();
-                return {
-                  l: v2.l,
-                  kids: kids$prime
-                };
-              };
-            }
-            ;
-            if (v3 instanceof DeleteTooth_Diff) {
-              return function __do2() {
-                var parent = fromMaybeM2($$throw("can't DeleteTooth_Diff at Root"))(todo2("mb_parent"))();
-                traverseWithIndex_2(function(i$prime_) {
-                  return function(e_kid2) {
-                    return when2(notEq3(v3.value0)(i$prime_))(function __do3() {
-                      cleanup_uiExpr_deep(e_kid2)();
-                      return removeChild2(getElem_UiExpr(e_kid2))(getElem_UiExpr(v2))();
-                    });
-                  };
-                })(v2.kids)();
-                var e_kid = fromMaybeM2($$throw("kid index out of bounds"))(getKid_Expr2(v3.value0)(v2))();
-                cleanup_UiExpr_shallow(v2)();
-                replaceChild2(getElem_UiExpr(v2))(getElem_UiExpr(e_kid))(parent)();
-                return updateUiExprViaDiff(true)(v1)(e_kid)(v3.value1)(v4)();
-              };
-            }
-            ;
-            if (v3 instanceof InsertTooth_Diff) {
-              return function __do2() {
-                var parent = fromMaybeM2($$throw("can't InsertTooth_Diff at Root"))(todo2("mb_parent"))();
-                var placeholder = createElement2("div")();
-                setText_Element("{{placeholder}}")(placeholder)();
-                replaceChild2(getElem_UiExpr(v2))(placeholder)(parent)();
-                var kids_L_length = length(v3.value0.kids_L);
-                var kids_R_length = length(v3.value0.kids_R);
-                var e$prime = createUiExpr$prime(v4)(v1)(v3.value0.l)(rangeSteps({
-                  "_L": 0,
-                  "_R": kids_L_length + kids_R_length | 0
-                }))(function(i) {
-                  var $172 = lessThan3(i)(kids_L_length);
-                  if ($172) {
-                    return function __do3() {
-                      var kid = fromMaybeM2($$throw("updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " + show32(i)))(index(v3.value0.kids_L)(unwrap3(i)))();
-                      var uiExpr_kid = createUiExpr(v4)(snoc2(v1)(i))(kid)();
+                      var kid = fromMaybeM2($$throw("updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " + show32(i)))(index(v4.value0.kids_R)(((-kids_L_length | 0) + (-1 | 0) | 0) + unwrap3(i) | 0))();
+                      var uiExpr_kid = createUiExpr(v5)(snoc2(v1)(i))(kid)();
                       return uiExpr_kid;
                     };
-                  }
-                  ;
-                  var $173 = eq5(i)(kids_L_length);
-                  if ($173) {
-                    return updateUiExprViaDiff(true)(snoc2(v1)(i))(v2)(v3.value1)(v4);
-                  }
-                  ;
-                  return function __do3() {
-                    var kid = fromMaybeM2($$throw("updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " + show32(i)))(index(v3.value0.kids_R)(((-kids_L_length | 0) + (-1 | 0) | 0) + unwrap3(i) | 0))();
-                    var uiExpr_kid = createUiExpr(v4)(snoc2(v1)(i))(kid)();
-                    return uiExpr_kid;
-                  };
-                })();
-                replaceChild2(placeholder)(getElem_UiExpr(e$prime))(parent)();
-                return e$prime;
-              };
-            }
-            ;
-            if (v3 instanceof ReplaceSpan_Diff) {
-              var e_elem = getElem_UiExpr(v2);
-              var e_uiPoints = getUiPoints_UiExpr(v2);
-              var at_diff = atIndexSpan_Expr(v3.value0)(v3.value1)(v2);
-              var pre_kids = fold3([map7(First2.create)(unwrap3(at_diff.outside).kids_L), map7(Second.create)(unwrap3(v3.value2)), map7(Third.create)(unwrap3(at_diff.outside).kids_R)]);
-              return function __do2() {
-                removeAllChildren(e_elem)();
-                return todo2("updateUiExprViaDiff ... (ReplaceSpan_Diff j0 j1 span) ...")();
-              };
-            }
-            ;
-            if (v3 instanceof Replace_Diff) {
-              return function __do2() {
-                var parent = fromMaybeM2($$throw("can't DeleteTooth_Diff at Root"))(todo2("mb_parent"))();
-                cleanup_uiExpr_deep(v2)();
-                var e$prime = createUiExpr(v4)(v1)(v3.value0)();
-                replaceChild2(getElem_UiExpr(v2))(getElem_UiExpr(e$prime))(parent)();
-                return e$prime;
-              };
-            }
-            ;
-            throw new Error("Failed pattern match at Ui.App (line 462, column 1 - line 462, column 93): " + [v.constructor.name, v1.constructor.name, v2.constructor.name, v3.constructor.name, v4.constructor.name]);
+                  })();
+                  replaceChild2(e$prime_placeholder)(getElem_UiExpr(e$prime))(parent)();
+                  return e$prime;
+                };
+              }
+              ;
+              if (v4 instanceof ReplaceSpan_Diff) {
+                var e_elem = getElem_UiExpr(v3);
+                var e_uiPoints = getUiPoints_UiExpr(v3);
+                var at_diff = atIndexSpan_Expr(v4.value0)(v4.value1)(v3);
+                var pre_kids = fold3([map7(First2.create)(unwrap3(at_diff.outside).kids_L), map7(Second.create)(unwrap3(v4.value2)), map7(Third.create)(unwrap3(at_diff.outside).kids_R)]);
+                return function __do2() {
+                  removeAllChildren(e_elem)();
+                  return todo2("updateUiExprViaDiff ... (ReplaceSpan_Diff j0 j1 span) ...")();
+                };
+              }
+              ;
+              if (v4 instanceof Replace_Diff) {
+                return function __do2() {
+                  var parent = fromMaybeM2($$throw("can't DeleteTooth_Diff at Root"))(v2)();
+                  cleanup_uiExpr_deep(v3)();
+                  var e$prime = createUiExpr(v5)(v1)(v4.value0)();
+                  replaceChild2(getElem_UiExpr(v3))(getElem_UiExpr(e$prime))(parent)();
+                  return e$prime;
+                };
+              }
+              ;
+              throw new Error("Failed pattern match at Ui.App (line 459, column 1 - line 459, column 110): " + [v.constructor.name, v1.constructor.name, v2.constructor.name, v3.constructor.name, v4.constructor.name, v5.constructor.name]);
+            };
           };
         };
       };
@@ -4558,7 +4564,7 @@
     return function(state) {
       return function __do2() {
         var uiExprRoot = getUiExpr_root(state)();
-        var uiExprRoot$prime = updateUiExprViaDiff(false)(Nil.value)(uiExprRoot)(diff0)(state)();
+        var uiExprRoot$prime = updateUiExprViaDiff(false)(Nil.value)(new Just(getElem_UiExpr(uiExprRoot)))(uiExprRoot)(diff0)(state)();
         return writeFlipped(state.mb_uiExprRoot)(pure12(uiExprRoot$prime))();
       };
     };
@@ -4606,7 +4612,7 @@
                           return updateUiExprViaDiff_root(diff)(state)();
                         }
                         ;
-                        throw new Error("Failed pattern match at Ui.App (line 215, column 15 - line 224, column 56): " + [v7.constructor.name]);
+                        throw new Error("Failed pattern match at Ui.App (line 213, column 15 - line 222, column 56): " + [v7.constructor.name]);
                       }
                       ;
                       return unit;
@@ -4615,7 +4621,7 @@
                   };
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.App (line 209, column 7 - line 226, column 20): " + [mb_handle.constructor.name]);
+                throw new Error("Failed pattern match at Ui.App (line 207, column 7 - line 224, column 20): " + [mb_handle.constructor.name]);
               }
               ;
               if (matchKeyInfo2(function(v7) {
@@ -4680,7 +4686,7 @@
                 return setHandle(new Just(moveHandleFocus($189.value0)(mb_handle.value0)))(state);
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 203, column 7 - line 206, column 76): " + [mb_handle.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 201, column 7 - line 204, column 76): " + [mb_handle.constructor.name]);
             }
             ;
             return v5(true);
@@ -4704,7 +4710,7 @@
                     return unit;
                   }
                   ;
-                  throw new Error("Failed pattern match at Ui.App (line 181, column 11 - line 185, column 24): " + [mb_dragOrigin.constructor.name]);
+                  throw new Error("Failed pattern match at Ui.App (line 179, column 11 - line 183, column 24): " + [mb_dragOrigin.constructor.name]);
                 })();
                 return setHandle(new Just(defaultHandle))(state)();
               }
@@ -4722,7 +4728,7 @@
                     return mb_dragOrigin.value0;
                   }
                   ;
-                  throw new Error("Failed pattern match at Ui.App (line 190, column 25 - line 196, column 30): " + [mb_dragOrigin.constructor.name]);
+                  throw new Error("Failed pattern match at Ui.App (line 188, column 25 - line 194, column 30): " + [mb_dragOrigin.constructor.name]);
                 }();
                 var v4 = movePointUntil2(uiExprRoot2)($194.value0)(getFocusPoint(mb_handle.value0))(function(p) {
                   return drag2(dragOrigin)(p)(uiExprRoot2);
@@ -4735,10 +4741,10 @@
                   return setHandle(new Just(v4.value0))(state)();
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.App (line 197, column 11 - line 200, column 47): " + [v4.constructor.name]);
+                throw new Error("Failed pattern match at Ui.App (line 195, column 11 - line 198, column 47): " + [v4.constructor.name]);
               }
               ;
-              throw new Error("Failed pattern match at Ui.App (line 178, column 7 - line 200, column 47): " + [mb_handle.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App (line 176, column 7 - line 198, column 47): " + [mb_handle.constructor.name]);
             };
           }
           ;
@@ -4767,10 +4773,10 @@
               return setHandle(new Just(new Point_Handle(v2.value0)))(state)();
             }
             ;
-            throw new Error("Failed pattern match at Ui.App (line 171, column 11 - line 173, column 72): " + [v2.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App (line 169, column 11 - line 171, column 72): " + [v2.constructor.name]);
           }
           ;
-          throw new Error("Failed pattern match at Ui.App (line 166, column 7 - line 173, column 72): " + [mb_handle.constructor.name]);
+          throw new Error("Failed pattern match at Ui.App (line 164, column 7 - line 171, column 72): " + [mb_handle.constructor.name]);
         }
         ;
         return v1(true)();
