@@ -139,7 +139,7 @@ createEditor parent = do
 
   ctx <- newCtx
 
-  elem <- parent # Element.createChildElement "div"
+  elem <- parent # Element.createChild "div"
   elem # Element.addClass "Editor"
 
   expr <- flip runReaderT ctx $ createUiExpr Nil expr_
@@ -305,7 +305,7 @@ createUiExpr' :: Path -> PureLabel -> Array Step -> (Step -> EditorM UiExpr) -> 
 createUiExpr' path0 label steps renderKid = do
   path_ref <- lift $ Ref.new path0
 
-  elem_expr <- lift $ Element.createElement "div"
+  elem_expr <- lift $ Element.create "div"
   uiExprs_kids <- steps # traverse renderKid
 
   assembleUiExpr path_ref elem_expr label uiExprs_kids
@@ -334,7 +334,7 @@ assembleUiExpr path_ref elem_expr label kids = do
 
   -- open
   when (config.displayStyle == Inline_DisplayStyle) do
-    elem_open <- lift $ elem_expr # Element.createChildElement "div"
+    elem_open <- lift $ elem_expr # Element.createChild "div"
     lift $ elem_open # Element.addClass "Punctuation"
     lift $ elem_open # Element.toNode # Node.setTextContent case label of
       L { dat: Root } -> ""
@@ -342,7 +342,7 @@ assembleUiExpr path_ref elem_expr label kids = do
 
   -- label
   do
-    elem_label <- lift $ elem_expr # Element.createChildElement "div"
+    elem_label <- lift $ elem_expr # Element.createChild "div"
     lift $ elem_label # Element.addClass "Label"
     lift $ elem_label # Element.toNode # Node.setTextContent (show label)
 
@@ -364,7 +364,7 @@ assembleUiExpr path_ref elem_expr label kids = do
 
   -- close
   when (config.displayStyle == Inline_DisplayStyle) do
-    elem_close <- lift $ elem_expr # Element.createChildElement "div"
+    elem_close <- lift $ elem_expr # Element.createChild "div"
     lift $ elem_close # Element.addClass "Punctuation"
     lift $ elem_close # Element.toNode # Node.setTextContent case label of
       L { dat: Root } -> ""
@@ -393,7 +393,7 @@ createUiPoint (Point point0) = do
 
   pointRef <- lift $ Ref.new (Point point0)
 
-  elem <- lift $ Element.createElement "div"
+  elem <- lift $ Element.create "div"
   lift $ elem # Element.addClass "Point"
 
   eventListenerInfos <- sequence
@@ -431,16 +431,16 @@ createUiPoint (Point point0) = do
     ]
 
   lift do
-    elem_Focus <- elem # Element.createChildElement "div"
+    elem_Focus <- elem # Element.createChild "div"
     elem_Focus # Element.addClass "Focus"
 
-    elem_L <- elem # Element.createChildElement "div"
+    elem_L <- elem # Element.createChild "div"
     elem_L # Element.addClass "Left"
 
-    elem_M <- elem # Element.createChildElement "div"
+    elem_M <- elem # Element.createChild "div"
     elem_M # Element.addClass "Middle"
 
-    elem_R <- elem # Element.createChildElement "div"
+    elem_R <- elem # Element.createChild "div"
     elem_R # Element.addClass "Right"
 
   pure
@@ -512,7 +512,7 @@ updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) = do
 
   -- replace e with placeholder for now, then replace the placeholder with the
   -- new e' that is rendered from the tooth (which will have e as a child)
-  e'_placeholder <- lift $ Element.createElement "div"
+  e'_placeholder <- lift $ Element.create "div"
   lift $ e'_placeholder # Element.setText "{{e'_placeholder}}"
   lift $ parent # Element.replaceChild (e # getElem_UiExpr) e'_placeholder
 
@@ -529,7 +529,7 @@ updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) = do
       else if i == Step kids_L_length then do
         -- this placeholder doesn't matter since the result of
         -- `updateUiExprViaDiff` will be appended to `e` anyway
-        e_parent_placeholder <- lift $ Element.createElement "div"
+        e_parent_placeholder <- lift $ Element.create "div"
         lift $ e_parent_placeholder # Element.setText "{{e_parent_placeholder}}"
         updateUiExprViaDiff true (path `List.snoc` i) (Just e_parent_placeholder) e d
       else do
