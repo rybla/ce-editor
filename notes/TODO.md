@@ -2,13 +2,19 @@
 
 ## direct-dom-manipulation
 
-- [x] make it so that the `create*` functions don't require the parent element
-  to `appendChild` to -- turns out this doesn't quite work out to.
 - [ ] InsertSpanTooth_Diff
 - [ ] DeleteSpanTooth_Diff
 - [ ] InsertSpan_Diff
 - [ ] DeleteSpan_Diff
 - [ ] refactor out `State` argument into a MonadReader via `ReaderT Effect`
+- [ ] fix bug in dragging that lets the inner span be outside the outer span
+- [ ] escpae action
+- [ ] copy/paste
+- [ ] undo/redo
+- [ ] make points have styles such that the inner left and right points get set as focus separately even when they're at the same point
+- [x] make it so that the `create*` functions don't require the parent element
+  to `appendChild` to
+    - what did i mean by this?: turns out this doesn't quite work out to.
 - [x] need to allow for initialization stage of Component (something run right after it's added to the DOM)
   - solved by not using Components
 
