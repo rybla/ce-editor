@@ -1,11 +1,11 @@
 export const htmlDoc = document;
 export const htmlBody = document.body;
 
-export const setText_Element = (text) => (e) => () => {
+export const setText = (text) => (e) => () => {
   e.innerText = text;
 }
 
-export const getText_Element = (e) => () => {
+export const getText = (e) => () => {
   return e.innerText;
 }
 
@@ -23,3 +23,4 @@ export const getChildren = (e) => () => {
   }
   return children
 }
+
