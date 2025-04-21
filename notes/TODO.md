@@ -2,9 +2,9 @@
 
 ## direct-dom-manipulation
 
-- [ ] maintain a tree of element references that supports looking up both kids and parents
-- [ ] make points have styles such that the inner left and right points get set as focus separately even when they're at the same point
+- [ ] refactor Element manipulation out of `Common` into its own module
 - [ ] refactor out `State` argument into a MonadReader via `ReaderT Effect`
+- [ ] make points have styles such that the inner left and right points get set as focus separately even when they're at the same point
 - [ ] InsertSpanTooth_Diff
 - [ ] DeleteSpanTooth_Diff
 - [ ] InsertSpan_Diff
@@ -13,7 +13,7 @@
 - [ ] copy/paste
 - [ ] undo/redo
 - [ ] fix bug in dragging that lets the inner span be outside the outer span
-- [x] make it so that the `create*` functions don't require the parent element
+- [x] VETO: maintain a tree of element references that supports looking up both kids and parents- [x] make it so that the `create*` functions don't require the parent element
   to `appendChild` to
     - what did i mean by this?: turns out this doesn't quite work out to.
 - [x] need to allow for initialization stage of Component (something run right after it's added to the DOM)

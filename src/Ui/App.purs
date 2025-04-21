@@ -2,6 +2,8 @@ module Ui.App where
 
 import Prelude
 
+import Control.Monad.Reader (ReaderT, ask, runReaderT)
+import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
 import Data.Expr (Diff(..), Expr(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), Step(..), Tooth(..), Zipper(..), ZipperFocus(..), atIndexSpan_Expr, atInjectDiff, atPoint, atSpan, atSubExpr, defaultHandle, getEndPoints_SpanH, getEndPoints_ZipperH, getFocusPoint, getIndexesAroundStep, getKid_Expr, mkExpr, offset_Span, rangeKidSteps, rangeSteps, toNePath)
 import Data.Expr.Drag as Expr.Drag
@@ -22,13 +24,16 @@ import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
-import Ui.Common (EventListenerInfo, KeyInfo(..), addClass, addEventListenerWithOptions, appendChild, body, createChildElement, createElement, doc, fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo, removeAllChildren, removeChild, removeClass, removeEventListener, replaceChild, setText_Element, shiftKey)
+import Prim.Row (class Nub, class Union)
+import Ui.Common (EventListenerInfo, KeyInfo(..), EventListenerOptions_Row, addClass, appendChild, body, createChildElement, createElement, doc, fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo, removeAllChildren, removeChild, removeClass, removeEventListener, replaceChild, setText_Element, shiftKey)
+import Ui.Common as Ui.Common
 import Utility (fromMaybeM, isAlpha, todo, (:%=), (:=))
 import Web.DOM (Element)
 import Web.DOM.Document as Document
 import Web.DOM.Element as Element
 import Web.DOM.Node as Node
-import Web.Event.Event (EventType(..), preventDefault)
+import Web.Event.Event (Event, EventType(..), preventDefault)
+import Web.Event.EventTarget (EventTarget)
 
 --------------------------------------------------------------------------------
 -- config
@@ -57,17 +62,17 @@ main = do
   void $ body # createEditor
 
 --------------------------------------------------------------------------------
--- State
+-- Ctx
 --------------------------------------------------------------------------------
 
-type State =
+type Ctx =
   { mb_uiExprRoot :: Ref (Maybe UiExpr)
   , mb_handle :: Ref (Maybe Handle)
   , mb_dragOrigin :: Ref (Maybe Handle)
   }
 
-newState :: Effect State
-newState = do
+newCtx :: Effect Ctx
+newCtx = do
   mb_uiExprRoot <- Ref.new Nothing
   mb_handle <- Ref.new Nothing
   mb_dragOrigin <- Ref.new Nothing
@@ -130,84 +135,86 @@ createEditor parent = do
   let expr_ = mkExpr (mkL Root {}) [ config.initialExpr ]
   Console.logShow expr_
 
-  state <- newState
+  ctx <- newCtx
 
   elem <- parent # createChildElement "div"
   elem # addClass "Editor"
 
-  expr <- createUiExpr state Nil expr_
+  expr <- flip runReaderT ctx $ createUiExpr Nil expr_
   elem # appendChild (expr # getElem_UiExpr)
-  state.mb_uiExprRoot := pure expr
+  ctx.mb_uiExprRoot := pure expr
 
-  eventListenerInfos <- sequence
-    [ state # eventListenerInfo_stopDrag_Editor
-    , state # eventListenerInfo_keydown_Editor
+  eventListenerInfos <- flip runReaderT ctx $ sequence
+    [ eventListenerInfo_stopDrag_Editor
+    , eventListenerInfo_keydown_Editor
     ]
 
   pure { elem, eventListenerInfos }
 
-eventListenerInfo_stopDrag_Editor :: State -> Effect EventListenerInfo
-eventListenerInfo_stopDrag_Editor state = doc # Document.toEventTarget # addEventListenerWithOptions (EventType "mouseup") { capture: true, passive: true } \_event -> do
-  state.mb_dragOrigin := none
+eventListenerInfo_stopDrag_Editor :: EditorM EventListenerInfo
+eventListenerInfo_stopDrag_Editor = doc # Document.toEventTarget # addEventListenerWithOptions (EventType "mouseup") { capture: true, passive: true } \_event -> do
+  ctx <- ask
+  lift $ ctx.mb_dragOrigin := none
 
-eventListenerInfo_keydown_Editor :: State -> Effect EventListenerInfo
-eventListenerInfo_keydown_Editor state = doc # Document.toEventTarget # addEventListenerWithOptions (EventType "keydown") { capture: true } \event -> do
+eventListenerInfo_keydown_Editor :: EditorM EventListenerInfo
+eventListenerInfo_keydown_Editor = doc # Document.toEventTarget # addEventListenerWithOptions (EventType "keydown") { capture: true } \event -> do
+  ctx <- ask
   let KeyInfo ki = event # fromEventToKeyInfo
   -- Console.log $ "keydown: " <> ki.key
-  mb_dragOrigin <- state.mb_dragOrigin # Ref.read
-  mb_handle <- state.mb_handle # Ref.read
+  mb_dragOrigin <- lift $ ctx.mb_dragOrigin # Ref.read
+  mb_handle <- lift $ ctx.mb_handle # Ref.read
   case unit of
     -- move
     _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: Just false, shift: Just false, alt: Just false } -> do
-      event # preventDefault
-      state.mb_dragOrigin := none
+      lift $ event # preventDefault
+      lift $ ctx.mb_dragOrigin := none
       case mb_handle of
         Nothing -> do
-          state # setHandle (Just defaultHandle)
+          setHandle (Just defaultHandle)
         Just handle -> do
-          uiExprRoot <- state # getUiExpr_root
+          uiExprRoot <- getUiExpr_root
           case Expr.Move.movePoint uiExprRoot dir (handle # getFocusPoint) of
-            Nothing -> state # setHandle (Just (Point_Handle (handle # getFocusPoint)))
-            Just point -> state # setHandle (Just (Point_Handle point))
+            Nothing -> setHandle (Just (Point_Handle (handle # getFocusPoint)))
+            Just point -> setHandle (Just (Point_Handle point))
     -- drag move
     _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: Just false, shift: Just true, alt: Just false } -> do
       Console.log "drag move"
-      event # preventDefault
+      lift $ event # preventDefault
       case mb_handle of
         Nothing -> do
           -- initialize dragOrigin
           case mb_dragOrigin of
             Nothing -> do
-              state.mb_dragOrigin := pure defaultHandle
+              lift $ ctx.mb_dragOrigin := pure defaultHandle
             Just _ -> do
               pure unit
-          state # setHandle (Just defaultHandle)
+          setHandle (Just defaultHandle)
         Just handle -> do
-          uiExprRoot <- state # getUiExpr_root
+          uiExprRoot <- getUiExpr_root
           -- initialize dragOrigin
           dragOrigin <- case mb_dragOrigin of
             Nothing -> do
               Console.log "initialize dragOrigin"
-              state.mb_dragOrigin := pure handle
+              lift $ ctx.mb_dragOrigin := pure handle
               pure handle
             Just dragOrigin -> do
               pure dragOrigin
           case Expr.Move.movePointUntil uiExprRoot dir (handle # getFocusPoint) \p -> uiExprRoot # Expr.Drag.drag dragOrigin p of
             Nothing -> pure unit
             Just handle' -> do
-              state # setHandle (Just handle')
+              setHandle (Just handle')
     -- move handle focus
     _ | Just dir <- KeyInfo ki # matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: Just false, shift: Just false, alt: Just true } -> do
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
-          state # setHandle (Just (handle # Expr.Move.moveHandleFocus dir))
+          setHandle (Just (handle # Expr.Move.moveHandleFocus dir))
     -- insert
     _ | KeyInfo ki # matchKeyInfo isAlpha { cmd: pure false, alt: pure false } -> do
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
-          expr <- state # getUiExpr_root
+          expr <- getUiExpr_root
           case handle of
             Point_Handle (Point p) -> do
               case p.path # toNePath of
@@ -218,16 +225,16 @@ eventListenerInfo_keydown_Editor state = doc # Document.toEventTarget # addEvent
                     diff = expr # atInjectDiff nepath \_expr' ->
                       InsertTooth_Diff t Id_Diff
                   Console.log $ "diff = " <> show diff
-                  state # setHandle none
-                  state # updateUiExprViaDiff_root diff
+                  setHandle none
+                  updateUiExprViaDiff_root diff
             _ -> pure unit -- TODO: other kinds of insert
           pure unit
     -- test 1
     _ | KeyInfo ki # matchKeyInfo (_ == "1") { cmd: pure true } -> do
-      event # preventDefault
-      state.mb_dragOrigin := none
-      state # setHandle Nothing
-      state # updateUiExprViaDiff_root
+      lift $ event # preventDefault
+      lift $ ctx.mb_dragOrigin := none
+      setHandle Nothing
+      updateUiExprViaDiff_root
         ( Inject_Diff {- Root -}
             [ DeleteTooth_Diff {- A -}  (Step 0)
                 (Inject_Diff {- C -}  [])
@@ -235,20 +242,20 @@ eventListenerInfo_keydown_Editor state = doc # Document.toEventTarget # addEvent
         )
     -- test 2
     _ | KeyInfo ki # matchKeyInfo (_ == "2") { cmd: pure true } -> do
-      event # preventDefault
-      state.mb_dragOrigin := none
-      state # setHandle Nothing
-      state # updateUiExprViaDiff_root
+      lift $ event # preventDefault
+      lift $ ctx.mb_dragOrigin := none
+      setHandle Nothing
+      updateUiExprViaDiff_root
         ( Inject_Diff {- Root -}
             [ Replace_Diff (mkPureExpr "D" [])
             ]
         )
     -- test 3
     _ | KeyInfo ki # matchKeyInfo (_ == "3") { cmd: pure true } -> do
-      event # preventDefault
-      state.mb_dragOrigin := none
-      state # setHandle Nothing
-      state # updateUiExprViaDiff_root
+      lift $ event # preventDefault
+      lift $ ctx.mb_dragOrigin := none
+      setHandle Nothing
+      updateUiExprViaDiff_root
         ( Inject_Diff {- Root -}
             [ InsertTooth_Diff
                 ( Tooth
@@ -265,18 +272,41 @@ eventListenerInfo_keydown_Editor state = doc # Document.toEventTarget # addEvent
         )
     _ -> pure unit
 
-eventListenerInfo_keyup_Editor :: State -> Effect EventListenerInfo
-eventListenerInfo_keyup_Editor state = doc # Document.toEventTarget # addEventListenerWithOptions (EventType "keyup") { capture: true } \event -> do
+eventListenerInfo_keyup_Editor :: EditorM EventListenerInfo
+eventListenerInfo_keyup_Editor = doc # Document.toEventTarget # addEventListenerWithOptions (EventType "keyup") { capture: true } \event -> do
   -- let KeyInfo ki = event # fromEventToKeyInfo
-  -- mb_handle <- state.mb_handle # Ref.read
-  -- mb_dragOrigin <- state.mb_dragOrigin # Ref.read
+  -- mb_handle <- ctx.mb_handle # Ref.read
+  -- mb_dragOrigin <- ctx.mb_dragOrigin # Ref.read
   case unit of
     _ -> pure unit
   pure unit
 
 --------------------------------------------------------------------------------
+-- EditorM
+--------------------------------------------------------------------------------
+
+type EditorM = ReaderT Ctx Effect
+
+--------------------------------------------------------------------------------
 -- createUiExpr
 --------------------------------------------------------------------------------
+
+createUiExpr :: Path -> PureExpr -> EditorM UiExpr
+createUiExpr path (Expr expr) = do
+  Console.log $ "createUiExpr: " <> show (Expr expr)
+
+  createUiExpr' path expr.l (Expr expr # rangeKidSteps) \i -> do
+    kid <- Expr expr # getKid_Expr i # fromMaybeM do lift $ throw $ "kid index out of bounds"
+    createUiExpr (path `List.snoc` i) kid
+
+createUiExpr' :: Path -> PureLabel -> Array Step -> (Step -> EditorM UiExpr) -> EditorM UiExpr
+createUiExpr' path0 label steps renderKid = do
+  path_ref <- lift $ Ref.new path0
+
+  elem_expr <- lift $ createElement "div"
+  uiExprs_kids <- steps # traverse renderKid
+
+  assembleUiExpr path_ref elem_expr label uiExprs_kids
 
 -- | Given these components of a UiExpr
 -- |  - path_ref :: Ref Path
@@ -284,57 +314,57 @@ eventListenerInfo_keyup_Editor state = doc # Document.toEventTarget # addEventLi
 -- |  - label :: PureLabel
 -- |  - kids :: Array UiExpr
 -- | assembles the UiExpr on the elem_expr and returns the resulting UiExpr.
-assembleUiExpr :: Ref Path -> Element -> PureLabel -> Array UiExpr -> State -> Effect UiExpr
-assembleUiExpr path_ref elem_expr label kids state = do
-  path <- path_ref # Ref.read
+assembleUiExpr :: Ref Path -> Element -> PureLabel -> Array UiExpr -> EditorM UiExpr
+assembleUiExpr path_ref elem_expr label kids = do
+  path <- lift $ path_ref # Ref.read
 
   -- attributes
-  elem_expr # addClass "Expr"
+  lift $ elem_expr # addClass "Expr"
   case config.displayStyle of
-    Inline_DisplayStyle -> elem_expr # addClass "Inline"
-    Nested_DisplayStyle -> elem_expr # addClass "Nested"
+    Inline_DisplayStyle -> lift $ elem_expr # addClass "Inline"
+    Nested_DisplayStyle -> lift $ elem_expr # addClass "Nested"
   case label of
-    L { dat: Root } -> elem_expr # addClass "Root"
+    L { dat: Root } -> lift $ elem_expr # addClass "Root"
     _ -> pure unit
 
-  eventListenerInfos <- sequence
+  eventListenerInfos <- lift $ sequence
     []
 
   -- open
   when (config.displayStyle == Inline_DisplayStyle) do
-    elem_open <- elem_expr # createChildElement "div"
-    elem_open # addClass "Punctuation"
-    elem_open # Element.toNode # Node.setTextContent case label of
+    elem_open <- lift $ elem_expr # createChildElement "div"
+    lift $ elem_open # addClass "Punctuation"
+    lift $ elem_open # Element.toNode # Node.setTextContent case label of
       L { dat: Root } -> ""
       _ -> "("
 
   -- label
   do
-    elem_label <- elem_expr # createChildElement "div"
-    elem_label # addClass "Label"
-    elem_label # Element.toNode # Node.setTextContent (show label)
+    elem_label <- lift $ elem_expr # createChildElement "div"
+    lift $ elem_label # addClass "Label"
+    lift $ elem_label # Element.toNode # Node.setTextContent (show label)
 
   -- kids
   uiPoints_init <- kids # traverseWithIndex \i_ uiExpr_kid -> do
     let i = Step i_
     let j = (i # getIndexesAroundStep)._L
-    uiPoint <- createUiPoint state (Point { path, j })
-    elem_expr # appendChild uiPoint.elem
-    elem_expr # appendChild (uiExpr_kid # getElem_UiExpr)
+    uiPoint <- createUiPoint (Point { path, j })
+    lift $ elem_expr # appendChild uiPoint.elem
+    lift $ elem_expr # appendChild (uiExpr_kid # getElem_UiExpr)
     pure uiPoint
-  uiPoint_last <- createUiPoint state $
+  uiPoint_last <- createUiPoint $
     Point
       { path
       , j: kids # Span # offset_Span
       }
-  elem_expr # appendChild uiPoint_last.elem
+  lift $ elem_expr # appendChild uiPoint_last.elem
   let uiPoints = uiPoints_init `Array.snoc` uiPoint_last
 
   -- close
   when (config.displayStyle == Inline_DisplayStyle) do
-    elem_close <- elem_expr # createChildElement "div"
-    elem_close # addClass "Punctuation"
-    elem_close # Element.toNode # Node.setTextContent case label of
+    elem_close <- lift $ elem_expr # createChildElement "div"
+    lift $ elem_close # addClass "Punctuation"
+    lift $ elem_close # Element.toNode # Node.setTextContent case label of
       L { dat: Root } -> ""
       _ -> ")"
 
@@ -350,71 +380,55 @@ assembleUiExpr path_ref elem_expr label kids state = do
     , kids
     }
 
-createUiExpr :: State -> Path -> PureExpr -> Effect UiExpr
-createUiExpr state path (Expr expr) = do
-  Console.log $ "createUiExpr: " <> show (Expr expr)
-
-  createUiExpr' state path expr.l (Expr expr # rangeKidSteps) \i -> do
-    kid <- Expr expr # getKid_Expr i # fromMaybeM do throw $ "kid index out of bounds"
-    createUiExpr state (path `List.snoc` i) kid
-
-createUiExpr' :: State -> Path -> PureLabel -> Array Step -> (Step -> Effect UiExpr) -> Effect UiExpr
-createUiExpr' state path0 label steps renderKid = do
-  path_ref <- Ref.new path0
-
-  elem_expr <- createElement "div"
-  uiExprs_kids <- steps # traverse renderKid
-
-  state # assembleUiExpr path_ref elem_expr label uiExprs_kids
-
 --------------------------------------------------------------------------------
 -- createUiPoint
 --------------------------------------------------------------------------------
 
-createUiPoint :: State -> Point -> Effect UiPoint
-createUiPoint state (Point point0) = do
+createUiPoint :: Point -> EditorM UiPoint
+createUiPoint (Point point0) = do
+  ctx <- ask
   Console.log $ "createUiPoint " <> show (Point point0)
 
-  pointRef <- Ref.new (Point point0)
+  pointRef <- lift $ Ref.new (Point point0)
 
-  elem <- createElement "div"
-  elem # addClass "Point"
+  elem <- lift $ createElement "div"
+  lift $ elem # addClass "Point"
 
   eventListenerInfos <- sequence
     [ elem # Element.toEventTarget # addEventListenerWithOptions (EventType "mousedown") { capture: true, passive: true } \event -> do
-        Point point <- pointRef # Ref.read
-        state.mb_handle # Ref.read >>= case _ of
+        Point point <- lift $ pointRef # Ref.read
+        (lift $ ctx.mb_handle # Ref.read) >>= case _ of
           Just h | event # shiftKey -> do
-            expr <- state # getUiExpr_root
-            state.mb_dragOrigin := pure h
+            expr <- getUiExpr_root
+            lift $ ctx.mb_dragOrigin := pure h
             case Expr.Drag.drag h (Point point) expr of
               Nothing -> pure unit
-              Just h' -> state # setHandle (pure h')
+              Just h' -> setHandle (pure h')
           Just h -> do
-            uiExprRoot <- state # getUiExpr_root
+            uiExprRoot <- getUiExpr_root
             let dragOrigin = Expr.Drag.getDragOrigin h (Point point)
-            state.mb_dragOrigin := pure dragOrigin
+            lift $ ctx.mb_dragOrigin := pure dragOrigin
             case Expr.Drag.drag dragOrigin (Point point) uiExprRoot of
               Nothing -> pure unit
-              Just h' -> state # setHandle (pure h')
+              Just h' -> setHandle (pure h')
           _ -> do
             let h' = Point_Handle (Point point)
-            state.mb_dragOrigin := pure h'
-            state # setHandle (pure h')
+            lift $ ctx.mb_dragOrigin := pure h'
+            setHandle (pure h')
     , elem # Element.toEventTarget # addEventListenerWithOptions (EventType "mouseenter") { capture: true, passive: true } \_event -> do
-        Point point <- pointRef # Ref.read
+        Point point <- lift $ pointRef # Ref.read
         -- Console.log $ "Point: mouseenter" <> show (Point point)
-        mb_dragOrigin <- state.mb_dragOrigin # Ref.read
+        mb_dragOrigin <- lift $ ctx.mb_dragOrigin # Ref.read
         case mb_dragOrigin of
           Nothing -> pure unit
           Just h -> do
-            uiExprRoot <- state # getUiExpr_root
+            uiExprRoot <- getUiExpr_root
             case Expr.Drag.drag h (Point point) uiExprRoot of
               Nothing -> pure unit
-              Just h' -> state # setHandle (pure h')
+              Just h' -> setHandle (pure h')
     ]
 
-  do
+  lift do
     elem_Focus <- elem # createChildElement "div"
     elem_Focus # addClass "Focus"
 
@@ -437,92 +451,95 @@ createUiPoint state (Point point0) = do
 -- Diff
 --------------------------------------------------------------------------------
 
-updateUiExprViaDiff_root :: Diff PureLabel -> State -> Effect Unit
-updateUiExprViaDiff_root diff0 state = do
-  uiExprRoot <- state # getUiExpr_root
-  uiExprRoot' <- state # updateUiExprViaDiff false Nil (Just (uiExprRoot # getElem_UiExpr)) uiExprRoot diff0
-  state.mb_uiExprRoot := pure uiExprRoot'
+updateUiExprViaDiff_root :: Diff PureLabel -> EditorM Unit
+updateUiExprViaDiff_root diff0 = do
+  ctx <- ask
+  uiExprRoot <- getUiExpr_root
+  uiExprRoot' <- updateUiExprViaDiff false Nil (Just (uiExprRoot # getElem_UiExpr)) uiExprRoot diff0
+  lift $ ctx.mb_uiExprRoot := pure uiExprRoot'
 
 -- | Updates the UiExpr and all of its descendants, which updates each UiExpr's
--- | state and Ui elements.
-updateUiExpr :: Path -> UiExpr -> State -> Effect UiExpr
-updateUiExpr path (Expr e) state = do
-  (e.l # unwrap).meta.path := path
-  (e.l # unwrap).meta.uiPoints # traverse_ \uiPoint -> uiPoint.point :%= Newtype.modify _ { path = path }
+-- | ctx and Ui elements.
+updateUiExpr :: Path -> UiExpr -> EditorM UiExpr
+updateUiExpr path (Expr e) = do
+  lift $ (e.l # unwrap).meta.path := path
+  lift $ (e.l # unwrap).meta.uiPoints # traverse_ \uiPoint ->
+    uiPoint.point :%= Newtype.modify _ { path = path }
   kids' <- e.kids # traverseWithIndex \i_ kid -> do
     let i = Step i_
-    state # updateUiExpr (path `List.snoc` i) kid
+    updateUiExpr (path `List.snoc` i) kid
   pure $ Expr e { kids = kids' }
 
 -- | Updates the UiExpr and all of its descendants via a Diff, which applies the
 -- | Diff's edit to the Expr and updates Ui elements accordingly.
-updateUiExprViaDiff :: Boolean -> Path -> Maybe Element -> UiExpr -> Diff PureLabel -> State -> Effect UiExpr
+updateUiExprViaDiff :: Boolean -> Path -> Maybe Element -> UiExpr -> Diff PureLabel -> EditorM UiExpr
 
-updateUiExprViaDiff isMoved path _mb_parent expr Id_Diff state = do
+updateUiExprViaDiff isMoved path _mb_parent expr Id_Diff = do
   -- only need to update if has moved
   if not isMoved then pure expr
   else do
-    state # updateUiExpr path expr
+    updateUiExpr path expr
 
-updateUiExprViaDiff _ path _mb_parent (Expr e) (Inject_Diff ds) state = do
-  (e.l # unwrap).meta.path := path
-  (e.l # unwrap).meta.uiPoints # traverse_ \uiPoint -> uiPoint.point :%= Newtype.modify _ { path = path }
+updateUiExprViaDiff _ path _mb_parent (Expr e) (Inject_Diff ds) = do
+  lift $ (e.l # unwrap).meta.path := path
+  lift $ (e.l # unwrap).meta.uiPoints # traverse_ \uiPoint ->
+    uiPoint.point :%= Newtype.modify _ { path = path }
   kids' <- ds # traverseWithIndex \i_ d -> do
     let i = Step i_
-    kid <- Expr e # getKid_Expr i # fromMaybeM do throw "kid index out of bounds"
-    state # updateUiExprViaDiff false (path `List.snoc` i) (Just (Expr e # getElem_UiExpr)) kid d
+    kid <- Expr e # getKid_Expr i # fromMaybeM do lift $ throw "kid index out of bounds"
+    updateUiExprViaDiff false (path `List.snoc` i) (Just (Expr e # getElem_UiExpr)) kid d
   pure $ Expr e { kids = kids' }
 
-updateUiExprViaDiff _ path mb_parent (Expr e) (DeleteTooth_Diff i d) state = do
-  parent <- mb_parent # fromMaybeM do throw "can't DeleteTooth_Diff at Root"
+updateUiExprViaDiff _ path mb_parent (Expr e) (DeleteTooth_Diff i d) = do
+  parent <- mb_parent # fromMaybeM do lift $ throw "can't DeleteTooth_Diff at Root"
   -- cleanup all kids around step i
   e.kids # traverseWithIndex_ \i'_ e_kid -> do
     let i' = Step i'_
     when (i /= i') do
-      e_kid # cleanup_uiExpr_deep
-      Expr e # getElem_UiExpr # removeChild (e_kid # getElem_UiExpr)
-  e_kid <- Expr e # getKid_Expr i # fromMaybeM do throw "kid index out of bounds"
+      lift $ e_kid # cleanup_uiExpr_deep
+      lift $ Expr e # getElem_UiExpr # removeChild (e_kid # getElem_UiExpr)
+  e_kid <- Expr e # getKid_Expr i # fromMaybeM do lift $ throw "kid index out of bounds"
   -- replace this expr with the kid at step i
   -- this expr's parent is now the kid's parent
-  Expr e # cleanup_UiExpr_shallow
-  parent # replaceChild (Expr e # getElem_UiExpr) (e_kid # getElem_UiExpr)
-  state # updateUiExprViaDiff true path (Just parent) e_kid d
+  lift $ Expr e # cleanup_UiExpr_shallow
+  lift $ parent # replaceChild (Expr e # getElem_UiExpr) (e_kid # getElem_UiExpr)
+  updateUiExprViaDiff true path (Just parent) e_kid d
 
-updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) state = do
-  parent <- mb_parent # fromMaybeM do throw "can't InsertTooth_Diff at Root"
+updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) = do
+  parent <- mb_parent # fromMaybeM do lift $ throw "can't InsertTooth_Diff at Root"
 
   -- replace e with placeholder for now, then replace the placeholder with the
   -- new e' that is rendered from the tooth (which will have e as a child)
-  e'_placeholder <- createElement "div"
-  e'_placeholder # setText_Element "{{e'_placeholder}}"
-  parent # replaceChild (e # getElem_UiExpr) e'_placeholder
+  e'_placeholder <- lift $ createElement "div"
+  lift $ e'_placeholder # setText_Element "{{e'_placeholder}}"
+  lift $ parent # replaceChild (e # getElem_UiExpr) e'_placeholder
 
   let kids_L_length = tooth.kids_L # Array.length
   let kids_R_length = tooth.kids_R # Array.length
 
-  e' <- createUiExpr' state path tooth.l
+  e' <- createUiExpr' path tooth.l
     ({ _L: Step 0, _R: Step $ kids_L_length + kids_R_length } # rangeSteps)
     \i -> do
       if i < Step kids_L_length then do
-        kid <- tooth.kids_L Array.!! unwrap i # fromMaybeM do throw $ "updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " <> show i
-        uiExpr_kid <- createUiExpr state (path `List.snoc` i) kid
+        kid <- tooth.kids_L Array.!! unwrap i # fromMaybeM do lift $ throw $ "updateUiExprViaDiff InsertTooth_Diff: step out-of-bounds: " <> show i
+        uiExpr_kid <- createUiExpr (path `List.snoc` i) kid
         pure uiExpr_kid
       else if i == Step kids_L_length then do
         -- this placeholder doesn't matter since the result of
         -- `updateUiExprViaDiff` will be appended to `e` anyway
-        e_parent_placeholder <- createElement "div"
-        e_parent_placeholder # setText_Element "{{e_parent_placeholder}}"
-        state # updateUiExprViaDiff true (path `List.snoc` i) (Just e_parent_placeholder) e d
+        e_parent_placeholder <- lift $ createElement "div"
+        lift $ e_parent_placeholder # setText_Element "{{e_parent_placeholder}}"
+        updateUiExprViaDiff true (path `List.snoc` i) (Just e_parent_placeholder) e d
       else do
-        kid <- tooth.kids_R Array.!! ((-kids_L_length) + (-1) + unwrap i) # fromMaybeM do throw $ "updateUiExprViaDiff  InsertTooth_Diff: step out-of-bounds: " <> show i
-        uiExpr_kid <- createUiExpr state (path `List.snoc` i) kid
+        kid <- tooth.kids_R Array.!! ((-kids_L_length) + (-1) + unwrap i) # fromMaybeM do lift $ throw $ "updateUiExprViaDiff InsertTooth_Diff: step out-of-bounds: " <> show i
+        uiExpr_kid <- createUiExpr (path `List.snoc` i) kid
         pure uiExpr_kid
 
-  parent # replaceChild e'_placeholder (e' # getElem_UiExpr)
+  lift $ parent # replaceChild e'_placeholder (e' # getElem_UiExpr)
 
   pure e'
 
-updateUiExprViaDiff isMoved path mb_parent (Expr e) (ReplaceSpan_Diff j0 j1 span) state = do
+updateUiExprViaDiff isMoved path mb_parent (Expr e) (ReplaceSpan_Diff j0 j1 span) = do
   let e_elem = Expr e # getElem_UiExpr
   let e_uiPoints = Expr e # getUiPoints_UiExpr
   let at_diff = Expr e # atIndexSpan_Expr j0 j1
@@ -533,7 +550,7 @@ updateUiExprViaDiff isMoved path mb_parent (Expr e) (ReplaceSpan_Diff j0 j1 span
       , (at_diff.outside # unwrap).kids_R # map Trident.Third
       ]
 
-  e_elem # removeAllChildren
+  lift $ e_elem # removeAllChildren
   -- deep cleanup kids that are permanently removed
   -- add them back appropriately
 
@@ -556,11 +573,11 @@ updateUiExprViaDiff isMoved path mb_parent (Expr e) (ReplaceSpan_Diff j0 j1 span
   -- pure $ Expr { l: todo "l", kids: todo "kids" }
   todo "updateUiExprViaDiff ... (ReplaceSpan_Diff j0 j1 span) ..."
 
-updateUiExprViaDiff _ path mb_parent e (Replace_Diff e'_) state = do
-  parent <- mb_parent # fromMaybeM do throw "can't DeleteTooth_Diff at Root"
-  e # cleanup_uiExpr_deep
-  e' <- createUiExpr state path e'_
-  parent # replaceChild (e # getElem_UiExpr) (e' # getElem_UiExpr)
+updateUiExprViaDiff _ path mb_parent e (Replace_Diff e'_) = do
+  parent <- mb_parent # fromMaybeM do lift $ throw "can't DeleteTooth_Diff at Root"
+  lift $ e # cleanup_uiExpr_deep
+  e' <- createUiExpr path e'_
+  lift $ parent # replaceChild (e # getElem_UiExpr) (e' # getElem_UiExpr)
   pure e'
 
 cleanup_UiExpr_shallow :: UiExpr -> Effect Unit
@@ -591,73 +608,95 @@ cleanup_UiPoint uiPoint = do
 -- operations
 --------------------------------------------------------------------------------
 
-insertSpan :: State -> Point -> Span PureLabel -> Effect Unit
-insertSpan state p (Span s) = do
-  uiExprRoot <- state # getUiExpr_root
+insertSpan :: Point -> Span PureLabel -> EditorM Unit
+insertSpan p (Span s) = do
+  uiExprRoot <- getUiExpr_root
   let at_h = uiExprRoot # atPoint p
   todo "insertSpan"
 
-insertZipper :: State -> SpanH -> Zipper PureLabel -> Effect Unit
-insertZipper state (SpanH h) (Zipper z) = do
-  uiExprRoot <- state # getUiExpr_root
+insertZipper :: SpanH -> Zipper PureLabel -> EditorM Unit
+insertZipper (SpanH h) (Zipper z) = do
+  uiExprRoot <- getUiExpr_root
   let at_h = uiExprRoot # atSpan (SpanH h)
   todo "insertZipper"
 
-modifyHandle :: Boolean -> State -> Maybe Handle -> Effect Unit
-modifyHandle b state mb_handle = do
+modifyHandle :: Boolean -> Maybe Handle -> EditorM Unit
+modifyHandle b mb_handle = do
+
   let modifyClass = if b then addClass else removeClass
   case mb_handle of
     Nothing -> pure unit
     Just (Point_Handle p) -> do
-      uiPoint <- getUiPoint state p
-      uiPoint.elem # modifyClass "Point_Handle"
-      uiPoint.elem # modifyClass "HandleFocus"
+      uiPoint <- getUiPoint p
+      lift $ uiPoint.elem # modifyClass "Point_Handle"
+      lift $ uiPoint.elem # modifyClass "HandleFocus"
     Just (SpanH_Handle h f) -> do
       let p = getEndPoints_SpanH h
-      uiPoint_L <- getUiPoint state p._L
-      uiPoint_L.elem # modifyClass "SpanH_Handle_Left"
-      uiPoint_R <- getUiPoint state p._R
-      uiPoint_R.elem # modifyClass "SpanH_Handle_Right"
+      uiPoint_L <- getUiPoint p._L
+      lift $ uiPoint_L.elem # modifyClass "SpanH_Handle_Left"
+      uiPoint_R <- getUiPoint p._R
+      lift $ uiPoint_R.elem # modifyClass "SpanH_Handle_Right"
       case f of
-        Left_SpanFocus -> uiPoint_L.elem # modifyClass "HandleFocus"
-        Right_SpanFocus -> uiPoint_R.elem # modifyClass "HandleFocus"
+        Left_SpanFocus -> lift $ uiPoint_L.elem # modifyClass "HandleFocus"
+        Right_SpanFocus -> lift $ uiPoint_R.elem # modifyClass "HandleFocus"
     Just (ZipperH_Handle h f) -> do
       let p = getEndPoints_ZipperH h
-      uiPoint_OL <- getUiPoint state p._OL
-      uiPoint_OL.elem # modifyClass "ZipperH_Handle_OuterLeft"
-      uiPoint_IL <- getUiPoint state p._IL
-      uiPoint_IL.elem # modifyClass "ZipperH_Handle_InnerLeft"
-      uiPoint_IR <- getUiPoint state p._IR
-      uiPoint_IR.elem # modifyClass "ZipperH_Handle_InnerRight"
-      uiPoint_OR <- getUiPoint state p._OR
-      uiPoint_OR.elem # modifyClass "ZipperH_Handle_OuterRight"
+      uiPoint_OL <- getUiPoint p._OL
+      lift $ uiPoint_OL.elem # modifyClass "ZipperH_Handle_OuterLeft"
+      uiPoint_IL <- getUiPoint p._IL
+      lift $ uiPoint_IL.elem # modifyClass "ZipperH_Handle_InnerLeft"
+      uiPoint_IR <- getUiPoint p._IR
+      lift $ uiPoint_IR.elem # modifyClass "ZipperH_Handle_InnerRight"
+      uiPoint_OR <- getUiPoint p._OR
+      lift $ uiPoint_OR.elem # modifyClass "ZipperH_Handle_OuterRight"
       case f of
-        OuterLeft_ZipperFocus -> uiPoint_OL.elem # modifyClass "HandleFocus"
-        InnerLeft_ZipperFocus -> uiPoint_IL.elem # modifyClass "HandleFocus"
-        InnerRight_ZipperFocus -> uiPoint_IR.elem # modifyClass "HandleFocus"
-        OuterRight_ZipperFocus -> uiPoint_OR.elem # modifyClass "HandleFocus"
+        OuterLeft_ZipperFocus -> lift $ uiPoint_OL.elem # modifyClass "HandleFocus"
+        InnerLeft_ZipperFocus -> lift $ uiPoint_IL.elem # modifyClass "HandleFocus"
+        InnerRight_ZipperFocus -> lift $ uiPoint_IR.elem # modifyClass "HandleFocus"
+        OuterRight_ZipperFocus -> lift $ uiPoint_OR.elem # modifyClass "HandleFocus"
 
-setHandle :: Maybe Handle -> State -> Effect Unit
-setHandle mb_handle' state = do
-  mb_handle <- state.mb_handle # Ref.read
-  modifyHandle false state mb_handle
-  modifyHandle true state mb_handle'
-  state.mb_handle := mb_handle'
+setHandle :: Maybe Handle -> EditorM Unit
+setHandle mb_handle' = do
+  ctx <- ask
+  mb_handle <- lift $ ctx.mb_handle # Ref.read
+  modifyHandle false mb_handle
+  modifyHandle true mb_handle'
+  lift $ ctx.mb_handle := mb_handle'
 
-getUiExpr_root :: State -> Effect UiExpr
-getUiExpr_root state = state.mb_uiExprRoot # Ref.read >>= case _ of
-  Nothing -> throw $ "getUiExpr_root: isNothing state.expr!"
-  Just expr -> pure expr
+getUiExpr_root :: EditorM UiExpr
+getUiExpr_root = do
+  ctx <- ask
+  (lift $ ctx.mb_uiExprRoot # Ref.read) >>= case _ of
+    Nothing -> lift $ throw $ "getUiExpr_root: isNothing ctx.expr!"
+    Just expr -> pure expr
 
-getUiExpr :: State -> Path -> Effect UiExpr
-getUiExpr state path = do
-  uiExprRoot <- state # getUiExpr_root
+getUiExpr :: Path -> EditorM UiExpr
+getUiExpr path = do
+  uiExprRoot <- getUiExpr_root
   pure (uiExprRoot # atSubExpr path).here
 
-getUiPoint :: State -> Point -> Effect UiPoint
-getUiPoint state (Point p) = do
-  uiExprRoot <- state # getUiExpr_root
+getUiPoint :: Point -> EditorM UiPoint
+getUiPoint (Point p) = do
+  uiExprRoot <- getUiExpr_root
   let expr = (uiExprRoot # atSubExpr p.path).here
   ((expr # unwrap).l # unwrap).meta.uiPoints Array.!! (unwrap p.j)
-    # fromMaybeM (throw "getUiPoint: p.j out-of-bounds")
+    # fromMaybeM (lift $ throw "getUiPoint: p.j out-of-bounds")
+
+--------------------------------------------------------------------------------
+-- aliases
+--------------------------------------------------------------------------------
+
+addEventListenerWithOptions
+  ∷ ∀ opts opts'
+  . Union opts EventListenerOptions_Row opts'
+  ⇒ Nub opts' EventListenerOptions_Row
+  ⇒ EventType
+  → Record opts
+  → (Event -> EditorM Unit)
+  → EventTarget
+  → EditorM EventListenerInfo
+addEventListenerWithOptions eventType options callback target = do
+  ctx <- ask
+  lift $ target # Ui.Common.addEventListenerWithOptions eventType options \event ->
+    flip runReaderT ctx $ callback event
 
