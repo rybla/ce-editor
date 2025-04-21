@@ -14,16 +14,14 @@
   --handle-point-inner-right--border-radius: 0 0 0 0;
   --handle-point-outer-right--border-radius: 0 var(--handle-point--border-radius) var(--handle-point--border-radius) 0;
 
-  --handle-point-focus--background-color: color-mix(in hsl, blue, transparent 30%);
+  --handle-point-focus--background-color: blue;
   --handle-point-focus--box-shadow:
     0 -0.5em 0 0 var(--handle-point--background-color),
     0 0.5em 0 0 var(--handle-point--background-color);
 
-  /* --handle-point--background-color: color-mix(in hsl, rgb(217, 0, 255), transparent 30%); */
   --handle-point--background-color: var(--handle-point-focus--background-color);
 
   --handle-inner--background-color: color-mix(in hsl, blue, transparent 80%);
-
 }
 
 /* -------------------------------------------------------------------------- */
@@ -225,11 +223,6 @@ body {
     border-radius: var(--handle-point-inner-left--border-radius);
   }
 
-  >.AfterRight {
-    background-color: var(--background-color);
-    border-radius: var(--handle-point-outer-left--border-radius);
-  }
-
   &.HandleFocus>.Right {
     box-shadow: var(--handle-point-focus--box-shadow);
     background-color: var(--handle-point-focus--background-color);
@@ -270,8 +263,13 @@ body {
 }
 
 .Point.ZipperH_Handle_InnerLeft.ZipperH_Handle_InnerRight {
-  &.HandleFocus>.Left {
+  &.HandleFocusLeft>.Left {
     box-shadow: var(--handle-point-focus--box-shadow);
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  &.HandleFocusLeft>.Right {
+    box-shadow: none;
     background-color: var(--handle-point-focus--background-color);
   }
 
@@ -279,7 +277,12 @@ body {
     background-color: var(--background-color);
   }
 
-  &.HandleFocus>.Right {
+  &.HandleFocusRight>.Left {
+    box-shadow: none;
+    background-color: var(--handle-point-focus--background-color);
+  }
+
+  &.HandleFocusRight>.Right {
     box-shadow: var(--handle-point-focus--box-shadow);
     background-color: var(--handle-point-focus--background-color);
   }

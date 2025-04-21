@@ -652,10 +652,18 @@ modifyHandle b mb_handle = do
       uip_OR <- getUiPoint p._OR
       lift $ uip_OR.elem # modifyClass "ZipperH_Handle_OuterRight"
       case f of
-        OuterLeft_ZipperFocus -> lift $ uip_OL.elem # modifyClass "HandleFocus"
-        InnerLeft_ZipperFocus -> lift $ uip_IL.elem # modifyClass "HandleFocus"
-        InnerRight_ZipperFocus -> lift $ uip_IR.elem # modifyClass "HandleFocus"
-        OuterRight_ZipperFocus -> lift $ uip_OR.elem # modifyClass "HandleFocus"
+        OuterLeft_ZipperFocus -> do
+          lift $ uip_OL.elem # modifyClass "HandleFocus"
+          lift $ uip_OL.elem # modifyClass "HandleFocusLeft"
+        InnerLeft_ZipperFocus -> do
+          lift $ uip_IL.elem # modifyClass "HandleFocus"
+          lift $ uip_IL.elem # modifyClass "HandleFocusLeft"
+        InnerRight_ZipperFocus -> do
+          lift $ uip_IR.elem # modifyClass "HandleFocus"
+          lift $ uip_IR.elem # modifyClass "HandleFocusRight"
+        OuterRight_ZipperFocus -> do
+          lift $ uip_OR.elem # modifyClass "HandleFocus"
+          lift $ uip_OR.elem # modifyClass "HandleFocusRight"
 
 setHandle :: Maybe Handle -> EditorM Unit
 setHandle mb_handle' = do
