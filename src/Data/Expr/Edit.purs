@@ -125,18 +125,28 @@ cut (SpanH_Handle (SpanH sh) _sf) e =
   at_sh = e # atSpan (SpanH sh)
 cut (ZipperH_Handle (ZipperH zh) zf) e =
   unSpanContext at_zh.outside at_zh.inside
-    /\ SpanH_Handle
-      ( SpanH
-          { path: zh.path_O
-          , j_L: zh.j_OL
-          , j_R: zh.j_OR
-          }
-      )
-      ( case zf of
-          OuterLeft_ZipperFocus -> Left_SpanFocus
-          InnerLeft_ZipperFocus -> Left_SpanFocus
-          InnerRight_ZipperFocus -> Right_SpanFocus
-          OuterRight_ZipperFocus -> Right_SpanFocus
+    /\
+      ( if zh.j_IL == zh.j_IR then
+          Point_Handle
+            ( Point
+                { path: zh.path_O
+                , j: zh.j_OL
+                }
+            )
+        else
+          SpanH_Handle
+            ( SpanH
+                { path: zh.path_O
+                , j_L: zh.j_OL
+                , j_R: zh.j_OR
+                }
+            )
+            ( case zf of
+                OuterLeft_ZipperFocus -> Left_SpanFocus
+                InnerLeft_ZipperFocus -> Left_SpanFocus
+                InnerRight_ZipperFocus -> Right_SpanFocus
+                OuterRight_ZipperFocus -> Right_SpanFocus
+            )
       )
     /\ Zipper_Fragment at_zh.here
   where

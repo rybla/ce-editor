@@ -3,13 +3,13 @@ module Ui.App1.Editor where
 import Prelude
 
 import Control.Monad.Reader (Reader, runReader)
-import Control.Monad.State (get, modify, modify_)
+import Control.Monad.State (get, modify)
 import Data.Array as Array
 import Data.Expr (Expr(..), Handle(..), Path, Point(..), SpanFocus(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, getIndexesAroundStep, traverseStepsAndKids)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
-import Data.List (List(..))
+import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.Set (Set)
@@ -26,11 +26,11 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
-import Ui.App1.Common (EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..))
+import Ui.App1.Common (EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot)
 import Ui.App1.Point as Point
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
-import Utility (todo, (:=))
+import Utility (todo, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -54,6 +54,8 @@ initialState input =
   , ref_mb_handle: unsafePerformEffect do Ref.new initial_mb_handle
   , ref_mb_dragOrigin: unsafePerformEffect do Ref.new none
   , clipboard: none
+  , ref_history: unsafePerformEffect do Ref.new none
+  , ref_future: unsafePerformEffect do Ref.new none
   }
   where
   initial_mb_handle = none
@@ -186,6 +188,14 @@ handleAction (KeyDown_EditorAction event) = do
             , initial_mb_handle = pure handle'
             }
         _ -> pure unit
+    -- redo
+    _ | ki # Event.matchKeyInfo (_ == "z") { cmd: pure true, shift: pure true, alt: pure false } -> do
+      liftEffect $ event # Event.preventDefault
+      redo
+    -- undo
+    _ | ki # Event.matchKeyInfo (_ == "z") { cmd: pure true, shift: pure false, alt: pure false } -> do
+      liftEffect $ event # Event.preventDefault
+      undo
     -- unrecognized keyboard event
     _ -> pure unit
 
@@ -211,23 +221,73 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
           Nothing -> pure unit
           Just h' -> setHandle (pure h')
 
+--------------------------------------------------------------------------------
+-- undo and redo
+--------------------------------------------------------------------------------
+
+snapshot :: EditorM Unit
+snapshot = do
+  state <- get
+  mb_handle <- liftEffect $ state.ref_mb_handle # Ref.read
+  liftEffect $ state.ref_history :%= ({ root: state.root, mb_handle } : _)
+  liftEffect $ state.ref_future := none
+
+undo :: EditorM Unit
+undo = do
+  state <- get
+  (liftEffect $ state.ref_history # Ref.read) >>= case _ of
+    Nil -> pure unit
+    s : history' -> do
+      liftEffect $ state.ref_history := history'
+      liftEffect $ state.ref_future :%= (s : _)
+      loadSnapshot s
+
+redo :: EditorM Unit
+redo = do
+  state <- get
+  (liftEffect $ state.ref_future # Ref.read) >>= case _ of
+    Nil -> pure unit
+    s : future' -> do
+      liftEffect $ state.ref_history :%= (s : _)
+      liftEffect $ state.ref_future := future'
+      loadSnapshot s
+
+loadSnapshot :: Snapshot -> EditorM Unit
+loadSnapshot s = do
+  setHandle' do
+    get >>= \state -> liftEffect $ state.ref_mb_dragOrigin := none
+    state <- modify _ { root = s.root, initial_mb_handle = s.mb_handle }
+    pure state.initial_mb_handle
+
+--------------------------------------------------------------------------------
+-- modifyEditorState
+--------------------------------------------------------------------------------
+
 modifyEditorState :: (EditorState -> EditorState) -> EditorM Unit
 modifyEditorState f = do
+  snapshot
   setHandle' do
     get >>= \state -> liftEffect $ state.ref_mb_dragOrigin := none
     state <- modify f
     pure state.initial_mb_handle
 
+--------------------------------------------------------------------------------
+-- setHandle
+--------------------------------------------------------------------------------
+
+-- | turns off old handle, then turns on new handle
 setHandle :: Maybe Handle -> EditorM Unit
 setHandle mb_handle = setHandle' $ pure mb_handle
 
+-- | turns off old handle, then computes new handle, then turns on new handle.
+-- | note that this DOES NOT reset ref_mb_dragOrigin.
 setHandle' :: EditorM (Maybe Handle) -> EditorM Unit
 setHandle' m_mb_handle = do
   state <- get
   mb_handle_old <- liftEffect $ Ref.read state.ref_mb_handle
   modifyHandle false mb_handle_old
   mb_handle_new <- m_mb_handle
-  Console.log $ "[Editor] setHandle " <> show mb_handle_new
+  -- Console.log $ "[Editor] setHandle " <> show mb_handle_new
   modifyHandle true mb_handle_new
   liftEffect $ state.ref_mb_handle := mb_handle_new
 

@@ -6,6 +6,7 @@ import Data.Const (Const)
 import Data.Eq.Generic (genericEq)
 import Data.Expr (Expr, Fragment, Handle, Point)
 import Data.Generic.Rep (class Generic)
+import Data.List (List)
 import Data.Maybe (Maybe)
 import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
@@ -62,6 +63,13 @@ type EditorState =
   , ref_mb_handle :: Ref (Maybe Handle)
   , ref_mb_dragOrigin :: Ref (Maybe Handle)
   , clipboard :: Maybe (Fragment L)
+  , ref_history :: Ref (List Snapshot)
+  , ref_future :: Ref (List Snapshot)
+  }
+
+type Snapshot =
+  { root :: Expr L
+  , mb_handle :: Maybe Handle
   }
 
 data EditorAction
