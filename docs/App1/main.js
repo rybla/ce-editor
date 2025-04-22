@@ -11205,7 +11205,7 @@
                 ;
               }
               ;
-              $61.option_i = pure15(v2.value0.value0 - mod2(1)(length8(state3.options_queried)) | 0);
+              $61.option_i = pure15(mod2(v2.value0.value0 - 1 | 0)(length8(state3.options_queried)));
               return $61;
             });
           }
@@ -11220,7 +11220,7 @@
                 ;
               }
               ;
-              $67.option_i = pure15(v2.value0.value0 + mod2(1)(length8(state3.options_queried)) | 0);
+              $67.option_i = pure15(mod2(v2.value0.value0 + 1 | 0)(length8(state3.options_queried)));
               return $67;
             });
           }

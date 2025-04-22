@@ -5,6 +5,8 @@
 - [x] searchable menu of edits
   - [ ] give Editor proper interface to computing these edits
   - [ ] edit an existing label (i.e. re-query it??)
+  - [x] BUG: cycling is off by 1
+- [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything
 - [ ] fix bug in dragging that lets the inner span be outside the outer span
 - [ ] fix other bugs in dragging
 - [ ] fix bug that redo takes two tries to work?? and can't redo final undo

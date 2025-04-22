@@ -96,8 +96,8 @@ handleAction (KeyDown_BufferAction event) = do
           H.raise $ SubmitBuffer_BufferOutput o
     _ | Just cd <- ki # Event.matchMapKeyInfo fromKeyToCycleDir { cmd: pure false, shift: pure false, alt: pure false } -> do
       case state.option_i /\ cd of
-        Just i /\ Prev -> modify_ _ { option_i = pure $ i - 1 `mod` (state.options_queried # length) }
-        Just i /\ Next -> modify_ _ { option_i = pure $ i + 1 `mod` (state.options_queried # length) }
+        Just i /\ Prev -> modify_ _ { option_i = pure $ (i - 1) `mod` (state.options_queried # length) }
+        Just i /\ Next -> modify_ _ { option_i = pure $ (i + 1) `mod` (state.options_queried # length) }
         _ -> pure unit
     _ -> pure unit
 
