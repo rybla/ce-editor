@@ -622,7 +622,6 @@ insertZipper (SpanH h) (Zipper z) = do
 
 modifyHandle :: Boolean -> Maybe Handle -> EditorM Unit
 modifyHandle b mb_handle = do
-
   let modifyClass = if b then Element.addClass else Element.removeClass
   case mb_handle of
     Nothing -> pure unit

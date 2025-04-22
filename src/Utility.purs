@@ -11,14 +11,17 @@ import Data.Either (fromRight')
 import Data.FoldableWithIndex (traverseWithIndex_)
 import Data.Function (applyFlipped)
 import Data.HeytingAlgebra (implies)
+import Data.Lens.Record as Lens.Record
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe')
+import Data.Profunctor.Strong (class Strong)
 import Data.String as String
 import Data.String.Regex (Regex)
 import Data.String.Regex as Regex
+import Data.Symbol (class IsSymbol)
 import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
@@ -26,7 +29,10 @@ import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Foreign.Object as Object
 import Partial.Unsafe (unsafeCrashWith)
+import Prim.Row (class Cons)
 import Prim.TypeError (class Warn, Text)
+import Type.Prelude (Proxy(..))
+import Type.Proxy (Proxy)
 import Type.Row.Homogeneous (class Homogeneous)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -146,3 +152,12 @@ lookup_unsafe :: forall a b. String -> a -> b
 lookup_unsafe k a = a # unsafeCoerce # Object.lookup k # fromMaybe' \_ -> bug $ "Object doesn't have property " <> show k
 
 infixr 1 applyFlipped as &
+
+prop
+  ∷ ∀ (@l ∷ Symbol) (r1 ∷ Row Type) (r2 ∷ Row Type) (r ∷ Row Type) (a ∷ Type) (b ∷ Type)
+  . IsSymbol l
+  ⇒ Cons l a r r1
+  ⇒ Cons l b r r2
+  ⇒ (∀ (p ∷ Type -> Type -> Type). Strong p ⇒ p a b → p (Record r1) (Record r2))
+prop = Lens.Record.prop (Proxy @l)
+

@@ -1,8 +1,35 @@
 .Editor {
   padding: 1em;
 
+  box-shadow: 0 0 0 1px black;
+
   flex: 1 1 200px;
   width: 100%;
+  overflow: auto;
 
-  box-shadow: 0 0 0 1px black;
+  font-family: 'Courier New', Courier, monospace;
+
+  >.root {}
+
+  .Expr {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+
+    user-select: none;
+  }
+
+  .Point {
+    height: 1em;
+    width: 0.5em;
+
+    background-color: transparent;
+
+
+    &.Point_Handle_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+  }
+
 }

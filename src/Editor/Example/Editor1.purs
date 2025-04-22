@@ -47,11 +47,12 @@ mkEditor default_meta =
   -- , initial_exprs: []
   -- , initial_exprs: [ example_expr 1 2 ]
   -- , initial_exprs: [ example_expr 3 2 ]
-  , initial_exprs:
-      [ example_expr default_meta 2 2
-      , example_expr default_meta 2 2
-      , example_expr default_meta 2 2
-      ]
+  , initial_expr:
+      mkL Root default_meta %
+        [ example_expr default_meta 2 2
+        , example_expr default_meta 2 2
+        , example_expr default_meta 2 2
+        ]
   -- , initial_exprs: [ example_expr 1 1 ]
   -- , initial_handle: mkCursorHandle $ Cursor (Path Nil) (Index 0) (Index 0) Left_CursorFocus
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
