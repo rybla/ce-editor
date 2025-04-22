@@ -17,6 +17,7 @@ import Effect.Aff (Aff)
 import Effect.Ref (Ref)
 import Halogen as H
 import Web.Event.Event (Event)
+import Web.UIEvent.KeyboardEvent (KeyboardEvent)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 --------------------------------------------------------------------------------
@@ -94,8 +95,8 @@ type EditorHTML = H.ComponentHTML EditorAction EditorSlots Aff
 
 data PointQuery a
   = ModifyStatuses_PointQuery (Set PointStatus -> Set PointStatus) a
-  | SetBufferOptions_PointQuery (Maybe (BufferOptions L)) a
-  | GetBufferOptions_PointQuery (Maybe (BufferOptions L) -> a)
+  | SetBufferInput_PointQuery (Maybe BufferInput) a
+  | GetBufferInput_PointQuery (Maybe BufferInput -> a)
 
 type PointInput =
   { point :: Point
@@ -104,12 +105,12 @@ type PointInput =
 data PointOutput
   = MouseDown_PointOutput MouseEvent Point
   | MouseEnter_PointOutput MouseEvent Point
-  | BufferOutput_PointOutput Point BufferOutput
+  | BufferOutput_PointOutput BufferOutput
 
 type PointState =
   { point :: Point
   , statuses :: Set PointStatus
-  , mb_bufferOptions :: Maybe (BufferOptions L)
+  , mb_bufferInput :: Maybe BufferInput
   }
 
 data PointStatus
@@ -152,8 +153,6 @@ type PointHTML = H.ComponentHTML PointAction PointSlots Aff
 -- Buffer
 --------------------------------------------------------------------------------
 
-----
-
 type BufferQuery :: Type -> Type
 type BufferQuery = Const Void
 
@@ -161,18 +160,24 @@ type BufferQuery = Const Void
 -- list of edits that have already been computed and then the buffer is justt
 -- searching through them, right?
 type BufferInput =
-  { options :: BufferOptions L }
+  { query :: String
+  , options :: BufferOptions L
+  }
 
 data BufferOutput =
-  SubmitBuffer (BufferOption L)
+  SubmitBuffer_BufferOutput (BufferOption L)
 
 type BufferState =
   { query :: String
   , options :: BufferOptions L
+  , option_i :: Maybe Int
   , options_queried :: Array (BufferOption L)
   }
 
-data BufferAction = Initialize_BufferAction
+data BufferAction
+  = Initialize_BufferAction
+  | KeyDown_BufferAction Event
+  | QueryInput_BufferAction Event
 
 type BufferSlots :: Row Type
 type BufferSlots = ()

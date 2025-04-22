@@ -43,14 +43,7 @@
 
     >.Buffer {
       position: absolute;
-      display: none;
-      visibility: hidden;
       top: 1.5em;
-
-      &.open {
-        display: block;
-        visibility: visible;
-      }
     }
 
     >.Left,

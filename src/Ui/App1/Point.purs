@@ -30,7 +30,7 @@ initialState :: PointInput -> PointState
 initialState input =
   { point: input.point
   , statuses: Set.empty
-  , mb_bufferOptions: none
+  , mb_bufferInput: none
   }
 
 eval :: forall a. H.HalogenQ PointQuery PointAction PointInput a -> H.HalogenM PointState PointAction PointSlots PointOutput Aff a
@@ -48,17 +48,17 @@ handleQuery (ModifyStatuses_PointQuery f a) = do
   -- get >>= \{ statuses } -> Console.log $ "[Point] new statuses: " <> show statuses
   gets _.statuses >>= \statuses -> do
     when (not $ statuses # Set.intersection ss_Focus # Set.isEmpty) do
-      mb_elem_this <- H.getHTMLElementRef this
+      mb_elem_this <- H.getHTMLElementRef refLabel_point
       case mb_elem_this of
         Nothing -> pure unit
         Just elem_this -> liftEffect $ elem_this # HTMLElement.toElement # Element.scrollIntoView
   pure $ pure a
-handleQuery (SetBufferOptions_PointQuery mb_bufferOptions a) = do
-  modify_ _ { mb_bufferOptions = mb_bufferOptions }
+handleQuery (SetBufferInput_PointQuery mb_bufferInput a) = do
+  modify_ _ { mb_bufferInput = mb_bufferInput }
   pure $ pure a
-handleQuery (GetBufferOptions_PointQuery k) = do
+handleQuery (GetBufferInput_PointQuery k) = do
   state <- get
-  pure $ pure $ k state.mb_bufferOptions
+  pure $ pure $ k state.mb_bufferInput
 
 ss_Focus = Set.fromFoldable [ Point_Handle_PointStatus, LeftFocus_PointStatus, RightFocus_PointStatus ]
 
@@ -76,12 +76,12 @@ handleAction (MouseEnter_PointAction event) = do
   H.raise $ MouseEnter_PointOutput event state.point
 handleAction (BufferOutput_PointAction bufferOutput) = do
   state <- get
-  H.raise $ BufferOutput_PointOutput state.point bufferOutput
+  H.raise $ BufferOutput_PointOutput bufferOutput
 
 render :: PointState -> PointHTML
 render state =
   HH.div
-    [ HP.ref this
+    [ HP.ref refLabel_point
     , classes $ Array.fold
         [ [ "Point" ]
         , state.statuses # Set.toUnfoldable # map show
@@ -89,12 +89,12 @@ render state =
     , HE.onMouseDown MouseDown_PointAction
     , HE.onMouseEnter MouseEnter_PointAction
     ] $ fold
-    [ state.mb_bufferOptions # foldMap \bufferOptions ->
-        [ HH.slot (Proxy @"Buffer") unit Buffer.component { options: bufferOptions } BufferOutput_PointAction ]
+    [ state.mb_bufferInput # foldMap \input ->
+        [ HH.slot (Proxy @"Buffer") unit Buffer.component input BufferOutput_PointAction ]
     , [ HH.div [ classes [ "Left" ] ] [] ]
     , [ HH.div [ classes [ "Middle" ] ] [] ]
     , [ HH.div [ classes [ "Right" ] ] [] ]
     ]
 
-this = H.RefLabel "this"
+refLabel_point = H.RefLabel "point"
 

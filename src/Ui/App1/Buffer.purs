@@ -2,28 +2,59 @@ module Ui.App1.Buffer where
 
 import Prelude
 
+import Control.Monad.State (get, modify_)
+import Data.Array ((!!))
 import Data.Const (Const(..))
 import Data.Expr (BufferOption(..))
-import Data.Foldable (fold)
-import Data.Maybe (Maybe)
+import Data.Foldable (fold, length, null)
+import Data.FunctorWithIndex (mapWithIndex)
+import Data.Maybe (Maybe(..))
+import Data.Tuple.Nested ((/\))
+import Data.Unfoldable (none)
 import Effect.Aff (Aff)
 import Effect.Class.Console as Console
+import Effect.Exception (throw)
+import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
-import Ui.App1.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, BufferOutput, BufferQuery, BufferSlots, BufferState)
+import Halogen.HTML.Elements.Keyed as HHK
+import Halogen.HTML.Events as HE
+import Halogen.HTML.Properties as HP
+import Halogen.Query.Event as HQE
+import Ui.App1.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, BufferOutput(..), BufferQuery, BufferSlots, BufferState)
+import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
+import Utility (fromMaybeM)
+import Web.Event.Event (target) as Event
+import Web.HTML as HTML
+import Web.HTML.HTMLDocument as HTMLDocument
+import Web.HTML.HTMLElement as HTMLElement
+import Web.HTML.HTMLInputElement as HTMLInputElement
+import Web.HTML.Window as HTML.Window
+import Web.UIEvent.KeyboardEvent.EventTypes as KeyboardEvent
+
+--------------------------------------------------------------------------------
+-- component
+--------------------------------------------------------------------------------
 
 component :: H.Component BufferQuery BufferInput BufferOutput Aff
 component = H.mkComponent { initialState, eval, render }
 
+--------------------------------------------------------------------------------
+-- initialState
+--------------------------------------------------------------------------------
+
 initialState :: BufferInput -> BufferState
-initialState input =
-  { query
+initialState input = setQuery' input.query
+  { query: input.query
   , options: input.options
-  , options_queried: input.options query
+  , option_i: none
+  , options_queried: []
   }
-  where
-  query = ""
+
+--------------------------------------------------------------------------------
+-- eval
+--------------------------------------------------------------------------------
 
 eval :: forall a. H.HalogenQ BufferQuery BufferAction BufferInput a -> H.HalogenM BufferState BufferAction BufferSlots BufferOutput Aff a
 eval = H.mkEval H.defaultEval
@@ -32,23 +63,99 @@ eval = H.mkEval H.defaultEval
   , handleAction = handleAction
   }
 
+--------------------------------------------------------------------------------
+-- handleQuery
+--------------------------------------------------------------------------------
+
 handleQuery :: forall a. BufferQuery a -> BufferM (Maybe a)
 handleQuery (Const x) = absurd x
 
+--------------------------------------------------------------------------------
+-- handleAction
+--------------------------------------------------------------------------------
+
 handleAction :: BufferAction -> BufferM Unit
+
 handleAction Initialize_BufferAction = do
   Console.log "[Buffer] initialize"
-  pure unit
+  H.getHTMLElementRef refLabel_input >>= \mb_elem_input -> do
+    elem_input <- mb_elem_input # fromMaybeM do liftEffect $ throw "[Buffer] input element doesn't exist"
+    liftEffect $ elem_input # HTMLElement.focus
+  doc <- liftEffect $ HTML.window >>= HTML.Window.document
+  H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTMLDocument.toEventTarget) $ pure <<< KeyDown_BufferAction
+
+handleAction (KeyDown_BufferAction event) = do
+  let ki = event # Event.fromEventToKeyInfo
+  state <- get
+  case unit of
+    _ | ki # Event.matchKeyInfo (_ == "Enter") { cmd: pure false, shift: pure false, alt: pure false } -> do
+      case state.option_i of
+        Nothing -> pure unit
+        Just i -> do
+          o <- state.options_queried !! i # fromMaybeM do liftEffect $ throw "impossible for option_i to be out of bounds of options_queried"
+          H.raise $ SubmitBuffer_BufferOutput o
+    _ | Just cd <- ki # Event.matchMapKeyInfo fromKeyToCycleDir { cmd: pure false, shift: pure false, alt: pure false } -> do
+      case state.option_i /\ cd of
+        Just i /\ Prev -> modify_ _ { option_i = pure $ i - 1 `mod` (state.options_queried # length) }
+        Just i /\ Next -> modify_ _ { option_i = pure $ i + 1 `mod` (state.options_queried # length) }
+        _ -> pure unit
+    _ -> pure unit
+
+handleAction (QueryInput_BufferAction event) = do
+  query <- liftEffect do
+    target <- event # Event.target # fromMaybeM do throw "SetQuery_BufferAction event must have target"
+    elem <- target # HTMLInputElement.fromEventTarget # fromMaybeM do throw "SetQuery_BufferAction event.target must be an HTMLInputElement"
+    elem # HTMLInputElement.value
+  setQuery query
+
+--------------------------------------------------------------------------------
+-- setQuery
+--------------------------------------------------------------------------------
+
+setQuery :: String -> BufferM Unit
+setQuery query = modify_ $ setQuery' query
+
+setQuery' :: String -> BufferState -> BufferState
+setQuery' query state = state
+  { query = query
+  , option_i = if null options_queried then none else pure 0
+  , options_queried = options_queried
+  }
+  where
+  options_queried = state.options query
+
+--------------------------------------------------------------------------------
+-- cycle options
+--------------------------------------------------------------------------------
+
+data CycleDir = Prev | Next
+
+fromKeyToCycleDir :: String -> Maybe CycleDir
+fromKeyToCycleDir "ArrowUp" = pure Prev
+fromKeyToCycleDir "ArrowDown" = pure Next
+fromKeyToCycleDir _ = none
+
+--------------------------------------------------------------------------------
+-- render
+--------------------------------------------------------------------------------
+
+refLabel_input = H.RefLabel "input"
 
 render :: BufferState -> BufferHTML
 render state =
   HH.div [ classes $ fold [ [ "Buffer" ] ] ]
-    [ HH.input []
-    , HH.div [] $ state.options_queried # map case _ of
+    [ HH.input
+        [ classes [ "query" ]
+        , HP.ref refLabel_input
+        , HP.value state.query
+        , HE.onInput QueryInput_BufferAction
+        ]
+    , HHK.div [] $ state.options_queried # mapWithIndex \i -> case _ of
         PasteSpan_BufferOption label span ->
-          HH.div [ classes [ "PasteSpan", "BufferOption" ] ]
-            [ HH.div [ classes [ "label" ] ] [ HH.text label ]
-            , HH.div [ classes [ "body" ] ] [ HH.text $ show span ]
-            ]
+          show i /\
+            HH.div [ classes $ fold [ [ "PasteSpan", "BufferOption" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
+              [ HH.div [ classes [ "label" ] ] [ HH.text label ]
+              , HH.div [ classes [ "body" ] ] [ HH.text $ show span ]
+              ]
     ]
 
