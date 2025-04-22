@@ -4968,6 +4968,11 @@
     };
   };
 
+  // output/Data.String.Common/index.js
+  var $$null3 = function(s) {
+    return s === "";
+  };
+
   // output/Halogen.Query.Input/index.js
   var RefUpdate = /* @__PURE__ */ function() {
     function RefUpdate2(value0, value1) {
@@ -5116,7 +5121,7 @@
     };
   };
   var range2 = /* @__PURE__ */ runFn2(rangeImpl);
-  var $$null3 = function(xs) {
+  var $$null4 = function(xs) {
     return length4(xs) === 0;
   };
   var intercalate2 = function(dictMonoid) {
@@ -6428,7 +6433,7 @@
       return new CatQueue(v.value0, new Cons(a2, v.value1));
     };
   };
-  var $$null4 = function(v) {
+  var $$null5 = function(v) {
     if (v.value0 instanceof Nil && v.value1 instanceof Nil) {
       return true;
     }
@@ -6554,7 +6559,7 @@
     ;
     if (v instanceof CatCons) {
       return new Just(new Tuple(v.value0, function() {
-        var $66 = $$null4(v.value1);
+        var $66 = $$null5(v.value1);
         if ($66) {
           return CatNil.value;
         }
@@ -8939,7 +8944,7 @@
     var show8 = show(dictShow);
     return {
       show: function(v) {
-        if ($$null3(v.kids)) {
+        if ($$null4(v.kids)) {
           return show8(v.l);
         }
         ;
@@ -9450,6 +9455,7 @@
 
   // output/Editor.Example.Editor2/index.js
   var mapFlipped2 = /* @__PURE__ */ mapFlipped(functorArray);
+  var fold3 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
   var $$String = /* @__PURE__ */ function() {
     function $$String2(value0) {
       this.value0 = value0;
@@ -9477,7 +9483,7 @@
         return v.value0;
       }
       ;
-      throw new Error("Failed pattern match at Editor.Example.Editor2 (line 15, column 1 - line 17, column 22): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Editor.Example.Editor2 (line 17, column 1 - line 19, column 22): " + [v.constructor.name]);
     }
   };
   var example_expr = function(v) {
@@ -9507,7 +9513,14 @@
       },
       bufferOptions_point: function(p2) {
         return function(query3) {
-          return [new PasteSpan_BufferOption(query3, [mkExpr(new $$String(query3))([])]), new PasteSpan_BufferOption("example", [mkExpr(new $$String("example"))([])])];
+          return fold3([function() {
+            var $25 = $$null3(query3);
+            if ($25) {
+              return [];
+            }
+            ;
+            return [new PasteSpan_BufferOption(query3, [mkExpr(new $$String(query3))([])])];
+          }(), [new PasteSpan_BufferOption("example", [mkExpr(new $$String("example"))([])])]]);
         };
       },
       max_history_length: 100
@@ -11047,11 +11060,11 @@
   };
 
   // output/Ui.App1.Buffer/index.js
-  var $$null5 = /* @__PURE__ */ $$null(foldableArray);
+  var $$null6 = /* @__PURE__ */ $$null(foldableArray);
   var none4 = /* @__PURE__ */ none(unfoldableMaybe);
   var pure15 = /* @__PURE__ */ pure(applicativeMaybe);
   var modify_3 = /* @__PURE__ */ modify_2(monadStateHalogenM);
-  var fold3 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
+  var fold4 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
   var value13 = /* @__PURE__ */ value12(isPropString);
   var mapWithIndex4 = /* @__PURE__ */ mapWithIndex(functorWithIndexArray);
   var show4 = /* @__PURE__ */ show(showInt);
@@ -11092,7 +11105,7 @@
         options: state3.options,
         query: query3,
         option_i: function() {
-          var $47 = $$null5(options_queried);
+          var $47 = $$null6(options_queried);
           if ($47) {
             return none4;
           }
@@ -11108,16 +11121,16 @@
   };
   var refLabel_input = "input";
   var render2 = function(state3) {
-    return div2([classes2(fold3([["Buffer"]]))])([input2([classes2(["query"]), ref2(refLabel_input), value13(state3.query), onInput(QueryInput_BufferAction.create)]), div3([classes2(["options"])])(mapWithIndex4(function(i2) {
+    return div2([classes2(fold4([["Buffer"]]))])([input2([classes2(["query"]), ref2(refLabel_input), value13(state3.query), onInput(QueryInput_BufferAction.create)]), div3([classes2(["options"])])(mapWithIndex4(function(i2) {
       return function(v) {
-        return new Tuple(show4(i2), div2([classes2(fold3([["PasteSpan", "BufferOption"], function() {
+        return new Tuple(show4(i2), div2([classes2(fold4([["PasteSpan", "BufferOption"], function() {
           var $49 = notEq3(new Just(i2))(state3.option_i);
           if ($49) {
             return [];
           }
           ;
           return ["selected"];
-        }()]))])([div2([classes2(["label"])])([text5(v.value0)]), div2([classes2(["body"])])([text5(show1(v.value1))])]));
+        }()]))])([text5(show1(v.value1))]));
       };
     })(state3.options_queried))]);
   };
@@ -11282,7 +11295,7 @@
   var _documentElement2 = getEffProp3("documentElement");
 
   // output/Ui.App1.Point/index.js
-  var fold4 = /* @__PURE__ */ fold2(monoidArray);
+  var fold5 = /* @__PURE__ */ fold2(monoidArray);
   var map23 = /* @__PURE__ */ map(functorArray);
   var show5 = /* @__PURE__ */ show(showPointStatus);
   var toUnfoldable6 = /* @__PURE__ */ toUnfoldable5(unfoldableArray);
@@ -11316,7 +11329,7 @@
   }();
   var refLabel_point = "point";
   var render3 = function(state3) {
-    return div2([ref2(refLabel_point), classes2(fold4([["Point"], map23(show5)(toUnfoldable6(state3.statuses))])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(fold13([foldMap2(function(input3) {
+    return div2([ref2(refLabel_point), classes2(fold5([["Point"], map23(show5)(toUnfoldable6(state3.statuses))])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(fold13([foldMap2(function(input3) {
       return [slot2($$Proxy.value)(unit)(component2)(input3)(BufferOutput_PointAction.create)];
     })(state3.mb_bufferInput), [div2([classes2(["Left"])])([])], [div2([classes2(["Middle"])])([])], [div2([classes2(["Right"])])([])]]));
   };
@@ -11445,7 +11458,7 @@
   var traverseStepsAndKids2 = /* @__PURE__ */ traverseStepsAndKids(applicativeReaderT2);
   var mapWithIndex5 = /* @__PURE__ */ mapWithIndex(functorWithIndexArray);
   var show6 = /* @__PURE__ */ show(showInt);
-  var fold5 = /* @__PURE__ */ fold2(monoidArray);
+  var fold6 = /* @__PURE__ */ fold2(monoidArray);
   var show12 = /* @__PURE__ */ show(showL);
   var tell3 = /* @__PURE__ */ tell2()(PointIsSymbol)(ordPoint);
   var union4 = /* @__PURE__ */ union3(ordPointStatus);
@@ -11546,7 +11559,7 @@
             return function(v1) {
               return new Tuple(show6(i2), v1);
             };
-          })(fold5([[div2([classes2(["Punctuation"])])([text5("(")])], [div2([classes2(["label"])])([text5(show12(v.l))])], fold5(htmls_kidsAndPoints), [html_lastPoint], [div2([classes2(["Punctuation"])])([text5(")")])]]))));
+          })(fold6([[div2([classes2(["Punctuation"])])([text5("(")])], [div2([classes2(["label"])])([text5(show12(v.l))])], fold6(htmls_kidsAndPoints), [html_lastPoint], [div2([classes2(["Punctuation"])])([text5(")")])]]))));
         });
       });
     };

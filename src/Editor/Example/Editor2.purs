@@ -4,8 +4,10 @@ import Data.Expr
 import Prelude
 
 import Data.Array as Array
+import Data.Foldable (fold, null)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (wrap)
+import Data.String as String
 import Editor (Editor)
 
 data L = String String | Root
@@ -34,9 +36,10 @@ editor =
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
   -- , example_fragment: \s -> Just $ Zipper_Fragment $ Zipper { kids_L: [], kids_R: [], inside: Just $ SpanContext { _O: ExprContext Nil, _I: SpanTooth { l: String s, kids_L: [], kids_R: [] } } }
   , example_fragment: \s -> Just $ Span_Fragment $ Span [ Expr { l: String s, kids: [] } ]
-  , bufferOptions_point: \p query ->
-      [ PasteSpan_BufferOption query $ Span [ String query % [] ]
-      , PasteSpan_BufferOption "example" $ Span [ String "example" % [] ]
+  , bufferOptions_point: \p query -> fold
+      [ if String.null query then []
+        else [ PasteSpan_BufferOption query $ Span [ String query % [] ] ]
+      , [ PasteSpan_BufferOption "example" $ Span [ String "example" % [] ] ]
       ]
   , max_history_length: 100
   }

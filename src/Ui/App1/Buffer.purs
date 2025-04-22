@@ -152,11 +152,9 @@ render state =
         ]
     , HHK.div [ classes [ "options" ] ]
         $ state.options_queried # mapWithIndex \i -> case _ of
-            PasteSpan_BufferOption label span ->
+            PasteSpan_BufferOption _label span ->
               show i /\
                 HH.div [ classes $ fold [ [ "PasteSpan", "BufferOption" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
-                  [ HH.div [ classes [ "label" ] ] [ HH.text label ]
-                  , HH.div [ classes [ "body" ] ] [ HH.text $ show span ]
-                  ]
+                  [ HH.text $ show span ]
     ]
 

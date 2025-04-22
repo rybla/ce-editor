@@ -47,41 +47,77 @@
     display: flex;
     flex-direction: row;
 
-    >.Buffer {
+    &>.Buffer {
       position: absolute;
       top: 1.5em;
       width: 20em;
-      box-shadow: 0 0 0 1px black;
+      padding: 0.5em;
 
       display: flex;
       flex-direction: column;
+      gap: 0.5em;
 
       &>.query {
         outline: none;
         border: none;
-        background-color: var(--Editor--background);
-        color: var(--Editor--color);
+        padding: 0.5em;
+        border-radius: 1em;
+
+        background: linear-gradient(90deg,
+            hsl(0, 100%, 28%),
+            hsl(39, 100%, 26%),
+            hsl(60, 100%, 25%),
+            hsl(120, 100%, 25%),
+            hsl(180, 100%, 25%),
+            hsl(240, 100%, 32%),
+            hsl(300, 100%, 32%),
+            hsl(0, 100%, 25%),
+            hsl(39, 100%, 26%),
+            hsl(60, 100%, 25%),
+            hsl(120, 100%, 25%),
+            hsl(180, 100%, 25%),
+            hsl(240, 100%, 32%),
+            hsl(300, 100%, 32%));
+        background-size: 200% 100%;
+        animation: rainbow-flow 20s linear infinite;
+
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+
+        color: white;
+
+        font-size: 1em;
         font-family: inherit;
+
+
+        &:focus {
+          box-shadow: 0 0 15px hsla(210deg 100% 60% / 0.5), 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
       }
 
       &>.options {
-        overflow: auto;
+        overflow: visible;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5em;
 
         &>.BufferOption {
-          display: flex;
-          flex-direction: row;
-          gap: 1em;
+          padding: 0.5em;
+          border-radius: 1em;
 
-          &>.label {
-            flex: 0 0 auto;
-          }
+          background: var(--Editor--background);
+          box-shadow: 0 0 0 0.1em black;
 
-          &>.body {
-            flex: 1 0 auto;
-          }
+          white-space: nowrap;
+
+          transition: all 0.3s ease;
 
           &.selected {
-            background-color: color-mix(in srgb, blue, transparent 80%)
+            background: color-mix(in srgb, blue, transparent 80%);
+            box-shadow: 0 0 0 0.1em black, 0 0 15px hsla(210deg 100% 60% / 0.5), 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
           }
         }
       }
@@ -232,5 +268,15 @@
         background: var(--Editor--background);
       }
     }
+  }
+}
+
+@keyframes rainbow-flow {
+  0% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
   }
 }
