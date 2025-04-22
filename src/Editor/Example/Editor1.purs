@@ -1,4 +1,9 @@
-module Editor.Example.Editor1 where
+module Editor.Example.Editor1
+  ( L(..)
+  , mkL
+  , Dat(..)
+  , mkEditor
+  ) where
 
 import Data.Expr
 import Prelude

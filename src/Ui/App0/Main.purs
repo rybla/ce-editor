@@ -1,11 +1,11 @@
-module Ui.App where
+module Ui.App0.Main where
 
 import Prelude
 
 import Control.Monad.Reader (ReaderT, ask, runReaderT)
 import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
-import Data.Expr (Diff(..), Expr(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), Step(..), Tooth(..), Zipper(..), ZipperFocus(..), atIndexSpan_Expr, atInjectDiff, atPoint, atSpan, atSubExpr, defaultHandle, getEndPoints_SpanH, getEndPoints_ZipperH, getFocusPoint, getIndexesAroundStep, getKid_Expr, mkExpr, offset_Span, rangeKidSteps, rangeSteps, toNePath)
+import Data.Expr (Diff(..), Expr(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), Step(..), Tooth(..), Zipper(..), ZipperFocus(..), atInjectDiff, atPoint, atSpan, atSubExpr, defaultHandle, getEndPoints_SpanH, getEndPoints_ZipperH, getFocusPoint, getIndexesAroundStep, getKid_Expr, mkExpr, offset_Span, rangeKidSteps, rangeSteps, toNePath)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Move as Expr.Move
 import Data.FoldableWithIndex (traverseWithIndex_)
@@ -24,14 +24,13 @@ import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Prim.Row (class Nub, class Union)
-import Ui.Common as Ui.Common
-import Ui.Element as Element
+import Ui.Element (addClass, appendChild, body, create, createChild, doc, removeChild, removeClass, replaceChild, setText) as Element
 import Ui.Event (KeyInfo(..))
 import Ui.Event as Event
 import Utility (fromMaybeM, isAlpha, todo, (:%=), (:=))
 import Web.DOM (Element)
 import Web.DOM.Document as Document
-import Web.DOM.Element as Element
+import Web.DOM.Element (toEventTarget, toNode) as Element
 import Web.DOM.Node as Node
 import Web.Event.Event (Event, EventType(..), preventDefault)
 import Web.Event.EventTarget (EventTarget)
