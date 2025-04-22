@@ -23,7 +23,7 @@
 
   font-family: 'Courier New', Courier, monospace;
 
-  >.root {}
+  >.Expr.root {}
 
   .Expr {
     display: inline-flex;
@@ -43,6 +43,10 @@
     >.Right {
       height: 1em;
       width: calc(var(--Handle--width) / 3);
+
+      transition-property: background-color, box-shadow;
+      transition-duration: 0.2s;
+      /* transition-duration: 0; */
     }
 
     &.Point_Handle_PointStatus {

@@ -66,6 +66,7 @@ data EditorAction
   = Initialize_EditorAction
   | PointOutput_EditorAction PointOutput
   | MouseUp_EditorAction Event
+  | KeyDown_EditorAction Event
 
 type EditorSlots :: Row Type
 type EditorSlots =
@@ -93,7 +94,7 @@ data PointOutput
 
 type PointState =
   { point :: Point
-  , mb_statuses :: Set PointStatus
+  , statuses :: Set PointStatus
   }
 
 data PointStatus
@@ -104,7 +105,6 @@ data PointStatus
   | ZipperH_Handle_InnerLeft_PointStatus
   | ZipperH_Handle_InnerRight_PointStatus
   | ZipperH_Handle_OuterRight_PointStatus
-  | Focus_PointStatus
   | LeftFocus_PointStatus
   | RightFocus_PointStatus
 

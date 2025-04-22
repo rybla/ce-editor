@@ -2,7 +2,7 @@
 
 ## halogen-simplified
 
-- [ ] keyboard movement
+- [x] keyboard movement
 - [ ] escape action
 - [ ] cut/paste
 - [ ] undo/redo

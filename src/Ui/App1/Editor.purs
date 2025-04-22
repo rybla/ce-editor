@@ -5,8 +5,9 @@ import Prelude
 import Control.Monad.Reader (Reader, runReader)
 import Control.Monad.State (get)
 import Data.Array as Array
-import Data.Expr (Expr(..), Handle(..), Path, Point(..), SpanFocus(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getIndexesAroundStep, traverseStepsAndKids)
+import Data.Expr (Expr(..), Handle(..), Path, Point(..), SpanFocus(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, getIndexesAroundStep, traverseStepsAndKids)
 import Data.Expr.Drag as Expr.Drag
+import Data.Expr.Move as Expr.Move
 import Data.List (List(..))
 import Data.List as List
 import Data.Maybe (Maybe(..))
@@ -24,11 +25,14 @@ import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
 import Ui.App1.Common (EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..))
 import Ui.App1.Point as Point
+import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
 import Utility ((:=))
+import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
 import Web.HTML.Window as HTML.Window
+import Web.UIEvent.KeyboardEvent.EventTypes as KeyboardEvent
 import Web.UIEvent.MouseEvent as MouseEvent
 import Web.UIEvent.MouseEvent.EventTypes as MouseEventType
 
@@ -62,9 +66,64 @@ handleAction Initialize_EditorAction = do
   -- Console.log "[Editor] initialize"
   doc <- liftEffect $ HTML.window >>= HTML.Window.document
   H.subscribe' \_subId -> HQE.eventListener MouseEventType.mouseup (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< MouseUp_EditorAction
+  H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< KeyDown_EditorAction
 handleAction (MouseUp_EditorAction _event) = do
   state <- get
   liftEffect do state.ref_mb_dragOrigin := none
+
+handleAction (KeyDown_EditorAction event) = do
+  state <- get
+  let ki = Event.fromEventToKeyInfo event
+  case unit of
+    -- move
+    _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure false } -> do
+      liftEffect $ event # Event.preventDefault
+      liftEffect $ state.ref_mb_dragOrigin := none
+      mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
+      case mb_handle of
+        Nothing -> do
+          setHandle $ pure state.editor.initial_handle
+        Just handle -> do
+          case Expr.Move.movePoint state.root dir (handle # getFocusPoint) of
+            Nothing -> setHandle (Just (Point_Handle (handle # getFocusPoint)))
+            Just point -> setHandle (Just (Point_Handle point))
+    -- drag move
+    _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure true, alt: pure false } -> do
+      liftEffect $ event # Event.preventDefault
+      mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
+      mb_dragOrigin <- liftEffect $ Ref.read state.ref_mb_dragOrigin
+      case mb_handle of
+        Nothing -> do
+          -- initialize dragOrigin
+          case mb_dragOrigin of
+            Nothing -> do
+              liftEffect $ state.ref_mb_dragOrigin := pure state.editor.initial_handle
+            Just _ -> do
+              pure unit
+          setHandle $ pure state.editor.initial_handle
+        Just handle -> do
+          -- initialize dragOrigin
+          dragOrigin <- case mb_dragOrigin of
+            Nothing -> do
+              liftEffect $ state.ref_mb_dragOrigin := pure handle
+              pure handle
+            Just dragOrigin -> do
+              pure dragOrigin
+          case Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p -> state.root # Expr.Drag.drag dragOrigin p of
+            Nothing -> pure unit
+            Just handle' -> do
+              setHandle $ pure handle'
+    -- move handle focus
+    _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure true } -> do
+      liftEffect $ event # Event.preventDefault
+      mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
+      case mb_handle of
+        Nothing -> pure unit
+        Just handle -> do
+          setHandle $ pure $ handle # Expr.Move.moveHandleFocus dir
+    _ | ki # Event.matchKeyInfo (_ == "Escape") { cmd: pure false, shift: pure false, alt: pure false } -> pure unit
+    _ -> pure unit
+
 handleAction (PointOutput_EditorAction (MouseDown_PointOutput _event p)) = do
   state <- get
   mb_handle <- liftEffect do Ref.read state.ref_mb_handle

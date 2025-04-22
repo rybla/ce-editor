@@ -179,3 +179,4 @@ dist
 .spago
 output
 template.js
+.psci_modules

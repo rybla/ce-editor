@@ -56,3 +56,5 @@ removeClass c elem = elem # Element.classList >>= (_ `DOMTokenList.remove` c)
 addClass :: String -> Element -> Effect Unit
 addClass c elem = elem # Element.classList >>= (_ `DOMTokenList.add` c)
 
+foreign import scrollIntoView :: Element -> Effect Unit
+

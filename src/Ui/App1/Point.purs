@@ -2,19 +2,23 @@ module Ui.App1.Point where
 
 import Prelude
 
-import Control.Monad.State (get)
+import Control.Monad.State (get, gets)
 import Data.Array as Array
 import Data.Lens ((%=))
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Effect.Aff (Aff)
 import Effect.Class.Console as Console
+import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
-import Ui.App1.Common (PointAction(..), PointHTML, PointInput, PointM, PointOutput(..), PointQuery(..), PointSlots, PointState)
+import Halogen.HTML.Properties as HP
+import Ui.App1.Common (PointAction(..), PointHTML, PointInput, PointM, PointOutput(..), PointQuery(..), PointSlots, PointState, PointStatus(..))
+import Ui.Element as Element
 import Ui.Halogen (classes)
 import Utility (prop)
+import Web.HTML.HTMLElement as HTMLElement
 
 component :: H.Component PointQuery PointInput PointOutput Aff
 component = H.mkComponent { initialState, eval, render }
@@ -22,7 +26,7 @@ component = H.mkComponent { initialState, eval, render }
 initialState :: PointInput -> PointState
 initialState input =
   { point: input.point
-  , mb_statuses: Set.empty
+  , statuses: Set.empty
   }
 
 eval :: forall a. H.HalogenQ PointQuery PointAction PointInput a -> H.HalogenM PointState PointAction PointSlots PointOutput Aff a
@@ -34,10 +38,18 @@ eval = H.mkEval H.defaultEval
 
 handleQuery :: forall a. PointQuery a -> PointM (Maybe a)
 handleQuery (ModifyMaybeStatuses_PointQuery f a) = do
-  -- get >>= \{ mb_statuses } -> Console.log $ "[Point] old mb_statuses: " <> show mb_statuses
-  prop @"mb_statuses" %= f
-  -- get >>= \{ mb_statuses } -> Console.log $ "[Point] new mb_statuses: " <> show mb_statuses
+  -- get >>= \{ statuses } -> Console.log $ "[Point] old statuses: " <> show statuses
+  prop @"statuses" %= f
+  -- get >>= \{ statuses } -> Console.log $ "[Point] new statuses: " <> show statuses
+  gets _.statuses >>= \statuses -> do
+    when (not $ statuses # Set.intersection ss_Focus # Set.isEmpty) do
+      mb_elem_this <- H.getHTMLElementRef this
+      case mb_elem_this of
+        Nothing -> pure unit
+        Just elem_this -> liftEffect $ elem_this # HTMLElement.toElement # Element.scrollIntoView
   pure (pure a)
+
+ss_Focus = Set.fromFoldable [ Point_Handle_PointStatus, LeftFocus_PointStatus, RightFocus_PointStatus ]
 
 handleAction :: PointAction -> PointM Unit
 handleAction Initialize_PointAction = do
@@ -52,9 +64,10 @@ handleAction (MouseEnter_PointAction event) = do
 render :: PointState -> PointHTML
 render state =
   HH.div
-    [ classes $ Array.fold
+    [ HP.ref this
+    , classes $ Array.fold
         [ [ "Point" ]
-        , state.mb_statuses # Set.toUnfoldable # map show
+        , state.statuses # Set.toUnfoldable # map show
         ]
     , HE.onMouseDown MouseDown_PointAction
     , HE.onMouseEnter MouseEnter_PointAction
@@ -64,3 +77,4 @@ render state =
     , HH.div [ classes [ "Right" ] ] []
     ]
 
+this = H.RefLabel "this"
