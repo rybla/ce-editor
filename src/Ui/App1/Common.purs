@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Const (Const)
 import Data.Eq.Generic (genericEq)
-import Data.Expr (Expr, Handle, Point)
+import Data.Expr (Expr, Fragment, Handle, Point)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe)
 import Data.Ord.Generic (genericCompare)
@@ -58,8 +58,10 @@ type EditorOutput = Void
 type EditorState =
   { editor :: Editor L
   , root :: Expr L
+  , initial_mb_handle :: Maybe Handle
   , ref_mb_handle :: Ref (Maybe Handle)
   , ref_mb_dragOrigin :: Ref (Maybe Handle)
+  , clipboard :: Maybe (Fragment L)
   }
 
 data EditorAction
@@ -122,6 +124,7 @@ instance Ord PointStatus where
 
 data PointAction
   = Initialize_PointAction
+  | Receive_PointAction PointInput
   | MouseDown_PointAction MouseEvent
   | MouseEnter_PointAction MouseEvent
 

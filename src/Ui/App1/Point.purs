@@ -2,7 +2,7 @@ module Ui.App1.Point where
 
 import Prelude
 
-import Control.Monad.State (get, gets)
+import Control.Monad.State (get, gets, put)
 import Data.Array as Array
 import Data.Lens ((%=))
 import Data.Maybe (Maybe(..))
@@ -34,6 +34,7 @@ eval = H.mkEval H.defaultEval
   { initialize = pure Initialize_PointAction
   , handleQuery = handleQuery
   , handleAction = handleAction
+  , receive = pure <<< Receive_PointAction
   }
 
 handleQuery :: forall a. PointQuery a -> PointM (Maybe a)
@@ -53,7 +54,10 @@ ss_Focus = Set.fromFoldable [ Point_Handle_PointStatus, LeftFocus_PointStatus, R
 
 handleAction :: PointAction -> PointM Unit
 handleAction Initialize_PointAction = do
-  Console.log "[Point] initialize"
+  -- Console.log "[Point] initialize"
+  pure unit
+handleAction (Receive_PointAction input) = do
+  put $ initialState input
 handleAction (MouseDown_PointAction event) = do
   state <- get
   H.raise $ MouseDown_PointOutput event state.point

@@ -3,19 +3,22 @@ module Ui.App1.Editor where
 import Prelude
 
 import Control.Monad.Reader (Reader, runReader)
-import Control.Monad.State (get)
+import Control.Monad.State (get, modify, modify_)
 import Data.Array as Array
 import Data.Expr (Expr(..), Handle(..), Path, Point(..), SpanFocus(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, getIndexesAroundStep, traverseStepsAndKids)
 import Data.Expr.Drag as Expr.Drag
+import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
 import Data.List (List(..))
 import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.Set (Set)
 import Data.Set as Set
+import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor.Example.Editor2 (L)
 import Effect.Aff (Aff)
+import Effect.Class.Console as Console
 import Effect.Ref as Ref
 import Effect.Unsafe (unsafePerformEffect)
 import Halogen (liftEffect)
@@ -27,7 +30,7 @@ import Ui.App1.Common (EditorAction(..), EditorHTML, EditorInput, EditorM, Edito
 import Ui.App1.Point as Point
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
-import Utility ((:=))
+import Utility (todo, (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -47,9 +50,13 @@ initialState :: EditorInput -> EditorState
 initialState input =
   { editor: input.editor
   , root: input.editor.initial_expr
-  , ref_mb_handle: unsafePerformEffect do Ref.new none
+  , initial_mb_handle
+  , ref_mb_handle: unsafePerformEffect do Ref.new initial_mb_handle
   , ref_mb_dragOrigin: unsafePerformEffect do Ref.new none
+  , clipboard: none
   }
+  where
+  initial_mb_handle = none
 
 --------------------------------------------------------------------------------
 -- eval
@@ -80,13 +87,14 @@ handleAction (MouseUp_EditorAction _event) = do
 
 handleAction (KeyDown_EditorAction event) = do
   state <- get
+  mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
+  mb_dragOrigin <- liftEffect $ Ref.read state.ref_mb_dragOrigin
   let ki = Event.fromEventToKeyInfo event
   case unit of
     -- move
     _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       liftEffect $ state.ref_mb_dragOrigin := none
-      mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
       case mb_handle of
         Nothing -> do
           setHandle $ pure state.editor.initial_handle
@@ -97,8 +105,6 @@ handleAction (KeyDown_EditorAction event) = do
     -- drag move
     _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure true, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
-      mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
-      mb_dragOrigin <- liftEffect $ Ref.read state.ref_mb_dragOrigin
       case mb_handle of
         Nothing -> do
           -- initialize dragOrigin
@@ -123,7 +129,6 @@ handleAction (KeyDown_EditorAction event) = do
     -- move handle focus
     _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure true } -> do
       liftEffect $ event # Event.preventDefault
-      mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
@@ -133,21 +138,44 @@ handleAction (KeyDown_EditorAction event) = do
     _ | ki # Event.matchKeyInfo (_ == "Escape") { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       liftEffect $ state.ref_mb_dragOrigin := none
-      mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
       case mb_handle of
-        Nothing -> pure unit
         Just h -> setHandle $ Expr.Move.escape h
+        _ -> pure unit
+    -- copy
+    _ | ki # Event.matchKeyInfo (_ == "c") { cmd: pure true, shift: pure false, alt: pure false } -> do
+      liftEffect $ event # Event.preventDefault
+      case mb_handle of
+        Just handle -> do
+          let root' /\ _ /\ frag = state.root # Expr.Edit.cut handle
+          modifyEditorState _
+            { root = root'
+            , clipboard = pure frag
+            }
+        _ -> pure unit
     -- cut
     _ | ki # Event.matchKeyInfo (_ == "x") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
-
-      -- TODO
-      pure unit
+      case mb_handle of
+        Just handle -> do
+          let root' /\ handle' /\ frag = state.root # Expr.Edit.cut handle
+          modifyEditorState _
+            { root = root'
+            , initial_mb_handle = pure handle'
+            , clipboard = pure frag
+            }
+        _ -> pure unit
     -- paste
     _ | ki # Event.matchKeyInfo (_ == "v") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
-      -- TODO
-      pure unit
+      case mb_handle /\ state.clipboard of
+        Just handle /\ Just clipboard -> do
+          let root' /\ handle' = state.root # Expr.Edit.paste clipboard handle
+          modifyEditorState _
+            { root = root'
+            , initial_mb_handle = pure handle'
+            }
+        _ -> pure unit
+    -- unrecognized keyboard event
     _ -> pure unit
 
 handleAction (PointOutput_EditorAction (MouseDown_PointOutput _event p)) = do
@@ -172,14 +200,25 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
           Nothing -> pure unit
           Just h' -> setHandle (pure h')
 
+modifyEditorState :: (EditorState -> EditorState) -> EditorM Unit
+modifyEditorState f = do
+  setHandle' do
+    get >>= \state -> liftEffect $ state.ref_mb_dragOrigin := none
+    state <- modify f
+    pure state.initial_mb_handle
+
 setHandle :: Maybe Handle -> EditorM Unit
-setHandle mb_handle = do
-  -- Console.log $ "[Editor] setHandle " <> show mb_handle
+setHandle mb_handle = setHandle' $ pure mb_handle
+
+setHandle' :: EditorM (Maybe Handle) -> EditorM Unit
+setHandle' m_mb_handle = do
   state <- get
   mb_handle_old <- liftEffect $ Ref.read state.ref_mb_handle
   modifyHandle false mb_handle_old
-  modifyHandle true mb_handle
-  liftEffect $ state.ref_mb_handle := mb_handle
+  mb_handle_new <- m_mb_handle
+  Console.log $ "[Editor] setHandle " <> show mb_handle_new
+  modifyHandle true mb_handle_new
+  liftEffect $ state.ref_mb_handle := mb_handle_new
 
 modifyHandle :: Boolean -> Maybe Handle -> EditorM Unit
 modifyHandle b mb_handle = do

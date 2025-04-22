@@ -8,18 +8,22 @@ import Data.List ((:))
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 
-insert :: forall l. Show l => Fragment l -> Handle -> Expr l -> Expr l /\ Handle
+--------------------------------------------------------------------------------
+-- paste
+--------------------------------------------------------------------------------
 
--- to insert s:Span at p:Point, splice s at p.
-insert (Span_Fragment s) (Point_Handle (Point p)) e =
+paste :: forall l. Show l => Fragment l -> Handle -> Expr l -> Expr l /\ Handle
+
+-- to paste s:Span at p:Point, splice s at p.
+paste (Span_Fragment s) (Point_Handle (Point p)) e =
   unSpanContext at_p.outside s /\
     Point_Handle (Point { path: p.path, j: p.j + offset_Span s })
   where
   at_p = e # atPoint (Point p)
 
--- to insert z:Zipper at p:Point, splice z at p and fill the inside of z with
+-- to paste z:Zipper at p:Point, splice z at p and fill the inside of z with
 -- the empty Span.
-insert (Zipper_Fragment z) (Point_Handle (Point p)) e =
+paste (Zipper_Fragment z) (Point_Handle (Point p)) e =
   unSpanContext at_p.outside (unZipper z (Span none)) /\
     Point_Handle
       ( Point
@@ -30,8 +34,8 @@ insert (Zipper_Fragment z) (Point_Handle (Point p)) e =
   where
   at_p = e # atPoint (Point p)
 
--- to insert s:Span at sh:SpanH, replace the span at sh with s.
-insert (Span_Fragment s) (SpanH_Handle (SpanH sh) sf) e =
+-- to paste s:Span at sh:SpanH, replace the span at sh with s.
+paste (Span_Fragment s) (SpanH_Handle (SpanH sh) sf) e =
   unSpanContext at_sh.outside s /\
     Point_Handle
       ( Point
@@ -44,7 +48,7 @@ insert (Span_Fragment s) (SpanH_Handle (SpanH sh) sf) e =
   where
   at_sh = e # atSpan (SpanH sh)
 
-insert (Zipper_Fragment z) (SpanH_Handle (SpanH sh) sf) e =
+paste (Zipper_Fragment z) (SpanH_Handle (SpanH sh) sf) e =
   unSpanContext at_sh.outside (unZipper z at_sh.here) /\
     Point_Handle
       ( Point
@@ -57,8 +61,8 @@ insert (Zipper_Fragment z) (SpanH_Handle (SpanH sh) sf) e =
   where
   at_sh = e # atSpan (SpanH sh)
 
--- to insert s:Span at zh:ZipperH, replace outer span of zh with s
-insert (Span_Fragment s) (ZipperH_Handle (ZipperH zh) zf) e =
+-- to paste s:Span at zh:ZipperH, replace outer span of zh with s
+paste (Span_Fragment s) (ZipperH_Handle (ZipperH zh) zf) e =
   unSpanContext at_zh.outside s /\
     SpanH_Handle
       ( SpanH
@@ -76,8 +80,8 @@ insert (Span_Fragment s) (ZipperH_Handle (ZipperH zh) zf) e =
   where
   at_zh = e # atZipper (ZipperH zh)
 
--- to insert z:Zipper at zh:ZipperH, replace the zipper at zh with z.
-insert (Zipper_Fragment z) (ZipperH_Handle (ZipperH zh) zf) e =
+-- to paste z:Zipper at zh:ZipperH, replace the zipper at zh with z.
+paste (Zipper_Fragment z) (ZipperH_Handle (ZipperH zh) zf) e =
   unSpanContext at_zh.outside (unZipper z at_zh.inside) /\
     SpanH_Handle
       ( let
@@ -104,6 +108,37 @@ insert (Zipper_Fragment z) (ZipperH_Handle (ZipperH zh) zf) e =
           InnerRight_ZipperFocus -> Right_SpanFocus
           OuterRight_ZipperFocus -> Right_SpanFocus
       )
+  where
+  at_zh = e # atZipper (ZipperH zh)
+
+--------------------------------------------------------------------------------
+-- cut
+--------------------------------------------------------------------------------
+
+cut :: forall l. Show l => Handle -> Expr l -> Expr l /\ Handle /\ Fragment l
+cut (Point_Handle p) e = e /\ Point_Handle p /\ Span_Fragment (Span none)
+cut (SpanH_Handle (SpanH sh) _sf) e =
+  unSpanContext at_sh.outside (Span none)
+    /\ Point_Handle (SpanH sh # getEndPoints_SpanH)._L
+    /\ Span_Fragment at_sh.here
+  where
+  at_sh = e # atSpan (SpanH sh)
+cut (ZipperH_Handle (ZipperH zh) zf) e =
+  unSpanContext at_zh.outside at_zh.inside
+    /\ SpanH_Handle
+      ( SpanH
+          { path: zh.path_O
+          , j_L: zh.j_OL
+          , j_R: zh.j_OR
+          }
+      )
+      ( case zf of
+          OuterLeft_ZipperFocus -> Left_SpanFocus
+          InnerLeft_ZipperFocus -> Left_SpanFocus
+          InnerRight_ZipperFocus -> Right_SpanFocus
+          OuterRight_ZipperFocus -> Right_SpanFocus
+      )
+    /\ Zipper_Fragment at_zh.here
   where
   at_zh = e # atZipper (ZipperH zh)
 

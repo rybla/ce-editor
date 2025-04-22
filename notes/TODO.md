@@ -2,7 +2,8 @@
 
 ## halogen-simplified
 
-- [ ] cut/paste
+- [x] copy/cut/paste
+- [ ] delete
 - [ ] undo/redo
 - [ ] fix bug in dragging that lets the inner span be outside the outer span
 - [ ] fix other bugs in dragging
