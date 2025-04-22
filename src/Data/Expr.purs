@@ -363,14 +363,17 @@ derive instance Functor Zipper
 derive instance Foldable Zipper
 derive instance Traversable Zipper
 
-unZipper :: forall l. (Zipper l) -> Span l -> Span l
+unZipper :: forall l. Zipper l -> Span l -> Span l
 unZipper (Zipper z) s = Span $ z.kids_L <> [ unSpanContext z.inside s ] <> z.kids_R
 
-offset_outer_Zipper :: forall l. (Zipper l) -> { _L :: Index, _R :: Index }
+offset_outer_Zipper :: forall l. Zipper l -> { _L :: Index, _R :: Index }
 offset_outer_Zipper (Zipper z) = { _L: Index $ z.kids_L # Array.length, _R: Index $ z.kids_R # Array.length }
 
-offset_inner_Zipper :: forall l. (Zipper l) -> Index
+offset_inner_Zipper :: forall l. Zipper l -> Index
 offset_inner_Zipper (Zipper z) = z.inside # offset_inner_SpanContext
+
+getPath_Zipper :: forall l. Zipper l -> Path
+getPath_Zipper (Zipper z) = getPath_SpanContext z.inside
 
 --------------------------------------------------------------------------------
 

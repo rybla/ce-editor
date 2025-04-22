@@ -67,6 +67,7 @@ data EditorAction
   | PointOutput_EditorAction PointOutput
   | MouseUp_EditorAction Event
   | KeyDown_EditorAction Event
+  | Rerender_EditorAction
 
 type EditorSlots :: Row Type
 type EditorSlots =

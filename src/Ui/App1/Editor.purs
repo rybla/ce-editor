@@ -62,11 +62,18 @@ eval = H.mkEval H.defaultEval
   }
 
 handleAction :: EditorAction -> EditorM Unit
+
 handleAction Initialize_EditorAction = do
   -- Console.log "[Editor] initialize"
   doc <- liftEffect $ HTML.window >>= HTML.Window.document
   H.subscribe' \_subId -> HQE.eventListener MouseEventType.mouseup (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< MouseUp_EditorAction
   H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< KeyDown_EditorAction
+  handleAction Rerender_EditorAction
+
+handleAction Rerender_EditorAction = do
+  -- TODO: setHandle
+  pure unit
+
 handleAction (MouseUp_EditorAction _event) = do
   state <- get
   liftEffect do state.ref_mb_dragOrigin := none
@@ -122,6 +129,7 @@ handleAction (KeyDown_EditorAction event) = do
         Just handle -> do
           liftEffect $ state.ref_mb_dragOrigin := none
           setHandle $ pure $ handle # Expr.Move.moveHandleFocus dir
+    -- escape
     _ | ki # Event.matchKeyInfo (_ == "Escape") { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       liftEffect $ state.ref_mb_dragOrigin := none
@@ -129,6 +137,17 @@ handleAction (KeyDown_EditorAction event) = do
       case mb_handle of
         Nothing -> pure unit
         Just h -> setHandle $ Expr.Move.escape h
+    -- cut
+    _ | ki # Event.matchKeyInfo (_ == "x") { cmd: pure true, shift: pure false, alt: pure false } -> do
+      liftEffect $ event # Event.preventDefault
+
+      -- TODO
+      pure unit
+    -- paste
+    _ | ki # Event.matchKeyInfo (_ == "v") { cmd: pure true, shift: pure false, alt: pure false } -> do
+      liftEffect $ event # Event.preventDefault
+      -- TODO
+      pure unit
     _ -> pure unit
 
 handleAction (PointOutput_EditorAction (MouseDown_PointOutput _event p)) = do

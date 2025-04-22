@@ -26,6 +26,8 @@
   >.Expr.root {}
 
   .Expr {
+    padding: 0.5em;
+
     display: inline-flex;
     flex-direction: row;
     align-items: stretch;
