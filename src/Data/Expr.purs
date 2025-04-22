@@ -595,6 +595,14 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
 -- Utilities
 --------------------------------------------------------------------------------
 
+type BufferOptions l = String -> Array (BufferOption l)
+data BufferOption l =
+  PasteSpan_BufferOption String (Span l)
+
+--------------------------------------------------------------------------------
+-- Utilities
+--------------------------------------------------------------------------------
+
 -- areSiblings_Point :: Point -> Point -> Boolean
 -- areSiblings_Point (Point p0) (Point p1) = p0.path == p1.path
 

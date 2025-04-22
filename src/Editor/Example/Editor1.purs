@@ -58,6 +58,7 @@ mkEditor default_meta =
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
   -- , example_fragment: \s -> Just $ Zipper_Fragment $ Zipper { kids_L: [], kids_R: [], inside: Just $ SpanContext { _O: ExprContext Nil, _I: SpanTooth { l: String s, kids_L: [], kids_R: [] } } }
   , example_fragment: \s -> Just $ Span_Fragment $ Span [ Expr { l: mkL (String s) default_meta, kids: [] } ]
+  , bufferOptions_point: \p query -> []
   , max_history_length: 100
   }
 

@@ -34,6 +34,7 @@ editor =
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
   -- , example_fragment: \s -> Just $ Zipper_Fragment $ Zipper { kids_L: [], kids_R: [], inside: Just $ SpanContext { _O: ExprContext Nil, _I: SpanTooth { l: String s, kids_L: [], kids_R: [] } } }
   , example_fragment: \s -> Just $ Span_Fragment $ Span [ Expr { l: String s, kids: [] } ]
+  , bufferOptions_point: \p query -> [ PasteSpan_BufferOption query $ Span [ String query % [] ] ]
   , max_history_length: 100
   }
 

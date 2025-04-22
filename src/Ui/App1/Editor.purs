@@ -10,9 +10,10 @@ import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
 import Data.Foldable (and)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..), (:))
 import Data.List as List
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isJust)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Tuple.Nested ((/\))
@@ -25,13 +26,14 @@ import Effect.Unsafe (unsafePerformEffect)
 import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
 import Ui.App1.Common (EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot)
 import Ui.App1.Point as Point
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
-import Utility ((:%=), (:=))
+import Utility (todo, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -94,7 +96,7 @@ handleAction (KeyDown_EditorAction event) = do
   mb_dragOrigin <- liftEffect $ Ref.read state.ref_mb_dragOrigin
   bufferIsOpen <- case mb_handle of
     Nothing -> pure false
-    Just handle -> and <$> H.request (Proxy @"Point") (handle # getFocusPoint) GetBufferIsOpen
+    Just handle -> isJust <<< join <$> H.request (Proxy @"Point") (handle # getFocusPoint) GetBufferOptions_PointQuery
   let ki = Event.fromEventToKeyInfo event
   -- Console.logShow { ki }
 
@@ -105,7 +107,7 @@ handleAction (KeyDown_EditorAction event) = do
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
-          H.tell (Proxy @"Point") (handle # getFocusPoint) $ SetBufferIsOpen false
+          H.tell (Proxy @"Point") (handle # getFocusPoint) $ SetBufferOptions_PointQuery none
     _ -> pure unit
   else do
     case unit of
@@ -115,7 +117,8 @@ handleAction (KeyDown_EditorAction event) = do
         case mb_handle of
           Nothing -> pure unit
           Just handle -> do
-            H.tell (Proxy @"Point") (handle # getFocusPoint) $ SetBufferIsOpen true
+            let point = handle # getFocusPoint
+            H.tell (Proxy @"Point") point $ SetBufferOptions_PointQuery $ pure $ state.editor.bufferOptions_point point
       -- move
       _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure false } -> do
         liftEffect $ event # Event.preventDefault
@@ -243,6 +246,8 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
         case state.root # Expr.Drag.drag h p of
           Nothing -> pure unit
           Just h' -> setHandle (pure h')
+handleAction (PointOutput_EditorAction (BufferOutput_PointOutput p bufferOutput)) = do
+  todo ""
 
 --------------------------------------------------------------------------------
 -- undo and redo
@@ -390,11 +395,13 @@ ss_ZipperH_Handle_OuterRight_Focus = Set.fromFoldable [ ZipperH_Handle_OuterRigh
 
 render :: EditorState -> EditorHTML
 render state =
-  HH.div [ classes [ "Editor" ] ]
-    [ HH.div [ classes [ "root" ] ]
-        [ flip runReader state $
-            renderExpr Nil state.root
-        ]
+  HHK.div [ classes [ "Editor" ] ]
+    [ "root" /\
+        HHK.div [ classes [ "root" ] ]
+          [ "0" /\
+              flip runReader state do
+                renderExpr Nil state.root
+          ]
     ]
 
 type RenderM = Reader EditorState
@@ -407,7 +414,8 @@ renderExpr path (Expr e) = do
     pure [ html_p, html_e ]
   html_lastPoint <- renderPoint $ Point { path, j: (Expr e # getExtremeIndexes)._R }
   pure
-    $ HH.div [ classes [ "Expr" ] ]
+    $ HHK.div [ classes [ "Expr" ] ]
+    $ mapWithIndex (\i -> (show i /\ _))
     $ Array.fold
         [ [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "(" ] ]
         , [ HH.div [ classes [ "label" ] ] [ HH.text $ show e.l ] ]

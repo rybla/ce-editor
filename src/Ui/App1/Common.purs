@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Const (Const)
 import Data.Eq.Generic (genericEq)
-import Data.Expr (Expr, Fragment, Handle, Point, Span)
+import Data.Expr (BufferOption, BufferOptions, Expr, Fragment, Handle, Point, Span)
 import Data.Generic.Rep (class Generic)
 import Data.List (List)
 import Data.Maybe (Maybe)
@@ -94,8 +94,8 @@ type EditorHTML = H.ComponentHTML EditorAction EditorSlots Aff
 
 data PointQuery a
   = ModifyStatuses_PointQuery (Set PointStatus -> Set PointStatus) a
-  | SetBufferIsOpen Boolean a
-  | GetBufferIsOpen (Boolean -> a)
+  | SetBufferOptions_PointQuery (Maybe (BufferOptions L)) a
+  | GetBufferOptions_PointQuery (Maybe (BufferOptions L) -> a)
 
 type PointInput =
   { point :: Point
@@ -104,19 +104,13 @@ type PointInput =
 data PointOutput
   = MouseDown_PointOutput MouseEvent Point
   | MouseEnter_PointOutput MouseEvent Point
+  | BufferOutput_PointOutput Point BufferOutput
 
 type PointState =
   { point :: Point
   , statuses :: Set PointStatus
-  , mb_buffer :: Maybe Buffer
+  , mb_bufferOptions :: Maybe (BufferOptions L)
   }
-
-type Buffer =
-  { query :: String
-  , results :: Array BufferResult
-  }
-
-data BufferResult = PasteSpan_BufferResult (Span L)
 
 data PointStatus
   = Point_Handle_PointStatus
@@ -145,13 +139,47 @@ data PointAction
   | Receive_PointAction PointInput
   | MouseDown_PointAction MouseEvent
   | MouseEnter_PointAction MouseEvent
+  | BufferOutput_PointAction BufferOutput
 
 type PointSlots :: Row Type
-type PointSlots = ()
+type PointSlots = ("Buffer" :: H.Slot BufferQuery BufferOutput Unit)
 
 type PointM = H.HalogenM PointState PointAction PointSlots PointOutput Aff
 
 type PointHTML = H.ComponentHTML PointAction PointSlots Aff
+
+--------------------------------------------------------------------------------
+-- Buffer
+--------------------------------------------------------------------------------
+
+----
+
+type BufferQuery :: Type -> Type
+type BufferQuery = Const Void
+
+-- TODO: what stuff does the buffer need to know about? can't it just have a
+-- list of edits that have already been computed and then the buffer is justt
+-- searching through them, right?
+type BufferInput =
+  { options :: BufferOptions L }
+
+data BufferOutput =
+  SubmitBuffer (BufferOption L)
+
+type BufferState =
+  { query :: String
+  , options :: BufferOptions L
+  , options_queried :: Array (BufferOption L)
+  }
+
+data BufferAction = Initialize_BufferAction
+
+type BufferSlots :: Row Type
+type BufferSlots = ()
+
+type BufferM = H.HalogenM BufferState BufferAction BufferSlots BufferOutput Aff
+
+type BufferHTML = H.ComponentHTML BufferAction BufferSlots Aff
 
 --------------------------------------------------------------------------------
 -- Console

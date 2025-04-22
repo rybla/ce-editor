@@ -42,9 +42,10 @@
     flex-direction: row;
 
     >.Buffer {
-      position: fixed;
+      position: absolute;
       display: none;
       visibility: hidden;
+      top: 1.5em;
 
       &.open {
         display: block;

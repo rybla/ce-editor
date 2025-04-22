@@ -6,7 +6,7 @@ import Control.Monad.State (get, gets, modify_, put)
 import Data.Array as Array
 import Data.Foldable (fold, foldMap)
 import Data.Lens ((%=))
-import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Unfoldable (none)
 import Effect.Aff (Aff)
@@ -15,7 +15,9 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Ui.App1.Common (PointAction(..), PointHTML, PointInput, PointM, PointOutput(..), PointQuery(..), PointSlots, PointState, PointStatus(..), Buffer)
+import Type.Proxy (Proxy(..))
+import Ui.App1.Buffer as Buffer
+import Ui.App1.Common (PointAction(..), PointHTML, PointInput, PointM, PointOutput(..), PointQuery(..), PointSlots, PointState, PointStatus(..))
 import Ui.Element as Element
 import Ui.Halogen (classes)
 import Utility (prop)
@@ -28,7 +30,7 @@ initialState :: PointInput -> PointState
 initialState input =
   { point: input.point
   , statuses: Set.empty
-  , mb_buffer: none
+  , mb_bufferOptions: none
   }
 
 eval :: forall a. H.HalogenQ PointQuery PointAction PointInput a -> H.HalogenM PointState PointAction PointSlots PointOutput Aff a
@@ -51,21 +53,12 @@ handleQuery (ModifyStatuses_PointQuery f a) = do
         Nothing -> pure unit
         Just elem_this -> liftEffect $ elem_this # HTMLElement.toElement # Element.scrollIntoView
   pure $ pure a
-handleQuery (SetBufferIsOpen b a) = do
-  if b then
-    modify_ \state -> state { mb_buffer = pure $ state.mb_buffer # fromMaybe initialBuffer }
-  else
-    modify_ _ { mb_buffer = none }
+handleQuery (SetBufferOptions_PointQuery mb_bufferOptions a) = do
+  modify_ _ { mb_bufferOptions = mb_bufferOptions }
   pure $ pure a
-handleQuery (GetBufferIsOpen k) = do
+handleQuery (GetBufferOptions_PointQuery k) = do
   state <- get
-  pure $ pure $ k $ state.mb_buffer # isJust
-
-initialBuffer :: Buffer
-initialBuffer =
-  { query: ""
-  , results: []
-  }
+  pure $ pure $ k state.mb_bufferOptions
 
 ss_Focus = Set.fromFoldable [ Point_Handle_PointStatus, LeftFocus_PointStatus, RightFocus_PointStatus ]
 
@@ -81,6 +74,9 @@ handleAction (MouseDown_PointAction event) = do
 handleAction (MouseEnter_PointAction event) = do
   state <- get
   H.raise $ MouseEnter_PointOutput event state.point
+handleAction (BufferOutput_PointAction bufferOutput) = do
+  state <- get
+  H.raise $ BufferOutput_PointOutput state.point bufferOutput
 
 render :: PointState -> PointHTML
 render state =
@@ -92,12 +88,12 @@ render state =
         ]
     , HE.onMouseDown MouseDown_PointAction
     , HE.onMouseEnter MouseEnter_PointAction
-    ]
-    [ HH.div [ classes $ fold [ [ "Buffer" ], state.mb_buffer # foldMap (const [ "open" ]) ] ]
-        [ HH.text "{{Buffer}}" ]
-    , HH.div [ classes [ "Left" ] ] []
-    , HH.div [ classes [ "Middle" ] ] []
-    , HH.div [ classes [ "Right" ] ] []
+    ] $ fold
+    [ state.mb_bufferOptions # foldMap \bufferOptions ->
+        [ HH.slot (Proxy @"Buffer") unit Buffer.component { options: bufferOptions } BufferOutput_PointAction ]
+    , [ HH.div [ classes [ "Left" ] ] [] ]
+    , [ HH.div [ classes [ "Middle" ] ] [] ]
+    , [ HH.div [ classes [ "Right" ] ] [] ]
     ]
 
 this = H.RefLabel "this"
