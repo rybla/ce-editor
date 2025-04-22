@@ -2,11 +2,12 @@
 
 ## halogen-simplified
 
-- [x] keyboard movement
-- [ ] escape action
 - [ ] cut/paste
 - [ ] undo/redo
 - [ ] fix bug in dragging that lets the inner span be outside the outer span
+- [ ] fix other bugs in dragging
+- [x] keyboard movement
+- [x] escape action
 - [x] drag from one point to another
 
 ## direct-dom-manipulation

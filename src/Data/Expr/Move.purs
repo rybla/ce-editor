@@ -10,6 +10,7 @@ import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.Newtype (wrap)
 import Data.Show.Generic (genericShow)
+import Data.Unfoldable (none)
 
 data Dir = L | R
 
@@ -69,4 +70,13 @@ moveZipperFocus R OuterLeft_ZipperFocus = InnerLeft_ZipperFocus
 moveZipperFocus R InnerLeft_ZipperFocus = InnerRight_ZipperFocus
 moveZipperFocus R InnerRight_ZipperFocus = OuterRight_ZipperFocus
 moveZipperFocus R OuterRight_ZipperFocus = OuterLeft_ZipperFocus
+
+escape :: Handle -> Maybe Handle
+escape (Point_Handle _) = none
+escape (SpanH_Handle h Left_SpanFocus) = pure $ Point_Handle (h # getEndPoints_SpanH)._L
+escape (SpanH_Handle h Right_SpanFocus) = pure $ Point_Handle (h # getEndPoints_SpanH)._R
+escape (ZipperH_Handle h OuterLeft_ZipperFocus) = pure $ SpanH_Handle (h # getInnerSpanH_ZipperH) Left_SpanFocus
+escape (ZipperH_Handle h InnerLeft_ZipperFocus) = pure $ SpanH_Handle (h # getOuterSpanH_ZipperH) Left_SpanFocus
+escape (ZipperH_Handle h InnerRight_ZipperFocus) = pure $ SpanH_Handle (h # getOuterSpanH_ZipperH) Right_SpanFocus
+escape (ZipperH_Handle h OuterRight_ZipperFocus) = pure $ SpanH_Handle (h # getInnerSpanH_ZipperH) Right_SpanFocus
 

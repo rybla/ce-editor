@@ -120,8 +120,15 @@ handleAction (KeyDown_EditorAction event) = do
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
+          liftEffect $ state.ref_mb_dragOrigin := none
           setHandle $ pure $ handle # Expr.Move.moveHandleFocus dir
-    _ | ki # Event.matchKeyInfo (_ == "Escape") { cmd: pure false, shift: pure false, alt: pure false } -> pure unit
+    _ | ki # Event.matchKeyInfo (_ == "Escape") { cmd: pure false, shift: pure false, alt: pure false } -> do
+      liftEffect $ event # Event.preventDefault
+      liftEffect $ state.ref_mb_dragOrigin := none
+      mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
+      case mb_handle of
+        Nothing -> pure unit
+        Just h -> setHandle $ Expr.Move.escape h
     _ -> pure unit
 
 handleAction (PointOutput_EditorAction (MouseDown_PointOutput _event p)) = do

@@ -438,6 +438,12 @@ getEndPoints_ZipperH (ZipperH h) =
   , _OR: Point { path: h.path_O, j: h.j_OR }
   }
 
+getOuterSpanH_ZipperH :: ZipperH -> SpanH
+getOuterSpanH_ZipperH (ZipperH h) = SpanH { path: h.path_O, j_L: h.j_OL, j_R: h.j_OR }
+
+getInnerSpanH_ZipperH :: ZipperH -> SpanH
+getInnerSpanH_ZipperH (ZipperH h) = SpanH { path: ZipperH h # getTotalInnerPath_ZipperH # fromNePath, j_L: h.j_IL, j_R: h.j_IR }
+
 getTotalInnerPath_ZipperH :: ZipperH -> NePath
 getTotalInnerPath_ZipperH (ZipperH h) = case h.path_O of
   Nil -> h.path_I
