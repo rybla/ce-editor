@@ -9507,7 +9507,7 @@
       },
       bufferOptions_point: function(p2) {
         return function(query3) {
-          return [new PasteSpan_BufferOption(query3, [mkExpr(new $$String(query3))([])])];
+          return [new PasteSpan_BufferOption(query3, [mkExpr(new $$String(query3))([])]), new PasteSpan_BufferOption("example", [mkExpr(new $$String("example"))([])])];
         };
       },
       max_history_length: 100
@@ -11108,7 +11108,7 @@
   };
   var refLabel_input = "input";
   var render2 = function(state3) {
-    return div2([classes2(fold3([["Buffer"]]))])([input2([classes2(["query"]), ref2(refLabel_input), value13(state3.query), onInput(QueryInput_BufferAction.create)]), div3([])(mapWithIndex4(function(i2) {
+    return div2([classes2(fold3([["Buffer"]]))])([input2([classes2(["query"]), ref2(refLabel_input), value13(state3.query), onInput(QueryInput_BufferAction.create)]), div3([classes2(["options"])])(mapWithIndex4(function(i2) {
       return function(v) {
         return new Tuple(show4(i2), div2([classes2(fold3([["PasteSpan", "BufferOption"], function() {
           var $49 = notEq3(new Just(i2))(state3.option_i);

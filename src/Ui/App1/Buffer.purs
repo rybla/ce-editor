@@ -150,12 +150,13 @@ render state =
         , HP.value state.query
         , HE.onInput QueryInput_BufferAction
         ]
-    , HHK.div [] $ state.options_queried # mapWithIndex \i -> case _ of
-        PasteSpan_BufferOption label span ->
-          show i /\
-            HH.div [ classes $ fold [ [ "PasteSpan", "BufferOption" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
-              [ HH.div [ classes [ "label" ] ] [ HH.text label ]
-              , HH.div [ classes [ "body" ] ] [ HH.text $ show span ]
-              ]
+    , HHK.div [ classes [ "options" ] ]
+        $ state.options_queried # mapWithIndex \i -> case _ of
+            PasteSpan_BufferOption label span ->
+              show i /\
+                HH.div [ classes $ fold [ [ "PasteSpan", "BufferOption" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
+                  [ HH.div [ classes [ "label" ] ] [ HH.text label ]
+                  , HH.div [ classes [ "body" ] ] [ HH.text $ show span ]
+                  ]
     ]
 

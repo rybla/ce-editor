@@ -3,6 +3,7 @@
 :root {
   /* --body--background: rgb(179, 175, 162); */
   --body--background: rgb(252, 243, 213);
+  --body--color: black;
 }
 
 html,

@@ -1,5 +1,6 @@
 :root {
   --Editor--background: var(--body--background);
+  --Editor--color: var(--body--color);
 
   --Handle--width: 1em;
   --Handle--background: blue;
@@ -34,6 +35,11 @@
     justify-content: flex-start;
 
     user-select: none;
+
+    &>.label {
+      display: block;
+      white-space: nowrap;
+    }
   }
 
   .Point {
@@ -44,6 +50,41 @@
     >.Buffer {
       position: absolute;
       top: 1.5em;
+      width: 20em;
+      box-shadow: 0 0 0 1px black;
+
+      display: flex;
+      flex-direction: column;
+
+      &>.query {
+        outline: none;
+        border: none;
+        background-color: var(--Editor--background);
+        color: var(--Editor--color);
+        font-family: inherit;
+      }
+
+      &>.options {
+        overflow: auto;
+
+        &>.BufferOption {
+          display: flex;
+          flex-direction: row;
+          gap: 1em;
+
+          &>.label {
+            flex: 0 0 auto;
+          }
+
+          &>.body {
+            flex: 1 0 auto;
+          }
+
+          &.selected {
+            background-color: color-mix(in srgb, blue, transparent 80%)
+          }
+        }
+      }
     }
 
     >.Left,

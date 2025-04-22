@@ -2,7 +2,9 @@
 
 ## halogen-simplified
 
-- [ ] searchable menu of edits
+- [x] searchable menu of edits
+  - [ ] give Editor proper interface to computing these edits
+  - [ ] edit an existing label (i.e. re-query it??)
 - [ ] fix bug in dragging that lets the inner span be outside the outer span
 - [ ] fix other bugs in dragging
 - [ ] fix bug that redo takes two tries to work?? and can't redo final undo
