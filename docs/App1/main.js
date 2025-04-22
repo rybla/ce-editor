@@ -10849,7 +10849,7 @@
           });
         }
         ;
-        throw new Error("Failed pattern match at Ui.App1.Editor (line 255, column 7 - line 261, column 55): " + [mb_handle.value0.value1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.App1.Editor (line 249, column 7 - line 255, column 55): " + [mb_handle.value0.value1.constructor.name]);
       }
       ;
       if (mb_handle instanceof Just && mb_handle.value0 instanceof ZipperH_Handle) {
@@ -10894,10 +10894,10 @@
           });
         }
         ;
-        throw new Error("Failed pattern match at Ui.App1.Editor (line 264, column 7 - line 284, column 63): " + [mb_handle.value0.value1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.App1.Editor (line 258, column 7 - line 278, column 63): " + [mb_handle.value0.value1.constructor.name]);
       }
       ;
-      throw new Error("Failed pattern match at Ui.App1.Editor (line 249, column 3 - line 284, column 63): " + [mb_handle.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App1.Editor (line 243, column 3 - line 278, column 63): " + [mb_handle.constructor.name]);
     };
   };
   var setHandle$prime = function(m_mb_handle) {
@@ -10942,13 +10942,13 @@
     if (v instanceof Initialize_EditorAction) {
       return bind16(liftEffect8(bind22(windowImpl)(document2)))(function(doc) {
         return discard7(subscribe$prime(function(_subId) {
-          return eventListener2(mouseup)(toEventTarget(doc))(function($149) {
-            return pure23(MouseUp_EditorAction.create($149));
+          return eventListener2(mouseup)(toEventTarget(doc))(function($159) {
+            return pure23(MouseUp_EditorAction.create($159));
           });
         }))(function() {
           return discard7(subscribe$prime(function(_subId) {
-            return eventListener2(keydown)(toEventTarget(doc))(function($150) {
-              return pure23(KeyDown_EditorAction.create($150));
+            return eventListener2(keydown)(toEventTarget(doc))(function($160) {
+              return pure23(KeyDown_EditorAction.create($160));
             });
           }))(function() {
             return handleAction2(Rerender_EditorAction.value);
@@ -11020,6 +11020,32 @@
                   }
                   ;
                   if (matchKeyInfo2(function(v7) {
+                    return v7 === "Backspace";
+                  })({
+                    cmd: pure23(false),
+                    shift: pure23(false),
+                    alt: pure23(false)
+                  })(ki)) {
+                    return discard7(liftEffect8(preventDefault(v.value0)))(function() {
+                      if (mb_handle instanceof Just) {
+                        var v7 = cut3(mb_handle.value0)(state3.root);
+                        return modifyEditorState(function(v8) {
+                          return {
+                            editor: v8.editor,
+                            ref_mb_handle: v8.ref_mb_handle,
+                            ref_mb_dragOrigin: v8.ref_mb_dragOrigin,
+                            clipboard: v8.clipboard,
+                            root: v7.value0,
+                            initial_mb_handle: pure23(v7.value1.value0)
+                          };
+                        });
+                      }
+                      ;
+                      return pure18(unit);
+                    });
+                  }
+                  ;
+                  if (matchKeyInfo2(function(v7) {
                     return v7 === "x";
                   })({
                     cmd: pure23(true),
@@ -11074,12 +11100,12 @@
                   ;
                   return pure18(unit);
                 };
-                var $114 = matchMapKeyInfo2(fromKeyToDir)({
+                var $124 = matchMapKeyInfo2(fromKeyToDir)({
                   cmd: pure23(false),
                   shift: pure23(false),
                   alt: pure23(true)
                 })(ki);
-                if ($114 instanceof Just) {
+                if ($124 instanceof Just) {
                   return discard7(liftEffect8(preventDefault(v.value0)))(function() {
                     if (mb_handle instanceof Nothing) {
                       return pure18(unit);
@@ -11087,7 +11113,7 @@
                     ;
                     if (mb_handle instanceof Just) {
                       return discard7(liftEffect8(writeFlipped(state3.ref_mb_dragOrigin)(none4)))(function() {
-                        return setHandle(pure23(moveHandleFocus($114.value0)(mb_handle.value0)));
+                        return setHandle(pure23(moveHandleFocus($124.value0)(mb_handle.value0)));
                       });
                     }
                     ;
@@ -11097,12 +11123,12 @@
                 ;
                 return v5(true);
               };
-              var $119 = matchMapKeyInfo2(fromKeyToDir)({
+              var $129 = matchMapKeyInfo2(fromKeyToDir)({
                 cmd: pure23(false),
                 shift: pure23(true),
                 alt: pure23(false)
               })(ki);
-              if ($119 instanceof Just) {
+              if ($129 instanceof Just) {
                 return discard7(liftEffect8(preventDefault(v.value0)))(function() {
                   if (mb_handle instanceof Nothing) {
                     return discard7(function() {
@@ -11134,7 +11160,7 @@
                       ;
                       throw new Error("Failed pattern match at Ui.App1.Editor (line 119, column 25 - line 124, column 30): " + [mb_dragOrigin.constructor.name]);
                     }())(function(dragOrigin) {
-                      var v4 = movePointUntil2(state3.root)($119.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
+                      var v4 = movePointUntil2(state3.root)($129.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
                         return drag3(dragOrigin)(p2)(state3.root);
                       });
                       if (v4 instanceof Nothing) {
@@ -11155,12 +11181,12 @@
               ;
               return v3(true);
             };
-            var $130 = matchMapKeyInfo2(fromKeyToDir)({
+            var $140 = matchMapKeyInfo2(fromKeyToDir)({
               cmd: pure23(false),
               shift: pure23(false),
               alt: pure23(false)
             })(ki);
-            if ($130 instanceof Just) {
+            if ($140 instanceof Just) {
               return discard7(liftEffect8(preventDefault(v.value0)))(function() {
                 return discard7(liftEffect8(writeFlipped(state3.ref_mb_dragOrigin)(none4)))(function() {
                   if (mb_handle instanceof Nothing) {
@@ -11168,7 +11194,7 @@
                   }
                   ;
                   if (mb_handle instanceof Just) {
-                    var v2 = movePoint2(state3.root)($130.value0)(getFocusPoint(mb_handle.value0));
+                    var v2 = movePoint2(state3.root)($140.value0)(getFocusPoint(mb_handle.value0));
                     if (v2 instanceof Nothing) {
                       return setHandle(new Just(new Point_Handle(getFocusPoint(mb_handle.value0))));
                     }
@@ -11207,7 +11233,7 @@
             });
           }
           ;
-          throw new Error("Failed pattern match at Ui.App1.Editor (line 184, column 3 - line 191, column 34): " + [mb_handle.constructor.name]);
+          throw new Error("Failed pattern match at Ui.App1.Editor (line 195, column 3 - line 202, column 34): " + [mb_handle.constructor.name]);
         });
       });
     }
@@ -11229,10 +11255,10 @@
               return setHandle(pure23(v1.value0));
             }
             ;
-            throw new Error("Failed pattern match at Ui.App1.Editor (line 199, column 9 - line 201, column 41): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App1.Editor (line 210, column 9 - line 212, column 41): " + [v1.constructor.name]);
           }
           ;
-          throw new Error("Failed pattern match at Ui.App1.Editor (line 196, column 5 - line 201, column 41): " + [mb_dragOrigin.constructor.name]);
+          throw new Error("Failed pattern match at Ui.App1.Editor (line 207, column 5 - line 212, column 41): " + [mb_dragOrigin.constructor.name]);
         });
       }));
     }

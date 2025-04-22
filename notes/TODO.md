@@ -2,11 +2,12 @@
 
 ## halogen-simplified
 
-- [x] copy/cut/paste
-- [ ] delete
 - [ ] undo/redo
+- [ ] searchable menu of edits
 - [ ] fix bug in dragging that lets the inner span be outside the outer span
 - [ ] fix other bugs in dragging
+- [x] copy/cut/paste
+- [x] delete
 - [x] keyboard movement
 - [x] escape action
 - [x] drag from one point to another

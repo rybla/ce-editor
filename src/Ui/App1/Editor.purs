@@ -152,6 +152,17 @@ handleAction (KeyDown_EditorAction event) = do
             , clipboard = pure frag
             }
         _ -> pure unit
+    -- delete
+    _ | ki # Event.matchKeyInfo (_ == "Backspace") { cmd: pure false, shift: pure false, alt: pure false } -> do
+      liftEffect $ event # Event.preventDefault
+      case mb_handle of
+        Just handle -> do
+          let root' /\ handle' /\ _ = state.root # Expr.Edit.cut handle
+          modifyEditorState _
+            { root = root'
+            , initial_mb_handle = pure handle'
+            }
+        _ -> pure unit
     -- cut
     _ | ki # Event.matchKeyInfo (_ == "x") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
