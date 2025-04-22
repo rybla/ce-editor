@@ -88,6 +88,12 @@ instance Show KeyInfo where
     , if ki.alt then "⎇" else ""
     , case ki.key of
         -- TODO: special cases
+        "ArrowUp" -> "↑"
+        "ArrowDown" -> "↓"
+        "ArrowRight" -> "→"
+        "ArrowLeft" -> "←"
+        "Backspace" -> "⌫"
+        "Enter" -> "⏎"
         k -> k
     ]
 

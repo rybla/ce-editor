@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Const (Const)
 import Data.Eq.Generic (genericEq)
-import Data.Expr (Expr, Fragment, Handle, Point)
+import Data.Expr (Expr, Fragment, Handle, Point, Span)
 import Data.Generic.Rep (class Generic)
 import Data.List (List)
 import Data.Maybe (Maybe)
@@ -92,8 +92,10 @@ type EditorHTML = H.ComponentHTML EditorAction EditorSlots Aff
 -- Point
 --------------------------------------------------------------------------------
 
-data PointQuery a =
-  ModifyMaybeStatuses_PointQuery (Set PointStatus -> Set PointStatus) a
+data PointQuery a
+  = ModifyStatuses_PointQuery (Set PointStatus -> Set PointStatus) a
+  | SetBufferIsOpen Boolean a
+  | GetBufferIsOpen (Boolean -> a)
 
 type PointInput =
   { point :: Point
@@ -106,7 +108,15 @@ data PointOutput
 type PointState =
   { point :: Point
   , statuses :: Set PointStatus
+  , mb_buffer :: Maybe Buffer
   }
+
+type Buffer =
+  { query :: String
+  , results :: Array BufferResult
+  }
+
+data BufferResult = PasteSpan_BufferResult (Span L)
 
 data PointStatus
   = Point_Handle_PointStatus

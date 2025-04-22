@@ -37,8 +37,20 @@
   }
 
   .Point {
+    position: relative;
     display: flex;
     flex-direction: row;
+
+    >.Buffer {
+      position: fixed;
+      display: none;
+      visibility: hidden;
+
+      &.open {
+        display: block;
+        visibility: visible;
+      }
+    }
 
     >.Left,
     >.Middle,

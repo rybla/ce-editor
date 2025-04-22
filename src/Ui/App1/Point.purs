@@ -2,19 +2,20 @@ module Ui.App1.Point where
 
 import Prelude
 
-import Control.Monad.State (get, gets, put)
+import Control.Monad.State (get, gets, modify_, put)
 import Data.Array as Array
+import Data.Foldable (fold, foldMap)
 import Data.Lens ((%=))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Set as Set
+import Data.Unfoldable (none)
 import Effect.Aff (Aff)
-import Effect.Class.Console as Console
 import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Ui.App1.Common (PointAction(..), PointHTML, PointInput, PointM, PointOutput(..), PointQuery(..), PointSlots, PointState, PointStatus(..))
+import Ui.App1.Common (PointAction(..), PointHTML, PointInput, PointM, PointOutput(..), PointQuery(..), PointSlots, PointState, PointStatus(..), Buffer)
 import Ui.Element as Element
 import Ui.Halogen (classes)
 import Utility (prop)
@@ -27,6 +28,7 @@ initialState :: PointInput -> PointState
 initialState input =
   { point: input.point
   , statuses: Set.empty
+  , mb_buffer: none
   }
 
 eval :: forall a. H.HalogenQ PointQuery PointAction PointInput a -> H.HalogenM PointState PointAction PointSlots PointOutput Aff a
@@ -38,7 +40,7 @@ eval = H.mkEval H.defaultEval
   }
 
 handleQuery :: forall a. PointQuery a -> PointM (Maybe a)
-handleQuery (ModifyMaybeStatuses_PointQuery f a) = do
+handleQuery (ModifyStatuses_PointQuery f a) = do
   -- get >>= \{ statuses } -> Console.log $ "[Point] old statuses: " <> show statuses
   prop @"statuses" %= f
   -- get >>= \{ statuses } -> Console.log $ "[Point] new statuses: " <> show statuses
@@ -48,7 +50,22 @@ handleQuery (ModifyMaybeStatuses_PointQuery f a) = do
       case mb_elem_this of
         Nothing -> pure unit
         Just elem_this -> liftEffect $ elem_this # HTMLElement.toElement # Element.scrollIntoView
-  pure (pure a)
+  pure $ pure a
+handleQuery (SetBufferIsOpen b a) = do
+  if b then
+    modify_ \state -> state { mb_buffer = pure $ state.mb_buffer # fromMaybe initialBuffer }
+  else
+    modify_ _ { mb_buffer = none }
+  pure $ pure a
+handleQuery (GetBufferIsOpen k) = do
+  state <- get
+  pure $ pure $ k $ state.mb_buffer # isJust
+
+initialBuffer :: Buffer
+initialBuffer =
+  { query: ""
+  , results: []
+  }
 
 ss_Focus = Set.fromFoldable [ Point_Handle_PointStatus, LeftFocus_PointStatus, RightFocus_PointStatus ]
 
@@ -76,9 +93,12 @@ render state =
     , HE.onMouseDown MouseDown_PointAction
     , HE.onMouseEnter MouseEnter_PointAction
     ]
-    [ HH.div [ classes [ "Left" ] ] []
+    [ HH.div [ classes $ fold [ [ "Buffer" ], state.mb_buffer # foldMap (const [ "open" ]) ] ]
+        [ HH.text "{{Buffer}}" ]
+    , HH.div [ classes [ "Left" ] ] []
     , HH.div [ classes [ "Middle" ] ] []
     , HH.div [ classes [ "Right" ] ] []
     ]
 
 this = H.RefLabel "this"
+

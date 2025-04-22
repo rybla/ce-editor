@@ -9,6 +9,7 @@ import Data.Expr (Expr(..), Handle(..), Path, Point(..), SpanFocus(..), ZipperFo
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
+import Data.Foldable (and)
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe(..))
@@ -30,7 +31,7 @@ import Ui.App1.Common (EditorAction(..), EditorHTML, EditorInput, EditorM, Edito
 import Ui.App1.Point as Point
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
-import Utility (todo, (:%=), (:=))
+import Utility ((:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -91,113 +92,135 @@ handleAction (KeyDown_EditorAction event) = do
   state <- get
   mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
   mb_dragOrigin <- liftEffect $ Ref.read state.ref_mb_dragOrigin
+  bufferIsOpen <- case mb_handle of
+    Nothing -> pure false
+    Just handle -> and <$> H.request (Proxy @"Point") (handle # getFocusPoint) GetBufferIsOpen
   let ki = Event.fromEventToKeyInfo event
-  case unit of
-    -- move
-    _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure false } -> do
-      liftEffect $ event # Event.preventDefault
-      liftEffect $ state.ref_mb_dragOrigin := none
-      case mb_handle of
-        Nothing -> do
-          setHandle $ pure state.editor.initial_handle
-        Just handle -> do
-          case Expr.Move.movePoint state.root dir (handle # getFocusPoint) of
-            Nothing -> setHandle (Just (Point_Handle (handle # getFocusPoint)))
-            Just point -> setHandle (Just (Point_Handle point))
-    -- drag move
-    _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure true, alt: pure false } -> do
-      liftEffect $ event # Event.preventDefault
-      case mb_handle of
-        Nothing -> do
-          -- initialize dragOrigin
-          case mb_dragOrigin of
-            Nothing -> do
-              liftEffect $ state.ref_mb_dragOrigin := pure state.editor.initial_handle
-            Just _ -> do
-              pure unit
-          setHandle $ pure state.editor.initial_handle
-        Just handle -> do
-          -- initialize dragOrigin
-          dragOrigin <- case mb_dragOrigin of
-            Nothing -> do
-              liftEffect $ state.ref_mb_dragOrigin := pure handle
-              pure handle
-            Just dragOrigin -> do
-              pure dragOrigin
-          case Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p -> state.root # Expr.Drag.drag dragOrigin p of
-            Nothing -> pure unit
-            Just handle' -> do
-              setHandle $ pure handle'
-    -- move handle focus
-    _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure true } -> do
+  -- Console.logShow { ki }
+
+  if bufferIsOpen then case unit of
+    -- close buffer
+    _ | ki # Event.matchKeyInfo (_ == "Enter") { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
-          liftEffect $ state.ref_mb_dragOrigin := none
-          setHandle $ pure $ handle # Expr.Move.moveHandleFocus dir
-    -- escape
-    _ | ki # Event.matchKeyInfo (_ == "Escape") { cmd: pure false, shift: pure false, alt: pure false } -> do
-      liftEffect $ event # Event.preventDefault
-      liftEffect $ state.ref_mb_dragOrigin := none
-      case mb_handle of
-        Just h -> setHandle $ Expr.Move.escape h
-        _ -> pure unit
-    -- copy
-    _ | ki # Event.matchKeyInfo (_ == "c") { cmd: pure true, shift: pure false, alt: pure false } -> do
-      liftEffect $ event # Event.preventDefault
-      case mb_handle of
-        Just handle -> do
-          let root' /\ _ /\ frag = state.root # Expr.Edit.cut handle
-          modifyEditorState _
-            { root = root'
-            , clipboard = pure frag
-            }
-        _ -> pure unit
-    -- delete
-    _ | ki # Event.matchKeyInfo (_ == "Backspace") { cmd: pure false, shift: pure false, alt: pure false } -> do
-      liftEffect $ event # Event.preventDefault
-      case mb_handle of
-        Just handle -> do
-          let root' /\ handle' /\ _ = state.root # Expr.Edit.cut handle
-          modifyEditorState _
-            { root = root'
-            , initial_mb_handle = pure handle'
-            }
-        _ -> pure unit
-    -- cut
-    _ | ki # Event.matchKeyInfo (_ == "x") { cmd: pure true, shift: pure false, alt: pure false } -> do
-      liftEffect $ event # Event.preventDefault
-      case mb_handle of
-        Just handle -> do
-          let root' /\ handle' /\ frag = state.root # Expr.Edit.cut handle
-          modifyEditorState _
-            { root = root'
-            , initial_mb_handle = pure handle'
-            , clipboard = pure frag
-            }
-        _ -> pure unit
-    -- paste
-    _ | ki # Event.matchKeyInfo (_ == "v") { cmd: pure true, shift: pure false, alt: pure false } -> do
-      liftEffect $ event # Event.preventDefault
-      case mb_handle /\ state.clipboard of
-        Just handle /\ Just clipboard -> do
-          let root' /\ handle' = state.root # Expr.Edit.paste clipboard handle
-          modifyEditorState _
-            { root = root'
-            , initial_mb_handle = pure handle'
-            }
-        _ -> pure unit
-    -- redo
-    _ | ki # Event.matchKeyInfo (_ == "z") { cmd: pure true, shift: pure true, alt: pure false } -> do
-      liftEffect $ event # Event.preventDefault
-      redo
-    -- undo
-    _ | ki # Event.matchKeyInfo (_ == "z") { cmd: pure true, shift: pure false, alt: pure false } -> do
-      liftEffect $ event # Event.preventDefault
-      undo
-    -- unrecognized keyboard event
+          H.tell (Proxy @"Point") (handle # getFocusPoint) $ SetBufferIsOpen false
     _ -> pure unit
+  else do
+    case unit of
+      -- open buffer
+      _ | ki # Event.matchKeyInfo (_ == "Enter") { cmd: pure false, shift: pure false, alt: pure false } -> do
+        liftEffect $ event # Event.preventDefault
+        case mb_handle of
+          Nothing -> pure unit
+          Just handle -> do
+            H.tell (Proxy @"Point") (handle # getFocusPoint) $ SetBufferIsOpen true
+      -- move
+      _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure false } -> do
+        liftEffect $ event # Event.preventDefault
+        liftEffect $ state.ref_mb_dragOrigin := none
+        case mb_handle of
+          Nothing -> do
+            setHandle $ pure state.editor.initial_handle
+          Just handle -> do
+            case Expr.Move.movePoint state.root dir (handle # getFocusPoint) of
+              Nothing -> setHandle (Just (Point_Handle (handle # getFocusPoint)))
+              Just point -> setHandle (Just (Point_Handle point))
+      -- drag move
+      _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure true, alt: pure false } -> do
+        liftEffect $ event # Event.preventDefault
+        case mb_handle of
+          Nothing -> do
+            -- initialize dragOrigin
+            case mb_dragOrigin of
+              Nothing -> do
+                liftEffect $ state.ref_mb_dragOrigin := pure state.editor.initial_handle
+              Just _ -> do
+                pure unit
+            setHandle $ pure state.editor.initial_handle
+          Just handle -> do
+            -- initialize dragOrigin
+            dragOrigin <- case mb_dragOrigin of
+              Nothing -> do
+                liftEffect $ state.ref_mb_dragOrigin := pure handle
+                pure handle
+              Just dragOrigin -> do
+                pure dragOrigin
+            case Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p -> state.root # Expr.Drag.drag dragOrigin p of
+              Nothing -> pure unit
+              Just handle' -> do
+                setHandle $ pure handle'
+      -- move handle focus
+      _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure true } -> do
+        liftEffect $ event # Event.preventDefault
+        case mb_handle of
+          Nothing -> pure unit
+          Just handle -> do
+            liftEffect $ state.ref_mb_dragOrigin := none
+            setHandle $ pure $ handle # Expr.Move.moveHandleFocus dir
+      -- escape
+      _ | ki # Event.matchKeyInfo (_ == "Escape") { cmd: pure false, shift: pure false, alt: pure false } -> do
+        liftEffect $ event # Event.preventDefault
+        liftEffect $ state.ref_mb_dragOrigin := none
+        case mb_handle of
+          Just h -> setHandle $ Expr.Move.escape h
+          _ -> pure unit
+      -- copy
+      _ | ki # Event.matchKeyInfo (_ == "c") { cmd: pure true, shift: pure false, alt: pure false } -> do
+        liftEffect $ event # Event.preventDefault
+        case mb_handle of
+          Just handle -> do
+            let root' /\ _ /\ frag = state.root # Expr.Edit.cut handle
+            modifyEditorState _
+              { root = root'
+              , clipboard = pure frag
+              }
+          _ -> pure unit
+      -- delete
+      _ | ki # Event.matchKeyInfo (_ == "Backspace") { cmd: pure false, shift: pure false, alt: pure false } -> do
+        liftEffect $ event # Event.preventDefault
+        case mb_handle of
+          Just handle -> do
+            let root' /\ handle' /\ _ = state.root # Expr.Edit.cut handle
+            modifyEditorState _
+              { root = root'
+              , initial_mb_handle = pure handle'
+              }
+          _ -> pure unit
+      -- cut
+      _ | ki # Event.matchKeyInfo (_ == "x") { cmd: pure true, shift: pure false, alt: pure false } -> do
+        liftEffect $ event # Event.preventDefault
+        case mb_handle of
+          Just handle -> do
+            let root' /\ handle' /\ frag = state.root # Expr.Edit.cut handle
+            modifyEditorState _
+              { root = root'
+              , initial_mb_handle = pure handle'
+              , clipboard = pure frag
+              }
+          _ -> pure unit
+      -- paste
+      _ | ki # Event.matchKeyInfo (_ == "v") { cmd: pure true, shift: pure false, alt: pure false } -> do
+        liftEffect $ event # Event.preventDefault
+        case mb_handle /\ state.clipboard of
+          Just handle /\ Just clipboard -> do
+            let root' /\ handle' = state.root # Expr.Edit.paste clipboard handle
+            modifyEditorState _
+              { root = root'
+              , initial_mb_handle = pure handle'
+              }
+          _ -> pure unit
+      -- redo
+      _ | ki # Event.matchKeyInfo (_ == "z") { cmd: pure true, shift: pure true, alt: pure false } -> do
+        liftEffect $ event # Event.preventDefault
+        redo
+      -- undo
+      _ | ki # Event.matchKeyInfo (_ == "z") { cmd: pure true, shift: pure false, alt: pure false } -> do
+        liftEffect $ event # Event.preventDefault
+        undo
+      -- unrecognized keyboard event
+      _ -> pure unit
 
 handleAction (PointOutput_EditorAction (MouseDown_PointOutput _event p)) = do
   state <- get
@@ -297,9 +320,9 @@ modifyHandle b mb_handle = do
     modifyClass :: Point -> Set PointStatus -> EditorM Unit
     modifyClass p ss' =
       if b then
-        H.tell (Proxy @"Point") p $ ModifyMaybeStatuses_PointQuery (_ `Set.union` ss')
+        H.tell (Proxy @"Point") p $ ModifyStatuses_PointQuery (_ `Set.union` ss')
       else
-        H.tell (Proxy @"Point") p $ ModifyMaybeStatuses_PointQuery (_ `Set.difference` ss')
+        H.tell (Proxy @"Point") p $ ModifyStatuses_PointQuery (_ `Set.difference` ss')
   case mb_handle of
     Nothing -> pure unit
     Just (Point_Handle p) -> do
