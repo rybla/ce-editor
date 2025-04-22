@@ -2,8 +2,7 @@
   "name": "ce-editor",
   "scripts": {
     "build.spago": "spago build",
-    "build.template": "spago bundle --platform node --bundle-type app --module Template --outfile template.js && bun template.js",
-    "build": "bun run build.spago && bun run build.template",
+    "build": "spago bundle --bundle-type app --module Ui.App --outfile ./docs/main.js",
     "serve": "http-server docs/",
     "start": "bun run build && bun run serve"
   },
