@@ -8986,20 +8986,6 @@
     SpanH_Handle_Left_PointStatus2.value = new SpanH_Handle_Left_PointStatus2();
     return SpanH_Handle_Left_PointStatus2;
   }();
-  var SpanH_Handle_Right_Focus_PointStatus = /* @__PURE__ */ function() {
-    function SpanH_Handle_Right_Focus_PointStatus2() {
-    }
-    ;
-    SpanH_Handle_Right_Focus_PointStatus2.value = new SpanH_Handle_Right_Focus_PointStatus2();
-    return SpanH_Handle_Right_Focus_PointStatus2;
-  }();
-  var SpanH_Handle_Left_Focus_PointStatus = /* @__PURE__ */ function() {
-    function SpanH_Handle_Left_Focus_PointStatus2() {
-    }
-    ;
-    SpanH_Handle_Left_Focus_PointStatus2.value = new SpanH_Handle_Left_Focus_PointStatus2();
-    return SpanH_Handle_Left_Focus_PointStatus2;
-  }();
   var SpanH_Handle_Right_PointStatus = /* @__PURE__ */ function() {
     function SpanH_Handle_Right_PointStatus2() {
     }
@@ -9035,33 +9021,26 @@
     ZipperH_Handle_OuterRight_PointStatus2.value = new ZipperH_Handle_OuterRight_PointStatus2();
     return ZipperH_Handle_OuterRight_PointStatus2;
   }();
-  var ZipperH_Handle_OuterLeft_Focus_PointStatus = /* @__PURE__ */ function() {
-    function ZipperH_Handle_OuterLeft_Focus_PointStatus2() {
+  var Focus_PointStatus = /* @__PURE__ */ function() {
+    function Focus_PointStatus2() {
     }
     ;
-    ZipperH_Handle_OuterLeft_Focus_PointStatus2.value = new ZipperH_Handle_OuterLeft_Focus_PointStatus2();
-    return ZipperH_Handle_OuterLeft_Focus_PointStatus2;
+    Focus_PointStatus2.value = new Focus_PointStatus2();
+    return Focus_PointStatus2;
   }();
-  var ZipperH_Handle_InnerLeft_Focus_PointStatus = /* @__PURE__ */ function() {
-    function ZipperH_Handle_InnerLeft_Focus_PointStatus2() {
+  var LeftFocus_PointStatus = /* @__PURE__ */ function() {
+    function LeftFocus_PointStatus2() {
     }
     ;
-    ZipperH_Handle_InnerLeft_Focus_PointStatus2.value = new ZipperH_Handle_InnerLeft_Focus_PointStatus2();
-    return ZipperH_Handle_InnerLeft_Focus_PointStatus2;
+    LeftFocus_PointStatus2.value = new LeftFocus_PointStatus2();
+    return LeftFocus_PointStatus2;
   }();
-  var ZipperH_Handle_InnerRight_Focus_PointStatus = /* @__PURE__ */ function() {
-    function ZipperH_Handle_InnerRight_Focus_PointStatus2() {
+  var RightFocus_PointStatus = /* @__PURE__ */ function() {
+    function RightFocus_PointStatus2() {
     }
     ;
-    ZipperH_Handle_InnerRight_Focus_PointStatus2.value = new ZipperH_Handle_InnerRight_Focus_PointStatus2();
-    return ZipperH_Handle_InnerRight_Focus_PointStatus2;
-  }();
-  var ZipperH_Handle_OuterRight_Focus_PointStatus = /* @__PURE__ */ function() {
-    function ZipperH_Handle_OuterRight_Focus_PointStatus2() {
-    }
-    ;
-    ZipperH_Handle_OuterRight_Focus_PointStatus2.value = new ZipperH_Handle_OuterRight_Focus_PointStatus2();
-    return ZipperH_Handle_OuterRight_Focus_PointStatus2;
+    RightFocus_PointStatus2.value = new RightFocus_PointStatus2();
+    return RightFocus_PointStatus2;
   }();
   var ModifyMaybeStatuses_PointQuery = /* @__PURE__ */ function() {
     function ModifyMaybeStatuses_PointQuery2(value0, value1) {
@@ -9077,22 +9056,28 @@
     return ModifyMaybeStatuses_PointQuery2;
   }();
   var MouseDown_PointOutput = /* @__PURE__ */ function() {
-    function MouseDown_PointOutput2(value0) {
+    function MouseDown_PointOutput2(value0, value1) {
       this.value0 = value0;
+      this.value1 = value1;
     }
     ;
     MouseDown_PointOutput2.create = function(value0) {
-      return new MouseDown_PointOutput2(value0);
+      return function(value1) {
+        return new MouseDown_PointOutput2(value0, value1);
+      };
     };
     return MouseDown_PointOutput2;
   }();
   var MouseEnter_PointOutput = /* @__PURE__ */ function() {
-    function MouseEnter_PointOutput2(value0) {
+    function MouseEnter_PointOutput2(value0, value1) {
       this.value0 = value0;
+      this.value1 = value1;
     }
     ;
     MouseEnter_PointOutput2.create = function(value0) {
-      return new MouseEnter_PointOutput2(value0);
+      return function(value1) {
+        return new MouseEnter_PointOutput2(value0, value1);
+      };
     };
     return MouseEnter_PointOutput2;
   }();
@@ -9161,50 +9146,38 @@
       }
       ;
       if (x instanceof Inr && (x.value0 instanceof Inr && x.value0.value0 instanceof Inl)) {
-        return SpanH_Handle_Right_Focus_PointStatus.value;
-      }
-      ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && x.value0.value0.value0 instanceof Inl))) {
-        return SpanH_Handle_Left_Focus_PointStatus.value;
-      }
-      ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0 instanceof Inl)))) {
         return SpanH_Handle_Right_PointStatus.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0 instanceof Inl))))) {
+      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && x.value0.value0.value0 instanceof Inl))) {
         return ZipperH_Handle_OuterLeft_PointStatus.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0 instanceof Inl)))))) {
+      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0 instanceof Inl)))) {
         return ZipperH_Handle_InnerLeft_PointStatus.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0 instanceof Inl))))))) {
+      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0 instanceof Inl))))) {
         return ZipperH_Handle_InnerRight_PointStatus.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl)))))))) {
+      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0 instanceof Inl)))))) {
         return ZipperH_Handle_OuterRight_PointStatus.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl))))))))) {
-        return ZipperH_Handle_OuterLeft_Focus_PointStatus.value;
+      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0 instanceof Inl))))))) {
+        return Focus_PointStatus.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl)))))))))) {
-        return ZipperH_Handle_InnerLeft_Focus_PointStatus.value;
+      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl)))))))) {
+        return LeftFocus_PointStatus.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inl))))))))))) {
-        return ZipperH_Handle_InnerRight_Focus_PointStatus.value;
+      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr)))))))) {
+        return RightFocus_PointStatus.value;
       }
       ;
-      if (x instanceof Inr && (x.value0 instanceof Inr && (x.value0.value0 instanceof Inr && (x.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && (x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr && x.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0.value0 instanceof Inr))))))))))) {
-        return ZipperH_Handle_OuterRight_Focus_PointStatus.value;
-      }
-      ;
-      throw new Error("Failed pattern match at Ui.App1.Common (line 114, column 1 - line 114, column 38): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App1.Common (line 111, column 1 - line 111, column 38): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof Point_Handle_PointStatus) {
@@ -9215,51 +9188,39 @@
         return new Inr(new Inl(NoArguments.value));
       }
       ;
-      if (x instanceof SpanH_Handle_Right_Focus_PointStatus) {
+      if (x instanceof SpanH_Handle_Right_PointStatus) {
         return new Inr(new Inr(new Inl(NoArguments.value)));
       }
       ;
-      if (x instanceof SpanH_Handle_Left_Focus_PointStatus) {
+      if (x instanceof ZipperH_Handle_OuterLeft_PointStatus) {
         return new Inr(new Inr(new Inr(new Inl(NoArguments.value))));
       }
       ;
-      if (x instanceof SpanH_Handle_Right_PointStatus) {
+      if (x instanceof ZipperH_Handle_InnerLeft_PointStatus) {
         return new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))));
       }
       ;
-      if (x instanceof ZipperH_Handle_OuterLeft_PointStatus) {
+      if (x instanceof ZipperH_Handle_InnerRight_PointStatus) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value))))));
       }
       ;
-      if (x instanceof ZipperH_Handle_InnerLeft_PointStatus) {
+      if (x instanceof ZipperH_Handle_OuterRight_PointStatus) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))))));
       }
       ;
-      if (x instanceof ZipperH_Handle_InnerRight_PointStatus) {
+      if (x instanceof Focus_PointStatus) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value))))))));
       }
       ;
-      if (x instanceof ZipperH_Handle_OuterRight_PointStatus) {
+      if (x instanceof LeftFocus_PointStatus) {
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))))))));
       }
       ;
-      if (x instanceof ZipperH_Handle_OuterLeft_Focus_PointStatus) {
-        return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value))))))))));
+      if (x instanceof RightFocus_PointStatus) {
+        return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(NoArguments.value)))))))));
       }
       ;
-      if (x instanceof ZipperH_Handle_InnerLeft_Focus_PointStatus) {
-        return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value)))))))))));
-      }
-      ;
-      if (x instanceof ZipperH_Handle_InnerRight_Focus_PointStatus) {
-        return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inl(NoArguments.value))))))))))));
-      }
-      ;
-      if (x instanceof ZipperH_Handle_OuterRight_Focus_PointStatus) {
-        return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(NoArguments.value))))))))))));
-      }
-      ;
-      throw new Error("Failed pattern match at Ui.App1.Common (line 114, column 1 - line 114, column 38): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App1.Common (line 111, column 1 - line 111, column 38): " + [x.constructor.name]);
     }
   };
   var genericShow2 = /* @__PURE__ */ genericShow(genericPointStatus_)(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor2({
@@ -9269,14 +9230,6 @@
   }))(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor2({
     reflectSymbol: function() {
       return "SpanH_Handle_Left_PointStatus";
-    }
-  }))(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor2({
-    reflectSymbol: function() {
-      return "SpanH_Handle_Right_Focus_PointStatus";
-    }
-  }))(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor2({
-    reflectSymbol: function() {
-      return "SpanH_Handle_Left_Focus_PointStatus";
     }
   }))(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor2({
     reflectSymbol: function() {
@@ -9300,23 +9253,19 @@
     }
   }))(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor2({
     reflectSymbol: function() {
-      return "ZipperH_Handle_OuterLeft_Focus_PointStatus";
+      return "Focus_PointStatus";
     }
   }))(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor2({
     reflectSymbol: function() {
-      return "ZipperH_Handle_InnerLeft_Focus_PointStatus";
-    }
-  }))(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor2({
-    reflectSymbol: function() {
-      return "ZipperH_Handle_InnerRight_Focus_PointStatus";
+      return "LeftFocus_PointStatus";
     }
   }))(/* @__PURE__ */ genericShowConstructor2({
     reflectSymbol: function() {
-      return "ZipperH_Handle_OuterRight_Focus_PointStatus";
+      return "RightFocus_PointStatus";
     }
-  }))))))))))))));
-  var genericEq2 = /* @__PURE__ */ genericEq(genericPointStatus_)(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(genericEqConstructor2)))))))))))));
-  var genericCompare3 = /* @__PURE__ */ genericCompare(genericPointStatus_)(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(genericOrdConstructor2)))))))))))));
+  })))))))))));
+  var genericEq2 = /* @__PURE__ */ genericEq(genericPointStatus_)(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(/* @__PURE__ */ genericEqSum2(genericEqConstructor2))))))))));
+  var genericCompare3 = /* @__PURE__ */ genericCompare(genericPointStatus_)(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(genericOrdConstructor2))))))))));
   var showPointStatus = {
     show: function(x) {
       return genericShow2(x);
@@ -9395,7 +9344,7 @@
   var bind6 = /* @__PURE__ */ bind(bindHalogenM);
   var get3 = /* @__PURE__ */ get(monadStateHalogenM);
   var render2 = function(state3) {
-    return div2([classes2(fold3([["Point"], map23(show8)(toUnfoldable6(state3.mb_statuses))])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])([text5("")]);
+    return div2([classes2(fold3([["Point"], map23(show8)(toUnfoldable6(state3.mb_statuses))])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])([div2([classes2(["Left"])])([]), div2([classes2(["Middle"])])([]), div2([classes2(["Right"])])([])]);
   };
   var initialState2 = function(input3) {
     return {
@@ -9415,13 +9364,13 @@
     ;
     if (v instanceof MouseDown_PointAction) {
       return bind6(get3)(function(state3) {
-        return raise(new MouseDown_PointOutput(state3.point));
+        return raise(new MouseDown_PointOutput(v.value0, state3.point));
       });
     }
     ;
     if (v instanceof MouseEnter_PointAction) {
       return bind6(get3)(function(state3) {
-        return raise(new MouseEnter_PointOutput(state3.point));
+        return raise(new MouseEnter_PointOutput(v.value0, state3.point));
       });
     }
     ;
@@ -9441,6 +9390,11 @@
     "eval": $$eval2,
     render: render2
   });
+
+  // output/Web.UIEvent.MouseEvent/foreign.js
+  function buttons(e) {
+    return e.buttons;
+  }
 
   // output/Ui.App1.Editor/index.js
   var fromFoldable5 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordPointStatus);
@@ -9470,21 +9424,40 @@
   var none2 = /* @__PURE__ */ none(unfoldableMaybe);
   var bind22 = /* @__PURE__ */ bind(bindEffect);
   var pure23 = /* @__PURE__ */ pure(applicativeMaybe);
+  var when4 = /* @__PURE__ */ when(applicativeHalogenM);
   var drag3 = /* @__PURE__ */ drag(showL);
+  var ss_ZipperH_Handle_OuterRight_Focus = /* @__PURE__ */ function() {
+    return fromFoldable5([ZipperH_Handle_OuterRight_PointStatus.value, RightFocus_PointStatus.value]);
+  }();
+  var ss_ZipperH_Handle_OuterRight = /* @__PURE__ */ function() {
+    return fromFoldable5([ZipperH_Handle_OuterRight_PointStatus.value]);
+  }();
   var ss_ZipperH_Handle_OuterLeft_Focus = /* @__PURE__ */ function() {
-    return fromFoldable5([ZipperH_Handle_OuterLeft_PointStatus.value, ZipperH_Handle_OuterLeft_Focus_PointStatus.value]);
+    return fromFoldable5([ZipperH_Handle_OuterLeft_PointStatus.value, LeftFocus_PointStatus.value]);
   }();
   var ss_ZipperH_Handle_OuterLeft = /* @__PURE__ */ function() {
     return fromFoldable5([ZipperH_Handle_OuterLeft_PointStatus.value]);
   }();
+  var ss_ZipperH_Handle_InnerRight_Focus = /* @__PURE__ */ function() {
+    return fromFoldable5([ZipperH_Handle_InnerRight_PointStatus.value, RightFocus_PointStatus.value]);
+  }();
+  var ss_ZipperH_Handle_InnerRight = /* @__PURE__ */ function() {
+    return fromFoldable5([ZipperH_Handle_InnerRight_PointStatus.value]);
+  }();
+  var ss_ZipperH_Handle_InnerLeft_Focus = /* @__PURE__ */ function() {
+    return fromFoldable5([ZipperH_Handle_InnerLeft_PointStatus.value, LeftFocus_PointStatus.value]);
+  }();
+  var ss_ZipperH_Handle_InnerLeft = /* @__PURE__ */ function() {
+    return fromFoldable5([ZipperH_Handle_InnerLeft_PointStatus.value]);
+  }();
   var ss_SpanH_Handle_Right_Focus = /* @__PURE__ */ function() {
-    return fromFoldable5([SpanH_Handle_Right_PointStatus.value, SpanH_Handle_Right_Focus_PointStatus.value]);
+    return fromFoldable5([SpanH_Handle_Right_PointStatus.value, RightFocus_PointStatus.value]);
   }();
   var ss_SpanH_Handle_Right = /* @__PURE__ */ function() {
     return fromFoldable5([SpanH_Handle_Right_PointStatus.value]);
   }();
   var ss_SpanH_Handle_Left_Focus = /* @__PURE__ */ function() {
-    return fromFoldable5([SpanH_Handle_Left_PointStatus.value, SpanH_Handle_Left_Focus_PointStatus.value]);
+    return fromFoldable5([SpanH_Handle_Left_PointStatus.value, LeftFocus_PointStatus.value]);
   }();
   var ss_SpanH_Handle_Left = /* @__PURE__ */ function() {
     return fromFoldable5([SpanH_Handle_Left_PointStatus.value]);
@@ -9560,16 +9533,16 @@
           });
         }
         ;
-        throw new Error("Failed pattern match at Ui.App1.Editor (line 117, column 7 - line 123, column 55): " + [mb_handle.value0.value1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.App1.Editor (line 116, column 7 - line 122, column 55): " + [mb_handle.value0.value1.constructor.name]);
       }
       ;
       if (mb_handle instanceof Just && mb_handle.value0 instanceof ZipperH_Handle) {
         var p2 = getEndPoints_ZipperH(mb_handle.value0.value0);
         if (mb_handle.value0.value1 instanceof OuterLeft_ZipperFocus) {
           return discard6(modifyClass(p2["_OL"])(ss_ZipperH_Handle_OuterLeft_Focus))(function() {
-            return discard6(modifyClass(p2["_IL"])(ss_ZipperH_Handle_OuterLeft))(function() {
-              return discard6(modifyClass(p2["_IR"])(ss_ZipperH_Handle_OuterLeft))(function() {
-                return modifyClass(p2["_OR"])(ss_ZipperH_Handle_OuterLeft);
+            return discard6(modifyClass(p2["_IL"])(ss_ZipperH_Handle_InnerLeft))(function() {
+              return discard6(modifyClass(p2["_IR"])(ss_ZipperH_Handle_InnerRight))(function() {
+                return modifyClass(p2["_OR"])(ss_ZipperH_Handle_OuterRight);
               });
             });
           });
@@ -9577,9 +9550,9 @@
         ;
         if (mb_handle.value0.value1 instanceof InnerLeft_ZipperFocus) {
           return discard6(modifyClass(p2["_OL"])(ss_ZipperH_Handle_OuterLeft))(function() {
-            return discard6(modifyClass(p2["_IL"])(ss_ZipperH_Handle_OuterLeft_Focus))(function() {
-              return discard6(modifyClass(p2["_IR"])(ss_ZipperH_Handle_OuterLeft))(function() {
-                return modifyClass(p2["_OR"])(ss_ZipperH_Handle_OuterLeft);
+            return discard6(modifyClass(p2["_IL"])(ss_ZipperH_Handle_InnerLeft_Focus))(function() {
+              return discard6(modifyClass(p2["_IR"])(ss_ZipperH_Handle_InnerRight))(function() {
+                return modifyClass(p2["_OR"])(ss_ZipperH_Handle_OuterRight);
               });
             });
           });
@@ -9587,9 +9560,9 @@
         ;
         if (mb_handle.value0.value1 instanceof InnerRight_ZipperFocus) {
           return discard6(modifyClass(p2["_OL"])(ss_ZipperH_Handle_OuterLeft))(function() {
-            return discard6(modifyClass(p2["_IL"])(ss_ZipperH_Handle_OuterLeft))(function() {
-              return discard6(modifyClass(p2["_IR"])(ss_ZipperH_Handle_OuterLeft_Focus))(function() {
-                return modifyClass(p2["_OR"])(ss_ZipperH_Handle_OuterLeft);
+            return discard6(modifyClass(p2["_IL"])(ss_ZipperH_Handle_InnerLeft))(function() {
+              return discard6(modifyClass(p2["_IR"])(ss_ZipperH_Handle_InnerRight_Focus))(function() {
+                return modifyClass(p2["_OR"])(ss_ZipperH_Handle_OuterRight);
               });
             });
           });
@@ -9597,18 +9570,18 @@
         ;
         if (mb_handle.value0.value1 instanceof OuterRight_ZipperFocus) {
           return discard6(modifyClass(p2["_OL"])(ss_ZipperH_Handle_OuterLeft))(function() {
-            return discard6(modifyClass(p2["_IL"])(ss_ZipperH_Handle_OuterLeft))(function() {
-              return discard6(modifyClass(p2["_IR"])(ss_ZipperH_Handle_OuterLeft))(function() {
-                return modifyClass(p2["_OR"])(ss_ZipperH_Handle_OuterLeft_Focus);
+            return discard6(modifyClass(p2["_IL"])(ss_ZipperH_Handle_InnerLeft))(function() {
+              return discard6(modifyClass(p2["_IR"])(ss_ZipperH_Handle_InnerRight))(function() {
+                return modifyClass(p2["_OR"])(ss_ZipperH_Handle_OuterRight_Focus);
               });
             });
           });
         }
         ;
-        throw new Error("Failed pattern match at Ui.App1.Editor (line 126, column 7 - line 146, column 62): " + [mb_handle.value0.value1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.App1.Editor (line 125, column 7 - line 145, column 63): " + [mb_handle.value0.value1.constructor.name]);
       }
       ;
-      throw new Error("Failed pattern match at Ui.App1.Editor (line 111, column 3 - line 146, column 62): " + [mb_handle.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App1.Editor (line 110, column 3 - line 145, column 63): " + [mb_handle.constructor.name]);
     };
   };
   var setHandle = function(mb_handle) {
@@ -9637,8 +9610,8 @@
       return discard6(log5("[Editor] initialize"))(function() {
         return bind16(liftEffect7(bind22(windowImpl)(document)))(function(doc) {
           return subscribe$prime(function(_subId) {
-            return eventListener2(mouseup)(toEventTarget(doc))(function($69) {
-              return pure23(MouseUp_EditorAction.create($69));
+            return eventListener2(mouseup)(toEventTarget(doc))(function($70) {
+              return pure23(MouseUp_EditorAction.create($70));
             });
           });
         });
@@ -9655,60 +9628,49 @@
       return bind16(get4)(function(state3) {
         return bind16(liftEffect7(read(state3.ref_mb_handle)))(function(mb_handle) {
           if (mb_handle instanceof Nothing) {
-            return discard6(liftEffect7(writeFlipped(state3.ref_mb_dragOrigin)(pure23(new Point_Handle(v.value0.value0)))))(function() {
-              return setHandle(pure23(new Point_Handle(v.value0.value0)));
+            return discard6(liftEffect7(writeFlipped(state3.ref_mb_dragOrigin)(pure23(new Point_Handle(v.value0.value1)))))(function() {
+              return setHandle(pure23(new Point_Handle(v.value0.value1)));
             });
           }
           ;
           if (mb_handle instanceof Just) {
-            var dragOrigin = getDragOrigin(mb_handle.value0)(v.value0.value0);
-            var v1 = drag3(mb_handle.value0)(v.value0.value0)(state3.root);
-            if (v1 instanceof Nothing) {
-              return pure16(unit);
-            }
-            ;
-            if (v1 instanceof Just) {
-              return discard6(liftEffect7(writeFlipped(state3.ref_mb_dragOrigin)(pure23(dragOrigin))))(function() {
-                return setHandle(pure23(v1.value0));
-              });
-            }
-            ;
-            throw new Error("Failed pattern match at Ui.App1.Editor (line 77, column 7 - line 81, column 30): " + [v1.constructor.name]);
+            var dragOrigin = getDragOrigin(mb_handle.value0)(v.value0.value1);
+            return discard6(liftEffect7(writeFlipped(state3.ref_mb_dragOrigin)(pure23(dragOrigin))))(function() {
+              return setHandle(pure23(dragOrigin));
+            });
           }
           ;
-          throw new Error("Failed pattern match at Ui.App1.Editor (line 71, column 3 - line 81, column 30): " + [mb_handle.constructor.name]);
+          throw new Error("Failed pattern match at Ui.App1.Editor (line 73, column 3 - line 80, column 34): " + [mb_handle.constructor.name]);
         });
       });
     }
     ;
     if (v instanceof PointOutput_EditorAction && v.value0 instanceof MouseEnter_PointOutput) {
-      return discard6(log5("MouseEnter"))(function() {
-        return bind16(get4)(function(state3) {
-          return bind16(liftEffect7(read(state3.ref_mb_dragOrigin)))(function(mb_dragOrigin) {
-            if (mb_dragOrigin instanceof Nothing) {
+      return when4(buttons(v.value0.value0) === 1)(bind16(get4)(function(state3) {
+        return bind16(liftEffect7(read(state3.ref_mb_dragOrigin)))(function(mb_dragOrigin) {
+          if (mb_dragOrigin instanceof Nothing) {
+            return pure16(unit);
+          }
+          ;
+          if (mb_dragOrigin instanceof Just) {
+            var v1 = drag3(mb_dragOrigin.value0)(v.value0.value1)(state3.root);
+            if (v1 instanceof Nothing) {
               return pure16(unit);
             }
             ;
-            if (mb_dragOrigin instanceof Just) {
-              var v1 = drag3(mb_dragOrigin.value0)(v.value0.value0)(state3.root);
-              if (v1 instanceof Nothing) {
-                return pure16(unit);
-              }
-              ;
-              if (v1 instanceof Just) {
-                return setHandle(pure23(v1.value0));
-              }
-              ;
-              throw new Error("Failed pattern match at Ui.App1.Editor (line 89, column 7 - line 91, column 39): " + [v1.constructor.name]);
+            if (v1 instanceof Just) {
+              return setHandle(pure23(v1.value0));
             }
             ;
-            throw new Error("Failed pattern match at Ui.App1.Editor (line 86, column 3 - line 91, column 39): " + [mb_dragOrigin.constructor.name]);
-          });
+            throw new Error("Failed pattern match at Ui.App1.Editor (line 88, column 9 - line 90, column 41): " + [v1.constructor.name]);
+          }
+          ;
+          throw new Error("Failed pattern match at Ui.App1.Editor (line 85, column 5 - line 90, column 41): " + [mb_dragOrigin.constructor.name]);
         });
-      });
+      }));
     }
     ;
-    throw new Error("Failed pattern match at Ui.App1.Editor (line 60, column 1 - line 60, column 45): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.App1.Editor (line 62, column 1 - line 62, column 45): " + [v.constructor.name]);
   };
   var $$eval3 = /* @__PURE__ */ function() {
     return mkEval({

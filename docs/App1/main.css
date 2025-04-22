@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------- */
 
 :root {
-  --background-color: rgb(179, 175, 162);
+  --body--background: rgb(179, 175, 162);
 }
 
 html,
@@ -9,7 +9,7 @@ body {
   margin: 0;
   padding: 0;
 
-  background-color: var(--background-color);
+  background: var(--body--background);
 }
 
 body {

@@ -88,8 +88,8 @@ type PointInput =
   }
 
 data PointOutput
-  = MouseDown_PointOutput Point
-  | MouseEnter_PointOutput Point
+  = MouseDown_PointOutput MouseEvent Point
+  | MouseEnter_PointOutput MouseEvent Point
 
 type PointState =
   { point :: Point
@@ -99,17 +99,14 @@ type PointState =
 data PointStatus
   = Point_Handle_PointStatus
   | SpanH_Handle_Left_PointStatus
-  | SpanH_Handle_Right_Focus_PointStatus
-  | SpanH_Handle_Left_Focus_PointStatus
   | SpanH_Handle_Right_PointStatus
   | ZipperH_Handle_OuterLeft_PointStatus
   | ZipperH_Handle_InnerLeft_PointStatus
   | ZipperH_Handle_InnerRight_PointStatus
   | ZipperH_Handle_OuterRight_PointStatus
-  | ZipperH_Handle_OuterLeft_Focus_PointStatus
-  | ZipperH_Handle_InnerLeft_Focus_PointStatus
-  | ZipperH_Handle_InnerRight_Focus_PointStatus
-  | ZipperH_Handle_OuterRight_Focus_PointStatus
+  | Focus_PointStatus
+  | LeftFocus_PointStatus
+  | RightFocus_PointStatus
 
 derive instance Generic PointStatus _
 

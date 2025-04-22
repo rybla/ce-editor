@@ -1,9 +1,23 @@
+:root {
+  --Editor--background: var(--body--background);
+
+  --Handle--width: 1em;
+  --Handle--background: blue;
+  --Handle_Focus--box-shadow: 0 -0.5em 0 0 var(--Handle--background), 0 0.5em 0 0 var(--Handle--background);
+
+  --Handle--border-radius: var(--Handle--width);
+  --Handle_Left--border-radius: var(--Handle--border-radius) 0 0 var(--Handle--border-radius);
+  --Handle_Right--border-radius: 0 var(--Handle--border-radius) var(--Handle--border-radius) 0;
+
+  --Handle_inside--background: color-mix(in hsl, var(--Handle--background), transparent 80%);
+}
+
 .Editor {
   padding: 1em;
 
   box-shadow: 0 0 0 1px black;
 
-  flex: 1 1 200px;
+  flex: 1 0 200px;
   width: 100%;
   overflow: auto;
 
@@ -14,69 +28,156 @@
   .Expr {
     display: inline-flex;
     flex-direction: row;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: flex-start;
 
     user-select: none;
   }
 
   .Point {
-    height: 1em;
-    width: 0.5em;
+    display: flex;
+    flex-direction: row;
 
-    background-color: transparent;
+    >.Left,
+    >.Middle,
+    >.Right {
+      height: 1em;
+      width: calc(var(--Handle--width) / 3);
+    }
 
     &.Point_Handle_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
+      >.Middle {
+        background: var(--Handle--background);
+        box-shadow: var(--Handle_Focus--box-shadow);
+      }
     }
 
     &.SpanH_Handle_Left_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
-    }
+      >.Right {
+        background: var(--Handle--background);
+        border-radius: var(--Handle_Left--border-radius);
+      }
 
-    &.SpanH_Handle_Right_Focus_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
-    }
+      &.LeftFocus_PointStatus>.Right {
+        box-shadow: var(--Handle_Focus--box-shadow);
+      }
 
-    &.SpanH_Handle_Left_Focus_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
+      &~* {
+        background: var(--Handle_inside--background);
+      }
     }
 
     &.SpanH_Handle_Right_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
+      >.Left {
+        background: var(--Handle--background);
+        border-radius: var(--Handle_Right--border-radius);
+      }
+
+      &.RightFocus_PointStatus>.Left {
+        box-shadow: var(--Handle_Focus--box-shadow);
+      }
+
+      background: var(--Editor--background);
+
+      &~* {
+        background: var(--Editor--background);
+      }
     }
 
     &.ZipperH_Handle_OuterLeft_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
+      >.Right {
+        background: var(--Handle--background);
+        border-radius: var(--Handle_Left--border-radius);
+      }
+
+      &.LeftFocus_PointStatus>.Right {
+        box-shadow: var(--Handle_Focus--box-shadow);
+      }
+
+      &~* {
+        background: var(--Handle_inside--background);
+      }
+
+      background: transparent;
     }
 
     &.ZipperH_Handle_InnerLeft_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
+      >.Right {
+        background: var(--Handle--background);
+      }
+
+      &.LeftFocus_PointStatus>.Right {
+        box-shadow: var(--Handle_Focus--box-shadow);
+      }
+
+      &~* {
+        background: var(--Editor--background);
+      }
+
+      background: transparent;
     }
 
     &.ZipperH_Handle_InnerRight_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
+      >.Left {
+        background: var(--Handle--background);
+      }
+
+      &.RightFocus_PointStatus>.Left {
+        box-shadow: var(--Handle_Focus--box-shadow);
+      }
+
+      background: transparent;
+
+      &~* {
+        background: transparent;
+      }
+    }
+
+    &.ZipperH_Handle_InnerLeft_PointStatus.ZipperH_Handle_InnerRight_PointStatus {
+      >.Left {
+        background: var(--Handle--background);
+      }
+
+      &.LeftFocus_PointStatus>.Left {
+        box-shadow: var(--Handle_Focus--box-shadow);
+      }
+
+      &.RightFocus_PointStatus>.Left {
+        box-shadow: none;
+      }
+
+      >.Middle {
+        background: var(--Editor--background);
+      }
+
+      >.Right {
+        background: var(--Handle--background);
+      }
+
+      &.LeftFocus_PointStatus>.Right {
+        box-shadow: none;
+      }
+
+      &.RightFocus_PointStatus>.Right {
+        box-shadow: var(--Handle_Focus--box-shadow);
+      }
     }
 
     &.ZipperH_Handle_OuterRight_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
-    }
+      >.Left {
+        background: var(--Handle--background);
+        border-radius: var(--Handle_Right--border-radius);
+      }
 
-    &.ZipperH_Handle_OuterLeft_Focus_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
-    }
+      &.RightFocus_PointStatus>.Left {
+        box-shadow: var(--Handle_Focus--box-shadow);
+      }
 
-    &.ZipperH_Handle_InnerLeft_Focus_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
-    }
+      background: transparent;
 
-    &.ZipperH_Handle_InnerRight_Focus_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
-    }
-
-    &.ZipperH_Handle_OuterRight_Focus_PointStatus {
-      background-color: color-mix(in srgb, blue, transparent 0%);
+      &~* {
+        background: var(--Editor--background);
+      }
     }
   }
-
 }

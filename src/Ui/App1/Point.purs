@@ -42,12 +42,12 @@ handleQuery (ModifyMaybeStatuses_PointQuery f a) = do
 handleAction :: PointAction -> PointM Unit
 handleAction Initialize_PointAction = do
   Console.log "[Point] initialize"
-handleAction (MouseDown_PointAction _event) = do
+handleAction (MouseDown_PointAction event) = do
   state <- get
-  H.raise $ MouseDown_PointOutput state.point
-handleAction (MouseEnter_PointAction _event) = do
+  H.raise $ MouseDown_PointOutput event state.point
+handleAction (MouseEnter_PointAction event) = do
   state <- get
-  H.raise $ MouseEnter_PointOutput state.point
+  H.raise $ MouseEnter_PointOutput event state.point
 
 render :: PointState -> PointHTML
 render state =
@@ -59,5 +59,8 @@ render state =
     , HE.onMouseDown MouseDown_PointAction
     , HE.onMouseEnter MouseEnter_PointAction
     ]
-    [ HH.text "" ]
+    [ HH.div [ classes [ "Left" ] ] []
+    , HH.div [ classes [ "Middle" ] ] []
+    , HH.div [ classes [ "Right" ] ] []
+    ]
 
