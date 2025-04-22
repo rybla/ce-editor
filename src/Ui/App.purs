@@ -16,7 +16,6 @@ import Data.Newtype (unwrap)
 import Data.Newtype as Newtype
 import Data.Traversable (sequence, traverse, traverse_)
 import Data.TraversableWithIndex (traverseWithIndex)
-import Data.Trident as Trident
 import Data.Unfoldable (none)
 import Editor.Example.Editor1 (Dat(..), L(..), mkL)
 import Effect (Effect)
@@ -542,17 +541,17 @@ updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) = do
   pure e'
 
 updateUiExprViaDiff isMoved path mb_parent (Expr e) (ReplaceSpan_Diff j0 j1 span) = do
-  let e_elem = Expr e # getElem_UiExpr
-  let e_uips = Expr e # getUiPoints_UiExpr
-  let at_diff = Expr e # atIndexSpan_Expr j0 j1
-  let
-    pre_kids = Array.fold
-      [ (at_diff.outside # unwrap).kids_L # map Trident.First
-      , span # unwrap # map Trident.Second
-      , (at_diff.outside # unwrap).kids_R # map Trident.Third
-      ]
+  -- let e_elem = Expr e # getElem_UiExpr
+  -- let e_uips = Expr e # getUiPoints_UiExpr
+  -- let at_diff = Expr e # atIndexSpan_Expr j0 j1
+  -- let
+  --   pre_kids = Array.fold
+  --     [ (at_diff.outside # unwrap).kids_L # map Trident.First
+  --     , span # unwrap # map Trident.Second
+  --     , (at_diff.outside # unwrap).kids_R # map Trident.Third
+  --     ]
 
-  lift $ e_elem # Element.removeAllChildren
+  -- lift $ e_elem # Element.removeAllChildren
   -- deep cleanup kids that are permanently removed
   -- add them back appropriately
 
