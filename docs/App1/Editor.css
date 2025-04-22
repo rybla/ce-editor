@@ -26,8 +26,55 @@
 
     background-color: transparent;
 
-
     &.Point_Handle_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+
+    &.SpanH_Handle_Left_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+
+    &.SpanH_Handle_Right_Focus_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+
+    &.SpanH_Handle_Left_Focus_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+
+    &.SpanH_Handle_Right_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+
+    &.ZipperH_Handle_OuterLeft_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+
+    &.ZipperH_Handle_InnerLeft_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+
+    &.ZipperH_Handle_InnerRight_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+
+    &.ZipperH_Handle_OuterRight_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+
+    &.ZipperH_Handle_OuterLeft_Focus_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+
+    &.ZipperH_Handle_InnerLeft_Focus_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+
+    &.ZipperH_Handle_InnerRight_Focus_PointStatus {
+      background-color: color-mix(in srgb, blue, transparent 0%);
+    }
+
+    &.ZipperH_Handle_OuterRight_Focus_PointStatus {
       background-color: color-mix(in srgb, blue, transparent 0%);
     }
   }

@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Const (Const)
 import Data.Eq.Generic (genericEq)
-import Data.Expr (Expr, Handle, Point(..))
+import Data.Expr (Expr, Handle, Point)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe)
 import Data.Ord.Generic (genericCompare)
@@ -15,6 +15,7 @@ import Editor.Example.Editor2 (L)
 import Effect.Aff (Aff)
 import Effect.Ref (Ref)
 import Halogen as H
+import Web.Event.Event (Event)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 --------------------------------------------------------------------------------
@@ -64,6 +65,7 @@ type EditorState =
 data EditorAction
   = Initialize_EditorAction
   | PointOutput_EditorAction PointOutput
+  | MouseUp_EditorAction Event
 
 type EditorSlots :: Row Type
 type EditorSlots =

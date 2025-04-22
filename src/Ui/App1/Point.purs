@@ -57,6 +57,7 @@ render state =
         , state.mb_statuses # Set.toUnfoldable # map show
         ]
     , HE.onMouseDown MouseDown_PointAction
+    , HE.onMouseEnter MouseEnter_PointAction
     ]
     [ HH.text "" ]
 
