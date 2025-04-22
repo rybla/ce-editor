@@ -28,6 +28,8 @@ type AppSlots =
 
 type AppM = H.HalogenM AppState AppAction AppSlots AppOutput Aff
 
+type AppHTML = H.ComponentHTML AppAction AppSlots Aff
+
 --------------------------------------------------------------------------------
 -- Editor
 --------------------------------------------------------------------------------
@@ -48,6 +50,8 @@ type EditorSlots = ()
 
 type EditorM = H.HalogenM EditorState EditorAction EditorSlots EditorOutput Aff
 
+type EditorHTML = H.ComponentHTML EditorAction EditorSlots Aff
+
 --------------------------------------------------------------------------------
 -- Console
 --------------------------------------------------------------------------------
@@ -67,4 +71,6 @@ type ConsoleSlots :: Row Type
 type ConsoleSlots = ()
 
 type ConsoleM = H.HalogenM ConsoleState ConsoleAction ConsoleSlots ConsoleOutput Aff
+
+type ConsoleHTML = H.ComponentHTML ConsoleAction ConsoleSlots Aff
 

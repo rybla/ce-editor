@@ -1,0 +1,8 @@
+.Console {
+  padding: 1em;
+
+  flex: 0 0 200px;
+  width: 100%;
+
+  box-shadow: 0 0 0 1px black;
+}
