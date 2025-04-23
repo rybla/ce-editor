@@ -174,10 +174,10 @@ handleAction (KeyDown_EditorAction event) = do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Just handle -> do
-          let root' /\ _ /\ frag = state.root # Expr.Edit.cut handle
+          let _ /\ _ /\ frag = state.root # Expr.Edit.cut handle
+          -- TODO: this should not snapshot
           modifyEditorState _
-            { root = root'
-            , clipboard = pure frag
+            { clipboard = pure frag
             }
         _ -> pure unit
     -- delete

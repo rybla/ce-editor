@@ -12114,12 +12114,12 @@
                           return modifyEditorState(function(v8) {
                             return {
                               editor: v8.editor,
+                              root: v8.root,
                               initial_mb_handle: v8.initial_mb_handle,
                               ref_mb_handle: v8.ref_mb_handle,
                               ref_mb_dragOrigin: v8.ref_mb_dragOrigin,
                               ref_history: v8.ref_history,
                               ref_future: v8.ref_future,
-                              root: v7.value0,
                               clipboard: pure23(v7.value1.value1)
                             };
                           });
