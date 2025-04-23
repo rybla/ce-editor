@@ -21,24 +21,16 @@ instance Show L where
 editor :: Editor L
 editor =
   { name: "Editor1"
-  -- , initial_handle: Cursor_Handle (Cursor (Point none 0) (Point none 0) Left_CursorFocus)
-  -- , initial_exprs: []
-  -- , initial_exprs: [ example_expr 1 2 ]
-  -- , initial_exprs: [ example_expr 3 2 ]
   , initial_expr:
       Root %
         [ example_expr 2 2
         , example_expr 2 2
         , example_expr 2 2
         ]
-  -- , initial_exprs: [ example_expr 1 1 ]
-  -- , initial_handle: mkCursorHandle $ Cursor (Path Nil) (Index 0) (Index 0) Left_CursorFocus
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
-  -- , example_fragment: \s -> Just $ Zipper_Fragment $ Zipper { kids_L: [], kids_R: [], inside: Just $ SpanContext { _O: ExprContext Nil, _I: SpanTooth { l: String s, kids_L: [], kids_R: [] } } }
-  , example_fragment: \s -> Just $ Span_Fragment $ Span [ Expr { l: String s, kids: [] } ]
-  , bufferOptions_point: \p query -> fold
-      [ if String.null query then []
-        else [ PasteSpan_BufferOption query $ Span [ String query % [] ] ]
+  , bufferOptions: \h e q -> fold
+      [ if String.null q then []
+        else [ PasteSpan_BufferOption q $ Span [ String q % [] ] ]
       , [ PasteSpan_BufferOption "example" $ Span [ String "example" % [] ] ]
       ]
   , max_history_length: 100

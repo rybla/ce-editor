@@ -227,14 +227,14 @@ handleAction (KeyDown_EditorAction event) = do
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: state.editor.bufferOptions_point point, query: "" }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: state.editor.bufferOptions handle state.root, query: "" }
     _ | ki # Event.matchKeyInfo isAlpha { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: state.editor.bufferOptions_point point, query: (unwrap ki).key }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: state.editor.bufferOptions handle state.root, query: (unwrap ki).key }
     -- unrecognized keyboard event
     _ -> pure unit
 

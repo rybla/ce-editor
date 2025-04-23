@@ -9652,22 +9652,18 @@
         path: mempty(monoidList),
         j: wrap()(0)
       }),
-      example_fragment: function(s) {
-        return new Just(new Span_Fragment([{
-          l: new $$String(s),
-          kids: []
-        }]));
-      },
-      bufferOptions_point: function(p2) {
-        return function(query3) {
-          return fold3([function() {
-            var $25 = $$null3(query3);
-            if ($25) {
-              return [];
-            }
-            ;
-            return [new PasteSpan_BufferOption(query3, [mkExpr(new $$String(query3))([])])];
-          }(), [new PasteSpan_BufferOption("example", [mkExpr(new $$String("example"))([])])]]);
+      bufferOptions: function(h) {
+        return function(e) {
+          return function(q2) {
+            return fold3([function() {
+              var $25 = $$null3(q2);
+              if ($25) {
+                return [];
+              }
+              ;
+              return [new PasteSpan_BufferOption(q2, [mkExpr(new $$String(q2))([])])];
+            }(), [new PasteSpan_BufferOption("example", [mkExpr(new $$String("example"))([])])]]);
+          };
         };
       },
       max_history_length: 100
@@ -11887,7 +11883,7 @@
           });
         }
         ;
-        throw new Error("Failed pattern match at Ui.App1.Editor (line 360, column 7 - line 366, column 55): " + [mb_handle.value0.value1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.App1.Editor (line 358, column 7 - line 364, column 55): " + [mb_handle.value0.value1.constructor.name]);
       }
       ;
       if (mb_handle instanceof Just && mb_handle.value0 instanceof ZipperH_Handle) {
@@ -11932,10 +11928,10 @@
           });
         }
         ;
-        throw new Error("Failed pattern match at Ui.App1.Editor (line 369, column 7 - line 389, column 63): " + [mb_handle.value0.value1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.App1.Editor (line 367, column 7 - line 387, column 63): " + [mb_handle.value0.value1.constructor.name]);
       }
       ;
-      throw new Error("Failed pattern match at Ui.App1.Editor (line 354, column 3 - line 389, column 63): " + [mb_handle.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App1.Editor (line 352, column 3 - line 387, column 63): " + [mb_handle.constructor.name]);
     };
   };
   var setHandle$prime = function(m_mb_handle) {
@@ -12002,7 +11998,7 @@
         });
       }
       ;
-      throw new Error("Failed pattern match at Ui.App1.Editor (line 299, column 50 - line 304, column 21): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App1.Editor (line 297, column 50 - line 302, column 21): " + [v.constructor.name]);
     });
   });
   var undo = /* @__PURE__ */ bind9(get5)(function(state3) {
@@ -12021,7 +12017,7 @@
         });
       }
       ;
-      throw new Error("Failed pattern match at Ui.App1.Editor (line 289, column 51 - line 294, column 21): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App1.Editor (line 287, column 51 - line 292, column 21): " + [v.constructor.name]);
     });
   });
   var initialState4 = function(input3) {
@@ -12081,7 +12077,7 @@
                 })(request2($$Proxy.value)(getFocusPoint(mb_handle.value0))(GetBufferInput_PointQuery.create));
               }
               ;
-              throw new Error("Failed pattern match at Ui.App1.Editor (line 99, column 19 - line 101, column 117): " + [mb_handle.constructor.name]);
+              throw new Error("Failed pattern match at Ui.App1.Editor (line 97, column 19 - line 99, column 117): " + [mb_handle.constructor.name]);
             }())(function(bufferIsOpen) {
               var ki = fromEventToKeyInfo(v.value0);
               if (bufferIsOpen) {
@@ -12101,7 +12097,7 @@
                       return tell3($$Proxy.value)(getFocusPoint(mb_handle.value0))(SetBufferInput_PointQuery.create(none1));
                     }
                     ;
-                    throw new Error("Failed pattern match at Ui.App1.Editor (line 109, column 7 - line 112, column 92): " + [mb_handle.constructor.name]);
+                    throw new Error("Failed pattern match at Ui.App1.Editor (line 107, column 7 - line 110, column 92): " + [mb_handle.constructor.name]);
                   });
                 }
                 ;
@@ -12301,12 +12297,12 @@
                         if (mb_handle instanceof Just) {
                           var point = getFocusPoint(mb_handle.value0);
                           return tell3($$Proxy.value)(point)(SetBufferInput_PointQuery.create(pure23({
-                            options: state3.editor.bufferOptions_point(point),
+                            options: state3.editor.bufferOptions(mb_handle.value0)(state3.root),
                             query: ""
                           })));
                         }
                         ;
-                        throw new Error("Failed pattern match at Ui.App1.Editor (line 228, column 7 - line 232, column 140): " + [mb_handle.constructor.name]);
+                        throw new Error("Failed pattern match at Ui.App1.Editor (line 226, column 7 - line 230, column 146): " + [mb_handle.constructor.name]);
                       });
                     }
                     ;
@@ -12323,12 +12319,12 @@
                         if (mb_handle instanceof Just) {
                           var point = getFocusPoint(mb_handle.value0);
                           return tell3($$Proxy.value)(point)(SetBufferInput_PointQuery.create(pure23({
-                            options: state3.editor.bufferOptions_point(point),
+                            options: state3.editor.bufferOptions(mb_handle.value0)(state3.root),
                             query: unwrap6(ki).key
                           })));
                         }
                         ;
-                        throw new Error("Failed pattern match at Ui.App1.Editor (line 235, column 7 - line 239, column 153): " + [mb_handle.constructor.name]);
+                        throw new Error("Failed pattern match at Ui.App1.Editor (line 233, column 7 - line 237, column 159): " + [mb_handle.constructor.name]);
                       });
                     }
                     ;
@@ -12351,7 +12347,7 @@
                         });
                       }
                       ;
-                      throw new Error("Failed pattern match at Ui.App1.Editor (line 153, column 7 - line 157, column 68): " + [mb_handle.constructor.name]);
+                      throw new Error("Failed pattern match at Ui.App1.Editor (line 151, column 7 - line 155, column 68): " + [mb_handle.constructor.name]);
                     });
                   }
                   ;
@@ -12374,7 +12370,7 @@
                           return pure110(unit);
                         }
                         ;
-                        throw new Error("Failed pattern match at Ui.App1.Editor (line 132, column 11 - line 136, column 24): " + [mb_dragOrigin.constructor.name]);
+                        throw new Error("Failed pattern match at Ui.App1.Editor (line 130, column 11 - line 134, column 24): " + [mb_dragOrigin.constructor.name]);
                       }())(function() {
                         return setHandle(pure23(state3.editor.initial_handle));
                       });
@@ -12392,7 +12388,7 @@
                           return pure110(mb_dragOrigin.value0);
                         }
                         ;
-                        throw new Error("Failed pattern match at Ui.App1.Editor (line 140, column 25 - line 145, column 30): " + [mb_dragOrigin.constructor.name]);
+                        throw new Error("Failed pattern match at Ui.App1.Editor (line 138, column 25 - line 143, column 30): " + [mb_dragOrigin.constructor.name]);
                       }())(function(dragOrigin) {
                         var v4 = movePointUntil2(state3.root)($168.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
                           return drag3(dragOrigin)(p2)(state3.root);
@@ -12405,11 +12401,11 @@
                           return setHandle(pure23(v4.value0));
                         }
                         ;
-                        throw new Error("Failed pattern match at Ui.App1.Editor (line 146, column 11 - line 149, column 39): " + [v4.constructor.name]);
+                        throw new Error("Failed pattern match at Ui.App1.Editor (line 144, column 11 - line 147, column 39): " + [v4.constructor.name]);
                       });
                     }
                     ;
-                    throw new Error("Failed pattern match at Ui.App1.Editor (line 129, column 7 - line 149, column 39): " + [mb_handle.constructor.name]);
+                    throw new Error("Failed pattern match at Ui.App1.Editor (line 127, column 7 - line 147, column 39): " + [mb_handle.constructor.name]);
                   });
                 }
                 ;
@@ -12437,10 +12433,10 @@
                         return setHandle(new Just(new Point_Handle(v2.value0)));
                       }
                       ;
-                      throw new Error("Failed pattern match at Ui.App1.Editor (line 123, column 11 - line 125, column 64): " + [v2.constructor.name]);
+                      throw new Error("Failed pattern match at Ui.App1.Editor (line 121, column 11 - line 123, column 64): " + [v2.constructor.name]);
                     }
                     ;
-                    throw new Error("Failed pattern match at Ui.App1.Editor (line 119, column 7 - line 125, column 64): " + [mb_handle.constructor.name]);
+                    throw new Error("Failed pattern match at Ui.App1.Editor (line 117, column 7 - line 123, column 64): " + [mb_handle.constructor.name]);
                   });
                 });
               }
@@ -12468,7 +12464,7 @@
             });
           }
           ;
-          throw new Error("Failed pattern match at Ui.App1.Editor (line 246, column 3 - line 253, column 34): " + [mb_handle.constructor.name]);
+          throw new Error("Failed pattern match at Ui.App1.Editor (line 244, column 3 - line 251, column 34): " + [mb_handle.constructor.name]);
         });
       });
     }
@@ -12490,10 +12486,10 @@
               return setHandle(pure23(v1.value0));
             }
             ;
-            throw new Error("Failed pattern match at Ui.App1.Editor (line 261, column 9 - line 263, column 41): " + [v1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App1.Editor (line 259, column 9 - line 261, column 41): " + [v1.constructor.name]);
           }
           ;
-          throw new Error("Failed pattern match at Ui.App1.Editor (line 258, column 5 - line 263, column 41): " + [mb_dragOrigin.constructor.name]);
+          throw new Error("Failed pattern match at Ui.App1.Editor (line 256, column 5 - line 261, column 41): " + [mb_dragOrigin.constructor.name]);
         });
       }));
     }
@@ -12518,7 +12514,7 @@
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.App1.Editor (line 78, column 1 - line 78, column 45): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.App1.Editor (line 76, column 1 - line 76, column 45): " + [v.constructor.name]);
   };
   var $$eval4 = /* @__PURE__ */ function() {
     return mkEval({

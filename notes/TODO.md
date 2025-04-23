@@ -2,9 +2,10 @@
 
 ## halogen-simplified
 
+- [ ] make stuff in `Ui.Editor` generic over label
 - [x] searchable menu of edits
   - [ ] give Editor proper interface to computing these edits
-    - [ ] should receive Handle instead of just point
+    - [x] Editor's bufferOptions should receive Handle and root Expr instead of just Point
   - [ ] edit an existing label (i.e. re-query it??)
   - [x] BUG: cycling is off by 1 somtimes
 - [ ] BUG: when paste a zipper, cursor doesnt go in riht place and sometimes duplicates
