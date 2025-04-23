@@ -7,6 +7,7 @@ import Data.Array as Array
 import Data.Foldable (fold, foldMap)
 import Data.Lens ((%=))
 import Data.Maybe (Maybe(..))
+import Data.Set (Set)
 import Data.Set as Set
 import Data.Unfoldable (none)
 import Effect.Aff (Aff)
@@ -20,7 +21,7 @@ import Ui.App1.Buffer as Buffer
 import Ui.App1.Common (PointAction(..), PointHTML, PointInput, PointM, PointOutput(..), PointQuery(..), PointSlots, PointState, PointStatus(..))
 import Ui.Element as Element
 import Ui.Halogen (classes)
-import Utility (prop)
+import Utility (bug, prop)
 import Web.HTML.HTMLElement as HTMLElement
 
 component :: H.Component PointQuery PointInput PointOutput Aff
@@ -61,6 +62,9 @@ handleQuery (GetBufferInput_PointQuery k) = do
   pure $ pure $ k state.mb_bufferInput
 
 ss_Focus = Set.fromFoldable [ Point_Handle_PointStatus, LeftFocus_PointStatus, RightFocus_PointStatus ]
+ss_Left = Set.fromFoldable [ LeftFocus_PointStatus ] :: Set PointStatus
+ss_Middle = Set.fromFoldable [ Point_Handle_PointStatus ] :: Set PointStatus
+ss_Right = Set.fromFoldable [ RightFocus_PointStatus ] :: Set PointStatus
 
 handleAction :: PointAction -> PointM Unit
 handleAction Initialize_PointAction = do
@@ -75,7 +79,6 @@ handleAction (MouseEnter_PointAction event) = do
   state <- get
   H.raise $ MouseEnter_PointOutput event state.point
 handleAction (BufferOutput_PointAction bufferOutput) = do
-  state <- get
   H.raise $ BufferOutput_PointOutput bufferOutput
 
 render :: PointState -> PointHTML
@@ -88,13 +91,16 @@ render state =
         ]
     , HE.onMouseDown MouseDown_PointAction
     , HE.onMouseEnter MouseEnter_PointAction
-    ] $ fold
-    [ [ HH.div [ classes [ "Left" ] ] [] ]
-    , [ HH.div [ classes [ "Middle" ] ] $ state.mb_bufferInput # foldMap \input ->
-          [ HH.slot (Proxy @"Buffer") unit Buffer.component input BufferOutput_PointAction ]
-      ]
-    , [ HH.div [ classes [ "Right" ] ] [] ]
     ]
+    case state.mb_bufferInput of
+      Nothing -> [ HH.div [ classes [ "Left" ] ] [], HH.div [ classes [ "Middle" ] ] [], HH.div [ classes [ "Right" ] ] [] ]
+      Just input -> case unit of
+        _ | state.statuses # Set.subset ss_Left -> [ HH.div [ classes [ "Left" ] ] [ buffer ], HH.div [ classes [ "Middle" ] ] [], HH.div [ classes [ "Right" ] ] [] ]
+        _ | state.statuses # Set.subset ss_Middle -> [ HH.div [ classes [ "Left" ] ] [], HH.div [ classes [ "Middle" ] ] [ buffer ], HH.div [ classes [ "Right" ] ] [] ]
+        _ | state.statuses # Set.subset ss_Right -> [ HH.div [ classes [ "Left" ] ] [], HH.div [ classes [ "Middle" ] ] [], HH.div [ classes [ "Right" ] ] [ buffer ] ]
+        _ -> bug "impossible"
+        where
+        buffer = HH.slot (Proxy @"Buffer") unit Buffer.component input BufferOutput_PointAction
 
 refLabel_point = H.RefLabel "point"
 
