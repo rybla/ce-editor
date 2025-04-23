@@ -89,11 +89,11 @@ render state =
     , HE.onMouseDown MouseDown_PointAction
     , HE.onMouseEnter MouseEnter_PointAction
     ] $ fold
-    [ state.mb_bufferInput # foldMap \input ->
-        [ HH.slot (Proxy @"Buffer") unit Buffer.component input BufferOutput_PointAction ]
-    , [ HH.div [ classes [ "Left" ] ] [] ]
+    [ [ HH.div [ classes [ "Left" ] ] [] ]
     , [ HH.div [ classes [ "Middle" ] ] [] ]
     , [ HH.div [ classes [ "Right" ] ] [] ]
+    , state.mb_bufferInput # foldMap \input ->
+        [ HH.slot (Proxy @"Buffer") unit Buffer.component input BufferOutput_PointAction ]
     ]
 
 refLabel_point = H.RefLabel "point"

@@ -58,3 +58,5 @@ addClass c elem = elem # Element.classList >>= (_ `DOMTokenList.add` c)
 
 foreign import scrollIntoView :: Element -> Effect Unit
 
+foreign import setSize :: Int -> Element -> Effect Unit
+

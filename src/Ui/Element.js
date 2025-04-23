@@ -27,3 +27,8 @@ export const getChildren = (e) => () => {
 export const scrollIntoView = (e) => () => {
   e.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" })
 }
+
+export const setSize = (size) => (e) => () => {
+  e.size = size;
+}
+

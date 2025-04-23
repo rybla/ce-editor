@@ -22,14 +22,19 @@
   width: 100%;
   overflow: auto;
 
-  font-family: 'Courier New', Courier, monospace;
+  font-family: monospace;
 
-  >.Expr.root {}
+  &>.root {
+    height: 1em;
+  }
 
   .Expr {
-    /* padding: 0.5em; */
+    /* padding: 0.5em;
+    box-shadow: 0 0 0 1px black; */
 
-    display: inline-flex;
+    height: 100%;
+
+    display: flex;
     flex-direction: row;
     align-items: stretch;
     justify-content: flex-start;
@@ -46,49 +51,43 @@
     position: relative;
     display: flex;
     flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    height: 100%;
 
     &>.Buffer {
       position: absolute;
       top: 1.5em;
-      width: 20em;
       padding: 0.5em;
+      width: fit-content;
 
       display: flex;
       flex-direction: column;
       gap: 0.5em;
 
       &>.query {
+        display: inline-block;
         outline: none;
         border: none;
-        padding: 0.5em;
         border-radius: 1em;
+        padding: 0.5em;
 
-        background: linear-gradient(90deg,
-            hsl(0, 100%, 28%),
-            hsl(39, 100%, 26%),
-            hsl(60, 100%, 25%),
-            hsl(120, 100%, 25%),
-            hsl(180, 100%, 25%),
-            hsl(240, 100%, 32%),
-            hsl(300, 100%, 32%),
-            hsl(0, 100%, 25%),
-            hsl(39, 100%, 26%),
-            hsl(60, 100%, 25%),
-            hsl(120, 100%, 25%),
-            hsl(180, 100%, 25%),
-            hsl(240, 100%, 32%),
-            hsl(300, 100%, 32%));
-        background-size: 200% 100%;
-        animation: rainbow-flow 20s linear infinite;
+        width: fit-content;
+        min-width: 1ch;
+        transition: width 0.3s ease-in-out;
+
+        animation:
+          rainbow-glow 20s infinite linear,
+          Buffer-query-appear 0.2s forwards linear;
+
+        background: #1a1a1a;
+        color: white;
 
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         transition: box-shadow 0.3s ease;
 
-        color: white;
-
         font-size: 1em;
         font-family: inherit;
-
 
         &:focus {
           box-shadow: 0 0 15px hsla(210deg 100% 60% / 0.5), 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -100,7 +99,8 @@
 
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start;
+        justify-content: flex-start;
         gap: 0.5em;
 
         &>.BufferOption {
@@ -112,13 +112,14 @@
 
           white-space: nowrap;
 
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
 
           &.selected {
             background: color-mix(in srgb, blue, transparent 80%);
             box-shadow: 0 0 0 0.1em black, 0 0 15px hsla(210deg 100% 60% / 0.5), 0 4px 10px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
           }
+
+          animation: BufferOption-appear 0.2s linear forwards;
         }
       }
     }
@@ -126,7 +127,7 @@
     >.Left,
     >.Middle,
     >.Right {
-      height: 1em;
+      height: 100%;
       width: calc(var(--Handle--width) / 3);
 
       transition-property: background-color, box-shadow;
@@ -135,7 +136,7 @@
     }
 
     &.Point_Handle_PointStatus {
-      >.Middle {
+      &>.Middle {
         background: var(--Handle--background);
         box-shadow: var(--Handle_Focus--box-shadow);
       }
@@ -271,12 +272,58 @@
   }
 }
 
-@keyframes rainbow-flow {
+@keyframes BufferOption-appear {
+  from {
+    opacity: 0;
+    transform: translateX(-1em);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes BufferOption-selected {
+  from {
+    transform: translateX(-1em);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes Buffer-query-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-1em);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rainbow-glow {
   0% {
-    background-position: 100% 50%;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.7), 0 0 8px rgba(0, 255, 255, 0.5) inset, 0 0 10px #00ffff;
+  }
+
+  25% {
+    box-shadow: 0 0 5px rgba(255, 0, 255, 0.7), 0 0 8px rgba(255, 0, 255, 0.5) inset, 0 0 10px #ff00ff;
+  }
+
+  50% {
+    box-shadow: 0 0 5px rgba(255, 255, 0, 0.7), 0 0 8px rgba(255, 255, 0, 0.5) inset, 0 0 10px #ffff00;
+  }
+
+  75% {
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.7), 0 0 8px rgba(0, 255, 0, 0.5) inset, 0 0 10px #00ff00;
   }
 
   100% {
-    background-position: 0% 50%;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.7), 0 0 8px rgba(0, 255, 255, 0.5) inset, 0 0 10px #00ffff;
   }
 }

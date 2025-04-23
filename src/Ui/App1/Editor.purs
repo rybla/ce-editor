@@ -5,7 +5,7 @@ import Prelude
 import Control.Monad.Reader (Reader, runReader)
 import Control.Monad.State (get, modify)
 import Data.Array as Array
-import Data.Expr (BufferOption(..), Expr(..), Fragment(..), Handle(..), Path, Point(..), SpanFocus(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, getIndexesAroundStep, traverseStepsAndKids)
+import Data.Expr (BufferOption(..), Expr(..), Fragment(..), Handle(..), Path, Point(..), SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getExtremeSteps, getFocusPoint, getIndexesAroundStep, traverseStepsAndKids)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
@@ -162,6 +162,13 @@ handleAction (KeyDown_EditorAction event) = do
       case mb_handle of
         Just h -> setHandle $ Expr.Move.escape h
         _ -> pure unit
+    -- select all
+    _ | ki # Event.matchKeyInfo (_ == "a") { cmd: pure true, shift: pure false, alt: pure false } -> do
+      liftEffect $ event # Event.preventDefault
+      liftEffect $ state.ref_mb_dragOrigin := none
+      let j = state.root # getExtremeIndexes
+      let h = SpanH_Handle (SpanH { path: none, j_L: j._L, j_R: j._R }) Left_SpanFocus
+      setHandle $ pure h
     -- copy
     _ | ki # Event.matchKeyInfo (_ == "c") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault

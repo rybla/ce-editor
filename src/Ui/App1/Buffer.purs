@@ -9,6 +9,7 @@ import Data.Expr (BufferOption(..))
 import Data.Foldable (fold, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
+import Data.String.CodePoints as String.CodePoints
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Effect.Aff (Aff)
@@ -25,7 +26,7 @@ import Ui.App1.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, Buffe
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
 import Utility (fromMaybeM)
-import Web.Event.Event (target) as Event
+import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
 import Web.HTML.HTMLElement as HTMLElement
@@ -83,6 +84,7 @@ handleAction Initialize_BufferAction = do
     liftEffect $ elem_input # HTMLElement.focus
   doc <- liftEffect $ HTML.window >>= HTML.Window.document
   H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTMLDocument.toEventTarget) $ pure <<< KeyDown_BufferAction
+  void resizeQueryInput
 
 handleAction (KeyDown_BufferAction event) = do
   let ki = event # Event.fromEventToKeyInfo
@@ -95,18 +97,24 @@ handleAction (KeyDown_BufferAction event) = do
           o <- state.options_queried !! i # fromMaybeM do liftEffect $ throw "impossible for option_i to be out of bounds of options_queried"
           H.raise $ SubmitBuffer_BufferOutput o
     _ | Just cd <- ki # Event.matchMapKeyInfo fromKeyToCycleDir { cmd: pure false, shift: pure false, alt: pure false } -> do
+      liftEffect $ event # Event.preventDefault
       case state.option_i /\ cd of
         Just i /\ Prev -> modify_ _ { option_i = pure $ (i - 1) `mod` (state.options_queried # length) }
         Just i /\ Next -> modify_ _ { option_i = pure $ (i + 1) `mod` (state.options_queried # length) }
         _ -> pure unit
     _ -> pure unit
 
-handleAction (QueryInput_BufferAction event) = do
-  query <- liftEffect do
-    target <- event # Event.target # fromMaybeM do throw "SetQuery_BufferAction event must have target"
-    elem <- target # HTMLInputElement.fromEventTarget # fromMaybeM do throw "SetQuery_BufferAction event.target must be an HTMLInputElement"
-    elem # HTMLInputElement.value
+handleAction (QueryInput_BufferAction _event) = do
+  query <- resizeQueryInput
   setQuery query
+
+resizeQueryInput = do
+  elem <- H.getHTMLElementRef refLabel_input >>= fromMaybeM do liftEffect $ throw "TODO"
+  inputElem <- elem # HTMLInputElement.fromHTMLElement # fromMaybeM do liftEffect $ throw "TODO"
+  let minSize = 1
+  value <- liftEffect $ inputElem # HTMLInputElement.value
+  liftEffect $ inputElem # HTMLInputElement.setSize (max minSize (value # String.CodePoints.length))
+  pure value
 
 --------------------------------------------------------------------------------
 -- setQuery
@@ -149,12 +157,14 @@ render state =
         , HP.ref refLabel_input
         , HP.value state.query
         , HE.onInput QueryInput_BufferAction
+        , HP.spellcheck false
         ]
     , HHK.div [ classes [ "options" ] ]
         $ state.options_queried # mapWithIndex \i -> case _ of
             PasteSpan_BufferOption _label span ->
               show i /\
-                HH.div [ classes $ fold [ [ "PasteSpan", "BufferOption" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
+                HH.div
+                  [ classes $ fold [ [ "PasteSpan", "BufferOption" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
                   [ HH.text $ show span ]
     ]
 
