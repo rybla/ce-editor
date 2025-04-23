@@ -5,7 +5,8 @@
 - [x] searchable menu of edits
   - [ ] give Editor proper interface to computing these edits
     - [x] Editor's bufferOptions should receive Handle and root Expr instead of just Point
-  - [ ] edit an existing label (i.e. re-query it??)
+  - [x] edit an existing label (i.e. re-query it??)
+    - VETO: actually no -- can just delete and re-wrap just as easily, and that's what you'd do in text anyway
   - [x] BUG: cycling is off by 1 somtimes
 - [ ] BUG: when paste a zipper, cursor doesnt go in riht place and sometimes duplicates
 - [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything
@@ -33,9 +34,9 @@
 - [x] make points have styles such that the inner left and right points get set as focus separately even when they're at the same point
 - [x] refactor out `State` argument into a MonadReader via `ReaderT Effect`
 - [x] refactor Element manipulation out of `Common` into its own module
-- [x] VETO: maintain a tree of element references that supports looking up both kids and parents- [x] make it so that the `create*` functions don't require the parent element
+- [x] maintain a tree of element references that supports looking up both kids and parents- [x] make it so that the `create*` functions don't require the parent element
   to `appendChild` to
-    - what did i mean by this?: turns out this doesn't quite work out to.
+    - VETO: what did i mean by this?: turns out this doesn't quite work out to.
 - [x] need to allow for initialization stage of Component (something run right after it's added to the DOM)
   - solved by not using Components
 
