@@ -530,6 +530,11 @@ instance Show ZipperFocus where
 defaultHandle :: Handle
 defaultHandle = Point_Handle $ Point { path: Nil, j: Index 0 }
 
+normalizeHandle :: Handle -> Handle
+normalizeHandle (SpanH_Handle (SpanH h) _) | h.j_L == h.j_R = Point_Handle (Point { path: h.path, j: h.j_L })
+-- normalizeHandle (ZipperH_Handle h f) = TODO: any rules for normalizing ZipperHs?
+normalizeHandle h = h
+
 getFocusPoint :: Handle -> Point
 getFocusPoint (Point_Handle p) = p
 getFocusPoint (SpanH_Handle (SpanH h) Left_SpanFocus) = Point { path: h.path, j: h.j_L }
