@@ -2,6 +2,7 @@ module Utility where
 
 import Prelude
 
+import Control.Alternative (class Alternative, empty)
 import Control.Monad.ST.Internal as STRef
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
@@ -160,4 +161,8 @@ prop
   ⇒ Cons l b r r2
   ⇒ (∀ (p ∷ Type -> Type -> Type). Strong p ⇒ p a b → p (Record r1) (Record r2))
 prop = Lens.Record.prop (Proxy @l)
+
+guardPure :: forall m a. Alternative m => (a -> Boolean) -> a -> m a
+guardPure f a | f a = pure a
+guardPure _ _ = empty
 

@@ -32,7 +32,7 @@ import Ui.App1.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInp
 import Ui.App1.Point as Point
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
-import Utility (fromMaybeM, isAlpha, (:%=), (:=))
+import Utility (fromMaybeM, guardPure, isAlpha, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -112,14 +112,21 @@ handleAction (KeyDown_EditorAction event) = do
     -- move
     _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
-      liftEffect $ state.ref_mb_dragOrigin := none
       case mb_handle of
         Nothing -> do
+          liftEffect $ state.ref_mb_dragOrigin := none
           setHandle $ pure editor.initial_handle
         Just handle -> do
-          case Expr.Move.movePoint state.root dir (handle # getFocusPoint) of
-            Nothing -> setHandle (Just (Point_Handle (handle # getFocusPoint)))
-            Just point -> setHandle (Just (Point_Handle point))
+          case
+            Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p ->
+              guardPure editor.validHandle (Point_Handle p)
+            of
+            Nothing -> do
+              liftEffect $ state.ref_mb_dragOrigin := none
+              setHandle (Just (Point_Handle (handle # getFocusPoint)))
+            Just handle' -> do
+              liftEffect $ state.ref_mb_dragOrigin := none
+              setHandle (Just handle')
     -- drag move
     _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure true, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
@@ -140,7 +147,10 @@ handleAction (KeyDown_EditorAction event) = do
               pure handle
             Just dragOrigin -> do
               pure dragOrigin
-          case Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p -> state.root # Expr.Drag.drag dragOrigin p of
+          case
+            Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p ->
+              state.root # Expr.Drag.drag dragOrigin p >>= guardPure editor.validHandle
+            of
             Nothing -> pure unit
             Just handle' -> do
               setHandle $ pure handle'
@@ -238,26 +248,29 @@ handleAction (KeyDown_EditorAction event) = do
     _ -> pure unit
 
 handleAction (PointOutput_EditorAction (MouseDown_PointOutput _event p)) = do
-  state <- get
+  state@{ editor: Editor editor } <- get
   mb_handle <- liftEffect do Ref.read state.ref_mb_handle
   case mb_handle of
     Nothing -> do
       liftEffect do state.ref_mb_dragOrigin := pure (Point_Handle p)
       setHandle $ pure (Point_Handle p)
     Just h -> do
-      let dragOrigin = Expr.Drag.getDragOrigin h p
-      liftEffect do state.ref_mb_dragOrigin := pure dragOrigin
-      setHandle $ pure dragOrigin
+      when (editor.validHandle h) do
+        let dragOrigin = Expr.Drag.getDragOrigin h p
+        liftEffect do state.ref_mb_dragOrigin := pure dragOrigin
+        setHandle $ pure dragOrigin
 handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
   when (MouseEvent.buttons event == 1) do
-    state <- get
+    state@{ editor: Editor editor } <- get
     mb_dragOrigin <- liftEffect $ Ref.read state.ref_mb_dragOrigin
     case mb_dragOrigin of
       Nothing -> pure unit
       Just h -> do
         case state.root # Expr.Drag.drag h p of
           Nothing -> pure unit
-          Just h' -> setHandle (pure h')
+          Just h' -> do
+            when (editor.validHandle h) do
+              setHandle (pure h')
 handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput bufferOption))) = do
   state <- get
   handle <- (liftEffect $ Ref.read state.ref_mb_handle) >>= fromMaybeM do liftEffect $ throw "impossible to submit Buffer when there is no Handle"
