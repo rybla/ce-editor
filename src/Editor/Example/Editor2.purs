@@ -20,7 +20,7 @@ instance Show L where
 
 editor :: Editor L
 editor =
-  { name: "Editor1"
+  { name: "Editor2"
   , initial_expr:
       Root %
         [ example_expr 2 2
