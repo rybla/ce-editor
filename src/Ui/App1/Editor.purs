@@ -4,10 +4,11 @@ import Prelude
 
 import Control.Monad.Reader (Reader, ask, runReader)
 import Control.Monad.State (get, modify)
-import Data.Expr (BufferOption(..), Expr(..), Fragment(..), Handle(..), Path, Point(..), SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle, traverseIndices, traverseStepsAndKids)
+import Data.Expr (BufferOption(..), Expr(..), Fragment(..), Handle(..), Path, Point(..), SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle, traverseIndexes, traverseStepsAndKids)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
+import Data.Expr.Render as Expr.Render
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..), (:))
 import Data.List as List
@@ -32,7 +33,7 @@ import Ui.App1.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInp
 import Ui.App1.Point as Point
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
-import Utility (fromMaybeM, guardPure, isAlpha, (:%=), (:=))
+import Utility (fromMaybeM, guardPure, isAlpha, todo, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -236,14 +237,14 @@ handleAction (KeyDown_EditorAction event) = do
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: editor.bufferOptions state.root handle, query: "" }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, options: editor.bufferOptions state.root handle, query: "" }
     _ | ki # Event.matchKeyInfo isAlpha { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: editor.bufferOptions state.root handle, query: (unwrap ki).key }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, options: editor.bufferOptions state.root handle, query: (unwrap ki).key }
     -- unrecognized keyboard event
     _ -> pure unit
 
@@ -431,25 +432,17 @@ render state =
   HHK.div [ classes [ "Editor" ] ]
     [ "root" /\
         HHK.div [ classes [ "root" ] ]
-          [ "0" /\
-              flip runReader state do
-                renderExpr Nil state.root
-          ]
+          [ "0" /\ renderExpr state Nil state.root ]
     ]
 
-type RenderM l = Reader (EditorState l)
+renderExpr :: forall l. Show l => EditorState l -> Path -> Expr l -> EditorHTML l
+renderExpr state@{ editor: Editor editor } path expr = do
+  Expr.Render.renderExpr { render_kid, render_point, assembleExpr: editor.assembleExpr } path expr
+  where
+  render_kid = renderExpr state
+  render_point = renderPoint state
 
-renderExpr :: forall l. Show l => Path -> Expr l -> RenderM l (EditorHTML l)
-renderExpr path (Expr e) = do
-  _state@{ editor: Editor editor } <- ask
-  htmls_kids <- Expr e # traverseStepsAndKids \i e_kid -> renderExpr (path `List.snoc` i) e_kid
-  htmls_points <- Expr e # traverseIndices \j -> renderPoint $ Point { path, j }
-  pure
-    $ HHK.div [ classes [ "Expr" ] ]
-    $ mapWithIndex (\i -> (show i /\ _))
-    $ editor.assembleExpr { label: e.l, kids: htmls_kids, points: htmls_points }
-
-renderPoint :: forall l. Show l => Point -> RenderM l (EditorHTML l)
-renderPoint point = do
-  pure $ HH.slot (Proxy @"Point") point Point.component { point } PointOutput_EditorAction
+renderPoint :: forall l. Show l => EditorState l -> Point -> EditorHTML l
+renderPoint state point =
+  HH.slot (Proxy @"Point") point Point.component { editor: state.editor, point } PointOutput_EditorAction
 

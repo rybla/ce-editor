@@ -24,17 +24,18 @@ import Ui.Halogen (classes)
 import Utility (prop)
 import Web.HTML.HTMLElement as HTMLElement
 
-component :: forall l. Show l => H.Component (PointQuery l) PointInput (PointOutput l) Aff
+component :: forall l. Show l => H.Component (PointQuery l) (PointInput l) (PointOutput l) Aff
 component = H.mkComponent { initialState, eval, render }
 
-initialState :: forall l. PointInput -> PointState l
+initialState :: forall l. PointInput l -> PointState l
 initialState input =
-  { point: input.point
+  { editor: input.editor
+  , point: input.point
   , statuses: Set.empty
   , mb_bufferInput: none
   }
 
-eval :: forall l a. H.HalogenQ (PointQuery l) (PointAction l) PointInput a -> H.HalogenM (PointState l) (PointAction l) (PointSlots l) (PointOutput l) Aff a
+eval :: forall l a. H.HalogenQ (PointQuery l) (PointAction l) (PointInput l) a -> H.HalogenM (PointState l) (PointAction l) (PointSlots l) (PointOutput l) Aff a
 eval = H.mkEval H.defaultEval
   { initialize = pure Initialize_PointAction
   , handleQuery = handleQuery

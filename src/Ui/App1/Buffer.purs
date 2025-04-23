@@ -5,18 +5,23 @@ import Prelude
 import Control.Monad.State (get, modify_)
 import Data.Array ((!!))
 import Data.Const (Const(..))
-import Data.Expr (BufferOption(..))
+import Data.Expr (BufferOption(..), Expr, Path, Point)
+import Data.Expr.Render (RenderArgs, renderFragment)
+import Data.Expr.Render as Expr.Render
 import Data.Foldable (fold, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (unwrap)
 import Data.String.CodePoints as String.CodePoints
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
+import Editor (Editor(..))
 import Effect.Aff (Aff)
 import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Halogen (liftEffect)
 import Halogen as H
+import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Events as HE
@@ -47,7 +52,9 @@ component = H.mkComponent { initialState, eval, render }
 
 initialState :: forall l. BufferInput l -> BufferState l
 initialState input = setQuery' input.query
-  { query: input.query
+  { editor: input.editor
+  , point: input.point
+  , query: input.query
   , options: input.options
   , option_i: none
   , options_queried: []
@@ -165,6 +172,20 @@ render state =
               show i /\
                 HH.div
                   [ classes $ fold [ [ "PasteSpan", "BufferOption" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
-                  [ HH.text $ show frag ]
+                  [ frag # renderFragment (renderArgs state.editor) (state.point # unwrap).path
+                  ]
     ]
+
+renderExpr :: forall l w i. Show l => Editor l -> Path -> Expr l -> HTML w i
+renderExpr editor path expr = Expr.Render.renderExpr (renderArgs editor) path expr
+
+renderPoint :: forall l w i. Show l => Editor l -> Point -> HTML w i
+renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]
+
+renderArgs :: forall l w i. Show l => Editor l -> RenderArgs l w i
+renderArgs (Editor editor) =
+  { render_kid: renderExpr (Editor editor)
+  , render_point: renderPoint (Editor editor)
+  , assembleExpr: editor.assembleExpr
+  }
 

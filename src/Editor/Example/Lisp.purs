@@ -26,7 +26,6 @@ instance Show L where
   show Group = "#Group"
   show (Symbol s) = s
 
--- (expr # atSubExpr p.path).here # \(Expr e) -> e.l == Group
 validPoint :: Expr L -> Point -> Boolean
 validPoint expr (Point p) = or
   [ e'.l == Root
@@ -45,9 +44,13 @@ editor = Editor
           "" -> []
           _ | "group" # startsWith (String.Pattern query) ->
             case handle of
-              Point_Handle _ -> [ Fragment_BufferOption $ Span_Fragment $ Span [ Group % [] ] ]
+              Point_Handle _ ->
+                [ Fragment_BufferOption $ Span_Fragment $ Span [ Symbol query % [] ]
+                , Fragment_BufferOption $ Span_Fragment $ Span [ Group % [] ]
+                ]
               SpanH_Handle _ _ ->
-                [ Fragment_BufferOption $ Zipper_Fragment $ Zipper
+                [ Fragment_BufferOption $ Span_Fragment $ Span [ Symbol query % [] ]
+                , Fragment_BufferOption $ Zipper_Fragment $ Zipper
                     { kids_L: []
                     , inside: SpanContext
                         { _O: ExprContext Nil
@@ -57,7 +60,8 @@ editor = Editor
                     }
                 ]
               ZipperH_Handle _ _ ->
-                [ Fragment_BufferOption $ Zipper_Fragment $ Zipper
+                [ Fragment_BufferOption $ Span_Fragment $ Span [ Symbol query % [] ]
+                , Fragment_BufferOption $ Zipper_Fragment $ Zipper
                     { kids_L: []
                     , inside: SpanContext
                         { _O: ExprContext Nil

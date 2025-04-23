@@ -95,8 +95,9 @@ data PointQuery l a
   | SetBufferInput_PointQuery (Maybe (BufferInput l)) a
   | GetBufferInput_PointQuery (Maybe (BufferInput l) -> a)
 
-type PointInput =
-  { point :: Point
+type PointInput l =
+  { editor :: Editor l
+  , point :: Point
   }
 
 data PointOutput l
@@ -105,7 +106,8 @@ data PointOutput l
   | BufferOutput_PointOutput (BufferOutput l)
 
 type PointState l =
-  { point :: Point
+  { editor :: Editor l
+  , point :: Point
   , statuses :: Set PointStatus
   , mb_bufferInput :: Maybe (BufferInput l)
   }
@@ -134,7 +136,7 @@ instance Ord PointStatus where
 
 data PointAction l
   = Initialize_PointAction
-  | Receive_PointAction PointInput
+  | Receive_PointAction (PointInput l)
   | MouseDown_PointAction MouseEvent
   | MouseEnter_PointAction MouseEvent
   | BufferOutput_PointAction (BufferOutput l)
@@ -156,7 +158,9 @@ type BufferQuery = Const Void
 -- list of edits that have already been computed and then the buffer is justt
 -- searching through them, right?
 type BufferInput l =
-  { query :: String
+  { editor :: Editor l
+  , point :: Point
+  , query :: String
   , options :: BufferOptions l
   }
 
@@ -164,7 +168,9 @@ data BufferOutput l =
   SubmitBuffer_BufferOutput (BufferOption l)
 
 type BufferState l =
-  { query :: String
+  { editor :: Editor l
+  , point :: Point
+  , query :: String
   , options :: BufferOptions l
   , option_i :: Maybe Int
   , options_queried :: Array (BufferOption l)

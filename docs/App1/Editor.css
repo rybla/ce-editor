@@ -51,6 +51,14 @@
     }
   }
 
+  .Hole {
+    padding: 0 0.5em;
+    background-color: black;
+    color: white;
+    border-radius: var(--Handle--width);
+    animation: rainbow-glow 20s infinite linear
+  }
+
   .Point {
     display: flex;
     flex-direction: row;

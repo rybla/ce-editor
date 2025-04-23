@@ -5,8 +5,9 @@ import Prelude
 import Control.Alternative (guard)
 import Control.Plus (empty)
 import Data.Array as Array
+import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
-import Data.Foldable (class Foldable, foldr)
+import Data.Foldable (class Foldable, foldr, length)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
@@ -144,8 +145,13 @@ mapStepsAndKids f (Expr e) = e.kids # mapWithIndex \i -> f (Step i)
 traverseStepsAndKids :: forall l m a. Applicative m => (Step -> Expr l -> m a) -> Expr l -> m (Array a)
 traverseStepsAndKids f (Expr e) = e.kids # traverseWithIndex \i -> f (Step i)
 
-traverseIndices :: forall l m a. Applicative m => (Index -> m a) -> Expr l -> m (Array a)
-traverseIndices f (Expr e) = rangeIndexes j # traverse f
+traverseIndexes :: forall l m a. Applicative m => (Index -> m a) -> Expr l -> m (Array a)
+traverseIndexes f (Expr e) = rangeIndexes j # traverse f
+  where
+  j = Expr e # getExtremeIndexes
+
+mapIndexes ∷ ∀ (l ∷ Type) (a ∷ Type). (Index → a) → Expr l → Array a
+mapIndexes f (Expr e) = rangeIndexes j # map f
   where
   j = Expr e # getExtremeIndexes
 
@@ -266,6 +272,19 @@ offset_Tooth (Tooth t) = Index $ t.kids_L # Array.length
 getStep :: forall l. Tooth l -> Step
 getStep (Tooth t) = Step $ t.kids_L # Array.length
 
+mapStepsAndKids_Tooth :: forall l a. (Step -> Expr l -> a) -> a -> Tooth l -> Array a
+mapStepsAndKids_Tooth f a (Tooth t) = (t.kids_L <#> Left) <> [ Right a ] <> (t.kids_R <#> Left) # mapWithIndex \i -> case _ of
+  Left kid -> f (Step i) kid
+  Right a' -> a'
+
+getExtremeIndexes_Tooth ∷ ∀ (l ∷ Type). Tooth l → { _L ∷ Index, _R ∷ Index }
+getExtremeIndexes_Tooth (Tooth t) = { _L: Index 0, _R: Index (length t.kids_L + 1 + length t.kids_R) }
+
+mapIndexes_Tooth :: forall l a. (Index -> a) -> Tooth l -> Array a
+mapIndexes_Tooth f tooth = rangeIndexes j # map f
+  where
+  j = tooth # getExtremeIndexes_Tooth
+
 --------------------------------------------------------------------------------
 
 newtype SpanTooth l = SpanTooth { l :: l, kids_L :: Array (Expr l), kids_R :: Array (Expr l) }
@@ -292,6 +311,19 @@ offset_outer_SpanTooth (SpanTooth st) = { _L: Index $ st.kids_L # Array.length, 
 
 offset_inner_SpanTooth :: forall l. (SpanTooth l) -> Index
 offset_inner_SpanTooth (SpanTooth st) = Index $ st.kids_L # Array.length
+
+mapStepsAndKids_SpanTooth :: forall l a. (Step -> Expr l -> a) -> Array a -> SpanTooth l -> Array a
+mapStepsAndKids_SpanTooth f as (SpanTooth t) = (t.kids_L <#> Left) <> (Right <$> as) <> (t.kids_R <#> Left) # mapWithIndex \i -> case _ of
+  Left kid -> f (Step i) kid
+  Right a' -> a'
+
+getExtremeIndexes_SpanTooth ∷ ∀ (l ∷ Type). Int -> SpanTooth l → { _L ∷ Index, _R ∷ Index }
+getExtremeIndexes_SpanTooth n (SpanTooth t) = { _L: Index 0, _R: Index (length t.kids_L + n + length t.kids_R) }
+
+mapIndexes_SpanTooth :: forall l a. Int -> (Index -> a) -> SpanTooth l -> Array a
+mapIndexes_SpanTooth n f tooth = rangeIndexes j # map f
+  where
+  j = tooth # getExtremeIndexes_SpanTooth n
 
 --------------------------------------------------------------------------------
 
