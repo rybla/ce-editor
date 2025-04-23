@@ -4,11 +4,11 @@ import Data.Expr
 import Prelude
 
 import Data.Array as Array
-import Data.Foldable (fold, null)
-import Data.Maybe (Maybe(..))
+import Data.Foldable (fold)
 import Data.Newtype (wrap)
 import Data.String as String
-import Editor (Editor)
+import Editor (Editor(..))
+import Editor.Common (assembleExpr_default)
 
 data L = String String | Root
 
@@ -19,7 +19,7 @@ instance Show L where
   show (String s) = s
 
 editor :: Editor L
-editor =
+editor = Editor
   { name: "Editor2"
   , initial_expr:
       Root %
@@ -33,7 +33,9 @@ editor =
         else [ PasteSpan_BufferOption q $ Span [ String q % [] ] ]
       , [ PasteSpan_BufferOption "example" $ Span [ String "example" % [] ] ]
       ]
-  , max_history_length: 100
+  , validHandle: const true
+  , assembleExpr: assembleExpr_default
+  , historyLength_max: 100
   }
 
 example_expr :: Int -> Int -> Expr L

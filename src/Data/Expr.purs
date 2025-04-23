@@ -17,7 +17,7 @@ import Data.NonEmpty (NonEmpty, (:|))
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.String as String
-import Data.Traversable (class Traversable)
+import Data.Traversable (class Traversable, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested (type (/\), (/\))
 import Utility (extractAt_Array, extractSpan_Array, impossible, parens, spaces)
@@ -143,6 +143,11 @@ mapStepsAndKids f (Expr e) = e.kids # mapWithIndex \i -> f (Step i)
 
 traverseStepsAndKids :: forall l m a. Applicative m => (Step -> Expr l -> m a) -> Expr l -> m (Array a)
 traverseStepsAndKids f (Expr e) = e.kids # traverseWithIndex \i -> f (Step i)
+
+traverseIndices :: forall l m a. Applicative m => (Index -> m a) -> Expr l -> m (Array a)
+traverseIndices f (Expr e) = rangeIndexes j # traverse f
+  where
+  j = Expr e # getExtremeIndexes
 
 --------------------------------------------------------------------------------
 

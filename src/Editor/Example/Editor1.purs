@@ -11,9 +11,8 @@ import Prelude
 import Data.Array (range)
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap)
-import Editor.Common (Editor)
+import Editor.Common (Editor(..), assembleExpr_default)
 
 newtype L meta = L { dat :: Dat, meta :: meta }
 
@@ -41,7 +40,7 @@ instance Eq Dat where
   eq x = genericEq x
 
 mkEditor :: forall meta. meta -> Editor (L meta)
-mkEditor default_meta =
+mkEditor default_meta = Editor
   { name: "Editor1"
   , initial_expr:
       mkL Root default_meta %
@@ -51,7 +50,9 @@ mkEditor default_meta =
         ]
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
   , bufferOptions: \h q e -> []
-  , max_history_length: 100
+  , validHandle: const true
+  , assembleExpr: assembleExpr_default
+  , historyLength_max: 100
   }
 
 example_expr :: forall meta. meta -> Int -> Int -> Expr (L meta)

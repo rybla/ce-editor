@@ -2,10 +2,9 @@ module Ui.App1.Editor where
 
 import Prelude
 
-import Control.Monad.Reader (Reader, runReader)
+import Control.Monad.Reader (Reader, ask, runReader)
 import Control.Monad.State (get, modify)
-import Data.Array as Array
-import Data.Expr (BufferOption(..), Expr(..), Fragment(..), Handle(..), Path, Point(..), SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, getIndexesAroundStep, normalizeHandle, traverseStepsAndKids)
+import Data.Expr (BufferOption(..), Expr(..), Fragment(..), Handle(..), Path, Point(..), SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle, traverseIndices, traverseStepsAndKids)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
@@ -18,6 +17,7 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
+import Editor (Editor(..))
 import Effect.Aff (Aff)
 import Effect.Exception (throw)
 import Effect.Ref as Ref
@@ -49,9 +49,9 @@ component = H.mkComponent { initialState, eval, render }
 --------------------------------------------------------------------------------
 
 initialState :: forall l. EditorInput l -> EditorState l
-initialState input =
-  { editor: input.editor
-  , root: input.editor.initial_expr
+initialState _input@{ editor: Editor editor } =
+  { editor: Editor editor
+  , root: editor.initial_expr
   , initial_mb_handle
   , ref_mb_handle: unsafePerformEffect do Ref.new initial_mb_handle
   , ref_mb_dragOrigin: unsafePerformEffect do Ref.new none
@@ -90,7 +90,7 @@ handleAction (MouseUp_EditorAction _event) = do
   liftEffect do state.ref_mb_dragOrigin := none
 
 handleAction (KeyDown_EditorAction event) = do
-  state <- get
+  state@{ editor: Editor editor } <- get
   mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
   mb_dragOrigin <- liftEffect $ Ref.read state.ref_mb_dragOrigin
   bufferIsOpen <- case mb_handle of
@@ -115,7 +115,7 @@ handleAction (KeyDown_EditorAction event) = do
       liftEffect $ state.ref_mb_dragOrigin := none
       case mb_handle of
         Nothing -> do
-          setHandle $ pure state.editor.initial_handle
+          setHandle $ pure editor.initial_handle
         Just handle -> do
           case Expr.Move.movePoint state.root dir (handle # getFocusPoint) of
             Nothing -> setHandle (Just (Point_Handle (handle # getFocusPoint)))
@@ -128,10 +128,10 @@ handleAction (KeyDown_EditorAction event) = do
           -- initialize dragOrigin
           case mb_dragOrigin of
             Nothing -> do
-              liftEffect $ state.ref_mb_dragOrigin := pure state.editor.initial_handle
+              liftEffect $ state.ref_mb_dragOrigin := pure editor.initial_handle
             Just _ -> do
               pure unit
-          setHandle $ pure state.editor.initial_handle
+          setHandle $ pure editor.initial_handle
         Just handle -> do
           -- initialize dragOrigin
           dragOrigin <- case mb_dragOrigin of
@@ -226,14 +226,14 @@ handleAction (KeyDown_EditorAction event) = do
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: state.editor.bufferOptions handle state.root, query: "" }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: editor.bufferOptions handle state.root, query: "" }
     _ | ki # Event.matchKeyInfo isAlpha { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: state.editor.bufferOptions handle state.root, query: (unwrap ki).key }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: editor.bufferOptions handle state.root, query: (unwrap ki).key }
     -- unrecognized keyboard event
     _ -> pure unit
 
@@ -428,21 +428,13 @@ type RenderM l = Reader (EditorState l)
 
 renderExpr :: forall l. Show l => Path -> Expr l -> RenderM l (EditorHTML l)
 renderExpr path (Expr e) = do
-  htmls_kidsAndPoints <- Expr e # traverseStepsAndKids \i e_kid -> do
-    html_p <- renderPoint $ Point { path, j: (i # getIndexesAroundStep)._L }
-    html_e <- renderExpr (path `List.snoc` i) e_kid
-    pure [ html_p, html_e ]
-  html_lastPoint <- renderPoint $ Point { path, j: (Expr e # getExtremeIndexes)._R }
+  _state@{ editor: Editor editor } <- ask
+  htmls_kids <- Expr e # traverseStepsAndKids \i e_kid -> renderExpr (path `List.snoc` i) e_kid
+  htmls_points <- Expr e # traverseIndices \j -> renderPoint $ Point { path, j }
   pure
     $ HHK.div [ classes [ "Expr" ] ]
     $ mapWithIndex (\i -> (show i /\ _))
-    $ Array.fold
-        [ [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "(" ] ]
-        , [ HH.div [ classes [ "label" ] ] [ HH.text $ show e.l ] ]
-        , Array.fold htmls_kidsAndPoints
-        , [ html_lastPoint ]
-        , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ] ]
-        ]
+    $ editor.assembleExpr { label: e.l, kids: htmls_kids, points: htmls_points }
 
 renderPoint :: forall l. Show l => Point -> RenderM l (EditorHTML l)
 renderPoint point = do

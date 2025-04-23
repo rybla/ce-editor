@@ -13,6 +13,7 @@
 - [ ] fix bug in dragging that lets the inner span be outside the outer span
 - [ ] fix other bugs in dragging
 - [ ] fix bug that redo takes two tries to work?? and can't redo final undo
+- [x] give Editor interface to custom rendering
 - [x] make stuff in `Ui.Editor` generic over label
 - [x] undo/redo
 - [x] copy/cut/paste
