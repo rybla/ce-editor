@@ -3,14 +3,16 @@
   --Editor--color: var(--body--color);
 
   --Handle--width: 1em;
-  --Handle--background: blue;
-  --Handle_Focus--box-shadow: 0 -0.5em 0 0 var(--Handle--background), 0 0.5em 0 0 var(--Handle--background);
+  --Handle--background-color: rgb(106, 0, 255);
+  --Handle_Focus--box-shadow:
+    0 -0.5em 0 0 var(--Handle--background-color),
+    0 0.5em 0 0 var(--Handle--background-color);
 
   --Handle--border-radius: var(--Handle--width);
   --Handle_Left--border-radius: var(--Handle--border-radius) 0 0 var(--Handle--border-radius);
   --Handle_Right--border-radius: 0 var(--Handle--border-radius) var(--Handle--border-radius) 0;
 
-  --Handle_inside--background: color-mix(in hsl, var(--Handle--background), transparent 80%);
+  --Handle_inside--background: color-mix(in hsl, var(--Handle--background-color), transparent 90%);
 }
 
 .Editor {
@@ -58,13 +60,21 @@
 
     &>.Buffer {
       position: absolute;
-      top: 1.5em;
+      top: 2em;
       padding: 0.5em;
       width: fit-content;
 
       display: flex;
       flex-direction: column;
       gap: 0.5em;
+
+      border-radius: 1em;
+      background: rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      box-shadow: 0 0 1em 0 rgba(0, 0, 0, 0.2);
+      transition: box-shadow 0.3s ease;
+      animation: Buffer-appear 0.2s forwards linear;
 
       &>.query {
         display: inline-block;
@@ -77,15 +87,10 @@
         min-width: 1ch;
         transition: width 0.3s ease-in-out;
 
-        animation:
-          rainbow-glow 20s infinite linear,
-          Buffer-query-appear 0.2s forwards linear;
+        animation: rainbow-glow 20s infinite linear;
 
         background: #1a1a1a;
         color: white;
-
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        transition: box-shadow 0.3s ease;
 
         font-size: 1em;
         font-family: inherit;
@@ -116,7 +121,7 @@
           transition: all 0.2s ease;
 
           &.selected {
-            background: color-mix(in srgb, blue, transparent 80%);
+            background: color-mix(in srgb, blue, transparent 90%);
             box-shadow: 0 0 0 0.1em black, 0 0 15px hsla(210deg 100% 60% / 0.5), 0 4px 10px rgba(0, 0, 0, 0.2);
           }
 
@@ -131,21 +136,22 @@
       height: 100%;
       width: calc(var(--Handle--width) / 3);
 
-      transition-property: background-color, box-shadow;
-      transition-duration: 0.2s;
-      /* transition-duration: 0; */
+      /* transition:
+        background-color 0.2s ease-in,
+        box-shadow 0.2s ease-in; */
     }
 
     &.Point_Handle_PointStatus {
       &>.Middle {
-        background: var(--Handle--background);
+        border-radius: 1em;
+        background: var(--Handle--background-color);
         box-shadow: var(--Handle_Focus--box-shadow);
       }
     }
 
     &.SpanH_Handle_Left_PointStatus {
       >.Right {
-        background: var(--Handle--background);
+        background: var(--Handle--background-color);
         border-radius: var(--Handle_Left--border-radius);
       }
 
@@ -160,7 +166,7 @@
 
     &.SpanH_Handle_Right_PointStatus {
       >.Left {
-        background: var(--Handle--background);
+        background: var(--Handle--background-color);
         border-radius: var(--Handle_Right--border-radius);
       }
 
@@ -177,7 +183,7 @@
 
     &.ZipperH_Handle_OuterLeft_PointStatus {
       >.Right {
-        background: var(--Handle--background);
+        background: var(--Handle--background-color);
         border-radius: var(--Handle_Left--border-radius);
       }
 
@@ -194,7 +200,7 @@
 
     &.ZipperH_Handle_InnerLeft_PointStatus {
       >.Right {
-        background: var(--Handle--background);
+        background: var(--Handle--background-color);
       }
 
       &.LeftFocus_PointStatus>.Right {
@@ -210,7 +216,7 @@
 
     &.ZipperH_Handle_InnerRight_PointStatus {
       >.Left {
-        background: var(--Handle--background);
+        background: var(--Handle--background-color);
       }
 
       &.RightFocus_PointStatus>.Left {
@@ -226,7 +232,7 @@
 
     &.ZipperH_Handle_InnerLeft_PointStatus.ZipperH_Handle_InnerRight_PointStatus {
       >.Left {
-        background: var(--Handle--background);
+        background: var(--Handle--background-color);
       }
 
       &.LeftFocus_PointStatus>.Left {
@@ -242,7 +248,7 @@
       }
 
       >.Right {
-        background: var(--Handle--background);
+        background: var(--Handle--background-color);
       }
 
       &.LeftFocus_PointStatus>.Right {
@@ -256,7 +262,7 @@
 
     &.ZipperH_Handle_OuterRight_PointStatus {
       >.Left {
-        background: var(--Handle--background);
+        background: var(--Handle--background-color);
         border-radius: var(--Handle_Right--border-radius);
       }
 
@@ -276,7 +282,7 @@
 @keyframes BufferOption-appear {
   from {
     opacity: 0;
-    transform: translateX(-1em);
+    transform: translateX(1em);
   }
 
   to {
@@ -295,7 +301,7 @@
   }
 }
 
-@keyframes Buffer-query-appear {
+@keyframes Buffer-appear {
   from {
     opacity: 0;
     transform: translateY(-1em);
@@ -326,5 +332,22 @@
 
   100% {
     box-shadow: 0 0 5px rgba(0, 255, 255, 0.7), 0 0 8px rgba(0, 255, 255, 0.5) inset, 0 0 10px #00ffff;
+  }
+}
+
+@keyframes Point-appear {
+  0% {
+    opacity: 0;
+    transform: scaleY(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scaleY(1.5);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
   }
 }
