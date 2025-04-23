@@ -11564,9 +11564,9 @@
   }();
   var refLabel_point = "point";
   var render3 = function(state3) {
-    return div2([ref2(refLabel_point), classes2(fold5([["Point"], map24(show5)(toUnfoldable6(state3.statuses))])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(fold13([[div2([classes2(["Left"])])([])], [div2([classes2(["Middle"])])([])], [div2([classes2(["Right"])])([])], foldMap2(function(input3) {
+    return div2([ref2(refLabel_point), classes2(fold5([["Point"], map24(show5)(toUnfoldable6(state3.statuses))])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(fold13([[div2([classes2(["Left"])])([])], [div2([classes2(["Middle"])])(foldMap2(function(input3) {
       return [slot2($$Proxy.value)(unit)(component2)(input3)(BufferOutput_PointAction.create)];
-    })(state3.mb_bufferInput)]));
+    })(state3.mb_bufferInput))], [div2([classes2(["Right"])])([])]]));
   };
   var initialState3 = function(input3) {
     return {

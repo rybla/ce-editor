@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Const (Const)
 import Data.Eq.Generic (genericEq)
-import Data.Expr (BufferOption, BufferOptions, Expr, Fragment, Handle, Point, Span)
+import Data.Expr (BufferOption, BufferOptions, Expr, Fragment, Handle, Point)
 import Data.Generic.Rep (class Generic)
 import Data.List (List)
 import Data.Maybe (Maybe)
@@ -17,7 +17,6 @@ import Effect.Aff (Aff)
 import Effect.Ref (Ref)
 import Halogen as H
 import Web.Event.Event (Event)
-import Web.UIEvent.KeyboardEvent (KeyboardEvent)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 --------------------------------------------------------------------------------
