@@ -5,11 +5,10 @@ import Prelude
 import Control.Monad.Reader (Reader, runReader)
 import Control.Monad.State (get, modify)
 import Data.Array as Array
-import Data.Expr (BufferOption(..), Expr(..), Fragment(..), Handle(..), Path, Point(..), SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getExtremeSteps, getFocusPoint, getIndexesAroundStep, traverseStepsAndKids)
+import Data.Expr (BufferOption(..), Expr(..), Fragment(..), Handle(..), Path, Point(..), SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, getIndexesAroundStep, normalizeHandle, traverseStepsAndKids)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
-import Data.Foldable (and)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..), (:))
 import Data.List as List
@@ -21,7 +20,6 @@ import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor.Example.Editor2 (L)
 import Effect.Aff (Aff)
-import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Effect.Ref as Ref
 import Effect.Unsafe (unsafePerformEffect)
@@ -35,7 +33,7 @@ import Ui.App1.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInp
 import Ui.App1.Point as Point
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
-import Utility (fromMaybeM, isAlpha, todo, (:%=), (:=))
+import Utility (fromMaybeM, isAlpha, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -167,7 +165,7 @@ handleAction (KeyDown_EditorAction event) = do
       liftEffect $ event # Event.preventDefault
       liftEffect $ state.ref_mb_dragOrigin := none
       let j = state.root # getExtremeIndexes
-      let h = SpanH_Handle (SpanH { path: none, j_L: j._L, j_R: j._R }) Left_SpanFocus
+      let h = normalizeHandle $ SpanH_Handle (SpanH { path: none, j_L: j._L, j_R: j._R }) Left_SpanFocus
       setHandle $ pure h
     -- copy
     _ | ki # Event.matchKeyInfo (_ == "c") { cmd: pure true, shift: pure false, alt: pure false } -> do

@@ -1207,11 +1207,11 @@
 
   // output/Data.Ord/foreign.js
   var unsafeCompareImpl = function(lt) {
-    return function(eq6) {
+    return function(eq7) {
       return function(gt) {
         return function(x) {
           return function(y) {
-            return x < y ? lt : x === y ? eq6 : gt;
+            return x < y ? lt : x === y ? eq7 : gt;
           };
         };
       };
@@ -1736,7 +1736,7 @@
     };
   };
   var eqMaybe = function(dictEq) {
-    var eq6 = eq(dictEq);
+    var eq7 = eq(dictEq);
     return {
       eq: function(x) {
         return function(y) {
@@ -1745,7 +1745,7 @@
           }
           ;
           if (x instanceof Just && y instanceof Just) {
-            return eq6(x.value0)(y.value0);
+            return eq7(x.value0)(y.value0);
           }
           ;
           return false;
@@ -2298,13 +2298,13 @@
     return v.value0;
   };
   var eqTuple = function(dictEq) {
-    var eq6 = eq(dictEq);
+    var eq7 = eq(dictEq);
     return function(dictEq1) {
       var eq14 = eq(dictEq1);
       return {
         eq: function(x) {
           return function(y) {
-            return eq6(x.value0)(y.value0) && eq14(x.value1)(y.value1);
+            return eq7(x.value0)(y.value0) && eq14(x.value1)(y.value1);
           };
         }
       };
@@ -2721,15 +2721,15 @@
     return dict.foldMap;
   };
   var fold = function(dictFoldable) {
-    var foldMap2 = foldMap(dictFoldable);
+    var foldMap22 = foldMap(dictFoldable);
     return function(dictMonoid) {
-      return foldMap2(dictMonoid)(identity5);
+      return foldMap22(dictMonoid)(identity5);
     };
   };
   var all = function(dictFoldable) {
-    var foldMap2 = foldMap(dictFoldable);
+    var foldMap22 = foldMap(dictFoldable);
     return function(dictHeytingAlgebra) {
-      return alaF2(Conj)(foldMap2(monoidConj(dictHeytingAlgebra)));
+      return alaF2(Conj)(foldMap22(monoidConj(dictHeytingAlgebra)));
     };
   };
   var and = function(dictFoldable) {
@@ -3707,13 +3707,13 @@
     return v.value0;
   };
   var foldableNonEmpty = function(dictFoldable) {
-    var foldMap2 = foldMap(dictFoldable);
+    var foldMap3 = foldMap(dictFoldable);
     var foldl3 = foldl(dictFoldable);
     var foldr5 = foldr(dictFoldable);
     return {
       foldMap: function(dictMonoid) {
         var append13 = append(dictMonoid.Semigroup0());
-        var foldMap12 = foldMap2(dictMonoid);
+        var foldMap12 = foldMap3(dictMonoid);
         return function(f) {
           return function(v) {
             return append13(f(v.value0))(foldMap12(f)(v.value1));
@@ -4000,7 +4000,7 @@
   };
   var eq1List = {
     eq1: function(dictEq) {
-      var eq6 = eq(dictEq);
+      var eq7 = eq(dictEq);
       return function(xs) {
         return function(ys) {
           var go2 = function($copy_v) {
@@ -4024,7 +4024,7 @@
                   if (v instanceof Cons && v1 instanceof Cons) {
                     $tco_var_v = v.value1;
                     $tco_var_v1 = v1.value1;
-                    $copy_v2 = v2 && eq6(v1.value0)(v.value0);
+                    $copy_v2 = v2 && eq7(v1.value0)(v.value0);
                     return;
                   }
                   ;
@@ -8415,11 +8415,11 @@
     }
   };
   var genericEqArgument = function(dictEq) {
-    var eq6 = eq(dictEq);
+    var eq7 = eq(dictEq);
     return {
       "genericEq'": function(v) {
         return function(v1) {
-          return eq6(v)(v1);
+          return eq7(v)(v1);
         };
       }
     };
@@ -9146,6 +9146,7 @@
     }
   };
   var genericEq3 = /* @__PURE__ */ genericEq(genericPoint_)(/* @__PURE__ */ genericEqConstructor(/* @__PURE__ */ genericEqArgument(/* @__PURE__ */ eqRec3(/* @__PURE__ */ eqRowCons22(jIsSymbol)(eqIndex)))));
+  var eq3 = /* @__PURE__ */ eq(eqIndex);
   var eqPoint = {
     eq: function(x) {
       return genericEq3(x);
@@ -9239,6 +9240,16 @@
   };
   var offset_Span = function(v) {
     return length4(v);
+  };
+  var normalizeHandle = function(v) {
+    if (v instanceof SpanH_Handle && eq3(v.value0.j_L)(v.value0.j_R)) {
+      return new Point_Handle({
+        path: v.value0.path,
+        j: v.value0.j_L
+      });
+    }
+    ;
+    return v;
   };
   var mkExpr = function(l) {
     return function(kids) {
@@ -9444,7 +9455,7 @@
       };
     }
     ;
-    throw new Error("Failed pattern match at Data.Expr (line 533, column 1 - line 533, column 33): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Data.Expr (line 538, column 1 - line 538, column 33): " + [v.constructor.name]);
   };
   var getInnerSpanH_ZipperH = function(v) {
     return {
@@ -9694,7 +9705,7 @@
   };
 
   // output/Data.Expr.Drag/index.js
-  var eq3 = /* @__PURE__ */ eq(eqPoint);
+  var eq4 = /* @__PURE__ */ eq(eqPoint);
   var pure10 = /* @__PURE__ */ pure(applicativeMaybe);
   var append6 = /* @__PURE__ */ append(semigroupList);
   var bind5 = /* @__PURE__ */ bind(bindMaybe);
@@ -9710,7 +9721,7 @@
                 };
                 if (v instanceof ZipperH_Handle) {
                   var $55 = getEndPoints_ZipperH(v.value0);
-                  var $56 = eq3(v1)($55["_OR"]);
+                  var $56 = eq4(v1)($55["_OR"]);
                   if ($56) {
                     return new ZipperH_Handle(v.value0, OuterRight_ZipperFocus.value);
                   }
@@ -9722,7 +9733,7 @@
               };
               if (v instanceof ZipperH_Handle) {
                 var $61 = getEndPoints_ZipperH(v.value0);
-                var $62 = eq3(v1)($61["_IR"]);
+                var $62 = eq4(v1)($61["_IR"]);
                 if ($62) {
                   return new ZipperH_Handle(v.value0, InnerRight_ZipperFocus.value);
                 }
@@ -9734,7 +9745,7 @@
             };
             if (v instanceof ZipperH_Handle) {
               var $67 = getEndPoints_ZipperH(v.value0);
-              var $68 = eq3(v1)($67["_IL"]);
+              var $68 = eq4(v1)($67["_IL"]);
               if ($68) {
                 return new ZipperH_Handle(v.value0, InnerLeft_ZipperFocus.value);
               }
@@ -9746,7 +9757,7 @@
           };
           if (v instanceof ZipperH_Handle) {
             var $73 = getEndPoints_ZipperH(v.value0);
-            var $74 = eq3(v1)($73["_OL"]);
+            var $74 = eq4(v1)($73["_OL"]);
             if ($74) {
               return new ZipperH_Handle(v.value0, OuterLeft_ZipperFocus.value);
             }
@@ -9758,7 +9769,7 @@
         };
         if (v instanceof SpanH_Handle) {
           var $79 = getEndPoints_SpanH(v.value0);
-          var $80 = eq3(v1)($79["_R"]);
+          var $80 = eq4(v1)($79["_R"]);
           if ($80) {
             return new SpanH_Handle(v.value0, Right_SpanFocus.value);
           }
@@ -9770,7 +9781,7 @@
       };
       if (v instanceof SpanH_Handle) {
         var $85 = getEndPoints_SpanH(v.value0);
-        var $86 = eq3(v1)($85["_L"]);
+        var $86 = eq4(v1)($85["_L"]);
         if ($86) {
           return new SpanH_Handle(v.value0, Left_SpanFocus.value);
         }
@@ -9787,7 +9798,7 @@
       return function(v1) {
         return function(v2) {
           if (v instanceof Point_Handle) {
-            if (eq3(v.value0)(v1)) {
+            if (eq4(v.value0)(v1)) {
               return pure10(new Point_Handle(v1));
             }
             ;
@@ -10053,7 +10064,7 @@
   var add2 = /* @__PURE__ */ add(semiringIndex);
   var none2 = /* @__PURE__ */ none(unfoldableArray);
   var append7 = /* @__PURE__ */ append(semigroupList);
-  var eq4 = /* @__PURE__ */ eq(eqIndex);
+  var eq5 = /* @__PURE__ */ eq(eqIndex);
   var paste = function(dictShow) {
     var atPoint2 = atPoint(dictShow);
     var atSpan2 = atSpan(dictShow);
@@ -10217,7 +10228,7 @@
         if (v instanceof ZipperH_Handle) {
           var at_zh = atZipper2(v.value0)(v1);
           return new Tuple(unSpanContext(at_zh.outside)(at_zh.inside), new Tuple(function() {
-            var $47 = eq4(v.value0.j_IL)(v.value0.j_IR);
+            var $47 = eq5(v.value0.j_IL)(v.value0.j_IR);
             if ($47) {
               return new Point_Handle({
                 path: v.value0.path_O,
@@ -10261,7 +10272,7 @@
   var append8 = /* @__PURE__ */ append(semigroupList);
   var add3 = /* @__PURE__ */ add(semiringIndex);
   var wrap3 = /* @__PURE__ */ wrap();
-  var eq5 = /* @__PURE__ */ eq(eqIndex);
+  var eq6 = /* @__PURE__ */ eq(eqIndex);
   var sub3 = /* @__PURE__ */ sub(ringIndex);
   var pure11 = /* @__PURE__ */ pure(applicativeMaybe);
   var none3 = /* @__PURE__ */ none(unfoldableMaybe);
@@ -10386,7 +10397,7 @@
                   return v9(true);
                 };
                 if (dir2 instanceof R) {
-                  var $76 = eq5(v.j)(extreme_j["_R"]);
+                  var $76 = eq6(v.j)(extreme_j["_R"]);
                   if ($76) {
                     var $77 = unsnoc(v.path);
                     if ($77 instanceof Just) {
@@ -10445,7 +10456,7 @@
             return v3(true);
           };
           if (dir2 instanceof L) {
-            var $91 = eq5(extreme_j["_L"])(v.j);
+            var $91 = eq6(extreme_j["_L"])(v.j);
             if ($91) {
               var $92 = unsnoc(v.path);
               if ($92 instanceof Just) {
@@ -11543,6 +11554,7 @@
   var map24 = /* @__PURE__ */ map(functorArray);
   var show5 = /* @__PURE__ */ show(showPointStatus);
   var toUnfoldable6 = /* @__PURE__ */ toUnfoldable5(unfoldableArray);
+  var foldMap2 = /* @__PURE__ */ foldMap(foldableMaybe)(monoidArray);
   var slot2 = /* @__PURE__ */ slot()({
     reflectSymbol: function() {
       return "Buffer";
@@ -11581,7 +11593,7 @@
   }();
   var refLabel_point = "point";
   var render3 = function(state3) {
-    return div2([ref2(refLabel_point), classes2(fold5([["Point"], map24(show5)(toUnfoldable6(state3.statuses))])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(function() {
+    return div2([ref2(refLabel_point), classes2(fold5([["Point"], map24(show5)(toUnfoldable6(state3.statuses)), foldMap2($$const(["bufferIsOpen"]))(state3.mb_bufferInput)])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(function() {
       if (state3.mb_bufferInput instanceof Nothing) {
         return [div2([classes2(["Left"])])([]), div2([classes2(["Middle"])])([]), div2([classes2(["Right"])])([])];
       }
@@ -11600,10 +11612,10 @@
           return [div2([classes2(["Left"])])([]), div2([classes2(["Middle"])])([]), div2([classes2(["Right"])])([buffer])];
         }
         ;
-        return bug("impossible");
+        return [div2([classes2(["Left"])])([]), div2([classes2(["Middle"])])([]), div2([classes2(["Right"])])([])];
       }
       ;
-      throw new Error("Failed pattern match at Ui.App1.Point (line 95, column 5 - line 103, column 96): " + [state3.mb_bufferInput.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App1.Point (line 96, column 5 - line 104, column 96): " + [state3.mb_bufferInput.constructor.name]);
     }());
   };
   var initialState3 = function(input3) {
@@ -11638,16 +11650,16 @@
     ;
     if (v instanceof SetBufferInput_PointQuery) {
       return discard7(modify_4(function(v1) {
-        var $46 = {};
-        for (var $47 in v1) {
-          if ({}.hasOwnProperty.call(v1, $47)) {
-            $46[$47] = v1[$47];
+        var $48 = {};
+        for (var $49 in v1) {
+          if ({}.hasOwnProperty.call(v1, $49)) {
+            $48[$49] = v1[$49];
           }
           ;
         }
         ;
-        $46.mb_bufferInput = v.value0;
-        return $46;
+        $48.mb_bufferInput = v.value0;
+        return $48;
       }))(function() {
         return pure17(pure18(v.value1));
       });
@@ -11694,8 +11706,8 @@
       initialize: pure18(Initialize_PointAction.value),
       handleQuery: handleQuery2,
       handleAction: handleAction2,
-      receive: function($57) {
-        return pure18(Receive_PointAction.create($57));
+      receive: function($59) {
+        return pure18(Receive_PointAction.create($59));
       }
     });
   }();
@@ -12127,11 +12139,11 @@
                       return discard8(liftEffect9(preventDefault(v.value0)))(function() {
                         return discard8(liftEffect9(writeFlipped(state3.ref_mb_dragOrigin)(none1)))(function() {
                           var j = getExtremeIndexes(state3.root);
-                          var h = new SpanH_Handle({
+                          var h = normalizeHandle(new SpanH_Handle({
                             path: none6,
                             j_L: j["_L"],
                             j_R: j["_R"]
-                          }, Left_SpanFocus.value);
+                          }, Left_SpanFocus.value));
                           return setHandle(pure23(h));
                         });
                       });

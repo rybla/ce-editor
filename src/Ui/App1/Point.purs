@@ -88,6 +88,7 @@ render state =
     , classes $ Array.fold
         [ [ "Point" ]
         , state.statuses # Set.toUnfoldable # map show
+        , state.mb_bufferInput # foldMap (const [ "bufferIsOpen" ])
         ]
     , HE.onMouseDown MouseDown_PointAction
     , HE.onMouseEnter MouseEnter_PointAction
@@ -98,7 +99,7 @@ render state =
         _ | state.statuses # Set.subset ss_Left -> [ HH.div [ classes [ "Left" ] ] [ buffer ], HH.div [ classes [ "Middle" ] ] [], HH.div [ classes [ "Right" ] ] [] ]
         _ | state.statuses # Set.subset ss_Middle -> [ HH.div [ classes [ "Left" ] ] [], HH.div [ classes [ "Middle" ] ] [ buffer ], HH.div [ classes [ "Right" ] ] [] ]
         _ | state.statuses # Set.subset ss_Right -> [ HH.div [ classes [ "Left" ] ] [], HH.div [ classes [ "Middle" ] ] [], HH.div [ classes [ "Right" ] ] [ buffer ] ]
-        _ -> bug "impossible"
+        _ -> [ HH.div [ classes [ "Left" ] ] [], HH.div [ classes [ "Middle" ] ] [], HH.div [ classes [ "Right" ] ] [] ]
         where
         buffer = HH.slot (Proxy @"Buffer") unit Buffer.component input BufferOutput_PointAction
 

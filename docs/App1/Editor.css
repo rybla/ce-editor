@@ -7,6 +7,7 @@
   --Handle_Focus--box-shadow:
     0 -0.5em 0 0 var(--Handle--background-color),
     0 0.5em 0 0 var(--Handle--background-color);
+  --Handle_Focus--height: 200%;
 
   --Handle--border-radius: var(--Handle--width);
   --Handle_Left--border-radius: var(--Handle--border-radius) 0 0 var(--Handle--border-radius);
@@ -23,7 +24,7 @@
   overflow: scroll;
   width: calc(100% - 2em);
 
-  padding: 1em;
+  padding: 2em;
 
   font-family: monospace;
 
@@ -51,29 +52,133 @@
   }
 
   .Point {
-    /* position: relative; */
     display: flex;
     flex-direction: row;
-    align-items: flex-start;
+    align-items: center;
     justify-content: flex-start;
     height: 100%;
-
 
     &>.Left,
     &>.Middle,
     &>.Right {
       height: 100%;
       min-width: calc(var(--Handle--width) / 3);
+    }
 
-      /* transition:
-        background-color 0.2s ease-in,
-        box-shadow 0.2s ease-in; */
+    &.Point_Handle_PointStatus {
+      &>.Middle {
+        border-radius: var(--Handle--width);
+        background: var(--Handle--background-color);
+        height: var(--Handle_Focus--height);
+      }
+    }
+
+    &.SpanH_Handle_Left_PointStatus {
+      >.Left {
+        background: var(--Handle--background-color);
+        border-radius: var(--Handle_Left--border-radius);
+      }
+
+      &.LeftFocus_PointStatus>.Left {
+        height: var(--Handle_Focus--height);
+      }
+
+      &>.Middle,
+      &>.Right,
+      &~* {
+        background: var(--Handle_inside--background);
+      }
+    }
+
+    &.SpanH_Handle_Right_PointStatus {
+      >.Right {
+        background: var(--Handle--background-color);
+        border-radius: var(--Handle_Right--border-radius);
+      }
+
+      &.RightFocus_PointStatus>.Right {
+        height: var(--Handle_Focus--height);
+      }
+
+      &~* {
+        background: var(--Editor--background);
+      }
+    }
+
+    &.ZipperH_Handle_OuterLeft_PointStatus {
+      >.Left {
+        background: var(--Handle--background-color);
+        border-radius: var(--Handle_Left--border-radius);
+      }
+
+      &.LeftFocus_PointStatus>.Left {
+        height: var(--Handle_Focus--height);
+      }
+
+      &>.Middle,
+      &>.Right,
+      &~* {
+        background: var(--Handle_inside--background);
+      }
+    }
+
+    &.ZipperH_Handle_InnerLeft_PointStatus {
+      &>.Left {
+        background: var(--Handle--background-color);
+      }
+
+      &.LeftFocus_PointStatus>.Left {
+        height: var(--Handle_Focus--height);
+      }
+
+      &~* {
+        background: var(--Editor--background);
+      }
+
+      background: var(--Editor--background)
+    }
+
+    &.ZipperH_Handle_InnerRight_PointStatus {
+      >.Right {
+        background: var(--Handle--background-color);
+      }
+
+      &.RightFocus_PointStatus>.Right {
+        height: var(--Handle_Focus--height);
+      }
+
+      &~* {
+        background: transparent;
+      }
+    }
+
+    &.ZipperH_Handle_OuterRight_PointStatus {
+
+      &>.Left,
+      &>.Middle {
+        background: var(--Handle_inside--background);
+      }
+
+      &>.Right {
+        background: var(--Handle--background-color);
+        border-radius: var(--Handle_Right--border-radius);
+      }
+
+      &.RightFocus_PointStatus>.Right {
+        height: var(--Handle_Focus--height);
+      }
+
+      background: transparent;
+
+      &~* {
+        background: var(--Editor--background);
+      }
     }
 
     .Buffer {
-      /* position: absolute;
-      top: 2em; */
+      margin: 0.5em;
       margin-top: -0.5em;
+
 
       padding: 0.5em;
       width: fit-content;
@@ -82,7 +187,7 @@
       flex-direction: column;
       gap: 0.5em;
 
-      border-radius: 0.5em;
+      border-radius: var(--Handle--width);
       background: rgba(0, 0, 0, 0.1);
       backdrop-filter: blur(15px);
       -webkit-backdrop-filter: blur(15px);
@@ -93,7 +198,7 @@
       &>.query {
         outline: none;
         border: none;
-        border-radius: 1em 1em 1em 0;
+        border-radius: var(--Handle--width) var(--Handle--width) var(--Handle--width) 0;
         padding: 0.5em;
 
         width: fit-content;
@@ -124,137 +229,19 @@
 
         &>.BufferOption {
           padding: 0.5em;
-          border-radius: 0 1em 1em 1em;
+          border-radius: 0 var(--Handle--width) var(--Handle--width) var(--Handle--width);
 
           background: var(--Editor--background);
           box-shadow: 0 0 0 0 black inset;
 
           white-space: nowrap;
 
-          /* transition: all 0.2s linear; */
-
           &.selected {
-            /* background: var(--Handle_inside--background); */
-            /* box-shadow:
-              0 0 0 0.1em black inset,
-              0 0 15px hsla(210deg 100% 60% / 0.5),
-              0 0 10px rgba(0, 0, 0, 0.2); */
             box-shadow: 0 0 0 0.1em black inset;
           }
 
           animation: BufferOption-appear 0.2s linear forwards;
         }
-      }
-    }
-
-
-    &.Point_Handle_PointStatus {
-      &>.Middle {
-        border-radius: 1em;
-        background: var(--Handle--background-color);
-        box-shadow: var(--Handle_Focus--box-shadow);
-      }
-    }
-
-    &.SpanH_Handle_Left_PointStatus {
-      >.Left {
-        background: var(--Handle--background-color);
-        border-radius: var(--Handle_Left--border-radius);
-      }
-
-      &.LeftFocus_PointStatus>.Left {
-        box-shadow: var(--Handle_Focus--box-shadow);
-      }
-
-      &>.Middle,
-      &>.Right,
-      &~* {
-        background: var(--Handle_inside--background);
-      }
-    }
-
-    &.SpanH_Handle_Right_PointStatus {
-      >.Right {
-        background: var(--Handle--background-color);
-        border-radius: var(--Handle_Right--border-radius);
-      }
-
-      &.RightFocus_PointStatus>.Right {
-        box-shadow: var(--Handle_Focus--box-shadow);
-      }
-
-      &~* {
-        background: var(--Editor--background);
-      }
-    }
-
-    &.ZipperH_Handle_OuterLeft_PointStatus {
-      >.Left {
-        background: var(--Handle--background-color);
-        border-radius: var(--Handle_Left--border-radius);
-      }
-
-      &.LeftFocus_PointStatus>.Left {
-        box-shadow: var(--Handle_Focus--box-shadow);
-      }
-
-      &>.Middle,
-      &>.Right,
-      &~* {
-        background: var(--Handle_inside--background);
-      }
-    }
-
-    &.ZipperH_Handle_InnerLeft_PointStatus {
-      &>.Left {
-        background: var(--Handle--background-color);
-      }
-
-      &.LeftFocus_PointStatus>.Left {
-        box-shadow: var(--Handle_Focus--box-shadow);
-      }
-
-      &~* {
-        background: var(--Editor--background);
-      }
-
-      background: var(--Editor--background)
-    }
-
-    &.ZipperH_Handle_InnerRight_PointStatus {
-      >.Right {
-        background: var(--Handle--background-color);
-      }
-
-      &.RightFocus_PointStatus>.Right {
-        box-shadow: var(--Handle_Focus--box-shadow);
-      }
-
-      &~* {
-        background: transparent;
-      }
-    }
-
-    &.ZipperH_Handle_OuterRight_PointStatus {
-
-      &>.Left,
-      &>.Middle {
-        background: var(--Handle_inside--background);
-      }
-
-      &>.Right {
-        background: var(--Handle--background-color);
-        border-radius: var(--Handle_Right--border-radius);
-      }
-
-      &.RightFocus_PointStatus>.Right {
-        box-shadow: var(--Handle_Focus--box-shadow);
-      }
-
-      background: transparent;
-
-      &~* {
-        background: var(--Editor--background);
       }
     }
   }
