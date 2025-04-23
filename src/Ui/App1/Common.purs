@@ -12,7 +12,6 @@ import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
 import Data.Show.Generic (genericShow)
 import Editor (Editor)
-import Editor.Example.Editor2 (L)
 import Effect.Aff (Aff)
 import Effect.Ref (Ref)
 import Halogen as H
@@ -50,66 +49,65 @@ type AppHTML = H.ComponentHTML AppAction AppSlots Aff
 type EditorQuery :: Type -> Type
 type EditorQuery = Const Void
 
-type EditorInput =
-  { editor :: Editor L
+type EditorInput l =
+  { editor :: Editor l
   }
 
 type EditorOutput = Void
 
-type EditorState =
-  { editor :: Editor L
-  , root :: Expr L
+type EditorState l =
+  { editor :: Editor l
+  , root :: Expr l
   , initial_mb_handle :: Maybe Handle
   , ref_mb_handle :: Ref (Maybe Handle)
   , ref_mb_dragOrigin :: Ref (Maybe Handle)
-  , clipboard :: Maybe (Fragment L)
-  , ref_history :: Ref (List Snapshot)
-  , ref_future :: Ref (List Snapshot)
+  , clipboard :: Maybe (Fragment l)
+  , ref_history :: Ref (List (Snapshot l))
+  , ref_future :: Ref (List (Snapshot l))
   }
 
-type Snapshot =
-  { root :: Expr L
+type Snapshot l =
+  { root :: Expr l
   , mb_handle :: Maybe Handle
   }
 
-data EditorAction
+data EditorAction l
   = Initialize_EditorAction
-  | PointOutput_EditorAction PointOutput
+  | PointOutput_EditorAction (PointOutput l)
   | MouseUp_EditorAction Event
   | KeyDown_EditorAction Event
   | Rerender_EditorAction
 
-type EditorSlots :: Row Type
-type EditorSlots =
-  ( "Point" :: H.Slot PointQuery PointOutput Point
+type EditorSlots l =
+  ( "Point" :: H.Slot (PointQuery l) (PointOutput l) Point
   )
 
-type EditorM = H.HalogenM EditorState EditorAction EditorSlots EditorOutput Aff
+type EditorM l = H.HalogenM (EditorState l) (EditorAction l) (EditorSlots l) EditorOutput Aff
 
-type EditorHTML = H.ComponentHTML EditorAction EditorSlots Aff
+type EditorHTML l = H.ComponentHTML (EditorAction l) (EditorSlots l) Aff
 
 --------------------------------------------------------------------------------
 -- Point
 --------------------------------------------------------------------------------
 
-data PointQuery a
+data PointQuery l a
   = ModifyStatuses_PointQuery (Set PointStatus -> Set PointStatus) a
-  | SetBufferInput_PointQuery (Maybe BufferInput) a
-  | GetBufferInput_PointQuery (Maybe BufferInput -> a)
+  | SetBufferInput_PointQuery (Maybe (BufferInput l)) a
+  | GetBufferInput_PointQuery (Maybe (BufferInput l) -> a)
 
 type PointInput =
   { point :: Point
   }
 
-data PointOutput
+data PointOutput l
   = MouseDown_PointOutput MouseEvent Point
   | MouseEnter_PointOutput MouseEvent Point
-  | BufferOutput_PointOutput BufferOutput
+  | BufferOutput_PointOutput (BufferOutput l)
 
-type PointState =
+type PointState l =
   { point :: Point
   , statuses :: Set PointStatus
-  , mb_bufferInput :: Maybe BufferInput
+  , mb_bufferInput :: Maybe (BufferInput l)
   }
 
 data PointStatus
@@ -134,19 +132,18 @@ instance Eq PointStatus where
 instance Ord PointStatus where
   compare x = genericCompare x
 
-data PointAction
+data PointAction l
   = Initialize_PointAction
   | Receive_PointAction PointInput
   | MouseDown_PointAction MouseEvent
   | MouseEnter_PointAction MouseEvent
-  | BufferOutput_PointAction BufferOutput
+  | BufferOutput_PointAction (BufferOutput l)
 
-type PointSlots :: Row Type
-type PointSlots = ("Buffer" :: H.Slot BufferQuery BufferOutput Unit)
+type PointSlots l = ("Buffer" :: H.Slot BufferQuery (BufferOutput l) Unit)
 
-type PointM = H.HalogenM PointState PointAction PointSlots PointOutput Aff
+type PointM l = H.HalogenM (PointState l) (PointAction l) (PointSlots l) (PointOutput l) Aff
 
-type PointHTML = H.ComponentHTML PointAction PointSlots Aff
+type PointHTML l = H.ComponentHTML (PointAction l) (PointSlots l) Aff
 
 --------------------------------------------------------------------------------
 -- Buffer
@@ -158,19 +155,19 @@ type BufferQuery = Const Void
 -- TODO: what stuff does the buffer need to know about? can't it just have a
 -- list of edits that have already been computed and then the buffer is justt
 -- searching through them, right?
-type BufferInput =
+type BufferInput l =
   { query :: String
-  , options :: BufferOptions L
+  , options :: BufferOptions l
   }
 
-data BufferOutput =
-  SubmitBuffer_BufferOutput (BufferOption L)
+data BufferOutput l =
+  SubmitBuffer_BufferOutput (BufferOption l)
 
-type BufferState =
+type BufferState l =
   { query :: String
-  , options :: BufferOptions L
+  , options :: BufferOptions l
   , option_i :: Maybe Int
-  , options_queried :: Array (BufferOption L)
+  , options_queried :: Array (BufferOption l)
   }
 
 data BufferAction
@@ -181,7 +178,7 @@ data BufferAction
 type BufferSlots :: Row Type
 type BufferSlots = ()
 
-type BufferM = H.HalogenM BufferState BufferAction BufferSlots BufferOutput Aff
+type BufferM l = H.HalogenM (BufferState l) BufferAction BufferSlots (BufferOutput l) Aff
 
 type BufferHTML = H.ComponentHTML BufferAction BufferSlots Aff
 

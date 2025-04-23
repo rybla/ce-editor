@@ -18,7 +18,6 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor.Example.Editor2 (L)
 import Effect.Aff (Aff)
 import Effect.Exception (throw)
 import Effect.Ref as Ref
@@ -42,14 +41,14 @@ import Web.UIEvent.KeyboardEvent.EventTypes as KeyboardEvent
 import Web.UIEvent.MouseEvent as MouseEvent
 import Web.UIEvent.MouseEvent.EventTypes as MouseEventType
 
-component :: H.Component EditorQuery EditorInput EditorOutput Aff
+component :: forall l. Show l => H.Component EditorQuery (EditorInput l) EditorOutput Aff
 component = H.mkComponent { initialState, eval, render }
 
 --------------------------------------------------------------------------------
 -- initialState
 --------------------------------------------------------------------------------
 
-initialState :: EditorInput -> EditorState
+initialState :: forall l. EditorInput l -> EditorState l
 initialState input =
   { editor: input.editor
   , root: input.editor.initial_expr
@@ -67,13 +66,13 @@ initialState input =
 -- eval
 --------------------------------------------------------------------------------
 
-eval :: forall a. H.HalogenQ EditorQuery EditorAction EditorInput a -> H.HalogenM EditorState EditorAction EditorSlots EditorOutput Aff a
+eval :: forall l a. Show l => H.HalogenQ EditorQuery (EditorAction l) (EditorInput l) a -> H.HalogenM (EditorState l) (EditorAction l) (EditorSlots l) EditorOutput Aff a
 eval = H.mkEval H.defaultEval
   { initialize = pure Initialize_EditorAction
   , handleAction = handleAction
   }
 
-handleAction :: EditorAction -> EditorM Unit
+handleAction :: forall l. Show l => EditorAction l -> EditorM l Unit
 
 handleAction Initialize_EditorAction = do
   -- Console.log "[Editor] initialize"
@@ -274,14 +273,14 @@ handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_B
 -- undo and redo
 --------------------------------------------------------------------------------
 
-snapshot :: EditorM Unit
+snapshot :: forall l. EditorM l Unit
 snapshot = do
   state <- get
   mb_handle <- liftEffect $ state.ref_mb_handle # Ref.read
   liftEffect $ state.ref_history :%= ({ root: state.root, mb_handle } : _)
   liftEffect $ state.ref_future := none
 
-undo :: EditorM Unit
+undo :: forall l. EditorM l Unit
 undo = do
   state <- get
   (liftEffect $ state.ref_history # Ref.read) >>= case _ of
@@ -291,7 +290,7 @@ undo = do
       liftEffect $ state.ref_future :%= (s : _)
       loadSnapshot s
 
-redo :: EditorM Unit
+redo :: forall l. EditorM l Unit
 redo = do
   state <- get
   (liftEffect $ state.ref_future # Ref.read) >>= case _ of
@@ -301,7 +300,7 @@ redo = do
       liftEffect $ state.ref_future := future'
       loadSnapshot s
 
-loadSnapshot :: Snapshot -> EditorM Unit
+loadSnapshot :: forall l. Snapshot l -> EditorM l Unit
 loadSnapshot s = do
   setHandle' do
     get >>= \state -> liftEffect $ state.ref_mb_dragOrigin := none
@@ -312,7 +311,7 @@ loadSnapshot s = do
 -- modifyEditorState
 --------------------------------------------------------------------------------
 
-modifyEditorState :: (EditorState -> EditorState) -> EditorM Unit
+modifyEditorState :: forall l. (EditorState l -> EditorState l) -> EditorM l Unit
 modifyEditorState f = do
   snapshot
   setHandle' do
@@ -325,12 +324,12 @@ modifyEditorState f = do
 --------------------------------------------------------------------------------
 
 -- | turns off old handle, then turns on new handle
-setHandle :: Maybe Handle -> EditorM Unit
+setHandle :: forall l. Maybe Handle -> EditorM l Unit
 setHandle mb_handle = setHandle' $ pure mb_handle
 
 -- | turns off old handle, then computes new handle, then turns on new handle.
 -- | note that this DOES NOT reset ref_mb_dragOrigin.
-setHandle' :: EditorM (Maybe Handle) -> EditorM Unit
+setHandle' :: forall l. EditorM l (Maybe Handle) -> EditorM l Unit
 setHandle' m_mb_handle = do
   state <- get
   mb_handle_old <- liftEffect $ Ref.read state.ref_mb_handle
@@ -340,10 +339,10 @@ setHandle' m_mb_handle = do
   modifyHandle true mb_handle_new
   liftEffect $ state.ref_mb_handle := mb_handle_new
 
-modifyHandle :: Boolean -> Maybe Handle -> EditorM Unit
+modifyHandle :: forall l. Boolean -> Maybe Handle -> EditorM l Unit
 modifyHandle b mb_handle = do
   let
-    modifyClass :: Point -> Set PointStatus -> EditorM Unit
+    modifyClass :: Point -> Set PointStatus -> EditorM l Unit
     modifyClass p ss' =
       if b then
         H.tell (Proxy @"Point") p $ ModifyStatuses_PointQuery (_ `Set.union` ss')
@@ -414,7 +413,7 @@ ss_ZipperH_Handle_OuterRight_Focus = Set.fromFoldable [ ZipperH_Handle_OuterRigh
 -- render
 --------------------------------------------------------------------------------
 
-render :: EditorState -> EditorHTML
+render :: forall l. Show l => EditorState l -> EditorHTML l
 render state =
   HHK.div [ classes [ "Editor" ] ]
     [ "root" /\
@@ -425,9 +424,9 @@ render state =
           ]
     ]
 
-type RenderM = Reader EditorState
+type RenderM l = Reader (EditorState l)
 
-renderExpr :: Path -> Expr L -> RenderM EditorHTML
+renderExpr :: forall l. Show l => Path -> Expr l -> RenderM l (EditorHTML l)
 renderExpr path (Expr e) = do
   htmls_kidsAndPoints <- Expr e # traverseStepsAndKids \i e_kid -> do
     html_p <- renderPoint $ Point { path, j: (i # getIndexesAroundStep)._L }
@@ -445,7 +444,7 @@ renderExpr path (Expr e) = do
         , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ] ]
         ]
 
-renderPoint :: Point -> RenderM EditorHTML
+renderPoint :: forall l. Show l => Point -> RenderM l (EditorHTML l)
 renderPoint point = do
   pure $ HH.slot (Proxy @"Point") point Point.component { point } PointOutput_EditorAction
 

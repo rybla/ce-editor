@@ -38,14 +38,14 @@ import Web.UIEvent.KeyboardEvent.EventTypes as KeyboardEvent
 -- component
 --------------------------------------------------------------------------------
 
-component :: H.Component BufferQuery BufferInput BufferOutput Aff
+component :: forall l. Show l => H.Component BufferQuery (BufferInput l) (BufferOutput l) Aff
 component = H.mkComponent { initialState, eval, render }
 
 --------------------------------------------------------------------------------
 -- initialState
 --------------------------------------------------------------------------------
 
-initialState :: BufferInput -> BufferState
+initialState :: forall l. BufferInput l -> BufferState l
 initialState input = setQuery' input.query
   { query: input.query
   , options: input.options
@@ -57,7 +57,7 @@ initialState input = setQuery' input.query
 -- eval
 --------------------------------------------------------------------------------
 
-eval :: forall a. H.HalogenQ BufferQuery BufferAction BufferInput a -> H.HalogenM BufferState BufferAction BufferSlots BufferOutput Aff a
+eval :: forall l a. H.HalogenQ BufferQuery BufferAction (BufferInput l) a -> H.HalogenM (BufferState l) BufferAction BufferSlots (BufferOutput l) Aff a
 eval = H.mkEval H.defaultEval
   { initialize = pure Initialize_BufferAction
   , handleQuery = handleQuery
@@ -68,14 +68,14 @@ eval = H.mkEval H.defaultEval
 -- handleQuery
 --------------------------------------------------------------------------------
 
-handleQuery :: forall a. BufferQuery a -> BufferM (Maybe a)
+handleQuery :: forall l a. BufferQuery a -> BufferM l (Maybe a)
 handleQuery (Const x) = absurd x
 
 --------------------------------------------------------------------------------
 -- handleAction
 --------------------------------------------------------------------------------
 
-handleAction :: BufferAction -> BufferM Unit
+handleAction :: forall l. BufferAction -> BufferM l Unit
 
 handleAction Initialize_BufferAction = do
   Console.log "[Buffer] initialize"
@@ -120,10 +120,10 @@ resizeQueryInput = do
 -- setQuery
 --------------------------------------------------------------------------------
 
-setQuery :: String -> BufferM Unit
+setQuery :: forall l. String -> BufferM l Unit
 setQuery query = modify_ $ setQuery' query
 
-setQuery' :: String -> BufferState -> BufferState
+setQuery' :: forall l. String -> BufferState l -> BufferState l
 setQuery' query state = state
   { query = query
   , option_i = if null options_queried then none else pure 0
@@ -149,7 +149,7 @@ fromKeyToCycleDir _ = none
 
 refLabel_input = H.RefLabel "input"
 
-render :: BufferState -> BufferHTML
+render :: forall l. Show l => BufferState l -> BufferHTML
 render state =
   HH.div [ classes $ fold [ [ "Buffer" ] ] ]
     [ HH.input
