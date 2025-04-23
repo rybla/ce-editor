@@ -119,7 +119,7 @@ handleAction (KeyDown_EditorAction event) = do
         Just handle -> do
           case
             Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p ->
-              guardPure editor.validHandle (Point_Handle p)
+              guardPure (editor.validHandle state.root) (Point_Handle p)
             of
             Nothing -> do
               liftEffect $ state.ref_mb_dragOrigin := none
@@ -149,7 +149,7 @@ handleAction (KeyDown_EditorAction event) = do
               pure dragOrigin
           case
             Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p ->
-              state.root # Expr.Drag.drag dragOrigin p >>= guardPure editor.validHandle
+              state.root # Expr.Drag.drag dragOrigin p >>= guardPure (editor.validHandle state.root)
             of
             Nothing -> pure unit
             Just handle' -> do
@@ -236,14 +236,14 @@ handleAction (KeyDown_EditorAction event) = do
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: editor.bufferOptions handle state.root, query: "" }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: editor.bufferOptions state.root handle, query: "" }
     _ | ki # Event.matchKeyInfo isAlpha { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: editor.bufferOptions handle state.root, query: (unwrap ki).key }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { options: editor.bufferOptions state.root handle, query: (unwrap ki).key }
     -- unrecognized keyboard event
     _ -> pure unit
 
@@ -255,7 +255,7 @@ handleAction (PointOutput_EditorAction (MouseDown_PointOutput _event p)) = do
       liftEffect do state.ref_mb_dragOrigin := pure (Point_Handle p)
       setHandle $ pure (Point_Handle p)
     Just h -> do
-      when (editor.validHandle h) do
+      when (editor.validHandle state.root h) do
         let dragOrigin = Expr.Drag.getDragOrigin h p
         liftEffect do state.ref_mb_dragOrigin := pure dragOrigin
         setHandle $ pure dragOrigin
@@ -269,14 +269,14 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
         case state.root # Expr.Drag.drag h p of
           Nothing -> pure unit
           Just h' -> do
-            when (editor.validHandle h) do
+            when (editor.validHandle state.root h) do
               setHandle (pure h')
 handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput bufferOption))) = do
   state <- get
   handle <- (liftEffect $ Ref.read state.ref_mb_handle) >>= fromMaybeM do liftEffect $ throw "impossible to submit Buffer when there is no Handle"
   case bufferOption of
-    PasteSpan_BufferOption _ span -> do
-      let root' /\ handle' = state.root # Expr.Edit.paste (Span_Fragment span) handle
+    Fragment_BufferOption frag -> do
+      let root' /\ handle' = state.root # Expr.Edit.paste frag handle
       modifyEditorState _
         { root = root'
         , initial_mb_handle = pure handle'

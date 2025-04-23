@@ -161,10 +161,10 @@ render state =
         ]
     , HHK.div [ classes [ "options" ] ]
         $ state.options_queried # mapWithIndex \i -> case _ of
-            PasteSpan_BufferOption _label span ->
+            Fragment_BufferOption frag ->
               show i /\
                 HH.div
                   [ classes $ fold [ [ "PasteSpan", "BufferOption" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
-                  [ HH.text $ show span ]
+                  [ HH.text $ show frag ]
     ]
 

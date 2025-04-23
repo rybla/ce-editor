@@ -2,17 +2,18 @@
 
 ## halogen-simplified
 
-- [x] searchable menu of edits
-  - [ ] give Editor proper interface to computing these edits
-    - [x] Editor's bufferOptions should receive Handle and root Expr instead of just Point
-  - [x] edit an existing label (i.e. re-query it??)
-    - VETO: actually no -- can just delete and re-wrap just as easily, and that's what you'd do in text anyway
-  - [x] BUG: cycling is off by 1 somtimes
+- [ ] use custom rendering in the buffer results as well
 - [ ] BUG: when paste a zipper, cursor doesnt go in riht place and sometimes duplicates
 - [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything
 - [ ] fix bug in dragging that lets the inner span be outside the outer span
 - [ ] fix other bugs in dragging
 - [ ] fix bug that redo takes two tries to work?? and can't redo final undo
+- [x] searchable menu of edits
+  - [x] give Editor proper interface to computing these edits
+    - [x] Editor's bufferOptions should receive Handle and root Expr instead of just Point
+  - [x] edit an existing label (i.e. re-query it??)
+    - VETO: actually no -- can just delete and re-wrap just as easily, and that's what you'd do in text anyway
+  - [x] BUG: cycling is off by 1 somtimes
 - [x] give Editor interface to custom rendering
 - [x] make stuff in `Ui.Editor` generic over label
 - [x] undo/redo

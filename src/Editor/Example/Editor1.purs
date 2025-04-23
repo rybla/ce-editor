@@ -50,7 +50,7 @@ mkEditor default_meta = Editor
         ]
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
   , bufferOptions: \h q e -> []
-  , validHandle: const true
+  , validHandle: \h e -> true
   , assembleExpr: assembleExpr_default
   , historyLength_max: 100
   }

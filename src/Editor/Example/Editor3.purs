@@ -1,14 +1,16 @@
-module Editor.Example.Editor2 where
+module Editor.Example.Editor3 where
 
 import Data.Expr
 import Prelude
 
 import Data.Array as Array
 import Data.Foldable (fold)
+import Data.Maybe (fromMaybe)
 import Data.Newtype (wrap)
 import Data.String as String
 import Editor (Editor(..))
 import Editor.Common (assembleExpr_default)
+import Halogen.HTML as HH
 
 data L = String String | Root
 
@@ -20,7 +22,7 @@ instance Show L where
 
 editor :: Editor L
 editor = Editor
-  { name: "Editor2"
+  { name: "Editor3"
   , initial_expr:
       Root %
         [ example_expr 2 2
@@ -34,7 +36,13 @@ editor = Editor
       , [ Fragment_BufferOption $ Span_Fragment $ Span [ String "example" % [] ] ]
       ]
   , validHandle: \h e -> true
-  , assembleExpr: assembleExpr_default
+  , assembleExpr: \args ->
+      case args.label of
+        Root -> Array.fold
+          [ Array.fold $ Array.zipWith (\kid point -> [ point, kid ]) args.kids args.points
+          , [ args.points # Array.last # fromMaybe (HH.div [] [ HH.text "{{missing last point}}" ]) ]
+          ]
+        _ -> assembleExpr_default args
   , historyLength_max: 100
   }
 

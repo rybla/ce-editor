@@ -5,7 +5,6 @@ import Prelude
 import Data.Array as Array
 import Data.Expr (BufferOptions, Expr, Handle)
 import Data.Maybe (fromMaybe)
-import Data.Newtype (class Newtype)
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Ui.Halogen (classes)
@@ -16,8 +15,8 @@ data Editor l = Editor
   { name :: String
   , initial_expr :: Expr l
   , initial_handle :: Handle
-  , bufferOptions :: Handle -> Expr l -> BufferOptions l
-  , validHandle :: Handle -> Boolean
+  , bufferOptions :: Expr l -> Handle -> BufferOptions l
+  , validHandle :: Expr l -> Handle -> Boolean
   , assembleExpr :: AssembleExpr l
   , historyLength_max :: Int
   }

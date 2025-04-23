@@ -606,8 +606,7 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
 --------------------------------------------------------------------------------
 
 type BufferOptions l = String -> Array (BufferOption l)
-data BufferOption l =
-  PasteSpan_BufferOption String (Span l)
+data BufferOption l = Fragment_BufferOption (Fragment l)
 
 --------------------------------------------------------------------------------
 -- Utilities

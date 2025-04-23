@@ -2,7 +2,9 @@ module Ui.App1.App where
 
 import Prelude
 
-import Editor.Example.Editor2 as Example2
+-- import Editor.Example.Editor2 as ExampleEditor
+-- import Editor.Example.Editor3 as ExampleEditor
+import Editor.Example.Lisp as ExampleEditor
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
@@ -25,7 +27,7 @@ render :: AppState -> AppHTML
 render _state =
   HH.div [ classes [ "App" ] ]
     [ HH.slot_ (Proxy @"Editor") unit Editor.component
-        { editor: Example2.editor
+        { editor: ExampleEditor.editor
         }
     , HH.slot_ (Proxy @"Console") unit Console.component {}
     ]
