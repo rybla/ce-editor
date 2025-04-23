@@ -71,5 +71,5 @@ renderFragment args path (Span_Fragment s) = HH.div [ classes [ "Fragment", "Spa
 renderFragment args path (Zipper_Fragment z) = HH.div [ classes [ "Fragment", "ZipperFragment" ] ] $ renderZipper args path z [ hole ]
 
 hole :: forall w i. HTML w i
-hole = HH.div [ classes [ "Hole" ] ] [ HH.text "?" ]
+hole = HH.div [ classes [ "Hole" ] ] [ HH.text " " ]
 

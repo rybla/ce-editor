@@ -10770,7 +10770,7 @@
       };
     };
   };
-  var hole = /* @__PURE__ */ div2([/* @__PURE__ */ classes2(["Hole"])])([/* @__PURE__ */ text5("?")]);
+  var hole = /* @__PURE__ */ div2([/* @__PURE__ */ classes2(["Hole"])])([/* @__PURE__ */ text5(" ")]);
   var renderFragment = function(dictShow) {
     var renderSpan1 = renderSpan(dictShow);
     var renderZipper1 = renderZipper(dictShow);

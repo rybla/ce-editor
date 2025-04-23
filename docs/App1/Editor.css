@@ -56,6 +56,7 @@
     background-color: black;
     color: white;
     border-radius: var(--Handle--width);
+    white-space: pre;
     animation: rainbow-glow 20s infinite linear
   }
 
