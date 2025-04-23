@@ -2721,15 +2721,15 @@
     return dict.foldMap;
   };
   var fold = function(dictFoldable) {
-    var foldMap22 = foldMap(dictFoldable);
+    var foldMap2 = foldMap(dictFoldable);
     return function(dictMonoid) {
-      return foldMap22(dictMonoid)(identity5);
+      return foldMap2(dictMonoid)(identity5);
     };
   };
   var all = function(dictFoldable) {
-    var foldMap22 = foldMap(dictFoldable);
+    var foldMap2 = foldMap(dictFoldable);
     return function(dictHeytingAlgebra) {
-      return alaF2(Conj)(foldMap22(monoidConj(dictHeytingAlgebra)));
+      return alaF2(Conj)(foldMap2(monoidConj(dictHeytingAlgebra)));
     };
   };
   var and = function(dictFoldable) {
@@ -3707,13 +3707,13 @@
     return v.value0;
   };
   var foldableNonEmpty = function(dictFoldable) {
-    var foldMap3 = foldMap(dictFoldable);
+    var foldMap2 = foldMap(dictFoldable);
     var foldl3 = foldl(dictFoldable);
     var foldr5 = foldr(dictFoldable);
     return {
       foldMap: function(dictMonoid) {
         var append13 = append(dictMonoid.Semigroup0());
-        var foldMap12 = foldMap3(dictMonoid);
+        var foldMap12 = foldMap2(dictMonoid);
         return function(f) {
           return function(v) {
             return append13(f(v.value0))(foldMap12(f)(v.value1));
@@ -10622,6 +10622,14 @@
   var difference3 = function(dictOrd) {
     return coerce4(difference(dictOrd));
   };
+  var subset = function(dictOrd) {
+    var difference1 = difference3(dictOrd);
+    return function(s1) {
+      return function(s2) {
+        return isEmpty2(difference1(s1)(s2));
+      };
+    };
+  };
 
   // output/Halogen.HTML.Elements.Keyed/index.js
   var div3 = /* @__PURE__ */ keyed2("div");
@@ -10951,7 +10959,7 @@
         return RightFocus_PointStatus.value;
       }
       ;
-      throw new Error("Failed pattern match at Ui.App1.Common (line 127, column 1 - line 127, column 38): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App1.Common (line 126, column 1 - line 126, column 38): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof Point_Handle_PointStatus) {
@@ -10990,7 +10998,7 @@
         return new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(new Inr(NoArguments.value))))))));
       }
       ;
-      throw new Error("Failed pattern match at Ui.App1.Common (line 127, column 1 - line 127, column 38): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Ui.App1.Common (line 126, column 1 - line 126, column 38): " + [x.constructor.name]);
     }
   };
   var genericShow3 = /* @__PURE__ */ genericShow(genericPointStatus_)(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor2({
@@ -11530,17 +11538,17 @@
   var _documentElement2 = getEffProp3("documentElement");
 
   // output/Ui.App1.Point/index.js
+  var fromFoldable5 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordPointStatus);
   var fold5 = /* @__PURE__ */ fold2(monoidArray);
   var map24 = /* @__PURE__ */ map(functorArray);
   var show5 = /* @__PURE__ */ show(showPointStatus);
   var toUnfoldable6 = /* @__PURE__ */ toUnfoldable5(unfoldableArray);
-  var fold13 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
-  var foldMap2 = /* @__PURE__ */ foldMap(foldableMaybe)(monoidArray);
   var slot2 = /* @__PURE__ */ slot()({
     reflectSymbol: function() {
       return "Buffer";
     }
   })(ordUnit);
+  var subset2 = /* @__PURE__ */ subset(ordPointStatus);
   var none5 = /* @__PURE__ */ none(unfoldableMaybe);
   var discard7 = /* @__PURE__ */ discard(discardUnit)(bindHalogenM);
   var modifying2 = /* @__PURE__ */ modifying(monadStateHalogenM);
@@ -11559,14 +11567,44 @@
   var modify_4 = /* @__PURE__ */ modify_2(monadStateHalogenM);
   var get4 = /* @__PURE__ */ get(monadStateHalogenM);
   var put2 = /* @__PURE__ */ put(monadStateHalogenM);
+  var ss_Right = /* @__PURE__ */ function() {
+    return fromFoldable5([RightFocus_PointStatus.value]);
+  }();
+  var ss_Middle = /* @__PURE__ */ function() {
+    return fromFoldable5([Point_Handle_PointStatus.value]);
+  }();
+  var ss_Left = /* @__PURE__ */ function() {
+    return fromFoldable5([LeftFocus_PointStatus.value]);
+  }();
   var ss_Focus = /* @__PURE__ */ function() {
-    return fromFoldable4(foldableArray)(ordPointStatus)([Point_Handle_PointStatus.value, LeftFocus_PointStatus.value, RightFocus_PointStatus.value]);
+    return fromFoldable5([Point_Handle_PointStatus.value, LeftFocus_PointStatus.value, RightFocus_PointStatus.value]);
   }();
   var refLabel_point = "point";
   var render3 = function(state3) {
-    return div2([ref2(refLabel_point), classes2(fold5([["Point"], map24(show5)(toUnfoldable6(state3.statuses))])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(fold13([[div2([classes2(["Left"])])([])], [div2([classes2(["Middle"])])(foldMap2(function(input3) {
-      return [slot2($$Proxy.value)(unit)(component2)(input3)(BufferOutput_PointAction.create)];
-    })(state3.mb_bufferInput))], [div2([classes2(["Right"])])([])]]));
+    return div2([ref2(refLabel_point), classes2(fold5([["Point"], map24(show5)(toUnfoldable6(state3.statuses))])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(function() {
+      if (state3.mb_bufferInput instanceof Nothing) {
+        return [div2([classes2(["Left"])])([]), div2([classes2(["Middle"])])([]), div2([classes2(["Right"])])([])];
+      }
+      ;
+      if (state3.mb_bufferInput instanceof Just) {
+        var buffer = slot2($$Proxy.value)(unit)(component2)(state3.mb_bufferInput.value0)(BufferOutput_PointAction.create);
+        if (subset2(ss_Left)(state3.statuses)) {
+          return [div2([classes2(["Left"])])([buffer]), div2([classes2(["Middle"])])([]), div2([classes2(["Right"])])([])];
+        }
+        ;
+        if (subset2(ss_Middle)(state3.statuses)) {
+          return [div2([classes2(["Left"])])([]), div2([classes2(["Middle"])])([buffer]), div2([classes2(["Right"])])([])];
+        }
+        ;
+        if (subset2(ss_Right)(state3.statuses)) {
+          return [div2([classes2(["Left"])])([]), div2([classes2(["Middle"])])([]), div2([classes2(["Right"])])([buffer])];
+        }
+        ;
+        return bug("impossible");
+      }
+      ;
+      throw new Error("Failed pattern match at Ui.App1.Point (line 95, column 5 - line 103, column 96): " + [state3.mb_bufferInput.constructor.name]);
+    }());
   };
   var initialState3 = function(input3) {
     return {
@@ -11590,7 +11628,7 @@
               return liftEffect8(scrollIntoView(toElement(mb_elem_this.value0)));
             }
             ;
-            throw new Error("Failed pattern match at Ui.App1.Point (line 52, column 7 - line 54, column 98): " + [mb_elem_this.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App1.Point (line 53, column 7 - line 55, column 98): " + [mb_elem_this.constructor.name]);
           }));
         }))(function() {
           return pure17(pure18(v.value1));
@@ -11621,7 +11659,7 @@
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.App1.Point (line 44, column 1 - line 44, column 58): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.App1.Point (line 45, column 1 - line 45, column 58): " + [v.constructor.name]);
   };
   var handleAction2 = function(v) {
     if (v instanceof Initialize_PointAction) {
@@ -11645,12 +11683,10 @@
     }
     ;
     if (v instanceof BufferOutput_PointAction) {
-      return bind8(get4)(function(state3) {
-        return raise(new BufferOutput_PointOutput(v.value0));
-      });
+      return raise(new BufferOutput_PointOutput(v.value0));
     }
     ;
-    throw new Error("Failed pattern match at Ui.App1.Point (line 65, column 1 - line 65, column 43): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.App1.Point (line 69, column 1 - line 69, column 43): " + [v.constructor.name]);
   };
   var $$eval3 = /* @__PURE__ */ function() {
     return mkEval({
@@ -11675,7 +11711,7 @@
   }
 
   // output/Ui.App1.Editor/index.js
-  var fromFoldable5 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordPointStatus);
+  var fromFoldable6 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordPointStatus);
   var bind9 = /* @__PURE__ */ bind(bindHalogenM);
   var get5 = /* @__PURE__ */ get(monadStateHalogenM);
   var liftEffect9 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff));
@@ -11717,43 +11753,43 @@
   var when5 = /* @__PURE__ */ when(applicativeHalogenM);
   var fromMaybeM3 = /* @__PURE__ */ fromMaybeM(applicativeHalogenM);
   var ss_ZipperH_Handle_OuterRight_Focus = /* @__PURE__ */ function() {
-    return fromFoldable5([ZipperH_Handle_OuterRight_PointStatus.value, RightFocus_PointStatus.value]);
+    return fromFoldable6([ZipperH_Handle_OuterRight_PointStatus.value, RightFocus_PointStatus.value]);
   }();
   var ss_ZipperH_Handle_OuterRight = /* @__PURE__ */ function() {
-    return fromFoldable5([ZipperH_Handle_OuterRight_PointStatus.value]);
+    return fromFoldable6([ZipperH_Handle_OuterRight_PointStatus.value]);
   }();
   var ss_ZipperH_Handle_OuterLeft_Focus = /* @__PURE__ */ function() {
-    return fromFoldable5([ZipperH_Handle_OuterLeft_PointStatus.value, LeftFocus_PointStatus.value]);
+    return fromFoldable6([ZipperH_Handle_OuterLeft_PointStatus.value, LeftFocus_PointStatus.value]);
   }();
   var ss_ZipperH_Handle_OuterLeft = /* @__PURE__ */ function() {
-    return fromFoldable5([ZipperH_Handle_OuterLeft_PointStatus.value]);
+    return fromFoldable6([ZipperH_Handle_OuterLeft_PointStatus.value]);
   }();
   var ss_ZipperH_Handle_InnerRight_Focus = /* @__PURE__ */ function() {
-    return fromFoldable5([ZipperH_Handle_InnerRight_PointStatus.value, RightFocus_PointStatus.value]);
+    return fromFoldable6([ZipperH_Handle_InnerRight_PointStatus.value, RightFocus_PointStatus.value]);
   }();
   var ss_ZipperH_Handle_InnerRight = /* @__PURE__ */ function() {
-    return fromFoldable5([ZipperH_Handle_InnerRight_PointStatus.value]);
+    return fromFoldable6([ZipperH_Handle_InnerRight_PointStatus.value]);
   }();
   var ss_ZipperH_Handle_InnerLeft_Focus = /* @__PURE__ */ function() {
-    return fromFoldable5([ZipperH_Handle_InnerLeft_PointStatus.value, LeftFocus_PointStatus.value]);
+    return fromFoldable6([ZipperH_Handle_InnerLeft_PointStatus.value, LeftFocus_PointStatus.value]);
   }();
   var ss_ZipperH_Handle_InnerLeft = /* @__PURE__ */ function() {
-    return fromFoldable5([ZipperH_Handle_InnerLeft_PointStatus.value]);
+    return fromFoldable6([ZipperH_Handle_InnerLeft_PointStatus.value]);
   }();
   var ss_SpanH_Handle_Right_Focus = /* @__PURE__ */ function() {
-    return fromFoldable5([SpanH_Handle_Right_PointStatus.value, RightFocus_PointStatus.value]);
+    return fromFoldable6([SpanH_Handle_Right_PointStatus.value, RightFocus_PointStatus.value]);
   }();
   var ss_SpanH_Handle_Right = /* @__PURE__ */ function() {
-    return fromFoldable5([SpanH_Handle_Right_PointStatus.value]);
+    return fromFoldable6([SpanH_Handle_Right_PointStatus.value]);
   }();
   var ss_SpanH_Handle_Left_Focus = /* @__PURE__ */ function() {
-    return fromFoldable5([SpanH_Handle_Left_PointStatus.value, LeftFocus_PointStatus.value]);
+    return fromFoldable6([SpanH_Handle_Left_PointStatus.value, LeftFocus_PointStatus.value]);
   }();
   var ss_SpanH_Handle_Left = /* @__PURE__ */ function() {
-    return fromFoldable5([SpanH_Handle_Left_PointStatus.value]);
+    return fromFoldable6([SpanH_Handle_Left_PointStatus.value]);
   }();
   var ss_Point_Handle = /* @__PURE__ */ function() {
-    return fromFoldable5([Point_Handle_PointStatus.value]);
+    return fromFoldable6([Point_Handle_PointStatus.value]);
   }();
   var snapshot = /* @__PURE__ */ bind9(get5)(function(state3) {
     return bind9(liftEffect9(read(state3.ref_mb_handle)))(function(mb_handle) {
