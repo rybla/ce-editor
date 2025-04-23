@@ -14,13 +14,14 @@
 }
 
 .Editor {
+  /* box-shadow: 0 0 0 1px black inset; */
+  scrollbar-width: 1em;
+
+  flex: 1 0 auto;
+  overflow: scroll;
+  width: calc(100% - 2em);
+
   padding: 1em;
-
-  box-shadow: 0 0 0 1px black;
-
-  flex: 1 0 200px;
-  width: 100%;
-  overflow: auto;
 
   font-family: monospace;
 

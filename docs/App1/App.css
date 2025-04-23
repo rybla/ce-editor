@@ -1,12 +1,10 @@
 .App {
-  padding: 1em;
-  width: 800px;
-  height: calc(100% - 2em);
+  height: 100%;
+  width: 100vw;
   margin: auto;
 
   display: flex;
   flex-direction: column;
-  gap: 1em;
   justify-content: stretch;
   align-items: start;
 }
