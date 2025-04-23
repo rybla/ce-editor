@@ -4,8 +4,9 @@
 
 - [x] searchable menu of edits
   - [ ] give Editor proper interface to computing these edits
+    - [ ] should receive Handle instead of just point
   - [ ] edit an existing label (i.e. re-query it??)
-  - [x] BUG: cycling is off by 1
+  - [x] BUG: cycling is off by 1 somtimes
 - [ ] BUG: when paste a zipper, cursor doesnt go in riht place and sometimes duplicates
 - [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything
 - [ ] fix bug in dragging that lets the inner span be outside the outer span
