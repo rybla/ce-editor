@@ -29,6 +29,6 @@ render _state =
     [ HH.slot_ (Proxy @"Editor") unit Editor.component
         { editor: ExampleEditor.editor
         }
-    , HH.slot_ (Proxy @"Console") unit Console.component {}
+    -- , HH.slot_ (Proxy @"Console") unit Console.component {}
     ]
 

@@ -7204,9 +7204,9 @@
         var componentSlot22 = componentSlot1(dictOrd);
         return function(label5) {
           return function(p2) {
-            return function(component6) {
+            return function(component5) {
               return function(input3) {
-                return widget(new ComponentSlot(componentSlot22(label5)(p2)(component6)(input3)($$const(Nothing.value))));
+                return widget(new ComponentSlot(componentSlot22(label5)(p2)(component5)(input3)($$const(Nothing.value))));
               };
             };
           };
@@ -7221,10 +7221,10 @@
         var componentSlot22 = componentSlot1(dictOrd);
         return function(label5) {
           return function(p2) {
-            return function(component6) {
+            return function(component5) {
               return function(input3) {
                 return function(outputQuery) {
-                  return widget(new ComponentSlot(componentSlot22(label5)(p2)(component6)(input3)(function($11) {
+                  return widget(new ComponentSlot(componentSlot22(label5)(p2)(component5)(input3)(function($11) {
                     return Just.create(outputQuery($11));
                   })));
                 };
@@ -7305,7 +7305,7 @@
       return f(v);
     };
   };
-  var initDriverState = function(component6) {
+  var initDriverState = function(component5) {
     return function(input3) {
       return function(handler3) {
         return function(lchs) {
@@ -7321,8 +7321,8 @@
             var subscriptions = $$new(new Just(empty2))();
             var forks = $$new(empty2)();
             var ds = {
-              component: component6,
-              state: component6.initialState(input3),
+              component: component5,
+              state: component5.initialState(input3),
               refs: empty2,
               children: empty3,
               childrenIn,
@@ -7429,16 +7429,16 @@
       });
     };
   };
-  var evalQ = function(render6) {
+  var evalQ = function(render5) {
     return function(ref3) {
       return function(q2) {
         return bind12(liftEffect4(read(ref3)))(function(v) {
-          return evalM(render6)(ref3)(v["component"]["eval"](new Query(map16(Just.create)(liftCoyoneda(q2)), $$const(Nothing.value))));
+          return evalM(render5)(ref3)(v["component"]["eval"](new Query(map16(Just.create)(liftCoyoneda(q2)), $$const(Nothing.value))));
         });
       };
     };
   };
-  var evalM = function(render6) {
+  var evalM = function(render5) {
     return function(initRef) {
       return function(v) {
         var evalChildQuery = function(ref3) {
@@ -7448,7 +7448,7 @@
                 var evalChild = function(v3) {
                   return parallel3(bind12(liftEffect4(read(v3)))(function(dsx) {
                     return unDriverStateX(function(ds) {
-                      return evalQ(render6)(ds.selfRef)(v2.value1);
+                      return evalQ(render5)(ds.selfRef)(v2.value1);
                     })(dsx);
                   }));
                 };
@@ -7485,7 +7485,7 @@
                     lifecycleHandlers: v2.lifecycleHandlers,
                     state: v3.value1
                   })(ref3)))(function() {
-                    return discard1(handleLifecycle(v2.lifecycleHandlers)(render6(v2.lifecycleHandlers)(ref3)))(function() {
+                    return discard1(handleLifecycle(v2.lifecycleHandlers)(render5(v2.lifecycleHandlers)(ref3)))(function() {
                       return pure6(v3.value0);
                     });
                   });
@@ -7498,7 +7498,7 @@
             if (v1 instanceof Subscribe) {
               return bind12(fresh(SubscriptionId)(ref3))(function(sid) {
                 return bind12(liftEffect4(subscribe(v1.value0(sid))(function(act) {
-                  return handleAff(evalF(render6)(ref3)(new Action(act)));
+                  return handleAff(evalF(render5)(ref3)(new Action(act)));
                 })))(function(finalize) {
                   return bind12(liftEffect4(read(ref3)))(function(v2) {
                     return discard1(liftEffect4(modify_(map22(insert4(sid)(finalize)))(v2.subscriptions)))(function() {
@@ -7535,7 +7535,7 @@
             ;
             if (v1 instanceof Par) {
               return sequential2(retractFreeAp2(hoistFreeAp(function() {
-                var $119 = evalM(render6)(ref3);
+                var $119 = evalM(render5)(ref3);
                 return function($120) {
                   return parallel3($119($120));
                 };
@@ -7549,7 +7549,7 @@
                     return bind12(fork3($$finally(liftEffect4(function __do2() {
                       modify_($$delete2(fid))(v2.forks)();
                       return write(true)(doneRef)();
-                    }))(evalM(render6)(ref3)(v1.value0))))(function(fiber) {
+                    }))(evalM(render5)(ref3)(v1.value0))))(function(fiber) {
                       return discard1(liftEffect4(unlessM2(read(doneRef))(modify_(insert12(fid)(fiber))(v2.forks))))(function() {
                         return pure6(v1.value1(fid));
                       });
@@ -7592,7 +7592,7 @@
       };
     };
   };
-  var evalF = function(render6) {
+  var evalF = function(render5) {
     return function(ref3) {
       return function(v) {
         if (v instanceof RefUpdate) {
@@ -7620,7 +7620,7 @@
         ;
         if (v instanceof Action) {
           return bind12(liftEffect4(read(ref3)))(function(v1) {
-            return evalM(render6)(ref3)(v1["component"]["eval"](new Action2(v.value0, unit)));
+            return evalM(render5)(ref3)(v1["component"]["eval"](new Action2(v.value0, unit)));
           });
         }
         ;
@@ -7686,12 +7686,12 @@
     };
   };
   var runUI = function(renderSpec2) {
-    return function(component6) {
+    return function(component5) {
       return function(i2) {
         var squashChildInitializers = function(lchs) {
           return function(preInits) {
             return unDriverStateX(function(st) {
-              var parentInitializer = evalM(render6)(st.selfRef)(st["component"]["eval"](new Initialize(unit)));
+              var parentInitializer = evalM(render5)(st.selfRef)(st["component"]["eval"](new Initialize(unit)));
               return modify_(function(handlers) {
                 return {
                   initializers: new Cons(discard22(parSequence_3(reverse(handlers.initializers)))(function() {
@@ -7721,7 +7721,7 @@
                     finalizers: pre2.finalizers
                   })(lchs)();
                   bindFlipped7(unDriverStateX(function() {
-                    var $63 = render6(lchs);
+                    var $63 = render5(lchs);
                     return function($64) {
                       return $63(function(v) {
                         return v.selfRef;
@@ -7754,7 +7754,7 @@
                                 return $65(slot4.output($66));
                               };
                             }())();
-                            return handleAff(evalM(render6)(st.selfRef)(st["component"]["eval"](new Receive(slot4.input, unit))))();
+                            return handleAff(evalM(render5)(st.selfRef)(st["component"]["eval"](new Receive(slot4.input, unit))))();
                           };
                         })(dsx)();
                         return childrenIn.value0.value0;
@@ -7793,7 +7793,7 @@
             };
           };
         };
-        var render6 = function(lchs) {
+        var render5 = function(lchs) {
           return function($$var2) {
             return function __do2() {
               var v = read($$var2)();
@@ -7803,7 +7803,7 @@
               write(v.children)(v.childrenIn)();
               var handler3 = function() {
                 var $70 = queueOrRun(v.pendingHandlers);
-                var $71 = evalF(render6)(v.selfRef);
+                var $71 = evalF(render5)(v.selfRef);
                 return function($72) {
                   return $70($$void6($71($72)));
                 };
@@ -7872,7 +7872,7 @@
           return unDriverStateX(function(st) {
             return function __do2() {
               cleanupSubscriptionsAndForks(st)();
-              var f = evalM(render6)(st.selfRef)(st["component"]["eval"](new Finalize(unit)));
+              var f = evalM(render5)(st.selfRef)(st["component"]["eval"](new Finalize(unit)));
               modify_(function(handlers) {
                 return {
                   initializers: handlers.initializers,
@@ -7896,7 +7896,7 @@
                   return pure12(Nothing.value);
                 }
                 ;
-                return evalQ(render6)(ref3)(q2);
+                return evalQ(render5)(ref3)(q2);
               });
             };
           };
@@ -7931,7 +7931,7 @@
                 return function($79) {
                   return liftEffect5($78($79));
                 };
-              }())(i2)(component6))();
+              }())(i2)(component5))();
               return unDriverStateX(function(st) {
                 return pure7({
                   query: evalDriver(disposed)(st.selfRef),
@@ -8108,9 +8108,9 @@
             };
           });
           var patch = $lazy_patch(91);
-          var render6 = $lazy_render(82);
+          var render5 = $lazy_render(82);
           var renderComponentSlot = $lazy_renderComponentSlot(109);
-          return render6;
+          return render5;
         };
         var buildAttributes = buildProp(handler3);
         return {
@@ -8123,7 +8123,7 @@
   };
   var renderSpec = function(document3) {
     return function(container) {
-      var render6 = function(handler3) {
+      var render5 = function(handler3) {
         return function(child) {
           return function(v) {
             return function(v1) {
@@ -8164,18 +8164,18 @@
         };
       };
       return {
-        render: render6,
+        render: render5,
         renderChild: identity10,
         removeChild: removeChild3,
         dispose: removeChild3
       };
     };
   };
-  var runUI2 = function(component6) {
+  var runUI2 = function(component5) {
     return function(i2) {
       return function(element3) {
         return bind14(liftEffect6(map20(toDocument)(bindFlipped8(document2)(windowImpl))))(function(document3) {
-          return runUI(renderSpec(document3)(element3))(component6)(i2);
+          return runUI(renderSpec(document3)(element3))(component5)(i2);
         });
       };
     };
@@ -10075,20 +10075,6 @@
     });
   }();
 
-  // output/Ui.App1.Console/index.js
-  var render = function(_state) {
-    return div2([classes2(["Console"])])([text5("{{Console}}")]);
-  };
-  var initialState = function(_input) {
-    return {};
-  };
-  var $$eval = /* @__PURE__ */ mkEval(defaultEval);
-  var component = /* @__PURE__ */ mkComponent({
-    initialState,
-    "eval": $$eval,
-    render
-  });
-
   // output/Data.Expr.Drag/index.js
   var eq6 = /* @__PURE__ */ eq(eqPoint);
   var pure14 = /* @__PURE__ */ pure(applicativeMaybe);
@@ -11550,7 +11536,7 @@
     };
   };
   var refLabel_input = "input";
-  var render2 = function(dictShow) {
+  var render = function(dictShow) {
     var renderFragment2 = renderFragment(dictShow);
     var renderArgs1 = renderArgs(dictShow);
     return function(state3) {
@@ -11581,7 +11567,7 @@
     });
   };
   var resizeQueryInput1 = /* @__PURE__ */ resizeQueryInput(monadEffectAff);
-  var initialState2 = function(input3) {
+  var initialState = function(input3) {
     return setQuery$prime(input3.query)({
       editor: input3.editor,
       point: input3.point,
@@ -11706,7 +11692,7 @@
     ;
     throw new Error("Failed pattern match at Ui.App1.Buffer (line 85, column 1 - line 85, column 57): " + [v.constructor.name]);
   };
-  var $$eval2 = /* @__PURE__ */ function() {
+  var $$eval = /* @__PURE__ */ function() {
     return mkEval({
       receive: defaultEval.receive,
       finalize: defaultEval.finalize,
@@ -11715,11 +11701,11 @@
       handleAction
     });
   }();
-  var component2 = function(dictShow) {
+  var component = function(dictShow) {
     return mkComponent({
-      initialState: initialState2,
-      "eval": $$eval2,
-      render: render2(dictShow)
+      initialState,
+      "eval": $$eval,
+      render: render(dictShow)
     });
   };
 
@@ -11789,8 +11775,8 @@
     return fromFoldable5([Point_Handle_PointStatus.value, LeftFocus_PointStatus.value, RightFocus_PointStatus.value]);
   }();
   var refLabel_point = "point";
-  var render3 = function(dictShow) {
-    var component12 = component2(dictShow);
+  var render2 = function(dictShow) {
+    var component12 = component(dictShow);
     return function(state3) {
       return div2([ref2(refLabel_point), classes2(fold6([["Point"], map25(show5)(toUnfoldable6(state3.statuses)), foldMap2($$const(["bufferIsOpen"]))(state3.mb_bufferInput)])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(function() {
         if (state3.mb_bufferInput instanceof Nothing) {
@@ -11818,7 +11804,7 @@
       }());
     };
   };
-  var initialState3 = function(input3) {
+  var initialState2 = function(input3) {
     return {
       editor: input3.editor,
       point: input3.point,
@@ -11880,7 +11866,7 @@
     }
     ;
     if (v instanceof Receive_PointAction) {
-      return put2(initialState3(v.value0));
+      return put2(initialState2(v.value0));
     }
     ;
     if (v instanceof MouseDown_PointAction) {
@@ -11901,7 +11887,7 @@
     ;
     throw new Error("Failed pattern match at Ui.App1.Point (line 70, column 1 - line 70, column 57): " + [v.constructor.name]);
   };
-  var $$eval3 = /* @__PURE__ */ function() {
+  var $$eval2 = /* @__PURE__ */ function() {
     return mkEval({
       finalize: defaultEval.finalize,
       initialize: pure19(Initialize_PointAction.value),
@@ -11912,11 +11898,11 @@
       }
     });
   }();
-  var component3 = function(dictShow) {
+  var component2 = function(dictShow) {
     return mkComponent({
-      initialState: initialState3,
-      "eval": $$eval3,
-      render: render3(dictShow)
+      initialState: initialState2,
+      "eval": $$eval2,
+      render: render2(dictShow)
     });
   };
 
@@ -12007,7 +11993,7 @@
     });
   });
   var renderPoint2 = function(dictShow) {
-    var component12 = component3(dictShow);
+    var component12 = component2(dictShow);
     return function(state3) {
       return function(point) {
         return slot3($$Proxy.value)(point)(component12)({
@@ -12034,7 +12020,7 @@
       };
     };
   };
-  var render4 = function(dictShow) {
+  var render3 = function(dictShow) {
     var renderExpr1 = renderExpr3(dictShow);
     return function(state3) {
       return div3([classes2(["Editor"])])([new Tuple("root", div3([classes2(["root"])])([new Tuple("0", renderExpr1(state3)(Nil.value)(state3.root))]))]);
@@ -12231,7 +12217,7 @@
       throw new Error("Failed pattern match at Ui.App1.Editor (line 293, column 51 - line 298, column 21): " + [v.constructor.name]);
     });
   });
-  var initialState4 = function(v) {
+  var initialState3 = function(v) {
     var initial_mb_handle1 = none(unfoldableMaybe);
     return {
       editor: new Editor(v.editor.value0),
@@ -12743,7 +12729,7 @@
       throw new Error("Failed pattern match at Ui.App1.Editor (line 73, column 1 - line 73, column 69): " + [v.constructor.name]);
     };
   };
-  var $$eval4 = function(dictShow) {
+  var $$eval3 = function(dictShow) {
     return mkEval({
       handleQuery: defaultEval.handleQuery,
       receive: defaultEval.receive,
@@ -12752,44 +12738,38 @@
       handleAction: handleAction3(dictShow)
     });
   };
-  var component4 = function(dictShow) {
+  var component3 = function(dictShow) {
     return mkComponent({
-      initialState: initialState4,
-      "eval": $$eval4(dictShow),
-      render: render4(dictShow)
+      initialState: initialState3,
+      "eval": $$eval3(dictShow),
+      render: render3(dictShow)
     });
   };
 
   // output/Ui.App1.App/index.js
-  var slot_2 = /* @__PURE__ */ slot_();
-  var slot_1 = /* @__PURE__ */ slot_2({
+  var slot_2 = /* @__PURE__ */ slot_()({
     reflectSymbol: function() {
       return "Editor";
     }
   })(ordUnit);
-  var component1 = /* @__PURE__ */ component4(showL);
-  var slot_22 = /* @__PURE__ */ slot_2({
-    reflectSymbol: function() {
-      return "Console";
-    }
-  })(ordUnit);
-  var render5 = function(_state) {
-    return div2([classes2(["App"])])([slot_1($$Proxy.value)(unit)(component1)({
+  var component1 = /* @__PURE__ */ component3(showL);
+  var render4 = function(_state) {
+    return div2([classes2(["App"])])([slot_2($$Proxy.value)(unit)(component1)({
       editor
-    }), slot_22($$Proxy.value)(unit)(component)({})]);
+    })]);
   };
-  var initialState5 = function(_input) {
+  var initialState4 = function(_input) {
     return {};
   };
-  var $$eval5 = /* @__PURE__ */ mkEval(defaultEval);
-  var component5 = /* @__PURE__ */ mkComponent({
-    initialState: initialState5,
-    "eval": $$eval5,
-    render: render5
+  var $$eval4 = /* @__PURE__ */ mkEval(defaultEval);
+  var component4 = /* @__PURE__ */ mkComponent({
+    initialState: initialState4,
+    "eval": $$eval4,
+    render: render4
   });
 
   // output/Ui.App1.Main/index.js
-  var main2 = /* @__PURE__ */ runHalogenAff(/* @__PURE__ */ bindFlipped(bindAff)(/* @__PURE__ */ runUI2(component5)({}))(awaitBody));
+  var main2 = /* @__PURE__ */ runHalogenAff(/* @__PURE__ */ bindFlipped(bindAff)(/* @__PURE__ */ runUI2(component4)({}))(awaitBody));
 
   // <stdin>
   main2();
