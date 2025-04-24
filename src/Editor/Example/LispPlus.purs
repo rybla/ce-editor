@@ -1,4 +1,4 @@
-module Editor.Example.Lisp where
+module Editor.Example.LispPlus where
 
 import Data.Expr
 import Prelude
@@ -8,7 +8,9 @@ import Data.Foldable (and, fold, or)
 import Data.List (List(..))
 import Data.Maybe (fromMaybe)
 import Data.Newtype (wrap)
+import Data.Set as Set
 import Data.String as String
+import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), mkPasteFragmentBufferOption)
 import Halogen.HTML as HH
@@ -21,26 +23,28 @@ data L
   = Root
   | Group
   | Symbol String
-
-derive instance Eq L
+  | Integral
 
 instance Show L where
   show Root = "#Root"
   show Group = "#Group"
   show (Symbol s) = s
+  show Integral = "#Integral"
+
+derive instance Eq L
+
+derive instance Ord L
 
 validPoint :: Expr L -> Point -> Boolean
-validPoint expr (Point p) = or
-  [ e'.l == Root
-  , e'.l == Group
-  ]
+validPoint expr (Point p) = e'.l `Set.member` ls
   where
   Expr e' = (expr # atSubExpr p.path).here
+  ls = Set.fromFoldable [ Root, Group, Integral ]
 
 editor :: Editor L
 editor = Editor
   { name: "Lisp"
-  , initial_expr: Root % []
+  , initial_expr: Root % [ Integral % [ Symbol "x" % [], Symbol "0" % [], Symbol "∞" % [], Symbol "x" % [] ] ]
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
   , bufferOptions: \root handle query -> fold
       [ case query of
@@ -68,6 +72,33 @@ editor = Editor
                     , inside: SpanContext
                         { _O: ExprContext Nil
                         , _I: SpanTooth { l: Group, kids_L: [], kids_R: [] }
+                        }
+                    , kids_R: []
+                    }
+                ]
+          _ | "integral" # startsWith (String.Pattern query) ->
+            case handle of
+              Point_Handle _ ->
+                [ mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ Symbol query % [] ]
+                , mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ Integral % [] ]
+                ]
+              SpanH_Handle _ _ ->
+                [ mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ Symbol query % [] ]
+                , mkPasteFragmentBufferOption root handle $ Zipper_Fragment $ Zipper
+                    { kids_L: []
+                    , inside: SpanContext
+                        { _O: ExprContext Nil
+                        , _I: SpanTooth { l: Integral, kids_L: [], kids_R: [] }
+                        }
+                    , kids_R: []
+                    }
+                ]
+              ZipperH_Handle _ _ ->
+                [ mkPasteFragmentBufferOption root handle $ Zipper_Fragment $ Zipper
+                    { kids_L: []
+                    , inside: SpanContext
+                        { _O: ExprContext Nil
+                        , _I: SpanTooth { l: Integral, kids_L: [], kids_R: [] }
                         }
                     , kids_R: []
                     }
@@ -111,6 +142,29 @@ editor = Editor
         Symbol str -> Array.fold
           [ [ HH.div [ classes [ "label" ] ] [ HH.text str ] ]
           ]
+        Integral -> case kids /\ points of
+          [ k0, k1, k2, k3 ] /\ [ p0, p1, p2, p3, p4 ] ->
+            [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "(" ]
+            , HH.div [ classes [ "Integral-kid-container", "Integral-integrand" ] ] [ HH.div [] [ HH.text "∫" ] ]
+            , p0
+            , HH.div [ classes [ "Integral-kid-container", "Integral-var" ] ] [ k0 ]
+            , HH.div [ classes [ "Integral-kid-container", "Integral-eq" ] ] [ HH.div [] [ HH.text "=" ] ]
+            , p1
+            , HH.div [ classes [ "Integral-kid-container", "Integral-start" ] ] [ k1 ]
+            , p2
+            , HH.div [ classes [ "Integral-kid-container", "Integral-end" ] ] [ k2 ]
+            , p3
+            , HH.div [ classes [ "Integral-kid-container", "Integral-body" ] ] [ k3 ]
+            , p4
+            , HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ]
+            ]
+          _ -> Array.fold
+            [ [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "[" ] ]
+            , [ HH.div [ classes [ "label" ] ] [ HH.text "Integral" ] ]
+            , Array.fold $ Array.zipWith (\kid point -> [ point, kid ]) kids points
+            , [ points # Array.last # fromMaybe (HH.div [] [ HH.text "{{missing last point}}" ]) ]
+            , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "]" ] ]
+            ]
   , historyLength_max: 100
   }
 

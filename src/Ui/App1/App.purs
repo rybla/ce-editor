@@ -4,7 +4,8 @@ import Prelude
 
 -- import Editor.Example.Editor2 as ExampleEditor
 -- import Editor.Example.Editor3 as ExampleEditor
-import Editor.Example.Lisp as ExampleEditor
+-- import Editor.Example.Lisp as ExampleEditor
+import Editor.Example.LispPlus as ExampleEditor
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH

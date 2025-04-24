@@ -29,12 +29,12 @@
   font-family: monospace;
 
   &>.root {
-    height: 1em;
+    /* height: 1em; */
   }
 
   .Expr {
-    /* padding: 0.5em;
-    box-shadow: 0 0 0 1px black; */
+    padding: 0.5em;
+    box-shadow: 0 0 0 1px black;
 
     height: 100%;
 
@@ -328,3 +328,37 @@
     transform: scaleY(1);
   }
 }
+
+/* language-specific */
+
+.Integral-kid-container {
+  /* height: 1em; */
+}
+
+.Integral-integrand {
+  font-size: 1.5em;
+}
+
+
+.Integral-var,
+.Integral-eq,
+.Integral-start {
+  margin-top: 1em;
+  font-size: 0.5em;
+}
+
+.Integral-eq {
+  /* white-space: pre; */
+  /* width: var(--Handle--width); */
+  /* width: 2em; */
+  margin-left: 2em;
+  text-align: center;
+}
+
+
+.Integral-end {
+  margin-top: -1em;
+  font-size: 0.5em;
+}
+
+.Integral-body {}
