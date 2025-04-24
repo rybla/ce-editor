@@ -9,7 +9,7 @@ import Data.List (List(..))
 import Data.Maybe (fromMaybe)
 import Data.Newtype (wrap)
 import Data.String as String
-import Editor (Editor(..))
+import Editor (Editor(..), mkPasteFragmentBufferOption)
 import Halogen.HTML as HH
 import Options.Applicative.Internal.Utils (startsWith)
 import Ui.Halogen (classes)
@@ -39,18 +39,18 @@ editor = Editor
   { name: "Lisp"
   , initial_expr: Root % []
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
-  , bufferOptions: \expr handle query -> fold
+  , bufferOptions: \root handle query -> fold
       [ case query of
           "" -> []
           _ | "group" # startsWith (String.Pattern query) ->
             case handle of
               Point_Handle _ ->
-                [ Fragment_BufferOption $ Span_Fragment $ Span [ Symbol query % [] ]
-                , Fragment_BufferOption $ Span_Fragment $ Span [ Group % [] ]
+                [ mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ Symbol query % [] ]
+                , mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ Group % [] ]
                 ]
               SpanH_Handle _ _ ->
-                [ Fragment_BufferOption $ Span_Fragment $ Span [ Symbol query % [] ]
-                , Fragment_BufferOption $ Zipper_Fragment $ Zipper
+                [ mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ Symbol query % [] ]
+                , mkPasteFragmentBufferOption root handle $ Zipper_Fragment $ Zipper
                     { kids_L: []
                     , inside: SpanContext
                         { _O: ExprContext Nil
@@ -60,8 +60,8 @@ editor = Editor
                     }
                 ]
               ZipperH_Handle _ _ ->
-                [ Fragment_BufferOption $ Span_Fragment $ Span [ Symbol query % [] ]
-                , Fragment_BufferOption $ Zipper_Fragment $ Zipper
+                [ mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ Symbol query % [] ]
+                , mkPasteFragmentBufferOption root handle $ Zipper_Fragment $ Zipper
                     { kids_L: []
                     , inside: SpanContext
                         { _O: ExprContext Nil
@@ -70,7 +70,8 @@ editor = Editor
                     , kids_R: []
                     }
                 ]
-          _ -> [ Fragment_BufferOption $ Span_Fragment $ Span [ Symbol query % [] ] ]
+          _ ->
+            [ mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ Symbol query % [] ] ]
       ]
   , validHandle: \expr handle -> case handle of
       Point_Handle p -> and [ validPoint expr p ]

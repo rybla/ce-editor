@@ -8,7 +8,7 @@ import Data.Foldable (fold)
 import Data.Maybe (fromMaybe)
 import Data.Newtype (wrap)
 import Data.String as String
-import Editor (Editor(..))
+import Editor (Editor(..), mkPasteFragmentBufferOption)
 import Editor.Common (assembleExpr_default)
 import Halogen.HTML as HH
 
@@ -30,10 +30,10 @@ editor = Editor
         , example_expr 2 2
         ]
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
-  , bufferOptions: \h e q -> fold
-      [ if String.null q then []
-        else [ Fragment_BufferOption $ Span_Fragment $ Span [ String q % [] ] ]
-      , [ Fragment_BufferOption $ Span_Fragment $ Span [ String "example" % [] ] ]
+  , bufferOptions: \root handle query -> fold
+      [ if String.null query then []
+        else [ mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ String query % [] ] ]
+      , [ mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ String "example" % [] ] ]
       ]
   , validHandle: \h e -> true
   , assembleExpr: \args ->

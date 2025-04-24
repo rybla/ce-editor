@@ -3,7 +3,9 @@ module Editor.Common where
 import Prelude
 
 import Data.Array as Array
-import Data.Expr (BufferOptions, Expr, Handle)
+import Data.Expr (BufferOption(..), BufferOptions, Expr, Fragment, Handle)
+import Data.Expr.Edit as Expr.Edit
+import Data.Lazy as Lazy
 import Data.Maybe (fromMaybe)
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
@@ -39,4 +41,7 @@ assembleExpr_default { label, kids, points } = Array.fold
   , [ points # Array.last # fromMaybe (HH.div [] [ HH.text "{{missing last point}}" ]) ]
   , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ] ]
   ]
+
+mkPasteFragmentBufferOption ∷ ∀ (l ∷ Type). Show l ⇒ Expr l → Handle → Fragment l → BufferOption l
+mkPasteFragmentBufferOption root handle frag = Fragment_BufferOption frag $ Lazy.defer \_ -> Expr.Edit.paste frag handle root
 

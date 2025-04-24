@@ -10,6 +10,7 @@ import Data.Eq.Generic (genericEq)
 import Data.Foldable (class Foldable, foldr, length)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Generic.Rep (class Generic)
+import Data.Lazy (Lazy)
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe', isJust, maybe)
@@ -638,14 +639,13 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
 --------------------------------------------------------------------------------
 
 type BufferOptions l = String -> Array (BufferOption l)
-data BufferOption l = Fragment_BufferOption (Fragment l)
+
+data BufferOption l =
+  Fragment_BufferOption (Fragment l) (Lazy (Expr l /\ Handle))
 
 --------------------------------------------------------------------------------
 -- Utilities
 --------------------------------------------------------------------------------
-
--- areSiblings_Point :: Point -> Point -> Boolean
--- areSiblings_Point (Point p0) (Point p1) = p0.path == p1.path
 
 areSiblings_Point :: Point -> Point -> Maybe (Index /\ Index)
 areSiblings_Point (Point p) (Point p') = do

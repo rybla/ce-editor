@@ -10,6 +10,7 @@ import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
 import Data.Expr.Render as Expr.Render
 import Data.FunctorWithIndex (mapWithIndex)
+import Data.Lazy as Lazy
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe(..), isJust)
@@ -273,11 +274,9 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
             when (editor.validHandle state.root h) do
               setHandle (pure h')
 handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput bufferOption))) = do
-  state <- get
-  handle <- (liftEffect $ Ref.read state.ref_mb_handle) >>= fromMaybeM do liftEffect $ throw "impossible to submit Buffer when there is no Handle"
   case bufferOption of
-    Fragment_BufferOption frag -> do
-      let root' /\ handle' = state.root # Expr.Edit.paste frag handle
+    Fragment_BufferOption _frag lazy_result -> do
+      let root' /\ handle' = lazy_result # Lazy.force
       modifyEditorState _
         { root = root'
         , initial_mb_handle = pure handle'

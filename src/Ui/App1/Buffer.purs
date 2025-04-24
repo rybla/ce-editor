@@ -168,7 +168,7 @@ render state =
         ]
     , HHK.div [ classes [ "options" ] ]
         $ state.options_queried # mapWithIndex \i -> case _ of
-            Fragment_BufferOption frag ->
+            Fragment_BufferOption frag _lazy_expr' ->
               show i /\
                 HH.div
                   [ classes $ fold [ [ "PasteSpan", "BufferOption" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
