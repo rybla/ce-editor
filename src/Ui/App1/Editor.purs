@@ -3,6 +3,7 @@ module Ui.App1.Editor where
 import Prelude
 
 import Control.Monad.State (get, modify)
+import Data.Array (elem)
 import Data.Expr (BufferOption(..), Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
@@ -232,7 +233,7 @@ handleAction (KeyDown_EditorAction event) = do
       liftEffect $ event # Event.preventDefault
       undo
     -- open buffer
-    _ | ki # Event.matchKeyInfo (_ == "Enter") { cmd: pure false, shift: pure false, alt: pure false } -> do
+    _ | ki # Event.matchKeyInfo (_ `Set.member` submit_keys) { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
@@ -275,6 +276,8 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
               setHandle (pure h')
 handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput bufferOption))) = do
   submitBufferOption bufferOption
+
+submit_keys = Set.fromFoldable [ "Enter", "Tab" ]
 
 --------------------------------------------------------------------------------
 -- undo and redo

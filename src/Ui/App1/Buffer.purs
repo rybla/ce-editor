@@ -12,6 +12,7 @@ import Data.Foldable (fold, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
+import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
@@ -97,7 +98,8 @@ handleAction (KeyDown_BufferAction event) = do
   let ki = event # Event.fromEventToKeyInfo
   state <- get
   case unit of
-    _ | ki # Event.matchKeyInfo (_ == "Enter") { cmd: pure false, shift: pure false, alt: pure false } -> do
+    _ | ki # Event.matchKeyInfo (_ `Set.member` submit_keys) { cmd: pure false, shift: pure false, alt: pure false } -> do
+      liftEffect $ event # Event.preventDefault
       case state.option_i of
         Nothing -> pure unit
         Just i -> do
@@ -114,6 +116,8 @@ handleAction (KeyDown_BufferAction event) = do
 handleAction (QueryInput_BufferAction _event) = do
   query <- resizeQueryInput
   setQuery query
+
+submit_keys = Set.fromFoldable [ "Enter", "Tab" ]
 
 resizeQueryInput = do
   elem <- H.getHTMLElementRef refLabel_input >>= fromMaybeM do liftEffect $ throw "TODO"
