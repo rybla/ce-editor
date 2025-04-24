@@ -200,7 +200,7 @@
       background: rgba(0, 0, 0, 0.1);
       backdrop-filter: blur(15px);
       -webkit-backdrop-filter: blur(15px);
-      box-shadow: 0 0 1em 0 rgba(0, 0, 0, 0.2);
+      box-shadow: 0 0 1em 0.1em rgba(0, 0, 0, 0.5);
       transition: box-shadow 0.3s ease;
       animation: Buffer-appear 0.2s forwards linear;
 

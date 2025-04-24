@@ -131,13 +131,16 @@ extractSpan_Array i_L i_R xs =
   in
     { before, here, after }
 
-isAlpha :: String -> Boolean
 isAlpha = Regex.test isAlpha_regex
+isAlpha_regex = Regex.regex "^[a-zA-Z]$" mempty # fromRight' (impossible "failed to compile isAlpha_regex")
 
-isAlpha_regex ∷ Regex
-isAlpha_regex = Regex.regex "^[a-zA-Z]$" mempty # fromRight' (impossible "isAlpha_regex: failure")
+isNonSpace = Regex.test isNonSpace_regex
+isNonSpace_regex = Regex.regex "^\\s*\\S\\s*$" mempty # fromRight' (impossible "failed to compile isNonSpace_regex")
 
 infixr 2 implies as ==>
+
+isWhitespaceFree = Regex.test isWhitespaceFree_regex
+isWhitespaceFree_regex = Regex.regex "^\\S*$" mempty # fromRight' (impossible "failed to compile isWhitespaceFree_regex")
 
 writeFlipped ∷ ∀ (a ∷ Type). Ref a → a → Effect Unit
 writeFlipped = flip Ref.write

@@ -6,9 +6,10 @@ import Data.Array as Array
 import Data.Expr (BufferOption(..), BufferOptions, Expr, Fragment, Handle)
 import Data.Expr.Edit as Expr.Edit
 import Data.Lazy as Lazy
-import Data.Maybe (fromMaybe)
+import Data.Maybe (Maybe, fromMaybe)
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
+import Ui.Event (KeyInfo)
 import Ui.Halogen (classes)
 
 --------------------------------------------------------------------------------
@@ -18,6 +19,7 @@ data Editor l = Editor
   , initial_expr :: Expr l
   , initial_handle :: Handle
   , bufferOptions :: Expr l -> Handle -> BufferOptions l
+  , getShortcut :: Expr l -> Handle -> KeyInfo -> Maybe (BufferOption l)
   , validHandle :: Expr l -> Handle -> Boolean
   , assembleExpr :: AssembleExpr l
   , historyLength_max :: Int

@@ -12,6 +12,7 @@ import Data.Array (range)
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Newtype (class Newtype, wrap)
+import Data.Unfoldable (none)
 import Editor.Common (Editor(..), assembleExpr_default)
 
 newtype L meta = L { dat :: Dat, meta :: meta }
@@ -49,7 +50,8 @@ mkEditor default_meta = Editor
         , example_expr default_meta 2 2
         ]
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
-  , bufferOptions: \h q e -> []
+  , bufferOptions: \_ _ _ -> none
+  , getShortcut: \_ _ _ -> none
   , validHandle: \h e -> true
   , assembleExpr: assembleExpr_default
   , historyLength_max: 100

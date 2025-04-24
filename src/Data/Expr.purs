@@ -638,6 +638,8 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
 -- Utilities
 --------------------------------------------------------------------------------
 
+-- TODO: rename this to "Edit" or something
+
 type BufferOptions l = String -> Array (BufferOption l)
 
 data BufferOption l =

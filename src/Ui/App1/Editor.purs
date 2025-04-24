@@ -2,17 +2,14 @@ module Ui.App1.Editor where
 
 import Prelude
 
-import Control.Monad.Reader (Reader, ask, runReader)
 import Control.Monad.State (get, modify)
-import Data.Expr (BufferOption(..), Expr(..), Fragment(..), Handle(..), Path, Point(..), SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle, traverseIndexes, traverseStepsAndKids)
+import Data.Expr (BufferOption(..), Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
 import Data.Expr.Render as Expr.Render
-import Data.FunctorWithIndex (mapWithIndex)
 import Data.Lazy as Lazy
 import Data.List (List(..), (:))
-import Data.List as List
 import Data.Maybe (Maybe(..), isJust)
 import Data.Newtype (unwrap)
 import Data.Set (Set)
@@ -21,7 +18,6 @@ import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..))
 import Effect.Aff (Aff)
-import Effect.Exception (throw)
 import Effect.Ref as Ref
 import Effect.Unsafe (unsafePerformEffect)
 import Halogen (liftEffect)
@@ -34,7 +30,7 @@ import Ui.App1.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInp
 import Ui.App1.Point as Point
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
-import Utility (fromMaybeM, guardPure, isAlpha, todo, (:%=), (:=))
+import Utility (guardPure, isNonSpace, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -111,6 +107,10 @@ handleAction (KeyDown_EditorAction event) = do
           H.tell (Proxy @"Point") (handle # getFocusPoint) $ SetBufferInput_PointQuery none
     _ -> pure unit
   else case unit of
+    -- shortcut
+    _ | Just handle <- mb_handle, Just bufferOption <- ki # editor.getShortcut state.root handle -> do
+      liftEffect $ event # Event.preventDefault
+      submitBufferOption bufferOption
     -- move
     _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
@@ -239,7 +239,7 @@ handleAction (KeyDown_EditorAction event) = do
         Just handle -> do
           let point = handle # getFocusPoint
           H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, options: editor.bufferOptions state.root handle, query: "" }
-    _ | ki # Event.matchKeyInfo isAlpha { cmd: pure false, shift: pure false, alt: pure false } -> do
+    _ | ki # Event.matchKeyInfo isNonSpace { cmd: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
@@ -274,13 +274,7 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
             when (editor.validHandle state.root h) do
               setHandle (pure h')
 handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput bufferOption))) = do
-  case bufferOption of
-    Fragment_BufferOption _frag lazy_result -> do
-      let root' /\ handle' = lazy_result # Lazy.force
-      modifyEditorState _
-        { root = root'
-        , initial_mb_handle = pure handle'
-        }
+  submitBufferOption bufferOption
 
 --------------------------------------------------------------------------------
 -- undo and redo
@@ -331,6 +325,18 @@ modifyEditorState f = do
     get >>= \state -> liftEffect $ state.ref_mb_dragOrigin := none
     state <- modify f
     pure state.initial_mb_handle
+
+--------------------------------------------------------------------------------
+-- submitBufferOption
+--------------------------------------------------------------------------------
+
+submitBufferOption :: forall l. Show l => BufferOption l -> EditorM l Unit
+submitBufferOption (Fragment_BufferOption _frag lazy_result) = do
+  let root' /\ handle' = lazy_result # Lazy.force
+  modifyEditorState _
+    { root = root'
+    , initial_mb_handle = pure handle'
+    }
 
 --------------------------------------------------------------------------------
 -- setHandle

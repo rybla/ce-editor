@@ -9,10 +9,13 @@ import Data.List (List(..))
 import Data.Maybe (fromMaybe)
 import Data.Newtype (wrap)
 import Data.String as String
+import Data.Unfoldable (none)
 import Editor (Editor(..), mkPasteFragmentBufferOption)
 import Halogen.HTML as HH
 import Options.Applicative.Internal.Utils (startsWith)
+import Ui.Event (matchKeyInfo)
 import Ui.Halogen (classes)
+import Utility (isWhitespaceFree)
 
 data L
   = Root
@@ -70,9 +73,22 @@ editor = Editor
                     , kids_R: []
                     }
                 ]
-          _ ->
+          _ | query # isWhitespaceFree ->
             [ mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ Symbol query % [] ] ]
+          _ ->
+            none
       ]
+  , getShortcut: \root handle ki -> case unit of
+      _ | ki # matchKeyInfo (_ == "(") { cmd: pure false, alt: pure false } ->
+        pure $ mkPasteFragmentBufferOption root handle $ Zipper_Fragment $ Zipper
+          { kids_L: []
+          , inside: SpanContext
+              { _O: ExprContext Nil
+              , _I: SpanTooth { l: Group, kids_L: [], kids_R: [] }
+              }
+          , kids_R: []
+          }
+      _ -> none
   , validHandle: \expr handle -> case handle of
       Point_Handle p -> and [ validPoint expr p ]
       SpanH_Handle sh _ -> and [ validPoint expr p._L, validPoint expr p._R ]
