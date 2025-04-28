@@ -3,7 +3,7 @@ module Editor.Common where
 import Prelude
 
 import Data.Array as Array
-import Data.Expr (BufferOption(..), BufferOptions, Expr, Fragment, Handle)
+import Data.Expr (Edit(..), EditMenu, Expr, Fragment, Handle)
 import Data.Expr.Edit as Expr.Edit
 import Data.Lazy as Lazy
 import Data.Maybe (Maybe, fromMaybe)
@@ -18,11 +18,10 @@ data Editor l = Editor
   { name :: String
   , initial_expr :: Expr l
   , initial_handle :: Handle
-  , bufferOptions :: Expr l -> Handle -> BufferOptions l
-  , getShortcut :: Expr l -> Handle -> KeyInfo -> Maybe (BufferOption l)
-  , validHandle :: Expr l -> Handle -> Boolean
+  , getEditMenu :: Expr l -> Handle -> EditMenu l
+  , getShortcut :: Expr l -> Handle -> KeyInfo -> Maybe (Edit l)
+  , isValidHandle :: Expr l -> Handle -> Boolean
   , assembleExpr :: AssembleExpr l
-  , historyLength_max :: Int
   }
 
 type AssembleExpr l =
@@ -44,6 +43,6 @@ assembleExpr_default { label, kids, points } = Array.fold
   , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ] ]
   ]
 
-mkPasteFragmentBufferOption ∷ ∀ (l ∷ Type). Show l ⇒ Expr l → Handle → Fragment l → BufferOption l
-mkPasteFragmentBufferOption root handle frag = Fragment_BufferOption frag $ Lazy.defer \_ -> Expr.Edit.paste frag handle root
+mkPasteFragmentEdit ∷ ∀ (l ∷ Type). Show l ⇒ Expr l → Handle → Fragment l → Edit l
+mkPasteFragmentEdit root handle frag = Fragment_Edit frag $ Lazy.defer \_ -> Expr.Edit.paste frag handle root
 

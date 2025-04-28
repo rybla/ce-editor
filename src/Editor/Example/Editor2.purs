@@ -8,7 +8,7 @@ import Data.Foldable (fold)
 import Data.Newtype (wrap)
 import Data.String as String
 import Data.Unfoldable (none)
-import Editor (Editor(..), mkPasteFragmentBufferOption)
+import Editor (Editor(..), mkPasteFragmentEdit)
 import Editor.Common (assembleExpr_default)
 
 data L = String String | Root
@@ -29,15 +29,14 @@ editor = Editor
         , example_expr 2 2
         ]
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
-  , bufferOptions: \root handle query -> fold
+  , getEditMenu: \root handle query -> fold
       [ if String.null query then []
-        else [ mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ String query % [] ] ]
-      , [ mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ String "example" % [] ] ]
+        else [ mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ String query % [] ] ]
+      , [ mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ String "example" % [] ] ]
       ]
   , getShortcut: \_ _ _ -> none
-  , validHandle: \_ _ -> true
+  , isValidHandle: \_ _ -> true
   , assembleExpr: assembleExpr_default
-  , historyLength_max: 100
   }
 
 example_expr :: Int -> Int -> Expr L

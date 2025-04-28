@@ -2,7 +2,6 @@
 
 ## halogen-simplified
 
-- [ ] alter the Editor interface to generating edits to do anything it wants with the root Expr, and has to decide where to place handle afterwards
 - [ ] rendering organization
   - [ ] option 1: render as just a sequence rather than nested tree structure
   - [ ] option 2: fix the way that highlighting works to be more generic over the shape of thing
@@ -11,6 +10,7 @@
 - [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything
 - [ ] BUG: dragging that lets the inner span be outside the outer span
 - [ ] BUG: redo takes two tries to work?? and can't redo final undo
+- [x] alter the Editor interface to generating edits to do anything it wants with the root Expr, and has to decide where to place handle afterwards
 - [x] in Editor spec, allow shortcut keys such as "(" for "#Group" in Lisp and "\n" for newlines, etc
 - [x] use custom rendering in the buffer results as well
 - [x] searchable menu of edits

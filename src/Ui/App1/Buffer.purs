@@ -5,7 +5,7 @@ import Prelude
 import Control.Monad.State (get, modify_)
 import Data.Array ((!!))
 import Data.Const (Const(..))
-import Data.Expr (BufferOption(..), Expr, Path, Point)
+import Data.Expr (Edit(..), Expr, Path, Point)
 import Data.Expr.Render (RenderArgs, renderFragment)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (fold, length, null)
@@ -172,10 +172,10 @@ render state =
         ]
     , HHK.div [ classes [ "options" ] ]
         $ state.options_queried # mapWithIndex \i -> case _ of
-            Fragment_BufferOption frag _lazy_expr' ->
+            Fragment_Edit frag _lazy_expr' ->
               show i /\
                 HH.div
-                  [ classes $ fold [ [ "PasteSpan", "BufferOption" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
+                  [ classes $ fold [ [ "PasteSpan", "Edit" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
                   [ frag # renderFragment (renderArgs state.editor) (state.point # unwrap).path
                   ]
     ]

@@ -50,11 +50,10 @@ mkEditor default_meta = Editor
         , example_expr default_meta 2 2
         ]
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
-  , bufferOptions: \_ _ _ -> none
+  , getEditMenu: \_ _ _ -> none
   , getShortcut: \_ _ _ -> none
-  , validHandle: \h e -> true
+  , isValidHandle: \h e -> true
   , assembleExpr: assembleExpr_default
-  , historyLength_max: 100
   }
 
 example_expr :: forall meta. meta -> Int -> Int -> Expr (L meta)

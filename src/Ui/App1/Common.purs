@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Const (Const)
 import Data.Eq.Generic (genericEq)
-import Data.Expr (BufferOption, BufferOptions, Expr, Fragment, Handle, Point)
+import Data.Expr (Edit, EditMenu, Expr, Fragment, Handle, Point)
 import Data.Generic.Rep (class Generic)
 import Data.List (List)
 import Data.Maybe (Maybe)
@@ -161,19 +161,19 @@ type BufferInput l =
   { editor :: Editor l
   , point :: Point
   , query :: String
-  , options :: BufferOptions l
+  , options :: EditMenu l
   }
 
 data BufferOutput l =
-  SubmitBuffer_BufferOutput (BufferOption l)
+  SubmitBuffer_BufferOutput (Edit l)
 
 type BufferState l =
   { editor :: Editor l
   , point :: Point
   , query :: String
-  , options :: BufferOptions l
+  , options :: EditMenu l
   , option_i :: Maybe Int
-  , options_queried :: Array (BufferOption l)
+  , options_queried :: Array (Edit l)
   }
 
 data BufferAction

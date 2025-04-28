@@ -4,7 +4,7 @@ import Prelude
 
 import Control.Monad.State (get, modify)
 import Data.Array (elem)
-import Data.Expr (BufferOption(..), Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
+import Data.Expr (Edit(..), Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
@@ -111,7 +111,7 @@ handleAction (KeyDown_EditorAction event) = do
     -- shortcut
     _ | Just handle <- mb_handle, Just bufferOption <- ki # editor.getShortcut state.root handle -> do
       liftEffect $ event # Event.preventDefault
-      submitBufferOption bufferOption
+      submitEdit bufferOption
     -- move
     _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
@@ -122,7 +122,7 @@ handleAction (KeyDown_EditorAction event) = do
         Just handle -> do
           case
             Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p ->
-              guardPure (editor.validHandle state.root) (Point_Handle p)
+              guardPure (editor.isValidHandle state.root) (Point_Handle p)
             of
             Nothing -> do
               liftEffect $ state.ref_mb_dragOrigin := none
@@ -152,7 +152,7 @@ handleAction (KeyDown_EditorAction event) = do
               pure dragOrigin
           case
             Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p ->
-              state.root # Expr.Drag.drag dragOrigin p >>= guardPure (editor.validHandle state.root)
+              state.root # Expr.Drag.drag dragOrigin p >>= guardPure (editor.isValidHandle state.root)
             of
             Nothing -> pure unit
             Just handle' -> do
@@ -239,14 +239,14 @@ handleAction (KeyDown_EditorAction event) = do
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, options: editor.bufferOptions state.root handle, query: "" }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, options: editor.getEditMenu state.root handle, query: "" }
     _ | ki # Event.matchKeyInfo isNonSpace { cmd: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, options: editor.bufferOptions state.root handle, query: (unwrap ki).key }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, options: editor.getEditMenu state.root handle, query: (unwrap ki).key }
     -- unrecognized keyboard event
     _ -> pure unit
 
@@ -258,7 +258,7 @@ handleAction (PointOutput_EditorAction (MouseDown_PointOutput _event p)) = do
       liftEffect do state.ref_mb_dragOrigin := pure (Point_Handle p)
       setHandle $ pure (Point_Handle p)
     Just h -> do
-      when (editor.validHandle state.root h) do
+      when (editor.isValidHandle state.root h) do
         let dragOrigin = Expr.Drag.getDragOrigin h p
         liftEffect do state.ref_mb_dragOrigin := pure dragOrigin
         setHandle $ pure dragOrigin
@@ -272,10 +272,10 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
         case state.root # Expr.Drag.drag h p of
           Nothing -> pure unit
           Just h' -> do
-            when (editor.validHandle state.root h) do
+            when (editor.isValidHandle state.root h) do
               setHandle (pure h')
 handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput bufferOption))) = do
-  submitBufferOption bufferOption
+  submitEdit bufferOption
 
 submit_keys = Set.fromFoldable [ "Enter", "Tab" ]
 
@@ -330,11 +330,11 @@ modifyEditorState f = do
     pure state.initial_mb_handle
 
 --------------------------------------------------------------------------------
--- submitBufferOption
+-- submitEdit
 --------------------------------------------------------------------------------
 
-submitBufferOption :: forall l. Show l => BufferOption l -> EditorM l Unit
-submitBufferOption (Fragment_BufferOption _frag lazy_result) = do
+submitEdit :: forall l. Show l => Edit l -> EditorM l Unit
+submitEdit (Fragment_Edit _frag lazy_result) = do
   let root' /\ handle' = lazy_result # Lazy.force
   modifyEditorState _
     { root = root'

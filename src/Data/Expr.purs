@@ -22,6 +22,7 @@ import Data.String as String
 import Data.Traversable (class Traversable, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested (type (/\), (/\))
+import Halogen.HTML (PlainHTML)
 import Utility (extractAt_Array, extractSpan_Array, impossible, parens, spaces)
 
 --------------------------------------------------------------------------------
@@ -638,12 +639,10 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
 -- Utilities
 --------------------------------------------------------------------------------
 
--- TODO: rename this to "Edit" or something
+type EditMenu l = String -> Array (Edit l)
 
-type BufferOptions l = String -> Array (BufferOption l)
-
-data BufferOption l =
-  Fragment_BufferOption (Fragment l) (Lazy (Expr l /\ Handle))
+data Edit l =
+  Fragment_Edit (Fragment l) (Lazy (Expr l /\ Handle))
 
 --------------------------------------------------------------------------------
 -- Utilities
