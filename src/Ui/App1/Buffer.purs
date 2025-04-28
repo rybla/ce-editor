@@ -117,7 +117,7 @@ handleAction (QueryInput_BufferAction _event) = do
   query <- resizeQueryInput
   setQuery query
 
-submit_keys = Set.fromFoldable [ "Enter", "Tab" ]
+submit_keys = Set.fromFoldable [ "Enter", "Tab", " " ]
 
 resizeQueryInput = do
   elem <- H.getHTMLElementRef refLabel_input >>= fromMaybeM do liftEffect $ throw "TODO"

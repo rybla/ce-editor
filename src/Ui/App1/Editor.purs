@@ -277,7 +277,7 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
 handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput bufferOption))) = do
   submitEdit bufferOption
 
-submit_keys = Set.fromFoldable [ "Enter", "Tab" ]
+submit_keys = Set.fromFoldable [ "Enter", "Tab", " " ]
 
 --------------------------------------------------------------------------------
 -- undo and redo
