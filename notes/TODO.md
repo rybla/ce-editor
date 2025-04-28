@@ -2,6 +2,7 @@
 
 ## halogen-simplified
 
+- [ ] render as just a sequence rather than nested tree structure
 - [ ] alter the Editor interface to generating edits to do anything it wants with the root Expr, and has to decide where to place handle afterwards
 - [ ] in Editor spec, allow shortcut keys such as "(" for "#Group" in Lisp and "\n" for newlines, etc
 - [ ] BUG: when paste a zipper, cursor doesnt go in riht place and sometimes duplicates

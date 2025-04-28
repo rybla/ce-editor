@@ -63,8 +63,7 @@ editor = Editor
                     }
                 ]
               ZipperH_Handle _ _ ->
-                [ mkPasteFragmentBufferOption root handle $ Span_Fragment $ Span [ Symbol query % [] ]
-                , mkPasteFragmentBufferOption root handle $ Zipper_Fragment $ Zipper
+                [ mkPasteFragmentBufferOption root handle $ Zipper_Fragment $ Zipper
                     { kids_L: []
                     , inside: SpanContext
                         { _O: ExprContext Nil
