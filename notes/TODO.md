@@ -4,12 +4,11 @@
 
 - [ ] render as just a sequence rather than nested tree structure
 - [ ] alter the Editor interface to generating edits to do anything it wants with the root Expr, and has to decide where to place handle afterwards
-- [ ] in Editor spec, allow shortcut keys such as "(" for "#Group" in Lisp and "\n" for newlines, etc
 - [ ] BUG: when paste a zipper, cursor doesnt go in riht place and sometimes duplicates
 - [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything
-- [ ] fix bug in dragging that lets the inner span be outside the outer span
-- [ ] fix other bugs in dragging
-- [ ] fix bug that redo takes two tries to work?? and can't redo final undo
+- [ ] BUG: dragging that lets the inner span be outside the outer span
+- [ ] BUG: redo takes two tries to work?? and can't redo final undo
+- [x] in Editor spec, allow shortcut keys such as "(" for "#Group" in Lisp and "\n" for newlines, etc
 - [x] use custom rendering in the buffer results as well
 - [x] searchable menu of edits
   - [x] give Editor proper interface to computing these edits
