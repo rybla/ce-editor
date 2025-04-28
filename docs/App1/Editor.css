@@ -22,7 +22,7 @@
 
   flex: 1 0 auto;
   overflow: scroll;
-  width: calc(100% - 2em);
+  width: calc(100% - 4em);
 
   padding: 2em;
 
