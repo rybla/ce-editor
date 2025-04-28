@@ -1,0 +1,51 @@
+module Editor.Notation where
+
+import Prelude
+
+import Control.Monad.State (State, evalState, get)
+import Data.Array as Array
+import Data.Foldable (fold, foldMap, length)
+import Data.Lens ((%=))
+import Data.Lens.Record (prop)
+import Data.Maybe (fromMaybe)
+import Data.String as String
+import Data.Traversable (traverse)
+import Editor.Common (AssembleExpr, renderWarning)
+import Halogen.HTML as HH
+import Type.Proxy (Proxy(..))
+import Ui.Halogen (classes)
+
+data Token
+  = All
+  | Kid Int
+  | Point Int
+  | Punc String
+
+parseString :: String -> Array Token
+parseString notation = notation
+  # String.split (String.Pattern " ")
+  # traverse parseWord
+  # flip evalState { kid: 0, point: 0 }
+
+parseWord :: String -> State { kid :: Int, point :: Int } Token
+parseWord "*" = pure All
+parseWord "_" = do
+  { kid: i } <- get
+  prop (Proxy @"kid") %= (_ + 1)
+  pure $ Kid i
+parseWord "|" = do
+  { point: i } <- get
+  prop (Proxy @"point") %= (_ + 1)
+  pure $ Point i
+parseWord str = pure $ Punc str
+
+mkAssembleExpr :: forall l. (l -> Array Token) -> AssembleExpr l
+mkAssembleExpr getTokens { label, kids, points } = label # getTokens # foldMap case _ of
+  All -> fold
+    [ Array.zipWith (\kid point -> [ point ] <> kid) kids points # fold
+    , [ points # Array.last # fromMaybe (renderWarning $ "missing point #" <> show @Int (length points)) ]
+    ]
+  Kid i -> kids Array.!! i # fromMaybe [ renderWarning $ "missing kid #" <> show i ]
+  Point i -> [ points Array.!! i # fromMaybe (renderWarning $ "missing point #" <> show i) ]
+  Punc punc -> [ HH.div [ classes [ "Punctuation" ] ] [ HH.text punc ] ]
+

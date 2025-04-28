@@ -11,6 +11,7 @@ import Data.Newtype (wrap)
 import Data.String as String
 import Data.Unfoldable (none)
 import Editor (Editor(..), mkPasteFragmentEdit)
+import Editor.Notation as Notation
 import Halogen.HTML as HH
 import Options.Applicative.Internal.Utils (startsWith)
 import Ui.Event (matchKeyInfo)
@@ -96,22 +97,14 @@ editor = Editor
       ZipperH_Handle zh _ -> and [ validPoint expr p._OL, validPoint expr p._IL, validPoint expr p._IR, validPoint expr p._OR ]
         where
         p = getEndPoints_ZipperH zh
-  , assembleExpr: \_args@{ label, kids, points } ->
-      case label of
-        Root -> Array.fold
-          [ fold $ Array.zipWith (\kid point -> point Array.: kid) kids points
-          , [ points # Array.last # fromMaybe (HH.div [] [ HH.text "{{missing last point}}" ]) ]
-          ]
-        Group -> Array.fold
-          [ [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "(" ] ]
-          , [ HH.br [] ]
-          , fold $ Array.zipWith (\kid point -> point Array.: kid) kids points
-          , [ points # Array.last # fromMaybe (HH.div [] [ HH.text "{{missing last point}}" ]) ]
-          , [ HH.br [] ]
-          , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ] ]
-          ]
-        Symbol str -> Array.fold
-          [ [ HH.div [ classes [ "label" ] ] [ HH.text str ] ]
-          ]
+  , assembleExpr:
+      let
+        root = Notation.parseString "Root *"
+        group = Notation.parseString "( * )"
+      in
+        Notation.mkAssembleExpr case _ of
+          Root -> root
+          Group -> group
+          Symbol s -> [ Notation.Punc s ]
   }
 

@@ -39,11 +39,12 @@ assembleExpr_default :: forall l. Show l => AssembleExpr l
 assembleExpr_default { label, kids, points } = fold
   [ [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "(" ] ]
   , [ HH.div [ classes [ "label" ] ] [ HH.text $ show label ] ]
-  , Array.zipWith (\kid point -> point Array.: kid) kids points # fold
-  , [ points # Array.last # fromMaybe (HH.div [] [ HH.text "{{missing last point}}" ]) ]
+  , Array.zipWith (\kid point -> [ point ] <> kid) kids points # fold
+  , [ points # Array.last # fromMaybe (renderWarning "missing last point") ]
   , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ] ]
   ]
 
 mkPasteFragmentEdit ∷ ∀ (l ∷ Type). Show l ⇒ Expr l → Handle → Fragment l → Edit l
 mkPasteFragmentEdit root handle frag = Fragment_Edit frag $ Lazy.defer \_ -> Expr.Edit.paste frag handle root
 
+renderWarning msg = HH.div [ classes [ "Warning" ] ] [ HH.text msg ]
