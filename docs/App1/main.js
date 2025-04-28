@@ -10061,38 +10061,29 @@
   };
   var mkAssembleExpr = function(getTokens) {
     return function(v) {
-      var v1 = getTokens(v.label);
-      if (v1 instanceof Left) {
-        return foldMap2(function(v2) {
-          if (v2 instanceof All) {
-            return fold3([fold3(zipWith(function(kid) {
-              return function(point) {
-                return append7([point])(kid);
-              };
-            })(v.kids)(v.points)), [fromMaybe(renderWarning("missing point #" + show4(length8(v.points))))(last(v.points))]]);
-          }
-          ;
-          if (v2 instanceof Kid) {
-            return fromMaybe([renderWarning("missing kid #" + show4(v2.value0))])(index2(v.kids)(v2.value0));
-          }
-          ;
-          if (v2 instanceof Point) {
-            return [fromMaybe(renderWarning("missing point #" + show4(v2.value0)))(index2(v.points)(v2.value0))];
-          }
-          ;
-          if (v2 instanceof Punc) {
-            return mapFlipped3(v2.value0)(fromPlainHTML);
-          }
-          ;
-          throw new Error("Failed pattern match at Editor.Notation (line 49, column 35 - line 56, column 39): " + [v2.constructor.name]);
-        })(v1.value0);
-      }
-      ;
-      if (v1 instanceof Right) {
-        return mapFlipped3(v1.value0)(fromPlainHTML);
-      }
-      ;
-      throw new Error("Failed pattern match at Editor.Notation (line 48, column 52 - line 57, column 38): " + [v1.constructor.name]);
+      return foldMap2(function(v1) {
+        if (v1 instanceof All) {
+          return fold3([fold3(zipWith(function(kid) {
+            return function(point) {
+              return append7([point])(kid);
+            };
+          })(v.kids)(v.points)), [fromMaybe(renderWarning("missing point #" + show4(length8(v.points))))(last(v.points))]]);
+        }
+        ;
+        if (v1 instanceof Kid) {
+          return fromMaybe([renderWarning("missing kid #" + show4(v1.value0))])(index2(v.kids)(v1.value0));
+        }
+        ;
+        if (v1 instanceof Point) {
+          return [fromMaybe(renderWarning("missing point #" + show4(v1.value0)))(index2(v.points)(v1.value0))];
+        }
+        ;
+        if (v1 instanceof Punc) {
+          return mapFlipped3(v1.value0)(fromPlainHTML);
+        }
+        ;
+        throw new Error("Failed pattern match at Editor.Notation (line 48, column 80 - line 55, column 37): " + [v1.constructor.name]);
+      })(getTokens(v.label));
     };
   };
 
@@ -10507,26 +10498,26 @@
         var arg = parseString("*");
         return mkAssembleExpr(function(v) {
           if (v instanceof Root) {
-            return new Left(root);
+            return root;
           }
           ;
           if (v instanceof Group) {
-            return new Left(group4);
+            return group4;
           }
           ;
           if (v instanceof Integral) {
-            return new Left(integral);
+            return integral;
           }
           ;
           if (v instanceof Arg) {
-            return new Left(arg);
+            return arg;
           }
           ;
           if (v instanceof $$Symbol) {
-            return new Left([new Punc([div2([classes2(["Punctuation"])])([text5(v.value0)])])]);
+            return [new Punc([div2([classes2(["Punctuation"])])([text5(v.value0)])])];
           }
           ;
-          throw new Error("Failed pattern match at Editor.Example.Lisp (line 113, column 33 - line 118, column 100): " + [v.constructor.name]);
+          throw new Error("Failed pattern match at Editor.Example.Lisp (line 113, column 33 - line 118, column 95): " + [v.constructor.name]);
         });
       }()
     });
@@ -11186,28 +11177,24 @@
       return none4;
     }
     ;
-    if (v instanceof SpanH_Handle && v.value1 instanceof Left_SpanFocus) {
-      return pure16(new Point_Handle(getEndPoints_SpanH(v.value0)["_L"]));
-    }
-    ;
-    if (v instanceof SpanH_Handle && v.value1 instanceof Right_SpanFocus) {
-      return pure16(new Point_Handle(getEndPoints_SpanH(v.value0)["_R"]));
+    if (v instanceof SpanH_Handle) {
+      return pure16(new Point_Handle(getFocusPoint(v)));
     }
     ;
     if (v instanceof ZipperH_Handle && v.value1 instanceof OuterLeft_ZipperFocus) {
-      return pure16(new SpanH_Handle(getInnerSpanH_ZipperH(v.value0), Left_SpanFocus.value));
-    }
-    ;
-    if (v instanceof ZipperH_Handle && v.value1 instanceof InnerLeft_ZipperFocus) {
-      return pure16(new SpanH_Handle(getOuterSpanH_ZipperH(v.value0), Left_SpanFocus.value));
-    }
-    ;
-    if (v instanceof ZipperH_Handle && v.value1 instanceof InnerRight_ZipperFocus) {
       return pure16(new SpanH_Handle(getOuterSpanH_ZipperH(v.value0), Right_SpanFocus.value));
     }
     ;
-    if (v instanceof ZipperH_Handle && v.value1 instanceof OuterRight_ZipperFocus) {
+    if (v instanceof ZipperH_Handle && v.value1 instanceof InnerLeft_ZipperFocus) {
       return pure16(new SpanH_Handle(getInnerSpanH_ZipperH(v.value0), Right_SpanFocus.value));
+    }
+    ;
+    if (v instanceof ZipperH_Handle && v.value1 instanceof InnerRight_ZipperFocus) {
+      return pure16(new SpanH_Handle(getInnerSpanH_ZipperH(v.value0), Left_SpanFocus.value));
+    }
+    ;
+    if (v instanceof ZipperH_Handle && v.value1 instanceof OuterRight_ZipperFocus) {
+      return pure16(new SpanH_Handle(getOuterSpanH_ZipperH(v.value0), Left_SpanFocus.value));
     }
     ;
     throw new Error("Failed pattern match at Data.Expr.Move (line 74, column 1 - line 74, column 33): " + [v.constructor.name]);

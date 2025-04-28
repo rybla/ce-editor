@@ -111,10 +111,10 @@ editor = Editor
         arg = Notation.parseString "*"
       in
         Notation.mkAssembleExpr case _ of
-          Root -> Left root
-          Group -> Left group
-          Integral -> Left integral
-          Arg -> Left arg
-          Symbol s -> Left [ Notation.Punc [ HH.div [ classes [ "Punctuation" ] ] [ HH.text s ] ] ]
+          Root -> root
+          Group -> group
+          Integral -> integral
+          Arg -> arg
+          Symbol s -> [ Notation.Punc [ HH.div [ classes [ "Punctuation" ] ] [ HH.text s ] ] ]
   }
 
