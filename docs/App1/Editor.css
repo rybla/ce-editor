@@ -3,19 +3,21 @@
   --Editor--color: var(--body--color);
 
   --Handle--width: 1em;
-  --Handle--background-color: rgb(43, 0, 255);
+  /* --Handle_Focus--height: 200%; */
+  --Handle_Focus--height: 100%;
+  --Handle_Focus--background: rgb(43, 0, 255);
+  /* --Handle--background-color: color-mix(in hsl, var(--Handle_Focus--background), transparent 30%); */
+  --Handle--background-color: color-mix(in hsl, var(--Handle_Focus--background), transparent 90%);
   --Handle_Focus--box-shadow:
     0 -0.5em 0 0 var(--Handle--background-color),
     0 0.5em 0 0 var(--Handle--background-color);
-  /* --Handle_Focus--height: 200%; */
-  --Handle_Focus--height: 100%;
-  --Handle_Focus--background: rgb(234, 0, 255);
 
   --Handle--border-radius: var(--Handle--width);
   --Handle_Left--border-radius: var(--Handle--border-radius) 0 0 var(--Handle--border-radius);
   --Handle_Right--border-radius: 0 var(--Handle--border-radius) var(--Handle--border-radius) 0;
 
-  --Handle_inside--background: color-mix(in hsl, var(--Handle--background-color), transparent 90%);
+  /* --Handle_inside--background: color-mix(in hsl, var(--Handle--background-color), transparent 90%); */
+  --Handle_inside--background: var(--Handle--background-color);
 }
 
 .Editor {
@@ -219,8 +221,8 @@
 
       border-radius: var(--Handle--width);
       background: rgba(0, 0, 0, 0.1);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       box-shadow: 0 0 1em 0.1em rgba(0, 0, 0, 0.5);
       transition: box-shadow 0.3s ease;
       animation: Buffer-appear 0.2s forwards linear;
@@ -317,7 +319,7 @@
   }
 
   25% {
-    box-shadow: 0 0 5px rgba(255, 0, 255, 0.7), 0 0 8px rgba(255, 0, 255, 0.5) inset, 0 0 10px #ff00ff;
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.7), 0 0 16px rgba(255, 0, 255, 0.5) inset, 0 0 20px #ff00ff;
   }
 
   50% {
@@ -325,7 +327,7 @@
   }
 
   75% {
-    box-shadow: 0 0 5px rgba(0, 255, 0, 0.7), 0 0 8px rgba(0, 255, 0, 0.5) inset, 0 0 10px #00ff00;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.7), 0 0 16px rgba(0, 255, 0, 0.5) inset, 0 0 20px #00ff00;
   }
 
   100% {
