@@ -4,6 +4,8 @@ import Prelude
 
 import Control.Monad.State (State, evalState, get)
 import Data.Array as Array
+import Data.Either (Either(..))
+import Data.Either.Nested (type (\/))
 import Data.Foldable (fold, foldMap, length)
 import Data.Lens ((%=))
 import Data.Lens.Record (prop)
@@ -42,13 +44,15 @@ parseWord "\n" = pure $ Punc [ HH.div [ classes [ "Token punctuation ghost" ] ] 
 parseWord "\t" = pure $ Punc [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⇥" ] ]
 parseWord str = pure $ Punc [ HH.div [ classes [ "Token punctuation" ] ] [ HH.text str ] ]
 
-mkAssembleExpr :: forall l. (l -> Array Token) -> AssembleExpr l
-mkAssembleExpr getTokens { label, kids, points } = label # getTokens # foldMap case _ of
-  All -> fold
-    [ Array.zipWith (\kid point -> [ point ] <> kid) kids points # fold
-    , [ points # Array.last # fromMaybe (renderWarning $ "missing point #" <> show @Int (length points)) ]
-    ]
-  Kid i -> kids Array.!! i # fromMaybe [ renderWarning $ "missing kid #" <> show i ]
-  Point i -> [ points Array.!! i # fromMaybe (renderWarning $ "missing point #" <> show i) ]
-  Punc punc -> punc <#> HH.fromPlainHTML
+mkAssembleExpr :: forall l. (l -> Array Token \/ Array PlainHTML) -> AssembleExpr l
+mkAssembleExpr getTokens { label, kids, points } = case label # getTokens of
+  Left tokens -> tokens # foldMap case _ of
+    All -> fold
+      [ Array.zipWith (\kid point -> [ point ] <> kid) kids points # fold
+      , [ points # Array.last # fromMaybe (renderWarning $ "missing point #" <> show @Int (length points)) ]
+      ]
+    Kid i -> kids Array.!! i # fromMaybe [ renderWarning $ "missing kid #" <> show i ]
+    Point i -> [ points Array.!! i # fromMaybe (renderWarning $ "missing point #" <> show i) ]
+    Punc es -> es <#> HH.fromPlainHTML
+  Right es -> es <#> HH.fromPlainHTML
 

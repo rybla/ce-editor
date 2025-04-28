@@ -3,10 +3,9 @@ module Editor.Example.Lisp where
 import Data.Expr
 import Prelude
 
-import Data.Array as Array
+import Data.Either (Either(..))
 import Data.Foldable (and, fold, or)
 import Data.List (List(..))
-import Data.Maybe (fromMaybe)
 import Data.Newtype (wrap)
 import Data.String as String
 import Data.Unfoldable (none)
@@ -21,19 +20,24 @@ import Utility (isWhitespaceFree)
 data L
   = Root
   | Group
+  | Integral
+  | Arg
   | Symbol String
 
 derive instance Eq L
 
 instance Show L where
   show Root = "#Root"
+  show Integral = "#Integral"
+  show Arg = "#Arg"
   show Group = "#Group"
   show (Symbol s) = s
 
-validPoint :: Expr L -> Point -> Boolean
-validPoint expr (Point p) = or
+isValidPoint :: Expr L -> Point -> Boolean
+isValidPoint expr (Point p) = or
   [ e'.l == Root
   , e'.l == Group
+  , e'.l == Arg
   ]
   where
   Expr e' = (expr # atSubExpr p.path).here
@@ -73,6 +77,8 @@ editor = Editor
                     , kids_R: []
                     }
                 ]
+          _ | query # startsWith (String.Pattern "integral") ->
+            [ mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ Integral % [ Arg % [], Arg % [], Arg % [], Arg % [] ] ] ]
           _ | query # isWhitespaceFree ->
             [ mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ Symbol query % [] ] ]
           _ ->
@@ -90,21 +96,25 @@ editor = Editor
           }
       _ -> none
   , isValidHandle: \expr handle -> case handle of
-      Point_Handle p -> and [ validPoint expr p ]
-      SpanH_Handle sh _ -> and [ validPoint expr p._L, validPoint expr p._R ]
+      Point_Handle p -> and [ isValidPoint expr p ]
+      SpanH_Handle sh _ -> and [ isValidPoint expr p._L, isValidPoint expr p._R ]
         where
         p = getEndPoints_SpanH sh
-      ZipperH_Handle zh _ -> and [ validPoint expr p._OL, validPoint expr p._IL, validPoint expr p._IR, validPoint expr p._OR ]
+      ZipperH_Handle zh _ -> and [ isValidPoint expr p._OL, isValidPoint expr p._IL, isValidPoint expr p._IR, isValidPoint expr p._OR ]
         where
         p = getEndPoints_ZipperH zh
   , assembleExpr:
       let
         root = Notation.parseString "Root [ \n \t * \n ]"
         group = Notation.parseString "( \n \t * \n )"
+        integral = Notation.parseString "(∫ _ from _ to _ of _ )"
+        arg = Notation.parseString "*"
       in
         Notation.mkAssembleExpr case _ of
-          Root -> root
-          Group -> group
-          Symbol s -> [ Notation.Punc [ HH.div [ classes [ "Punctuation" ] ] [ HH.text s ] ] ]
+          Root -> Left root
+          Group -> Left group
+          Integral -> Left integral
+          Arg -> Left arg
+          Symbol s -> Left [ Notation.Punc [ HH.div [ classes [ "Punctuation" ] ] [ HH.text s ] ] ]
   }
 

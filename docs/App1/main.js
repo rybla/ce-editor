@@ -10061,29 +10061,38 @@
   };
   var mkAssembleExpr = function(getTokens) {
     return function(v) {
-      return foldMap2(function(v1) {
-        if (v1 instanceof All) {
-          return fold3([fold3(zipWith(function(kid) {
-            return function(point) {
-              return append7([point])(kid);
-            };
-          })(v.kids)(v.points)), [fromMaybe(renderWarning("missing point #" + show4(length8(v.points))))(last(v.points))]]);
-        }
-        ;
-        if (v1 instanceof Kid) {
-          return fromMaybe([renderWarning("missing kid #" + show4(v1.value0))])(index2(v.kids)(v1.value0));
-        }
-        ;
-        if (v1 instanceof Point) {
-          return [fromMaybe(renderWarning("missing point #" + show4(v1.value0)))(index2(v.points)(v1.value0))];
-        }
-        ;
-        if (v1 instanceof Punc) {
-          return mapFlipped3(v1.value0)(fromPlainHTML);
-        }
-        ;
-        throw new Error("Failed pattern match at Editor.Notation (line 46, column 80 - line 53, column 41): " + [v1.constructor.name]);
-      })(getTokens(v.label));
+      var v1 = getTokens(v.label);
+      if (v1 instanceof Left) {
+        return foldMap2(function(v2) {
+          if (v2 instanceof All) {
+            return fold3([fold3(zipWith(function(kid) {
+              return function(point) {
+                return append7([point])(kid);
+              };
+            })(v.kids)(v.points)), [fromMaybe(renderWarning("missing point #" + show4(length8(v.points))))(last(v.points))]]);
+          }
+          ;
+          if (v2 instanceof Kid) {
+            return fromMaybe([renderWarning("missing kid #" + show4(v2.value0))])(index2(v.kids)(v2.value0));
+          }
+          ;
+          if (v2 instanceof Point) {
+            return [fromMaybe(renderWarning("missing point #" + show4(v2.value0)))(index2(v.points)(v2.value0))];
+          }
+          ;
+          if (v2 instanceof Punc) {
+            return mapFlipped3(v2.value0)(fromPlainHTML);
+          }
+          ;
+          throw new Error("Failed pattern match at Editor.Notation (line 49, column 35 - line 56, column 39): " + [v2.constructor.name]);
+        })(v1.value0);
+      }
+      ;
+      if (v1 instanceof Right) {
+        return mapFlipped3(v1.value0)(fromPlainHTML);
+      }
+      ;
+      throw new Error("Failed pattern match at Editor.Notation (line 48, column 52 - line 57, column 38): " + [v1.constructor.name]);
     };
   };
 
@@ -10293,6 +10302,20 @@
     Group2.value = new Group2();
     return Group2;
   }();
+  var Integral = /* @__PURE__ */ function() {
+    function Integral2() {
+    }
+    ;
+    Integral2.value = new Integral2();
+    return Integral2;
+  }();
+  var Arg = /* @__PURE__ */ function() {
+    function Arg2() {
+    }
+    ;
+    Arg2.value = new Arg2();
+    return Arg2;
+  }();
   var $$Symbol = /* @__PURE__ */ function() {
     function $$Symbol2(value0) {
       this.value0 = value0;
@@ -10309,6 +10332,14 @@
         return "#Root";
       }
       ;
+      if (v instanceof Integral) {
+        return "#Integral";
+      }
+      ;
+      if (v instanceof Arg) {
+        return "#Arg";
+      }
+      ;
       if (v instanceof Group) {
         return "#Group";
       }
@@ -10317,7 +10348,7 @@
         return v.value0;
       }
       ;
-      throw new Error("Failed pattern match at Editor.Example.Lisp (line 28, column 1 - line 31, column 22): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Editor.Example.Lisp (line 29, column 1 - line 34, column 22): " + [v.constructor.name]);
     }
   };
   var atSubExpr2 = /* @__PURE__ */ atSubExpr(showL);
@@ -10333,6 +10364,14 @@
           return true;
         }
         ;
+        if (x instanceof Integral && y instanceof Integral) {
+          return true;
+        }
+        ;
+        if (x instanceof Arg && y instanceof Arg) {
+          return true;
+        }
+        ;
         if (x instanceof $$Symbol && y instanceof $$Symbol) {
           return x.value0 === y.value0;
         }
@@ -10342,10 +10381,10 @@
     }
   };
   var eq14 = /* @__PURE__ */ eq(eqL);
-  var validPoint = function(expr) {
+  var isValidPoint = function(expr) {
     return function(v) {
       var v1 = atSubExpr2(v.path)(expr).here;
-      return or2([eq14(v1.l)(Root.value), eq14(v1.l)(Group.value)]);
+      return or2([eq14(v1.l)(Root.value), eq14(v1.l)(Group.value), eq14(v1.l)(Arg.value)]);
     };
   };
   var editor = /* @__PURE__ */ function() {
@@ -10399,7 +10438,11 @@
                   }))];
                 }
                 ;
-                throw new Error("Failed pattern match at Editor.Example.Lisp (line 50, column 13 - line 75, column 18): " + [handle.constructor.name]);
+                throw new Error("Failed pattern match at Editor.Example.Lisp (line 54, column 13 - line 79, column 18): " + [handle.constructor.name]);
+              }
+              ;
+              if (startsWith("integral")(query3)) {
+                return [mkPasteFragmentEdit2(root)(handle)(new Span_Fragment([mkExpr(Integral.value)([mkExpr(Arg.value)([]), mkExpr(Arg.value)([]), mkExpr(Arg.value)([]), mkExpr(Arg.value)([])])]))];
               }
               ;
               if (isWhitespaceFree(query3)) {
@@ -10441,39 +10484,49 @@
       isValidHandle: function(expr) {
         return function(handle) {
           if (handle instanceof Point_Handle) {
-            return and3([validPoint(expr)(handle.value0)]);
+            return and3([isValidPoint(expr)(handle.value0)]);
           }
           ;
           if (handle instanceof SpanH_Handle) {
             var p2 = getEndPoints_SpanH(handle.value0);
-            return and3([validPoint(expr)(p2["_L"]), validPoint(expr)(p2["_R"])]);
+            return and3([isValidPoint(expr)(p2["_L"]), isValidPoint(expr)(p2["_R"])]);
           }
           ;
           if (handle instanceof ZipperH_Handle) {
             var p2 = getEndPoints_ZipperH(handle.value0);
-            return and3([validPoint(expr)(p2["_OL"]), validPoint(expr)(p2["_IL"]), validPoint(expr)(p2["_IR"]), validPoint(expr)(p2["_OR"])]);
+            return and3([isValidPoint(expr)(p2["_OL"]), isValidPoint(expr)(p2["_IL"]), isValidPoint(expr)(p2["_IR"]), isValidPoint(expr)(p2["_OR"])]);
           }
           ;
-          throw new Error("Failed pattern match at Editor.Example.Lisp (line 92, column 36 - line 99, column 36): " + [handle.constructor.name]);
+          throw new Error("Failed pattern match at Editor.Example.Lisp (line 98, column 36 - line 105, column 36): " + [handle.constructor.name]);
         };
       },
       assembleExpr: function() {
         var root = parseString("Root [ \n 	 * \n ]");
+        var integral = parseString("(\u222B _ from _ to _ of _ )");
         var group4 = parseString("( \n 	 * \n )");
+        var arg = parseString("*");
         return mkAssembleExpr(function(v) {
           if (v instanceof Root) {
-            return root;
+            return new Left(root);
           }
           ;
           if (v instanceof Group) {
-            return group4;
+            return new Left(group4);
+          }
+          ;
+          if (v instanceof Integral) {
+            return new Left(integral);
+          }
+          ;
+          if (v instanceof Arg) {
+            return new Left(arg);
           }
           ;
           if (v instanceof $$Symbol) {
-            return [new Punc([div2([classes2(["Punctuation"])])([text5(v.value0)])])];
+            return new Left([new Punc([div2([classes2(["Punctuation"])])([text5(v.value0)])])]);
           }
           ;
-          throw new Error("Failed pattern match at Editor.Example.Lisp (line 105, column 33 - line 108, column 95): " + [v.constructor.name]);
+          throw new Error("Failed pattern match at Editor.Example.Lisp (line 113, column 33 - line 118, column 100): " + [v.constructor.name]);
         });
       }()
     });
