@@ -238,14 +238,14 @@ handleAction (KeyDown_EditorAction event) = do
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, options: editor.getEditMenu state.root handle, query: "" }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu: editor.getEditMenu state.root handle, query: "" }
     _ | ki # Event.matchKeyInfo isNonSpace { cmd: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, options: editor.getEditMenu state.root handle, query: (unwrap ki).key }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu: editor.getEditMenu state.root handle, query: (unwrap ki).key }
     -- unrecognized keyboard event
     _ -> pure unit
 
@@ -439,10 +439,10 @@ render state =
   HHK.div [ classes [ "Editor" ] ]
     [ "root" /\
         HHK.div [ classes [ "root" ] ]
-          [ "0" /\ renderExpr state Nil state.root ]
+          [ "0" /\ HH.div [ classes [ "Expr" ] ] (renderExpr state Nil state.root) ]
     ]
 
-renderExpr :: forall l. Show l => EditorState l -> Path -> Expr l -> EditorHTML l
+renderExpr :: forall l. Show l => EditorState l -> Path -> Expr l -> Array (EditorHTML l)
 renderExpr state@{ editor: Editor editor } path expr = do
   Expr.Render.renderExpr { render_kid, render_point, assembleExpr: editor.assembleExpr } path expr
   where

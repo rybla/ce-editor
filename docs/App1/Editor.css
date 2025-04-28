@@ -3,12 +3,13 @@
   --Editor--color: var(--body--color);
 
   --Handle--width: 1em;
-  --Handle--background-color: rgb(106, 0, 255);
+  --Handle--background-color: rgb(43, 0, 255);
   --Handle_Focus--box-shadow:
     0 -0.5em 0 0 var(--Handle--background-color),
     0 0.5em 0 0 var(--Handle--background-color);
   /* --Handle_Focus--height: 200%; */
   --Handle_Focus--height: 100%;
+  --Handle_Focus--background: rgb(234, 0, 255);
 
   --Handle--border-radius: var(--Handle--width);
   --Handle_Left--border-radius: var(--Handle--border-radius) 0 0 var(--Handle--border-radius);
@@ -29,31 +30,27 @@
 
   font-family: monospace;
 
-  &>.root {
-    /* height: 1em; */
-  }
+  &>.root {}
 
   .Expr {
-    display: inline-block;
-
-    &>* {
-      display: inline-block;
-    }
-
-    /* padding: 0.5em;
-    box-shadow: 0 0 0 1px black; */
-
-    height: 1em;
-
-    /* display: flex;
+    display: flex;
     flex-direction: row;
-    align-items: stretch;
-    justify-content: flex-start; */
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
 
     user-select: none;
 
-    &>.label {
-      display: inline-block;
+    &>* {
+      height: 1.5em;
+    }
+
+    &>.label,
+    &>.Punctuation {
+      display: flex;
+      align-items: center;
+      text-align: center;
+
       white-space: nowrap;
       font-size: 1em;
     }
@@ -64,8 +61,10 @@
     background-color: black;
     color: white;
     border-radius: var(--Handle--width);
-    white-space: pre;
-    animation: rainbow-glow 20s infinite linear
+    width: 0.5em;
+    overflow: hidden;
+    /* white-space: pre; */
+    animation: rainbow-glow 20s infinite linear;
   }
 
   .Point {
@@ -73,8 +72,7 @@
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
-    height: 1em;
-    overflow: hidden;
+    overflow: visible;
 
     &>.Left,
     &>.Middle,
@@ -88,6 +86,7 @@
         border-radius: var(--Handle--width);
         background: var(--Handle--background-color);
         height: var(--Handle_Focus--height);
+        background: var(--Handle_Focus--background)
       }
     }
 
@@ -99,6 +98,7 @@
 
       &.LeftFocus_PointStatus>.Left {
         height: var(--Handle_Focus--height);
+        background: var(--Handle_Focus--background)
       }
 
       &>.Middle,
@@ -109,14 +109,23 @@
     }
 
     &.SpanH_Handle_Right_PointStatus {
-      >.Right {
+
+      &>.Left,
+      &>.Middle {
+        background: var(--Handle_inside--background);
+      }
+
+      &>.Right {
         background: var(--Handle--background-color);
         border-radius: var(--Handle_Right--border-radius);
       }
 
       &.RightFocus_PointStatus>.Right {
         height: var(--Handle_Focus--height);
+        background: var(--Handle_Focus--background);
       }
+
+      background: var(--Editor--background);
 
       &~* {
         background: var(--Editor--background);
@@ -131,6 +140,7 @@
 
       &.LeftFocus_PointStatus>.Left {
         height: var(--Handle_Focus--height);
+        background: var(--Handle_Focus--background)
       }
 
       &>.Middle,
@@ -147,6 +157,7 @@
 
       &.LeftFocus_PointStatus>.Left {
         height: var(--Handle_Focus--height);
+        background: var(--Handle_Focus--background)
       }
 
       &~* {
@@ -163,10 +174,11 @@
 
       &.RightFocus_PointStatus>.Right {
         height: var(--Handle_Focus--height);
+        background: var(--Handle_Focus--background)
       }
 
       &~* {
-        background: transparent;
+        background: var(--Handle_inside--background);
       }
     }
 
@@ -184,6 +196,7 @@
 
       &.RightFocus_PointStatus>.Right {
         height: var(--Handle_Focus--height);
+        background: var(--Handle_Focus--background)
       }
 
       background: transparent;
@@ -195,7 +208,7 @@
 
     .Buffer {
       margin: 0.5em;
-      margin-top: -0.5em;
+      margin-top: -0.75em;
 
       padding: 0.5em;
       width: fit-content;
@@ -235,7 +248,7 @@
         }
       }
 
-      &>.options {
+      &>.menu {
         overflow: visible;
 
         display: flex;
@@ -244,7 +257,7 @@
         justify-content: flex-start;
         gap: 0.5em;
 
-        &>.BufferOption {
+        &>.Edit {
           padding: 0.5em;
           border-radius: 0 var(--Handle--width) var(--Handle--width) var(--Handle--width);
 
@@ -257,14 +270,14 @@
             box-shadow: 0 0 0 0.1em black inset;
           }
 
-          animation: BufferOption-appear 0.2s linear forwards;
+          animation: Edit-appear 0.2s linear forwards;
         }
       }
     }
   }
 }
 
-@keyframes BufferOption-appear {
+@keyframes Edit-appear {
   from {
     opacity: 0;
     transform: translateX(1em);
@@ -276,7 +289,7 @@
   }
 }
 
-@keyframes BufferOption-selected {
+@keyframes Edit-selected {
   from {
     transform: translateX(-1em);
   }

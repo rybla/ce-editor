@@ -161,7 +161,7 @@ type BufferInput l =
   { editor :: Editor l
   , point :: Point
   , query :: String
-  , options :: EditMenu l
+  , menu :: EditMenu l
   }
 
 data BufferOutput l =
@@ -171,9 +171,9 @@ type BufferState l =
   { editor :: Editor l
   , point :: Point
   , query :: String
-  , options :: EditMenu l
+  , menu :: EditMenu l
   , option_i :: Maybe Int
-  , options_queried :: Array (Edit l)
+  , menu_queried :: Array (Edit l)
   }
 
 data BufferAction

@@ -41,7 +41,7 @@ editor = Editor
   , assembleExpr: \args ->
       case args.label of
         Root -> Array.fold
-          [ Array.fold $ Array.zipWith (\kid point -> [ point, kid ]) args.kids args.points
+          [ fold $ Array.zipWith (\kid point -> point Array.: kid) args.kids args.points
           , [ args.points # Array.last # fromMaybe (HH.div [] [ HH.text "{{missing last point}}" ]) ]
           ]
         _ -> assembleExpr_default args

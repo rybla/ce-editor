@@ -5,6 +5,7 @@ import Prelude
 import Data.Array as Array
 import Data.Expr (Edit(..), EditMenu, Expr, Fragment, Handle)
 import Data.Expr.Edit as Expr.Edit
+import Data.Foldable (fold)
 import Data.Lazy as Lazy
 import Data.Maybe (Maybe, fromMaybe)
 import Halogen.HTML (HTML)
@@ -27,7 +28,7 @@ data Editor l = Editor
 type AssembleExpr l =
   forall w i
    . { label :: l
-     , kids :: Array (HTML w i)
+     , kids :: Array (Array (HTML w i))
      , points :: Array (HTML w i)
      }
   -> Array (HTML w i)
@@ -35,10 +36,10 @@ type AssembleExpr l =
 --------------------------------------------------------------------------------
 
 assembleExpr_default :: forall l. Show l => AssembleExpr l
-assembleExpr_default { label, kids, points } = Array.fold
+assembleExpr_default { label, kids, points } = fold
   [ [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "(" ] ]
   , [ HH.div [ classes [ "label" ] ] [ HH.text $ show label ] ]
-  , Array.fold $ Array.zipWith (\kid point -> [ point, kid ]) kids points
+  , Array.zipWith (\kid point -> point Array.: kid) kids points # fold
   , [ points # Array.last # fromMaybe (HH.div [] [ HH.text "{{missing last point}}" ]) ]
   , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ] ]
   ]

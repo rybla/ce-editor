@@ -56,9 +56,9 @@ initialState input = setQuery' input.query
   { editor: input.editor
   , point: input.point
   , query: input.query
-  , options: input.options
+  , menu: input.menu
   , option_i: none
-  , options_queried: []
+  , menu_queried: []
   }
 
 --------------------------------------------------------------------------------
@@ -103,13 +103,13 @@ handleAction (KeyDown_BufferAction event) = do
       case state.option_i of
         Nothing -> pure unit
         Just i -> do
-          o <- state.options_queried !! i # fromMaybeM do liftEffect $ throw "impossible for option_i to be out of bounds of options_queried"
+          o <- state.menu_queried !! i # fromMaybeM do liftEffect $ throw "impossible for option_i to be out of bounds of menu_queried"
           H.raise $ SubmitBuffer_BufferOutput o
     _ | Just cd <- ki # Event.matchMapKeyInfo fromKeyToCycleDir { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case state.option_i /\ cd of
-        Just i /\ Prev -> modify_ _ { option_i = pure $ (i - 1) `mod` (state.options_queried # length) }
-        Just i /\ Next -> modify_ _ { option_i = pure $ (i + 1) `mod` (state.options_queried # length) }
+        Just i /\ Prev -> modify_ _ { option_i = pure $ (i - 1) `mod` (state.menu_queried # length) }
+        Just i /\ Next -> modify_ _ { option_i = pure $ (i + 1) `mod` (state.menu_queried # length) }
         _ -> pure unit
     _ -> pure unit
 
@@ -137,14 +137,14 @@ setQuery query = modify_ $ setQuery' query
 setQuery' :: forall l. String -> BufferState l -> BufferState l
 setQuery' query state = state
   { query = query
-  , option_i = if null options_queried then none else pure 0
-  , options_queried = options_queried
+  , option_i = if null menu_queried then none else pure 0
+  , menu_queried = menu_queried
   }
   where
-  options_queried = state.options query
+  menu_queried = state.menu query
 
 --------------------------------------------------------------------------------
--- cycle options
+-- cycle menu
 --------------------------------------------------------------------------------
 
 data CycleDir = Prev | Next
@@ -170,17 +170,18 @@ render state =
         , HE.onInput QueryInput_BufferAction
         , HP.spellcheck false
         ]
-    , HHK.div [ classes [ "options" ] ]
-        $ state.options_queried # mapWithIndex \i -> case _ of
+    , HHK.div [ classes [ "menu" ] ]
+        $ state.menu_queried # mapWithIndex \i -> case _ of
             Fragment_Edit frag _lazy_expr' ->
               show i /\
                 HH.div
-                  [ classes $ fold [ [ "PasteSpan", "Edit" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
-                  [ frag # renderFragment (renderArgs state.editor) (state.point # unwrap).path
+                  [ classes $ fold [ [ "Edit" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
+                  [ HH.div [ classes [ "Expr" ] ] $
+                      frag # renderFragment (renderArgs state.editor) (state.point # unwrap).path
                   ]
     ]
 
-renderExpr :: forall l w i. Show l => Editor l -> Path -> Expr l -> HTML w i
+renderExpr :: forall l w i. Show l => Editor l -> Path -> Expr l -> Array (HTML w i)
 renderExpr editor path expr = Expr.Render.renderExpr (renderArgs editor) path expr
 
 renderPoint :: forall l w i. Show l => Editor l -> Point -> HTML w i

@@ -99,13 +99,13 @@ editor = Editor
   , assembleExpr: \_args@{ label, kids, points } ->
       case label of
         Root -> Array.fold
-          [ Array.fold $ Array.zipWith (\kid point -> [ point, kid ]) kids points
+          [ fold $ Array.zipWith (\kid point -> point Array.: kid) kids points
           , [ points # Array.last # fromMaybe (HH.div [] [ HH.text "{{missing last point}}" ]) ]
           ]
         Group -> Array.fold
           [ [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "(" ] ]
           , [ HH.br [] ]
-          , Array.fold $ Array.zipWith (\kid point -> [ point, kid ]) kids points
+          , fold $ Array.zipWith (\kid point -> point Array.: kid) kids points
           , [ points # Array.last # fromMaybe (HH.div [] [ HH.text "{{missing last point}}" ]) ]
           , [ HH.br [] ]
           , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ] ]
