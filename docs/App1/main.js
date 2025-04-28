@@ -1469,10 +1469,10 @@
     return dict.compare;
   };
   var lessThan = function(dictOrd) {
-    var compare32 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return function(a1) {
       return function(a2) {
-        var v = compare32(a1)(a2);
+        var v = compare3(a1)(a2);
         if (v instanceof LT) {
           return true;
         }
@@ -1482,10 +1482,10 @@
     };
   };
   var lessThanOrEq = function(dictOrd) {
-    var compare32 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return function(a1) {
       return function(a2) {
-        var v = compare32(a1)(a2);
+        var v = compare3(a1)(a2);
         if (v instanceof GT) {
           return false;
         }
@@ -1495,10 +1495,10 @@
     };
   };
   var max = function(dictOrd) {
-    var compare32 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return function(x) {
       return function(y) {
-        var v = compare32(x)(y);
+        var v = compare3(x)(y);
         if (v instanceof LT) {
           return y;
         }
@@ -1523,14 +1523,14 @@
         var reflectSymbol2 = reflectSymbol(dictIsSymbol);
         var eqRowCons1 = eqRowCons3(dictIsSymbol);
         return function(dictOrd) {
-          var compare32 = compare(dictOrd);
+          var compare3 = compare(dictOrd);
           var eqRowCons23 = eqRowCons1(dictOrd.Eq0());
           return {
             compareRecord: function(v) {
               return function(ra) {
                 return function(rb) {
                   var key2 = reflectSymbol2($$Proxy.value);
-                  var left2 = compare32(unsafeGet(key2)(ra))(unsafeGet(key2)(rb));
+                  var left2 = compare3(unsafeGet(key2)(ra))(unsafeGet(key2)(rb));
                   var $95 = notEq2(left2)(EQ.value);
                   if ($95) {
                     return left2;
@@ -2248,18 +2248,18 @@
   var eqTuple = function(dictEq) {
     var eq8 = eq(dictEq);
     return function(dictEq1) {
-      var eq14 = eq(dictEq1);
+      var eq15 = eq(dictEq1);
       return {
         eq: function(x) {
           return function(y) {
-            return eq8(x.value0)(y.value0) && eq14(x.value1)(y.value1);
+            return eq8(x.value0)(y.value0) && eq15(x.value1)(y.value1);
           };
         }
       };
     };
   };
   var ordTuple = function(dictOrd) {
-    var compare4 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     var eqTuple1 = eqTuple(dictOrd.Eq0());
     return function(dictOrd1) {
       var compare13 = compare(dictOrd1);
@@ -2267,7 +2267,7 @@
       return {
         compare: function(x) {
           return function(y) {
-            var v = compare4(x.value0)(y.value0);
+            var v = compare3(x.value0)(y.value0);
             if (v instanceof LT) {
               return LT.value;
             }
@@ -2449,6 +2449,30 @@
     };
   };
 
+  // output/Data.Monoid.Disj/index.js
+  var Disj = function(x) {
+    return x;
+  };
+  var semigroupDisj = function(dictHeytingAlgebra) {
+    var disj2 = disj(dictHeytingAlgebra);
+    return {
+      append: function(v) {
+        return function(v1) {
+          return disj2(v)(v1);
+        };
+      }
+    };
+  };
+  var monoidDisj = function(dictHeytingAlgebra) {
+    var semigroupDisj1 = semigroupDisj(dictHeytingAlgebra);
+    return {
+      mempty: ff(dictHeytingAlgebra),
+      Semigroup0: function() {
+        return semigroupDisj1;
+      }
+    };
+  };
+
   // output/Data.Foldable/index.js
   var identity5 = /* @__PURE__ */ identity(categoryFn);
   var alaF2 = /* @__PURE__ */ alaF()()()();
@@ -2601,6 +2625,18 @@
     var foldMap22 = foldMap(dictFoldable);
     return function(dictMonoid) {
       return foldMap22(dictMonoid)(identity5);
+    };
+  };
+  var any = function(dictFoldable) {
+    var foldMap22 = foldMap(dictFoldable);
+    return function(dictHeytingAlgebra) {
+      return alaF2(Disj)(foldMap22(monoidDisj(dictHeytingAlgebra)));
+    };
+  };
+  var or = function(dictFoldable) {
+    var any1 = any(dictFoldable);
+    return function(dictHeytingAlgebra) {
+      return any1(dictHeytingAlgebra)(identity5);
     };
   };
   var all = function(dictFoldable) {
@@ -3765,7 +3801,7 @@
   };
   var ord1List = {
     compare1: function(dictOrd) {
-      var compare4 = compare(dictOrd);
+      var compare3 = compare(dictOrd);
       return function(xs) {
         return function(ys) {
           var go2 = function($copy_v) {
@@ -3790,7 +3826,7 @@
                 }
                 ;
                 if (v instanceof Cons && v1 instanceof Cons) {
-                  var v2 = compare4(v.value0)(v1.value0);
+                  var v2 = compare3(v.value0)(v1.value0);
                   if (v2 instanceof EQ) {
                     $tco_var_v = v.value1;
                     $copy_v1 = v1.value1;
@@ -4297,11 +4333,11 @@
   });
   var unsafeUnionWith = /* @__PURE__ */ $lazy_unsafeUnionWith(803);
   var unionWith = function(dictOrd) {
-    var compare4 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return function(app) {
       return function(m1) {
         return function(m2) {
-          return unsafeUnionWith(compare4, app, m1, m2);
+          return unsafeUnionWith(compare3, app, m1, m2);
         };
       };
     };
@@ -4310,10 +4346,10 @@
     return unionWith(dictOrd)($$const);
   };
   var pop = function(dictOrd) {
-    var compare4 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return function(k) {
       return function(m) {
-        var v = unsafeSplit(compare4, k, m);
+        var v = unsafeSplit(compare3, k, m);
         return map11(function(a2) {
           return new Tuple(a2, unsafeJoinNodes(v.value1, v.value2));
         })(v.value0);
@@ -4321,7 +4357,7 @@
     };
   };
   var member = function(dictOrd) {
-    var compare4 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return function(k) {
       var go2 = function($copy_v) {
         var $tco_done = false;
@@ -4333,7 +4369,7 @@
           }
           ;
           if (v instanceof Node) {
-            var v1 = compare4(k)(v.value2);
+            var v1 = compare3(k)(v.value2);
             if (v1 instanceof LT) {
               $copy_v = v.value4;
               return;
@@ -4365,7 +4401,7 @@
     };
   };
   var lookup = function(dictOrd) {
-    var compare4 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return function(k) {
       var go2 = function($copy_v) {
         var $tco_done = false;
@@ -4377,7 +4413,7 @@
           }
           ;
           if (v instanceof Node) {
-            var v1 = compare4(k)(v.value2);
+            var v1 = compare3(k)(v.value2);
             if (v1 instanceof LT) {
               $copy_v = v.value4;
               return;
@@ -4416,11 +4452,11 @@
     return false;
   };
   var intersectionWith = function(dictOrd) {
-    var compare4 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return function(app) {
       return function(m1) {
         return function(m2) {
-          return unsafeIntersectionWith(compare4, app, m1, m2);
+          return unsafeIntersectionWith(compare3, app, m1, m2);
         };
       };
     };
@@ -4429,7 +4465,7 @@
     return intersectionWith(dictOrd)($$const);
   };
   var insert = function(dictOrd) {
-    var compare4 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return function(k) {
       return function(v) {
         var go2 = function(v1) {
@@ -4438,7 +4474,7 @@
           }
           ;
           if (v1 instanceof Node) {
-            var v2 = compare4(k)(v1.value2);
+            var v2 = compare3(k)(v1.value2);
             if (v2 instanceof LT) {
               return unsafeBalancedNode(v1.value2, v1.value3, go2(v1.value4), v1.value5);
             }
@@ -4600,15 +4636,15 @@
     return Leaf.value;
   }();
   var difference = function(dictOrd) {
-    var compare4 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return function(m1) {
       return function(m2) {
-        return unsafeDifference(compare4, m1, m2);
+        return unsafeDifference(compare3, m1, m2);
       };
     };
   };
   var $$delete = function(dictOrd) {
-    var compare4 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return function(k) {
       var go2 = function(v) {
         if (v instanceof Leaf) {
@@ -4616,7 +4652,7 @@
         }
         ;
         if (v instanceof Node) {
-          var v1 = compare4(k)(v.value2);
+          var v1 = compare3(k)(v.value2);
           if (v1 instanceof LT) {
             return unsafeBalancedNode(v.value2, v.value3, go2(v.value4), v.value5);
           }
@@ -4638,11 +4674,11 @@
     };
   };
   var alter = function(dictOrd) {
-    var compare4 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return function(f) {
       return function(k) {
         return function(m) {
-          var v = unsafeSplit(compare4, k, m);
+          var v = unsafeSplit(compare3, k, m);
           var v2 = f(v.value0);
           if (v2 instanceof Nothing) {
             return unsafeJoinNodes(v.value1, v.value2);
@@ -8262,11 +8298,11 @@
     }
   };
   var genericOrdArgument = function(dictOrd) {
-    var compare4 = compare(dictOrd);
+    var compare3 = compare(dictOrd);
     return {
       "genericCompare'": function(v) {
         return function(v1) {
-          return compare4(v)(v1);
+          return compare3(v)(v1);
         };
       }
     };
@@ -9446,59 +9482,6 @@
     };
   };
 
-  // output/Data.Set/index.js
-  var coerce4 = /* @__PURE__ */ coerce();
-  var union3 = function(dictOrd) {
-    return coerce4(union(dictOrd));
-  };
-  var toList = function(v) {
-    return keys(v);
-  };
-  var toUnfoldable5 = function(dictUnfoldable) {
-    var $96 = toUnfoldable(dictUnfoldable);
-    return function($97) {
-      return $96(toList($97));
-    };
-  };
-  var member2 = function(dictOrd) {
-    return coerce4(member(dictOrd));
-  };
-  var isEmpty2 = /* @__PURE__ */ coerce4(isEmpty);
-  var intersection2 = function(dictOrd) {
-    return coerce4(intersection(dictOrd));
-  };
-  var insert6 = function(dictOrd) {
-    var insert13 = insert(dictOrd);
-    return function(a2) {
-      return function(v) {
-        return insert13(a2)(unit)(v);
-      };
-    };
-  };
-  var empty8 = empty2;
-  var fromFoldable4 = function(dictFoldable) {
-    var foldl22 = foldl(dictFoldable);
-    return function(dictOrd) {
-      var insert13 = insert6(dictOrd);
-      return foldl22(function(m) {
-        return function(a2) {
-          return insert13(a2)(m);
-        };
-      })(empty8);
-    };
-  };
-  var difference3 = function(dictOrd) {
-    return coerce4(difference(dictOrd));
-  };
-  var subset = function(dictOrd) {
-    var difference1 = difference3(dictOrd);
-    return function(s1) {
-      return function(s2) {
-        return isEmpty2(difference1(s1)(s2));
-      };
-    };
-  };
-
   // output/Data.Expr.Edit/index.js
   var add2 = /* @__PURE__ */ add(semiringIndex);
   var none2 = /* @__PURE__ */ none(unfoldableArray);
@@ -9922,8 +9905,8 @@
     };
   };
 
-  // output/Editor.Example.LispPlus/index.js
-  var compare3 = /* @__PURE__ */ compare(ordString);
+  // output/Editor.Example.Lisp/index.js
+  var or2 = /* @__PURE__ */ or(foldableArray)(heytingAlgebraBoolean);
   var fold3 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
   var none3 = /* @__PURE__ */ none(unfoldableArray);
   var matchKeyInfo2 = /* @__PURE__ */ matchKeyInfo()();
@@ -9955,13 +9938,6 @@
     };
     return $$Symbol2;
   }();
-  var Integral = /* @__PURE__ */ function() {
-    function Integral2() {
-    }
-    ;
-    Integral2.value = new Integral2();
-    return Integral2;
-  }();
   var showL = {
     show: function(v) {
       if (v instanceof Root) {
@@ -9976,11 +9952,7 @@
         return v.value0;
       }
       ;
-      if (v instanceof Integral) {
-        return "#Integral";
-      }
-      ;
-      throw new Error("Failed pattern match at Editor.Example.LispPlus (line 28, column 1 - line 32, column 30): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Editor.Example.Lisp (line 27, column 1 - line 30, column 22): " + [v.constructor.name]);
     }
   };
   var atSubExpr2 = /* @__PURE__ */ atSubExpr(showL);
@@ -10000,77 +9972,21 @@
           return x.value0 === y.value0;
         }
         ;
-        if (x instanceof Integral && y instanceof Integral) {
-          return true;
-        }
-        ;
         return false;
       };
     }
   };
-  var ordL = {
-    compare: function(x) {
-      return function(y) {
-        if (x instanceof Root && y instanceof Root) {
-          return EQ.value;
-        }
-        ;
-        if (x instanceof Root) {
-          return LT.value;
-        }
-        ;
-        if (y instanceof Root) {
-          return GT.value;
-        }
-        ;
-        if (x instanceof Group && y instanceof Group) {
-          return EQ.value;
-        }
-        ;
-        if (x instanceof Group) {
-          return LT.value;
-        }
-        ;
-        if (y instanceof Group) {
-          return GT.value;
-        }
-        ;
-        if (x instanceof $$Symbol && y instanceof $$Symbol) {
-          return compare3(x.value0)(y.value0);
-        }
-        ;
-        if (x instanceof $$Symbol) {
-          return LT.value;
-        }
-        ;
-        if (y instanceof $$Symbol) {
-          return GT.value;
-        }
-        ;
-        if (x instanceof Integral && y instanceof Integral) {
-          return EQ.value;
-        }
-        ;
-        throw new Error("Failed pattern match at Editor.Example.LispPlus (line 0, column 0 - line 0, column 0): " + [x.constructor.name, y.constructor.name]);
-      };
-    },
-    Eq0: function() {
-      return eqL;
-    }
-  };
-  var fromFoldable5 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordL);
-  var member3 = /* @__PURE__ */ member2(ordL);
+  var eq14 = /* @__PURE__ */ eq(eqL);
   var validPoint = function(expr) {
     return function(v) {
       var v1 = atSubExpr2(v.path)(expr).here;
-      var ls = fromFoldable5([Root.value, Group.value, Integral.value]);
-      return member3(v1.l)(ls);
+      return or2([eq14(v1.l)(Root.value), eq14(v1.l)(Group.value)]);
     };
   };
   var editor = /* @__PURE__ */ function() {
     return new Editor({
       name: "Lisp",
-      initial_expr: mkExpr(Root.value)([mkExpr(Integral.value)([mkExpr(new $$Symbol("x"))([]), mkExpr(new $$Symbol("0"))([]), mkExpr(new $$Symbol("\u221E"))([]), mkExpr(new $$Symbol("x"))([])])]),
+      initial_expr: mkExpr(Root.value)([]),
       initial_handle: new Point_Handle({
         path: mempty(monoidList),
         j: wrap()(0)
@@ -10118,45 +10034,7 @@
                   }))];
                 }
                 ;
-                throw new Error("Failed pattern match at Editor.Example.LispPlus (line 53, column 13 - line 78, column 18): " + [handle.constructor.name]);
-              }
-              ;
-              if (startsWith(query3)("integral")) {
-                if (handle instanceof Point_Handle) {
-                  return [mkPasteFragmentBufferOption2(root)(handle)(new Span_Fragment([mkExpr(new $$Symbol(query3))([])])), mkPasteFragmentBufferOption2(root)(handle)(new Span_Fragment([mkExpr(Integral.value)([])]))];
-                }
-                ;
-                if (handle instanceof SpanH_Handle) {
-                  return [mkPasteFragmentBufferOption2(root)(handle)(new Span_Fragment([mkExpr(new $$Symbol(query3))([])])), mkPasteFragmentBufferOption2(root)(handle)(new Zipper_Fragment({
-                    kids_L: [],
-                    inside: {
-                      "_O": Nil.value,
-                      "_I": {
-                        l: Integral.value,
-                        kids_L: [],
-                        kids_R: []
-                      }
-                    },
-                    kids_R: []
-                  }))];
-                }
-                ;
-                if (handle instanceof ZipperH_Handle) {
-                  return [mkPasteFragmentBufferOption2(root)(handle)(new Zipper_Fragment({
-                    kids_L: [],
-                    inside: {
-                      "_O": Nil.value,
-                      "_I": {
-                        l: Integral.value,
-                        kids_L: [],
-                        kids_R: []
-                      }
-                    },
-                    kids_R: []
-                  }))];
-                }
-                ;
-                throw new Error("Failed pattern match at Editor.Example.LispPlus (line 80, column 13 - line 105, column 18): " + [handle.constructor.name]);
+                throw new Error("Failed pattern match at Editor.Example.Lisp (line 49, column 13 - line 74, column 18): " + [handle.constructor.name]);
               }
               ;
               if (isWhitespaceFree(query3)) {
@@ -10211,7 +10089,7 @@
             return and3([validPoint(expr)(p2["_OL"]), validPoint(expr)(p2["_IL"]), validPoint(expr)(p2["_IR"]), validPoint(expr)(p2["_OR"])]);
           }
           ;
-          throw new Error("Failed pattern match at Editor.Example.LispPlus (line 122, column 34 - line 129, column 36): " + [handle.constructor.name]);
+          throw new Error("Failed pattern match at Editor.Example.Lisp (line 91, column 34 - line 98, column 36): " + [handle.constructor.name]);
         };
       },
       assembleExpr: function(v) {
@@ -10235,20 +10113,7 @@
           return fold13([[div2([classes2(["label"])])([text5(v.label.value0)])]]);
         }
         ;
-        if (v.label instanceof Integral) {
-          var v1 = new Tuple(v.kids, v.points);
-          if (v1.value0.length === 4 && v1.value1.length === 5) {
-            return [div2([classes2(["Punctuation"])])([text5("(")]), div2([classes2(["Integral-kid-container", "Integral-integrand"])])([div2([])([text5("\u222B")])]), v1["value1"][0], div2([classes2(["Integral-kid-container", "Integral-var"])])([v1["value0"][0]]), div2([classes2(["Integral-kid-container", "Integral-eq"])])([div2([])([text5("=")])]), v1["value1"][1], div2([classes2(["Integral-kid-container", "Integral-start"])])([v1["value0"][1]]), v1["value1"][2], div2([classes2(["Integral-kid-container", "Integral-end"])])([v1["value0"][2]]), v1["value1"][3], div2([classes2(["Integral-kid-container", "Integral-body"])])([v1["value0"][3]]), v1["value1"][4], div2([classes2(["Punctuation"])])([text5(")")])];
-          }
-          ;
-          return fold13([[div2([classes2(["Punctuation"])])([text5("[")])], [div2([classes2(["label"])])([text5("Integral")])], fold13(zipWith(function(kid) {
-            return function(point) {
-              return [point, kid];
-            };
-          })(v.kids)(v.points)), [fromMaybe(div2([])([text5("{{missing last point}}")]))(last(v.points))], [div2([classes2(["Punctuation"])])([text5("]")])]]);
-        }
-        ;
-        throw new Error("Failed pattern match at Editor.Example.LispPlus (line 131, column 7 - line 167, column 14): " + [v.label.constructor.name]);
+        throw new Error("Failed pattern match at Editor.Example.Lisp (line 100, column 7 - line 113, column 12): " + [v.label.constructor.name]);
       },
       historyLength_max: 100
     });
@@ -11086,6 +10951,59 @@
     };
   };
 
+  // output/Data.Set/index.js
+  var coerce4 = /* @__PURE__ */ coerce();
+  var union3 = function(dictOrd) {
+    return coerce4(union(dictOrd));
+  };
+  var toList = function(v) {
+    return keys(v);
+  };
+  var toUnfoldable5 = function(dictUnfoldable) {
+    var $96 = toUnfoldable(dictUnfoldable);
+    return function($97) {
+      return $96(toList($97));
+    };
+  };
+  var member2 = function(dictOrd) {
+    return coerce4(member(dictOrd));
+  };
+  var isEmpty2 = /* @__PURE__ */ coerce4(isEmpty);
+  var intersection2 = function(dictOrd) {
+    return coerce4(intersection(dictOrd));
+  };
+  var insert6 = function(dictOrd) {
+    var insert13 = insert(dictOrd);
+    return function(a2) {
+      return function(v) {
+        return insert13(a2)(unit)(v);
+      };
+    };
+  };
+  var empty8 = empty2;
+  var fromFoldable4 = function(dictFoldable) {
+    var foldl22 = foldl(dictFoldable);
+    return function(dictOrd) {
+      var insert13 = insert6(dictOrd);
+      return foldl22(function(m) {
+        return function(a2) {
+          return insert13(a2)(m);
+        };
+      })(empty8);
+    };
+  };
+  var difference3 = function(dictOrd) {
+    return coerce4(difference(dictOrd));
+  };
+  var subset = function(dictOrd) {
+    var difference1 = difference3(dictOrd);
+    return function(s1) {
+      return function(s2) {
+        return isEmpty2(difference1(s1)(s2));
+      };
+    };
+  };
+
   // output/Halogen.HTML.Elements.Keyed/index.js
   var div3 = /* @__PURE__ */ keyed2("div");
 
@@ -11597,7 +11515,7 @@
   var $$void8 = /* @__PURE__ */ $$void(functorHalogenM);
   var get3 = /* @__PURE__ */ get(monadStateHalogenM);
   var matchKeyInfo3 = /* @__PURE__ */ matchKeyInfo()();
-  var member4 = /* @__PURE__ */ member2(ordString);
+  var member3 = /* @__PURE__ */ member2(ordString);
   var matchMapKeyInfo2 = /* @__PURE__ */ matchMapKeyInfo()();
   var mod2 = /* @__PURE__ */ mod(euclideanRingInt);
   var length11 = /* @__PURE__ */ length(foldableArray)(semiringInt);
@@ -11747,7 +11665,7 @@
       var ki = fromEventToKeyInfo(v.value0);
       return bind7(get3)(function(state3) {
         if (matchKeyInfo3(function(v12) {
-          return member4(v12)(submit_keys);
+          return member3(v12)(submit_keys);
         })({
           cmd: pure16(false),
           shift: pure16(false),
@@ -11865,7 +11783,7 @@
   var _documentElement2 = getEffProp3("documentElement");
 
   // output/Ui.App1.Point/index.js
-  var fromFoldable6 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordPointStatus);
+  var fromFoldable5 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordPointStatus);
   var fold6 = /* @__PURE__ */ fold2(monoidArray);
   var map25 = /* @__PURE__ */ map(functorArray);
   var show5 = /* @__PURE__ */ show(showPointStatus);
@@ -11896,16 +11814,16 @@
   var get4 = /* @__PURE__ */ get(monadStateHalogenM);
   var put2 = /* @__PURE__ */ put(monadStateHalogenM);
   var ss_Right = /* @__PURE__ */ function() {
-    return fromFoldable6([RightFocus_PointStatus.value]);
+    return fromFoldable5([RightFocus_PointStatus.value]);
   }();
   var ss_Middle = /* @__PURE__ */ function() {
-    return fromFoldable6([Point_Handle_PointStatus.value]);
+    return fromFoldable5([Point_Handle_PointStatus.value]);
   }();
   var ss_Left = /* @__PURE__ */ function() {
-    return fromFoldable6([LeftFocus_PointStatus.value]);
+    return fromFoldable5([LeftFocus_PointStatus.value]);
   }();
   var ss_Focus = /* @__PURE__ */ function() {
-    return fromFoldable6([Point_Handle_PointStatus.value, LeftFocus_PointStatus.value, RightFocus_PointStatus.value]);
+    return fromFoldable5([Point_Handle_PointStatus.value, LeftFocus_PointStatus.value, RightFocus_PointStatus.value]);
   }();
   var refLabel_point = "point";
   var render2 = function(dictShow) {
@@ -12045,8 +11963,8 @@
   }
 
   // output/Ui.App1.Editor/index.js
-  var fromFoldable7 = /* @__PURE__ */ fromFoldable4(foldableArray);
-  var fromFoldable1 = /* @__PURE__ */ fromFoldable7(ordPointStatus);
+  var fromFoldable6 = /* @__PURE__ */ fromFoldable4(foldableArray);
+  var fromFoldable1 = /* @__PURE__ */ fromFoldable6(ordPointStatus);
   var bind9 = /* @__PURE__ */ bind(bindHalogenM);
   var get5 = /* @__PURE__ */ get(monadStateHalogenM);
   var liftEffect9 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff));
@@ -12070,13 +11988,13 @@
   var join3 = /* @__PURE__ */ join(bindMaybe);
   var request2 = /* @__PURE__ */ request()(PointIsSymbol)(ordPoint);
   var matchKeyInfo4 = /* @__PURE__ */ matchKeyInfo()();
-  var member5 = /* @__PURE__ */ member2(ordString);
+  var member4 = /* @__PURE__ */ member2(ordString);
   var unwrap6 = /* @__PURE__ */ unwrap();
   var matchMapKeyInfo3 = /* @__PURE__ */ matchMapKeyInfo()();
   var bind22 = /* @__PURE__ */ bind(bindMaybe);
   var guardPure2 = /* @__PURE__ */ guardPure(alternativeMaybe);
   var when5 = /* @__PURE__ */ when(applicativeHalogenM);
-  var submit_keys2 = /* @__PURE__ */ fromFoldable7(ordString)(["Enter", "Tab"]);
+  var submit_keys2 = /* @__PURE__ */ fromFoldable6(ordString)(["Enter", "Tab"]);
   var ss_ZipperH_Handle_OuterRight_Focus = /* @__PURE__ */ function() {
     return fromFoldable1([ZipperH_Handle_OuterRight_PointStatus.value, RightFocus_PointStatus.value]);
   }();
@@ -12623,7 +12541,7 @@
                         }
                         ;
                         if (matchKeyInfo4(function(v10) {
-                          return member5(v10)(submit_keys2);
+                          return member4(v10)(submit_keys2);
                         })({
                           cmd: pure110(false),
                           shift: pure110(false),
