@@ -7487,6 +7487,7 @@
       };
     };
   };
+  var fromPlainHTML = unsafeCoerce2;
 
   // output/Halogen.Query/index.js
   var $$void5 = /* @__PURE__ */ $$void(functorHalogenM);
@@ -9979,6 +9980,7 @@
   var append7 = /* @__PURE__ */ append(semigroupArray);
   var show4 = /* @__PURE__ */ show(showInt);
   var length8 = /* @__PURE__ */ length(foldableArray)(semiringInt);
+  var mapFlipped3 = /* @__PURE__ */ mapFlipped(functorArray);
   var All = /* @__PURE__ */ function() {
     function All2() {
     }
@@ -10041,7 +10043,15 @@
       });
     }
     ;
-    return pure10(new Punc(v));
+    if (v === "\n") {
+      return pure10(new Punc([div2([classes2(["Token punctuation ghost"])])([text5("\u23CE")]), div2([classes2(["Token break"])])([])]));
+    }
+    ;
+    if (v === "	") {
+      return pure10(new Punc([div2([classes2(["Token punctuation ghost"])])([text5("\u21E5")])]));
+    }
+    ;
+    return pure10(new Punc([div2([classes2(["Token punctuation"])])([text5(v)])]));
   };
   var parseString = function(notation) {
     return flip(evalState)({
@@ -10069,10 +10079,10 @@
         }
         ;
         if (v1 instanceof Punc) {
-          return [div2([classes2(["Punctuation"])])([text5(v1.value0)])];
+          return mapFlipped3(v1.value0)(fromPlainHTML);
         }
         ;
-        throw new Error("Failed pattern match at Editor.Notation (line 43, column 80 - line 50, column 73): " + [v1.constructor.name]);
+        throw new Error("Failed pattern match at Editor.Notation (line 46, column 80 - line 53, column 41): " + [v1.constructor.name]);
       })(getTokens(v.label));
     };
   };
@@ -10448,8 +10458,8 @@
         };
       },
       assembleExpr: function() {
-        var root = parseString("Root *");
-        var group4 = parseString("( * )");
+        var root = parseString("Root [ \n 	 * \n ]");
+        var group4 = parseString("( \n 	 * \n )");
         return mkAssembleExpr(function(v) {
           if (v instanceof Root) {
             return root;
@@ -10460,10 +10470,10 @@
           }
           ;
           if (v instanceof $$Symbol) {
-            return [new Punc(v.value0)];
+            return [new Punc([div2([classes2(["Punctuation"])])([text5(v.value0)])])];
           }
           ;
-          throw new Error("Failed pattern match at Editor.Example.Lisp (line 122, column 33 - line 125, column 42): " + [v.constructor.name]);
+          throw new Error("Failed pattern match at Editor.Example.Lisp (line 105, column 33 - line 108, column 95): " + [v.constructor.name]);
         });
       }()
     });

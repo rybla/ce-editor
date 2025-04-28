@@ -2,6 +2,7 @@
 
 ## halogen-simplified
 
+- [ ] do nested indentation levels
 - [ ] BUG: when paste a zipper, cursor doesnt go in riht place and sometimes duplicates
 - [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything
 - [ ] BUG: dragging that lets the inner span be outside the outer span

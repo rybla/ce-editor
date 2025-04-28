@@ -11,6 +11,7 @@ import Data.Maybe (fromMaybe)
 import Data.String as String
 import Data.Traversable (traverse)
 import Editor.Common (AssembleExpr, renderWarning)
+import Halogen.HTML (PlainHTML)
 import Halogen.HTML as HH
 import Type.Proxy (Proxy(..))
 import Ui.Halogen (classes)
@@ -19,7 +20,7 @@ data Token
   = All
   | Kid Int
   | Point Int
-  | Punc String
+  | Punc (Array PlainHTML)
 
 parseString :: String -> Array Token
 parseString notation = notation
@@ -37,7 +38,9 @@ parseWord "|" = do
   { point: i } <- get
   prop (Proxy @"point") %= (_ + 1)
   pure $ Point i
-parseWord str = pure $ Punc str
+parseWord "\n" = pure $ Punc [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ], HH.div [ classes [ "Token break" ] ] [] ]
+parseWord "\t" = pure $ Punc [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⇥" ] ]
+parseWord str = pure $ Punc [ HH.div [ classes [ "Token punctuation" ] ] [ HH.text str ] ]
 
 mkAssembleExpr :: forall l. (l -> Array Token) -> AssembleExpr l
 mkAssembleExpr getTokens { label, kids, points } = label # getTokens # foldMap case _ of
@@ -47,5 +50,5 @@ mkAssembleExpr getTokens { label, kids, points } = label # getTokens # foldMap c
     ]
   Kid i -> kids Array.!! i # fromMaybe [ renderWarning $ "missing kid #" <> show i ]
   Point i -> [ points Array.!! i # fromMaybe (renderWarning $ "missing point #" <> show i) ]
-  Punc punc -> [ HH.div [ classes [ "Punctuation" ] ] [ HH.text punc ] ]
+  Punc punc -> punc <#> HH.fromPlainHTML
 

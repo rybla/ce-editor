@@ -99,12 +99,12 @@ editor = Editor
         p = getEndPoints_ZipperH zh
   , assembleExpr:
       let
-        root = Notation.parseString "Root *"
-        group = Notation.parseString "( * )"
+        root = Notation.parseString "Root [ \n \t * \n ]"
+        group = Notation.parseString "( \n \t * \n )"
       in
         Notation.mkAssembleExpr case _ of
           Root -> root
           Group -> group
-          Symbol s -> [ Notation.Punc s ]
+          Symbol s -> [ Notation.Punc [ HH.div [ classes [ "Punctuation" ] ] [ HH.text s ] ] ]
   }
 

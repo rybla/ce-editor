@@ -22,13 +22,15 @@
 
 .Editor {
   /* box-shadow: 0 0 0 1px black inset; */
-  scrollbar-width: 1em;
+  /* scrollbar-width: 1em; */
 
-  flex: 1 0 auto;
-  overflow: scroll;
+  /* flex: 1 0 auto; */
+  height: 100%;
+  overflow-y: scroll;
+  /* width: 100%; */
   width: calc(100% - 4em);
-
   padding: 2em;
+
 
   font-family: monospace;
 
@@ -350,4 +352,27 @@
     opacity: 1;
     transform: scaleY(1);
   }
+}
+
+.Token.punctuation {
+  display: flex;
+  align-items: center;
+  text-align: center;
+
+  white-space: nowrap;
+  font-size: 1em;
+}
+
+.Token.break {
+  flex-basis: 100%;
+  height: 0;
+}
+
+.Token.indent {
+  white-space: nowrap;
+  width: 2em;
+}
+
+.Token.ghost {
+  color: color-mix(in hsl, black, transparent 80%);
 }
