@@ -2,14 +2,15 @@
 
 ## halogen-simplified
 
-- [ ] rendering organization
-  - [ ] option 1: render as just a sequence rather than nested tree structure
-  - [ ] option 2: fix the way that highlighting works to be more generic over the shape of thing
-    - this could work if i use `*:has(...)` css selector carefully as a parent selector, but it doesnt _actually_ seem to work
 - [ ] BUG: when paste a zipper, cursor doesnt go in riht place and sometimes duplicates
 - [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything
 - [ ] BUG: dragging that lets the inner span be outside the outer span
 - [ ] BUG: redo takes two tries to work?? and can't redo final undo
+- [x] rendering organization
+  - [x] option 1: render as just a sequence rather than nested tree structure
+  - [ ] option 2: fix the way that highlighting works to be more generic over the shape of thing
+    - this could work if i use `*:has(...)` css selector carefully as a parent selector, but it doesnt _actually_ seem to work
+    - VETO: best to just simplify and work with sequences rather than try to be fancy
 - [x] alter the Editor interface to generating edits to do anything it wants with the root Expr, and has to decide where to place handle afterwards
 - [x] in Editor spec, allow shortcut keys such as "(" for "#Group" in Lisp and "\n" for newlines, etc
 - [x] use custom rendering in the buffer results as well
