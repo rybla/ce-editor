@@ -7,7 +7,8 @@
   --Handle_Focus--box-shadow:
     0 -0.5em 0 0 var(--Handle--background-color),
     0 0.5em 0 0 var(--Handle--background-color);
-  --Handle_Focus--height: 200%;
+  /* --Handle_Focus--height: 200%; */
+  --Handle_Focus--height: 100%;
 
   --Handle--border-radius: var(--Handle--width);
   --Handle_Left--border-radius: var(--Handle--border-radius) 0 0 var(--Handle--border-radius);
@@ -29,25 +30,32 @@
   font-family: monospace;
 
   &>.root {
-    height: 1em;
+    /* height: 1em; */
   }
 
   .Expr {
+    display: inline-block;
+
+    &>* {
+      display: inline-block;
+    }
+
     /* padding: 0.5em;
     box-shadow: 0 0 0 1px black; */
 
-    height: 100%;
+    height: 1em;
 
-    display: flex;
+    /* display: flex;
     flex-direction: row;
     align-items: stretch;
-    justify-content: flex-start;
+    justify-content: flex-start; */
 
     user-select: none;
 
     &>.label {
-      display: block;
+      display: inline-block;
       white-space: nowrap;
+      font-size: 1em;
     }
   }
 
@@ -61,11 +69,12 @@
   }
 
   .Point {
-    display: flex;
+    display: inline-flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
-    height: 100%;
+    height: 1em;
+    overflow: hidden;
 
     &>.Left,
     &>.Middle,
@@ -187,7 +196,6 @@
     .Buffer {
       margin: 0.5em;
       margin-top: -0.5em;
-
 
       padding: 0.5em;
       width: fit-content;

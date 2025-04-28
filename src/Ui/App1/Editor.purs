@@ -3,7 +3,6 @@ module Ui.App1.Editor where
 import Prelude
 
 import Control.Monad.State (get, modify)
-import Data.Array (elem)
 import Data.Expr (Edit(..), Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit

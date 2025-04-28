@@ -104,8 +104,10 @@ editor = Editor
           ]
         Group -> Array.fold
           [ [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "(" ] ]
+          , [ HH.br [] ]
           , Array.fold $ Array.zipWith (\kid point -> [ point, kid ]) kids points
           , [ points # Array.last # fromMaybe (HH.div [] [ HH.text "{{missing last point}}" ]) ]
+          , [ HH.br [] ]
           , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ] ]
           ]
         Symbol str -> Array.fold

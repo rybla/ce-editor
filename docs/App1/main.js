@@ -7208,6 +7208,9 @@
     return element2("input")(props)([]);
   };
   var div2 = /* @__PURE__ */ element2("div");
+  var br = function(props) {
+    return element2("br")(props)([]);
+  };
 
   // output/Halogen.HTML.Properties/index.js
   var unwrap2 = /* @__PURE__ */ unwrap();
@@ -10102,18 +10105,18 @@
         }
         ;
         if (v.label instanceof Group) {
-          return fold13([[div2([classes2(["Punctuation"])])([text5("(")])], fold13(zipWith(function(kid) {
+          return fold13([[div2([classes2(["Punctuation"])])([text5("(")])], [br([])], fold13(zipWith(function(kid) {
             return function(point) {
               return [point, kid];
             };
-          })(v.kids)(v.points)), [fromMaybe(div2([])([text5("{{missing last point}}")]))(last(v.points))], [div2([classes2(["Punctuation"])])([text5(")")])]]);
+          })(v.kids)(v.points)), [fromMaybe(div2([])([text5("{{missing last point}}")]))(last(v.points))], [br([])], [div2([classes2(["Punctuation"])])([text5(")")])]]);
         }
         ;
         if (v.label instanceof $$Symbol) {
           return fold13([[div2([classes2(["label"])])([text5(v.label.value0)])]]);
         }
         ;
-        throw new Error("Failed pattern match at Editor.Example.Lisp (line 100, column 7 - line 113, column 12): " + [v.label.constructor.name]);
+        throw new Error("Failed pattern match at Editor.Example.Lisp (line 100, column 7 - line 115, column 12): " + [v.label.constructor.name]);
       }
     });
   }();
@@ -11532,7 +11535,7 @@
     Next2.value = new Next2();
     return Next2;
   }();
-  var submit_keys = /* @__PURE__ */ fromFoldable4(foldableArray)(ordString)(["Enter", "Tab"]);
+  var submit_keys = /* @__PURE__ */ fromFoldable4(foldableArray)(ordString)(["Enter", "Tab", " "]);
   var setQuery$prime = function(query3) {
     return function(state3) {
       var options_queried = state3.options(query3);
@@ -11993,7 +11996,7 @@
   var bind22 = /* @__PURE__ */ bind(bindMaybe);
   var guardPure2 = /* @__PURE__ */ guardPure(alternativeMaybe);
   var when5 = /* @__PURE__ */ when(applicativeHalogenM);
-  var submit_keys2 = /* @__PURE__ */ fromFoldable6(ordString)(["Enter", "Tab"]);
+  var submit_keys2 = /* @__PURE__ */ fromFoldable6(ordString)(["Enter", "Tab", " "]);
   var ss_ZipperH_Handle_OuterRight_Focus = /* @__PURE__ */ function() {
     return fromFoldable1([ZipperH_Handle_OuterRight_PointStatus.value, RightFocus_PointStatus.value]);
   }();
