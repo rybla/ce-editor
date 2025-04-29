@@ -62,14 +62,14 @@ paste insertion@(Span_Fragment s) (SpanH_Handle (SpanH sh) sf) e =
 paste insertion@(Zipper_Fragment z) (SpanH_Handle (SpanH sh) sf) e =
   Edit (Insert_EditInfo { insertion }) $ Lazy.defer \_ ->
     { root: unSpanContext at_sh.outside (unZipper z at_sh.here)
-    , handle: Point_Handle
-        ( Point
+    , handle: SpanH_Handle
+        ( SpanH
             { path: sh.path <> (sh.j_L # getStepsAroundIndex)._R : (z # getPath_Zipper)
-            , j: case sf of
-                Left_SpanFocus -> offset_inner_Zipper z
-                Right_SpanFocus -> offset_inner_Zipper z + offset_Span at_sh.here
+            , j_L: offset_inner_Zipper z
+            , j_R: offset_inner_Zipper z + offset_Span at_sh.here
             }
         )
+        sf
     , clipboard: none
     }
   where

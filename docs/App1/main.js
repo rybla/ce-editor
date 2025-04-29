@@ -10939,20 +10939,11 @@
             }), defer3(function(v3) {
               return {
                 root: unSpanContext2(at_sh.outside)(unZipper2(v.value0)(at_sh.here)),
-                handle: new Point_Handle({
+                handle: new SpanH_Handle({
                   path: append6(v1.value0.path)(new Cons(getStepsAroundIndex(v1.value0.j_L)["_R"], getPath_Zipper(v.value0))),
-                  j: function() {
-                    if (v1.value1 instanceof Left_SpanFocus) {
-                      return offset_inner_Zipper(v.value0);
-                    }
-                    ;
-                    if (v1.value1 instanceof Right_SpanFocus) {
-                      return add2(offset_inner_Zipper(v.value0))(offset_Span(at_sh.here));
-                    }
-                    ;
-                    throw new Error("Failed pattern match at Data.Expr.Edit (line 68, column 18 - line 70, column 82): " + [v1.value1.constructor.name]);
-                  }()
-                }),
+                  j_L: offset_inner_Zipper(v.value0),
+                  j_R: add2(offset_inner_Zipper(v.value0))(offset_Span(at_sh.here))
+                }, v1.value1),
                 clipboard: none2
               };
             }));
@@ -10986,7 +10977,7 @@
                     return Right_SpanFocus.value;
                   }
                   ;
-                  throw new Error("Failed pattern match at Data.Expr.Edit (line 89, column 11 - line 93, column 54): " + [v1.value1.constructor.name]);
+                  throw new Error("Failed pattern match at Data.Expr.Edit (line 97, column 11 - line 101, column 54): " + [v1.value1.constructor.name]);
                 }()),
                 clipboard: none2
               };
@@ -11031,7 +11022,7 @@
                     return force(outer);
                   }
                   ;
-                  throw new Error("Failed pattern match at Data.Expr.Edit (line 117, column 13 - line 121, column 57): " + [v1.value1.constructor.name]);
+                  throw new Error("Failed pattern match at Data.Expr.Edit (line 125, column 13 - line 129, column 57): " + [v1.value1.constructor.name]);
                 }(), function() {
                   if (v1.value1 instanceof OuterLeft_ZipperFocus) {
                     return Left_SpanFocus.value;
@@ -11049,7 +11040,7 @@
                     return Right_SpanFocus.value;
                   }
                   ;
-                  throw new Error("Failed pattern match at Data.Expr.Edit (line 123, column 11 - line 127, column 54): " + [v1.value1.constructor.name]);
+                  throw new Error("Failed pattern match at Data.Expr.Edit (line 131, column 11 - line 135, column 54): " + [v1.value1.constructor.name]);
                 }()),
                 clipboard: none2
               };
@@ -11094,8 +11085,8 @@
             return {
               root: unSpanContext2(at_zh.outside)(at_zh.inside),
               handle: function() {
-                var $66 = eq4(v.value0.j_IL)(v.value0.j_IR);
-                if ($66) {
+                var $65 = eq4(v.value0.j_IL)(v.value0.j_IR);
+                if ($65) {
                   return new Point_Handle({
                     path: v.value0.path_O,
                     j: v.value0.j_OL
@@ -11123,7 +11114,7 @@
                     return Right_SpanFocus.value;
                   }
                   ;
-                  throw new Error("Failed pattern match at Data.Expr.Edit (line 177, column 17 - line 181, column 60): " + [v.value1.constructor.name]);
+                  throw new Error("Failed pattern match at Data.Expr.Edit (line 185, column 17 - line 189, column 60): " + [v.value1.constructor.name]);
                 }());
               }(),
               clipboard: pure10(new Zipper_Fragment(at_zh.here))
@@ -11131,7 +11122,7 @@
           }));
         }
         ;
-        throw new Error("Failed pattern match at Data.Expr.Edit (line 143, column 1 - line 143, column 36): " + [v.constructor.name, v1.constructor.name]);
+        throw new Error("Failed pattern match at Data.Expr.Edit (line 151, column 1 - line 151, column 36): " + [v.constructor.name, v1.constructor.name]);
       };
     };
   };
