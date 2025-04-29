@@ -2,13 +2,13 @@
 
 ## halogen-simplified
 
-- [ ] why is there one fewer indent than there should be at the beginning?
 - [ ] figure out better way of visually representing both sides of the linebreak grammar construct
-- [ ] do nested indentation levels
+- [ ] BUG: why is there one fewer indent than there should be at the beginning?
 - [ ] BUG: when paste a zipper, cursor doesnt go in riht place and sometimes duplicates
 - [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything
 - [ ] BUG: dragging that lets the inner span be outside the outer span
 - [ ] BUG: redo takes two tries to work?? and can't redo final undo
+- [x] do nested indentation levels
 - [x] rendering organization
   - [x] option 1: render as just a sequence rather than nested tree structure
   - [ ] option 2: fix the way that highlighting works to be more generic over the shape of thing
