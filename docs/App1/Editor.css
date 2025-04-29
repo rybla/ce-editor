@@ -71,6 +71,8 @@
   }
 
   .Point {
+    min-width: var(--Handle--width);
+
     display: inline-flex;
     flex-direction: row;
     align-items: center;
@@ -353,37 +355,44 @@
   }
 }
 
-.Token.punctuation {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+.Token {
 
-  white-space: nowrap;
-  font-size: 1em;
-}
+  &.punctuation {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 
-.Token.break {
-  flex-basis: 100%;
-  height: 0;
-}
+    white-space: nowrap;
+    font-size: 1em;
+  }
 
-.Token.indentation {
-  width: 2em;
+  &.keyword {
+    font-weight: bold;
+  }
 
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-}
+  &.break {
+    flex-basis: 100%;
+    height: 0;
+  }
 
-.Token.ghost {
-  color: color-mix(in hsl, black, transparent 80%);
-}
+  &.indentation {
+    width: 2em;
 
-.before-extra-Arg-kid,
-.after-extra-Arg-kid {
-  color: red;
-}
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+  }
 
-.before-empty-Arg-kids+.Point {
-  box-shadow: 0 0 0 0.1em red inset;
+  &.ghost {
+    color: color-mix(in hsl, black, transparent 80%);
+  }
+
+  &.before-extra-Arg-kid,
+  &.after-extra-Arg-kid {
+    color: red;
+  }
+
+  &.before-empty-Arg-kids+.Point {
+    box-shadow: 0 0 0 0.1em red inset;
+  }
 }

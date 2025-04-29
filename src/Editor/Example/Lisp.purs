@@ -3,16 +3,15 @@ module Editor.Example.Lisp where
 import Data.Expr
 import Prelude
 
-import Control.Biapplicative (bipure)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (and, fold, length, or)
-import Data.List (List(..))
+import Data.List (List(..), (:))
 import Data.Maybe (fromMaybe)
 import Data.Newtype (wrap)
+import Data.Set as Set
 import Data.String as String
 import Data.TraversableWithIndex (traverseWithIndex)
-import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), mkPasteFragmentEdit)
@@ -22,82 +21,110 @@ import Halogen.HTML as HH
 import Options.Applicative.Internal.Utils (startsWith)
 import Ui.Event (matchKeyInfo)
 import Ui.Halogen (classes)
-import Utility (isWhitespaceFree, todo)
+import Utility (isWhitespaceFree)
 
-data L
-  = Root
-  | Group
-  | Integral
-  | Arg
-  | Symbol String
-
-derive instance Eq L
-
-instance Show L where
-  show Root = "#Root"
-  show Integral = "#Integral"
-  show Arg = "#Arg"
-  show Group = "#Group"
-  show (Symbol s) = s
+type L = String
 
 isValidPoint :: Expr L -> Point -> Boolean
-isValidPoint expr (Point p) = or
-  [ e'.l == Root
-  , e'.l == Group
-  , e'.l == Arg
-  ]
+isValidPoint expr (Point p) = e'.l `Set.member` ls
   where
   Expr e' = (expr # atSubExpr p.path).here
+  ls = Set.fromFoldable [ "Root", "Group", "Arg", "LineBreak" ]
 
 editor :: Editor L
 editor = Editor
   { name: "Lisp"
-  , initial_expr: Root % []
+  , initial_expr: "Root" % []
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
-  , getEditMenu: \root handle query -> fold
-      [ case query of
-          "" -> []
-          _ | "group" # startsWith (String.Pattern query) ->
-            case handle of
-              Point_Handle _ ->
-                [ mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ Symbol query % [] ]
-                , mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ Group % [] ]
-                ]
-              SpanH_Handle _ _ ->
-                [ mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ Symbol query % [] ]
-                , mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
-                    { kids_L: []
-                    , inside: SpanContext
-                        { _O: ExprContext Nil
-                        , _I: SpanTooth { l: Group, kids_L: [], kids_R: [] }
-                        }
-                    , kids_R: []
-                    }
-                ]
-              ZipperH_Handle _ _ ->
-                [ mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
-                    { kids_L: []
-                    , inside: SpanContext
-                        { _O: ExprContext Nil
-                        , _I: SpanTooth { l: Group, kids_L: [], kids_R: [] }
-                        }
-                    , kids_R: []
-                    }
-                ]
-          _ | query # startsWith (String.Pattern "integral") ->
-            [ mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ Integral % [ Arg % [], Arg % [], Arg % [], Arg % [] ] ] ]
-          _ | query # isWhitespaceFree ->
-            [ mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ Symbol query % [] ] ]
-          _ ->
-            none
-      ]
+  , getEditMenu:
+      let
+        pasteLiteral root handle query = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ query % [] ]
+
+        pasteGroup_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "Group" % [] ]
+        pasteGroup_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
+          { kids_L: []
+          , inside: SpanContext
+              { _O: ExprContext Nil
+              , _I: SpanTooth { l: "Group", kids_L: [], kids_R: [] }
+              }
+          , kids_R: []
+          }
+
+        pasteIntegral_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "Integral" % [ "Arg" % [], "Arg" % [], "Arg" % [], "Arg" % [] ] ]
+
+        pasteIntegral_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
+          { kids_L: []
+          , inside: SpanContext
+              { _O: ExprContext $ Tooth { l: "Integral", kids_L: [ "Arg" % [], "Arg" % [], "Arg" % [] ], kids_R: [] } : Nil
+              , _I: SpanTooth { l: "Arg", kids_L: [], kids_R: [] }
+              }
+          , kids_R: []
+          }
+
+        pasteLineBreak_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "LineBreak" % [] ]
+        pasteLineBreak_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
+          { kids_L: []
+          , inside: SpanContext
+              { _O: ExprContext Nil
+              , _I: SpanTooth { l: "LineBreak", kids_L: [], kids_R: [] }
+              }
+          , kids_R: []
+          }
+      in
+        \root handle query -> fold
+          [ case query of
+              "" -> []
+              _ | "group" # startsWith (String.Pattern query) -> case handle of
+                Point_Handle _ ->
+                  [ pasteGroup_Span root handle
+                  , pasteLiteral root handle query
+                  ]
+                SpanH_Handle _ _ ->
+                  [ pasteGroup_Zipper root handle
+                  , pasteLiteral root handle query
+                  ]
+                ZipperH_Handle _ _ ->
+                  [ pasteGroup_Zipper root handle
+                  ]
+              _ | "integral" # startsWith (String.Pattern query) -> case handle of
+                Point_Handle _ ->
+                  [ pasteIntegral_Span root handle
+                  , pasteLiteral root handle query
+                  ]
+                SpanH_Handle _ _ ->
+                  [ pasteIntegral_Zipper root handle
+                  , pasteLiteral root handle query
+                  ]
+                ZipperH_Handle _ _ ->
+                  [ pasteIntegral_Zipper root handle
+                  ]
+              _ | "linebreak" # startsWith (String.Pattern query) -> case handle of
+                Point_Handle _ ->
+                  [ pasteLineBreak_Span root handle
+                  , pasteLiteral root handle query
+                  ]
+                SpanH_Handle _ _ ->
+                  [ pasteLineBreak_Zipper root handle
+                  , pasteLiteral root handle query
+                  ]
+                ZipperH_Handle _ _ ->
+                  [ pasteLineBreak_Zipper root handle
+                  ]
+                _ -> []
+              _ | query # isWhitespaceFree -> case handle of
+                Point_Handle _ -> [ pasteLiteral root handle query ]
+                SpanH_Handle _ _ -> [ pasteLiteral root handle query ]
+                ZipperH_Handle _ _ -> []
+              _ ->
+                none
+          ]
   , getShortcut: \root handle ki -> case unit of
       _ | ki # matchKeyInfo (_ == "(") { cmd: pure false, alt: pure false } ->
         pure $ mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
           { kids_L: []
           , inside: SpanContext
               { _O: ExprContext Nil
-              , _I: SpanTooth { l: Group, kids_L: [], kids_R: [] }
+              , _I: SpanTooth { l: "Group", kids_L: [], kids_R: [] }
               }
           , kids_R: []
           }
@@ -113,16 +140,19 @@ editor = Editor
   , assembleExpr:
       let
         root = Notation.parseString "*"
-        group = Notation.parseString "( \n* )"
-        integral = Notation.parseString "(∫ _ from _ to _ of _ )"
+        group = Notation.parseString "'(' * ')'"
+        integral = Notation.parseString "'(' ∫ _ from _ to _ of _ ')'"
+        -- linebreak = Notation.parseString "begin \n* end"
+        linebreak = Notation.parseString "\n*"
       in
         Notation.mkAssembleExpr case _ of
-          { label: Root } -> Left root
-          { label: Group } -> Left group
-          { label: Integral } -> Left integral
-          args@{ label: Arg }
+          { label: "Root" } -> Left root
+          { label: "Group" } -> Left group
+          { label: "LineBreak" } -> Left linebreak
+          { label: "Integral" } -> Left integral
+          args@{ label: "Arg" }
             | length args.kids == 0 -> Right $ pure $
-                [ HH.div [ classes [ "before-empty-Arg-kids" ] ] []
+                [ HH.div [ classes [ "Token", "before-empty-Arg-kids" ] ] []
                 , args.points # Array.last # fromMaybe (renderWarning $ "missing point #" <> show @Int (length args.points))
                 ]
             | otherwise -> Right do
@@ -131,15 +161,15 @@ editor = Editor
                   [ fold $ Array.zipWith
                       ( \point (i /\ kid) -> fold
                           [ [ point ]
-                          , if i == 0 then [] else [ HH.div [ classes [ "punctuation", "before-extra-Arg-kid" ] ] [ HH.text "[" ] ]
+                          , if i == 0 then [] else [ HH.div [ classes [ "Token", "punctuation", "before-extra-Arg-kid" ] ] [ HH.text "[" ] ]
                           , kid
-                          , if i == 0 then [] else [ HH.div [ classes [ "punctuation", "after-extra-Arg-kid" ] ] [ HH.text "]" ] ]
+                          , if i == 0 then [] else [ HH.div [ classes [ "Token", "punctuation", "after-extra-Arg-kid" ] ] [ HH.text "]" ] ]
                           ]
                       )
                       args.points
                       kids
                   , [ args.points # Array.last # fromMaybe do renderWarning $ "missing point #" <> show @Int (length args.points) ]
                   ]
-          { label: Symbol s } -> Left [ Notation.Punc do pure [ HH.div [ classes [ "punctuation" ] ] [ HH.text s ] ] ]
+          { label } -> Left [ Notation.Punc do pure [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text label ] ] ]
   }
 

@@ -10,7 +10,7 @@ import Data.Either.Nested (type (\/))
 import Data.Foldable (fold, foldMap, length)
 import Data.Lens ((%=))
 import Data.Lens.Record (prop)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String as String
 import Data.Traversable (sequence, traverse)
 import Editor.Common (RenderM, renderWarning)
@@ -57,7 +57,9 @@ parseWord "\n" =
   pure $ Punc do
     ctx <- ask
     pure $ linebreak <> indentations ctx.indentLevel
-parseWord str = pure $ Punc $ pure [ HH.div [ classes [ "Token punctuation" ] ] [ HH.text str ] ]
+parseWord str0 | Just str1 <- str0 # String.stripPrefix (String.Pattern "'"), Just str <- str1 # String.stripSuffix (String.Pattern "'") =
+  pure $ Punc $ pure [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text str ] ]
+parseWord str = pure $ Punc $ pure [ HH.div [ classes [ "Token", "punctuation", "keyword" ] ] [ HH.text str ] ]
 
 mkAssembleExpr
   :: forall l w i
@@ -79,7 +81,7 @@ mkAssembleExpr getTokens args = case args # getTokens of
       kids <- local (prop (Proxy @"indentLevel") (_ + 1)) do
         sequence args.kids
       pure $ fold
-        [ if opt.indented then linebreak <> indentations ctx.indentLevel else []
+        [ if opt.indented then linebreak <> indentations (ctx.indentLevel - 1) else []
         , Array.zipWith (\kid point -> [ point ] <> kid) kids args.points # fold
         , [ args.points # Array.last # fromMaybe do renderWarning $ "missing point #" <> show @Int (length args.points) ]
         ]
@@ -88,7 +90,7 @@ mkAssembleExpr getTokens args = case args # getTokens of
       kid <- local (prop (Proxy @"indentLevel") (_ + 1)) do
         args.kids Array.!! i # fromMaybe do pure [ renderWarning $ "missing kid #" <> show i ]
       pure $ fold
-        [ if opt.indented then linebreak <> indentations ctx.indentLevel else []
+        [ if opt.indented then linebreak <> indentations (ctx.indentLevel - 1) else []
         , kid
         ]
     Point i -> pure [ args.points Array.!! i # fromMaybe (renderWarning $ "missing point #" <> show i) ]

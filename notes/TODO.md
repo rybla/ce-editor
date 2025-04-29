@@ -2,6 +2,7 @@
 
 ## halogen-simplified
 
+- [ ] figure out better way of visually representing both sides of the linebreak grammar construct
 - [ ] do nested indentation levels
 - [ ] BUG: when paste a zipper, cursor doesnt go in riht place and sometimes duplicates
 - [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything

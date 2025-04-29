@@ -2731,30 +2731,6 @@
     };
   };
 
-  // output/Data.Monoid.Disj/index.js
-  var Disj = function(x) {
-    return x;
-  };
-  var semigroupDisj = function(dictHeytingAlgebra) {
-    var disj2 = disj(dictHeytingAlgebra);
-    return {
-      append: function(v) {
-        return function(v1) {
-          return disj2(v)(v1);
-        };
-      }
-    };
-  };
-  var monoidDisj = function(dictHeytingAlgebra) {
-    var semigroupDisj1 = semigroupDisj(dictHeytingAlgebra);
-    return {
-      mempty: ff(dictHeytingAlgebra),
-      Semigroup0: function() {
-        return semigroupDisj1;
-      }
-    };
-  };
-
   // output/Data.Foldable/index.js
   var identity5 = /* @__PURE__ */ identity(categoryFn);
   var alaF2 = /* @__PURE__ */ alaF()()()();
@@ -2907,18 +2883,6 @@
     var foldMap22 = foldMap(dictFoldable);
     return function(dictMonoid) {
       return foldMap22(dictMonoid)(identity5);
-    };
-  };
-  var any = function(dictFoldable) {
-    var foldMap22 = foldMap(dictFoldable);
-    return function(dictHeytingAlgebra) {
-      return alaF2(Disj)(foldMap22(monoidDisj(dictHeytingAlgebra)));
-    };
-  };
-  var or = function(dictFoldable) {
-    var any1 = any(dictFoldable);
-    return function(dictHeytingAlgebra) {
-      return any1(dictHeytingAlgebra)(identity5);
     };
   };
   var all = function(dictFoldable) {
@@ -6197,6 +6161,11 @@
       return s.substring(n);
     };
   };
+  var splitAt2 = function(i2) {
+    return function(s) {
+      return { before: s.substring(0, i2), after: s.substring(i2) };
+    };
+  };
 
   // output/Data.String.Unsafe/foreign.js
   var charAt = function(i2) {
@@ -6207,6 +6176,28 @@
   };
 
   // output/Data.String.CodeUnits/index.js
+  var stripSuffix = function(v) {
+    return function(str) {
+      var v1 = splitAt2(length6(str) - length6(v) | 0)(str);
+      var $14 = v1.after === v;
+      if ($14) {
+        return new Just(v1.before);
+      }
+      ;
+      return Nothing.value;
+    };
+  };
+  var stripPrefix = function(v) {
+    return function(str) {
+      var v1 = splitAt2(length6(v))(str);
+      var $20 = v1.before === v;
+      if ($20) {
+        return new Just(v1.after);
+      }
+      ;
+      return Nothing.value;
+    };
+  };
   var indexOf = /* @__PURE__ */ function() {
     return _indexOf(Just.create)(Nothing.value);
   }();
@@ -10015,6 +10006,59 @@
     };
   };
 
+  // output/Data.Set/index.js
+  var coerce4 = /* @__PURE__ */ coerce();
+  var union3 = function(dictOrd) {
+    return coerce4(union(dictOrd));
+  };
+  var toList = function(v) {
+    return keys(v);
+  };
+  var toUnfoldable5 = function(dictUnfoldable) {
+    var $96 = toUnfoldable(dictUnfoldable);
+    return function($97) {
+      return $96(toList($97));
+    };
+  };
+  var member2 = function(dictOrd) {
+    return coerce4(member(dictOrd));
+  };
+  var isEmpty2 = /* @__PURE__ */ coerce4(isEmpty);
+  var intersection2 = function(dictOrd) {
+    return coerce4(intersection(dictOrd));
+  };
+  var insert6 = function(dictOrd) {
+    var insert13 = insert(dictOrd);
+    return function(a2) {
+      return function(v) {
+        return insert13(a2)(unit)(v);
+      };
+    };
+  };
+  var empty8 = empty2;
+  var fromFoldable4 = function(dictFoldable) {
+    var foldl22 = foldl(dictFoldable);
+    return function(dictOrd) {
+      var insert13 = insert6(dictOrd);
+      return foldl22(function(m) {
+        return function(a2) {
+          return insert13(a2)(m);
+        };
+      })(empty8);
+    };
+  };
+  var difference3 = function(dictOrd) {
+    return coerce4(difference(dictOrd));
+  };
+  var subset = function(dictOrd) {
+    var difference1 = difference3(dictOrd);
+    return function(s1) {
+      return function(s2) {
+        return isEmpty2(difference1(s1)(s2));
+      };
+    };
+  };
+
   // output/Control.Monad.Reader/index.js
   var unwrap5 = /* @__PURE__ */ unwrap();
   var runReader = function(v) {
@@ -10386,7 +10430,7 @@
               }))(sequence2(args.kids)))(function(kids) {
                 return pure10(fold3([function() {
                   if (v1.value0.indented) {
-                    return append7(linebreak)(indentations(ctx.indentLevel));
+                    return append7(linebreak)(indentations(ctx.indentLevel - 1 | 0));
                   }
                   ;
                   return [];
@@ -10406,7 +10450,7 @@
               }))(fromMaybe(pure10([renderWarning("missing kid #" + show4(v1.value0))]))(index2(args.kids)(v1.value0))))(function(kid) {
                 return pure10(fold3([function() {
                   if (v1.value1.indented) {
-                    return append7(linebreak)(indentations(ctx.indentLevel));
+                    return append7(linebreak)(indentations(ctx.indentLevel - 1 | 0));
                   }
                   ;
                   return [];
@@ -10423,7 +10467,7 @@
             return v1.value0;
           }
           ;
-          throw new Error("Failed pattern match at Editor.Notation (line 77, column 35 - line 96, column 22): " + [v1.constructor.name]);
+          throw new Error("Failed pattern match at Editor.Notation (line 78, column 35 - line 97, column 22): " + [v1.constructor.name]);
         })(v.value0);
       }
       ;
@@ -10431,7 +10475,7 @@
         return v.value0;
       }
       ;
-      throw new Error("Failed pattern match at Editor.Notation (line 76, column 33 - line 97, column 17): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Editor.Notation (line 77, column 33 - line 98, column 17): " + [v.constructor.name]);
     };
   };
   var defaultKidTokenOptions = /* @__PURE__ */ bottom(/* @__PURE__ */ boundedRecord()(/* @__PURE__ */ boundedRecordCons({
@@ -10451,21 +10495,21 @@
     }
     ;
     if (v === "_") {
-      return bind16(get3)(function(v1) {
+      return bind16(get3)(function(v12) {
         return discard5(modifying2(prop12($$Proxy.value)(strongFn))(function(v2) {
           return v2 + 1 | 0;
         }))(function() {
-          return pure14(new Kid(v1.kid, defaultKidTokenOptions));
+          return pure14(new Kid(v12.kid, defaultKidTokenOptions));
         });
       });
     }
     ;
     if (v === "\n_") {
-      return bind16(get3)(function(v1) {
+      return bind16(get3)(function(v12) {
         return discard5(modifying2(prop12($$Proxy.value)(strongFn))(function(v2) {
           return v2 + 1 | 0;
         }))(function() {
-          return pure14(new Kid(v1.kid, {
+          return pure14(new Kid(v12.kid, {
             indented: true
           }));
         });
@@ -10473,11 +10517,11 @@
     }
     ;
     if (v === "|") {
-      return bind16(get3)(function(v1) {
+      return bind16(get3)(function(v12) {
         return discard5(modifying2(prop23($$Proxy.value)(strongFn))(function(v2) {
           return v2 + 1 | 0;
         }))(function() {
-          return pure14(new Point(v1.point));
+          return pure14(new Point(v12.point));
         });
       });
     }
@@ -10488,7 +10532,20 @@
       })));
     }
     ;
-    return pure14(new Punc(pure10([div2([classes2(["Token punctuation"])])([text5(v)])])));
+    var v1 = function(v2) {
+      return pure14(new Punc(pure10([div2([classes2(["Token", "punctuation", "keyword"])])([text5(v)])])));
+    };
+    var $90 = stripPrefix("'")(v);
+    if ($90 instanceof Just) {
+      var $91 = stripSuffix("'")($90.value0);
+      if ($91 instanceof Just) {
+        return pure14(new Punc(pure10([div2([classes2(["Token", "punctuation"])])([text5($91.value0)])])));
+      }
+      ;
+      return v1(true);
+    }
+    ;
+    return v1(true);
   };
   var parseString = function(notation) {
     return flip(evalState)({
@@ -10682,7 +10739,10 @@
   };
 
   // output/Editor.Example.Lisp/index.js
-  var or2 = /* @__PURE__ */ or(foldableArray)(heytingAlgebraBoolean);
+  var atSubExpr2 = /* @__PURE__ */ atSubExpr(showString);
+  var fromFoldable5 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordString);
+  var member3 = /* @__PURE__ */ member2(ordString);
+  var mkPasteFragmentEdit2 = /* @__PURE__ */ mkPasteFragmentEdit(showString);
   var fold4 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
   var none3 = /* @__PURE__ */ none(unfoldableArray);
   var matchKeyInfo2 = /* @__PURE__ */ matchKeyInfo()();
@@ -10696,172 +10756,174 @@
   var bind7 = /* @__PURE__ */ bind(/* @__PURE__ */ bindReaderT(bindIdentity));
   var traverseWithIndex2 = /* @__PURE__ */ traverseWithIndex(traversableWithIndexArray)(applicativeReaderT3);
   var map24 = /* @__PURE__ */ map(/* @__PURE__ */ functorReaderT(functorIdentity));
-  var Root = /* @__PURE__ */ function() {
-    function Root2() {
-    }
-    ;
-    Root2.value = new Root2();
-    return Root2;
-  }();
-  var Group = /* @__PURE__ */ function() {
-    function Group2() {
-    }
-    ;
-    Group2.value = new Group2();
-    return Group2;
-  }();
-  var Integral = /* @__PURE__ */ function() {
-    function Integral2() {
-    }
-    ;
-    Integral2.value = new Integral2();
-    return Integral2;
-  }();
-  var Arg = /* @__PURE__ */ function() {
-    function Arg2() {
-    }
-    ;
-    Arg2.value = new Arg2();
-    return Arg2;
-  }();
-  var $$Symbol = /* @__PURE__ */ function() {
-    function $$Symbol2(value0) {
-      this.value0 = value0;
-    }
-    ;
-    $$Symbol2.create = function(value0) {
-      return new $$Symbol2(value0);
-    };
-    return $$Symbol2;
-  }();
-  var showL = {
-    show: function(v) {
-      if (v instanceof Root) {
-        return "#Root";
-      }
-      ;
-      if (v instanceof Integral) {
-        return "#Integral";
-      }
-      ;
-      if (v instanceof Arg) {
-        return "#Arg";
-      }
-      ;
-      if (v instanceof Group) {
-        return "#Group";
-      }
-      ;
-      if (v instanceof $$Symbol) {
-        return v.value0;
-      }
-      ;
-      throw new Error("Failed pattern match at Editor.Example.Lisp (line 36, column 1 - line 41, column 22): " + [v.constructor.name]);
-    }
-  };
-  var atSubExpr2 = /* @__PURE__ */ atSubExpr(showL);
-  var mkPasteFragmentEdit2 = /* @__PURE__ */ mkPasteFragmentEdit(showL);
-  var eqL = {
-    eq: function(x) {
-      return function(y) {
-        if (x instanceof Root && y instanceof Root) {
-          return true;
-        }
-        ;
-        if (x instanceof Group && y instanceof Group) {
-          return true;
-        }
-        ;
-        if (x instanceof Integral && y instanceof Integral) {
-          return true;
-        }
-        ;
-        if (x instanceof Arg && y instanceof Arg) {
-          return true;
-        }
-        ;
-        if (x instanceof $$Symbol && y instanceof $$Symbol) {
-          return x.value0 === y.value0;
-        }
-        ;
-        return false;
-      };
-    }
-  };
-  var eq23 = /* @__PURE__ */ eq(eqL);
   var isValidPoint = function(expr) {
     return function(v) {
       var v1 = atSubExpr2(v.path)(expr).here;
-      return or2([eq23(v1.l)(Root.value), eq23(v1.l)(Group.value), eq23(v1.l)(Arg.value)]);
+      var ls = fromFoldable5(["Root", "Group", "Arg", "LineBreak"]);
+      return member3(v1.l)(ls);
     };
   };
   var editor = /* @__PURE__ */ function() {
     return new Editor({
       name: "Lisp",
-      initial_expr: mkExpr(Root.value)([]),
+      initial_expr: mkExpr("Root")([]),
       initial_handle: new Point_Handle({
         path: mempty(monoidList),
         j: wrap()(0)
       }),
-      getEditMenu: function(root) {
-        return function(handle) {
-          return function(query3) {
-            return fold4([function() {
-              if (query3 === "") {
-                return [];
-              }
-              ;
-              if (startsWith(query3)("group")) {
-                if (handle instanceof Point_Handle) {
-                  return [mkPasteFragmentEdit2(root)(handle)(new Span_Fragment([mkExpr(new $$Symbol(query3))([])])), mkPasteFragmentEdit2(root)(handle)(new Span_Fragment([mkExpr(Group.value)([])]))];
-                }
-                ;
-                if (handle instanceof SpanH_Handle) {
-                  return [mkPasteFragmentEdit2(root)(handle)(new Span_Fragment([mkExpr(new $$Symbol(query3))([])])), mkPasteFragmentEdit2(root)(handle)(new Zipper_Fragment({
-                    kids_L: [],
-                    inside: {
-                      "_O": Nil.value,
-                      "_I": {
-                        l: Group.value,
-                        kids_L: [],
-                        kids_R: []
-                      }
-                    },
-                    kids_R: []
-                  }))];
-                }
-                ;
-                if (handle instanceof ZipperH_Handle) {
-                  return [mkPasteFragmentEdit2(root)(handle)(new Zipper_Fragment({
-                    kids_L: [],
-                    inside: {
-                      "_O": Nil.value,
-                      "_I": {
-                        l: Group.value,
-                        kids_L: [],
-                        kids_R: []
-                      }
-                    },
-                    kids_R: []
-                  }))];
-                }
-                ;
-                throw new Error("Failed pattern match at Editor.Example.Lisp (line 61, column 13 - line 86, column 18): " + [handle.constructor.name]);
-              }
-              ;
-              if (startsWith("integral")(query3)) {
-                return [mkPasteFragmentEdit2(root)(handle)(new Span_Fragment([mkExpr(Integral.value)([mkExpr(Arg.value)([]), mkExpr(Arg.value)([]), mkExpr(Arg.value)([]), mkExpr(Arg.value)([])])]))];
-              }
-              ;
-              if (isWhitespaceFree(query3)) {
-                return [mkPasteFragmentEdit2(root)(handle)(new Span_Fragment([mkExpr(new $$Symbol(query3))([])]))];
-              }
-              ;
-              return none3;
-            }()]);
+      getEditMenu: /* @__PURE__ */ function() {
+        var pasteLiteral = function(root) {
+          return function(handle) {
+            return function(query3) {
+              return mkPasteFragmentEdit2(root)(handle)(new Span_Fragment([mkExpr(query3)([])]));
+            };
           };
         };
-      },
+        var pasteLineBreak_Zipper = function(root) {
+          return function(handle) {
+            return mkPasteFragmentEdit2(root)(handle)(new Zipper_Fragment({
+              kids_L: [],
+              inside: {
+                "_O": Nil.value,
+                "_I": {
+                  l: "LineBreak",
+                  kids_L: [],
+                  kids_R: []
+                }
+              },
+              kids_R: []
+            }));
+          };
+        };
+        var pasteLineBreak_Span = function(root) {
+          return function(handle) {
+            return mkPasteFragmentEdit2(root)(handle)(new Span_Fragment([mkExpr("LineBreak")([])]));
+          };
+        };
+        var pasteIntegral_Zipper = function(root) {
+          return function(handle) {
+            return mkPasteFragmentEdit2(root)(handle)(new Zipper_Fragment({
+              kids_L: [],
+              inside: {
+                "_O": new Cons({
+                  l: "Integral",
+                  kids_L: [mkExpr("Arg")([]), mkExpr("Arg")([]), mkExpr("Arg")([])],
+                  kids_R: []
+                }, Nil.value),
+                "_I": {
+                  l: "Arg",
+                  kids_L: [],
+                  kids_R: []
+                }
+              },
+              kids_R: []
+            }));
+          };
+        };
+        var pasteIntegral_Span = function(root) {
+          return function(handle) {
+            return mkPasteFragmentEdit2(root)(handle)(new Span_Fragment([mkExpr("Integral")([mkExpr("Arg")([]), mkExpr("Arg")([]), mkExpr("Arg")([]), mkExpr("Arg")([])])]));
+          };
+        };
+        var pasteGroup_Zipper = function(root) {
+          return function(handle) {
+            return mkPasteFragmentEdit2(root)(handle)(new Zipper_Fragment({
+              kids_L: [],
+              inside: {
+                "_O": Nil.value,
+                "_I": {
+                  l: "Group",
+                  kids_L: [],
+                  kids_R: []
+                }
+              },
+              kids_R: []
+            }));
+          };
+        };
+        var pasteGroup_Span = function(root) {
+          return function(handle) {
+            return mkPasteFragmentEdit2(root)(handle)(new Span_Fragment([mkExpr("Group")([])]));
+          };
+        };
+        return function(root) {
+          return function(handle) {
+            return function(query3) {
+              return fold4([function() {
+                if (query3 === "") {
+                  return [];
+                }
+                ;
+                if (startsWith(query3)("group")) {
+                  if (handle instanceof Point_Handle) {
+                    return [pasteGroup_Span(root)(handle), pasteLiteral(root)(handle)(query3)];
+                  }
+                  ;
+                  if (handle instanceof SpanH_Handle) {
+                    return [pasteGroup_Zipper(root)(handle), pasteLiteral(root)(handle)(query3)];
+                  }
+                  ;
+                  if (handle instanceof ZipperH_Handle) {
+                    return [pasteGroup_Zipper(root)(handle)];
+                  }
+                  ;
+                  throw new Error("Failed pattern match at Editor.Example.Lisp (line 77, column 66 - line 88, column 20): " + [handle.constructor.name]);
+                }
+                ;
+                if (startsWith(query3)("integral")) {
+                  if (handle instanceof Point_Handle) {
+                    return [pasteIntegral_Span(root)(handle), pasteLiteral(root)(handle)(query3)];
+                  }
+                  ;
+                  if (handle instanceof SpanH_Handle) {
+                    return [pasteIntegral_Zipper(root)(handle), pasteLiteral(root)(handle)(query3)];
+                  }
+                  ;
+                  if (handle instanceof ZipperH_Handle) {
+                    return [pasteIntegral_Zipper(root)(handle)];
+                  }
+                  ;
+                  throw new Error("Failed pattern match at Editor.Example.Lisp (line 89, column 69 - line 100, column 20): " + [handle.constructor.name]);
+                }
+                ;
+                if (startsWith(query3)("linebreak")) {
+                  if (handle instanceof Point_Handle) {
+                    return [pasteLineBreak_Span(root)(handle), pasteLiteral(root)(handle)(query3)];
+                  }
+                  ;
+                  if (handle instanceof SpanH_Handle) {
+                    return [pasteLineBreak_Zipper(root)(handle), pasteLiteral(root)(handle)(query3)];
+                  }
+                  ;
+                  if (handle instanceof ZipperH_Handle) {
+                    return [pasteLineBreak_Zipper(root)(handle)];
+                  }
+                  ;
+                  return [];
+                }
+                ;
+                if (isWhitespaceFree(query3)) {
+                  if (handle instanceof Point_Handle) {
+                    return [pasteLiteral(root)(handle)(query3)];
+                  }
+                  ;
+                  if (handle instanceof SpanH_Handle) {
+                    return [pasteLiteral(root)(handle)(query3)];
+                  }
+                  ;
+                  if (handle instanceof ZipperH_Handle) {
+                    return [];
+                  }
+                  ;
+                  throw new Error("Failed pattern match at Editor.Example.Lisp (line 114, column 47 - line 117, column 41): " + [handle.constructor.name]);
+                }
+                ;
+                return none3;
+              }()]);
+            };
+          };
+        };
+      }(),
       getShortcut: function(root) {
         return function(handle) {
           return function(ki) {
@@ -10876,7 +10938,7 @@
                 inside: {
                   "_O": Nil.value,
                   "_I": {
-                    l: Group.value,
+                    l: "Group",
                     kids_L: [],
                     kids_R: []
                   }
@@ -10905,29 +10967,34 @@
             return and3([isValidPoint(expr)(p2["_OL"]), isValidPoint(expr)(p2["_IL"]), isValidPoint(expr)(p2["_IR"]), isValidPoint(expr)(p2["_OR"])]);
           }
           ;
-          throw new Error("Failed pattern match at Editor.Example.Lisp (line 105, column 36 - line 112, column 36): " + [handle.constructor.name]);
+          throw new Error("Failed pattern match at Editor.Example.Lisp (line 132, column 36 - line 139, column 36): " + [handle.constructor.name]);
         };
       },
       assembleExpr: function() {
         var root = parseString("*");
-        var integral = parseString("(\u222B _ from _ to _ of _ )");
-        var group4 = parseString("( \n* )");
+        var linebreak2 = parseString("\n*");
+        var integral = parseString("'(' \u222B _ from _ to _ of _ ')'");
+        var group4 = parseString("'(' * ')'");
         return mkAssembleExpr(function(v) {
-          if (v.label instanceof Root) {
+          if (v.label === "Root") {
             return new Left(root);
           }
           ;
-          if (v.label instanceof Group) {
+          if (v.label === "Group") {
             return new Left(group4);
           }
           ;
-          if (v.label instanceof Integral) {
+          if (v.label === "LineBreak") {
+            return new Left(linebreak2);
+          }
+          ;
+          if (v.label === "Integral") {
             return new Left(integral);
           }
           ;
-          if (v.label instanceof Arg) {
+          if (v.label === "Arg") {
             if (length10(v.kids) === 0) {
-              return new Right(pure16([div2([classes2(["before-empty-Arg-kids"])])([]), fromMaybe(renderWarning("missing point #" + show5(length10(v.points))))(last(v.points))]));
+              return new Right(pure16([div2([classes2(["Token", "before-empty-Arg-kids"])])([]), fromMaybe(renderWarning("missing point #" + show5(length10(v.points))))(last(v.points))]));
             }
             ;
             if (otherwise) {
@@ -10939,19 +11006,19 @@
                 return pure16(fold4([fold4(zipWith(function(point) {
                   return function(v1) {
                     return fold4([[point], function() {
-                      var $71 = v1.value0 === 0;
-                      if ($71) {
+                      var $77 = v1.value0 === 0;
+                      if ($77) {
                         return [];
                       }
                       ;
-                      return [div2([classes2(["Punctuation", "before-extra-Arg-kid"])])([text5("[")])];
+                      return [div2([classes2(["Token", "punctuation", "before-extra-Arg-kid"])])([text5("[")])];
                     }(), v1.value1, function() {
-                      var $72 = v1.value0 === 0;
-                      if ($72) {
+                      var $78 = v1.value0 === 0;
+                      if ($78) {
                         return [];
                       }
                       ;
-                      return [div2([classes2(["Punctuation", "after-extra-Arg-kid"])])([text5("]")])];
+                      return [div2([classes2(["Token", "punctuation", "after-extra-Arg-kid"])])([text5("]")])];
                     }()]);
                   };
                 })(v.points)(kids)), [fromMaybe(renderWarning("missing point #" + show5(length10(v.points))))(last(v.points))]]));
@@ -10960,11 +11027,7 @@
             ;
           }
           ;
-          if (v.label instanceof $$Symbol) {
-            return new Left([new Punc(pure16([div2([classes2(["Punctuation"])])([text5(v.label.value0)])]))]);
-          }
-          ;
-          throw new Error("Failed pattern match at Editor.Example.Lisp (line 119, column 33 - line 143, column 119): " + [v.constructor.name]);
+          return new Left([new Punc(pure16([div2([classes2(["Token", "punctuation"])])([text5(v.label)])]))]);
         });
       }()
     });
@@ -11799,59 +11862,6 @@
     };
   };
 
-  // output/Data.Set/index.js
-  var coerce4 = /* @__PURE__ */ coerce();
-  var union3 = function(dictOrd) {
-    return coerce4(union(dictOrd));
-  };
-  var toList = function(v) {
-    return keys(v);
-  };
-  var toUnfoldable5 = function(dictUnfoldable) {
-    var $96 = toUnfoldable(dictUnfoldable);
-    return function($97) {
-      return $96(toList($97));
-    };
-  };
-  var member2 = function(dictOrd) {
-    return coerce4(member(dictOrd));
-  };
-  var isEmpty2 = /* @__PURE__ */ coerce4(isEmpty);
-  var intersection2 = function(dictOrd) {
-    return coerce4(intersection(dictOrd));
-  };
-  var insert6 = function(dictOrd) {
-    var insert13 = insert(dictOrd);
-    return function(a2) {
-      return function(v) {
-        return insert13(a2)(unit)(v);
-      };
-    };
-  };
-  var empty8 = empty2;
-  var fromFoldable4 = function(dictFoldable) {
-    var foldl22 = foldl(dictFoldable);
-    return function(dictOrd) {
-      var insert13 = insert6(dictOrd);
-      return foldl22(function(m) {
-        return function(a2) {
-          return insert13(a2)(m);
-        };
-      })(empty8);
-    };
-  };
-  var difference3 = function(dictOrd) {
-    return coerce4(difference(dictOrd));
-  };
-  var subset = function(dictOrd) {
-    var difference1 = difference3(dictOrd);
-    return function(s1) {
-      return function(s2) {
-        return isEmpty2(difference1(s1)(s2));
-      };
-    };
-  };
-
   // output/Halogen.HTML.Elements.Keyed/index.js
   var div3 = /* @__PURE__ */ keyed2("div");
 
@@ -12349,7 +12359,7 @@
   var $$void8 = /* @__PURE__ */ $$void(functorHalogenM);
   var get4 = /* @__PURE__ */ get(monadStateHalogenM);
   var matchKeyInfo3 = /* @__PURE__ */ matchKeyInfo()();
-  var member3 = /* @__PURE__ */ member2(ordString);
+  var member4 = /* @__PURE__ */ member2(ordString);
   var matchMapKeyInfo2 = /* @__PURE__ */ matchMapKeyInfo()();
   var mod2 = /* @__PURE__ */ mod(euclideanRingInt);
   var length13 = /* @__PURE__ */ length(foldableArray)(semiringInt);
@@ -12500,7 +12510,7 @@
       var ki = fromEventToKeyInfo(v.value0);
       return bind9(get4)(function(state3) {
         if (matchKeyInfo3(function(v12) {
-          return member3(v12)(submit_keys);
+          return member4(v12)(submit_keys);
         })({
           cmd: pure20(false),
           shift: pure20(false),
@@ -12618,7 +12628,7 @@
   var _documentElement2 = getEffProp3("documentElement");
 
   // output/Ui.App1.Point/index.js
-  var fromFoldable5 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordPointStatus);
+  var fromFoldable6 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordPointStatus);
   var fold7 = /* @__PURE__ */ fold2(monoidArray);
   var map26 = /* @__PURE__ */ map(functorArray);
   var show7 = /* @__PURE__ */ show(showPointStatus);
@@ -12649,16 +12659,16 @@
   var get5 = /* @__PURE__ */ get(monadStateHalogenM);
   var put2 = /* @__PURE__ */ put(monadStateHalogenM);
   var ss_Right = /* @__PURE__ */ function() {
-    return fromFoldable5([RightFocus_PointStatus.value]);
+    return fromFoldable6([RightFocus_PointStatus.value]);
   }();
   var ss_Middle = /* @__PURE__ */ function() {
-    return fromFoldable5([Point_Handle_PointStatus.value]);
+    return fromFoldable6([Point_Handle_PointStatus.value]);
   }();
   var ss_Left = /* @__PURE__ */ function() {
-    return fromFoldable5([LeftFocus_PointStatus.value]);
+    return fromFoldable6([LeftFocus_PointStatus.value]);
   }();
   var ss_Focus = /* @__PURE__ */ function() {
-    return fromFoldable5([Point_Handle_PointStatus.value, LeftFocus_PointStatus.value, RightFocus_PointStatus.value]);
+    return fromFoldable6([Point_Handle_PointStatus.value, LeftFocus_PointStatus.value, RightFocus_PointStatus.value]);
   }();
   var refLabel_point = "point";
   var render2 = function(dictShow) {
@@ -12798,8 +12808,8 @@
   }
 
   // output/Ui.App1.Editor/index.js
-  var fromFoldable6 = /* @__PURE__ */ fromFoldable4(foldableArray);
-  var fromFoldable1 = /* @__PURE__ */ fromFoldable6(ordPointStatus);
+  var fromFoldable7 = /* @__PURE__ */ fromFoldable4(foldableArray);
+  var fromFoldable1 = /* @__PURE__ */ fromFoldable7(ordPointStatus);
   var bind11 = /* @__PURE__ */ bind(bindHalogenM);
   var get6 = /* @__PURE__ */ get(monadStateHalogenM);
   var liftEffect9 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff));
@@ -12823,13 +12833,13 @@
   var join3 = /* @__PURE__ */ join(bindMaybe);
   var request2 = /* @__PURE__ */ request()(PointIsSymbol)(ordPoint);
   var matchKeyInfo4 = /* @__PURE__ */ matchKeyInfo()();
-  var member4 = /* @__PURE__ */ member2(ordString);
+  var member5 = /* @__PURE__ */ member2(ordString);
   var unwrap7 = /* @__PURE__ */ unwrap();
   var matchMapKeyInfo3 = /* @__PURE__ */ matchMapKeyInfo()();
   var bind22 = /* @__PURE__ */ bind(bindMaybe);
   var guardPure2 = /* @__PURE__ */ guardPure(alternativeMaybe);
   var when5 = /* @__PURE__ */ when(applicativeHalogenM);
-  var submit_keys2 = /* @__PURE__ */ fromFoldable6(ordString)(["Enter", "Tab", " "]);
+  var submit_keys2 = /* @__PURE__ */ fromFoldable7(ordString)(["Enter", "Tab", " "]);
   var ss_ZipperH_Handle_OuterRight_Focus = /* @__PURE__ */ function() {
     return fromFoldable1([ZipperH_Handle_OuterRight_PointStatus.value, RightFocus_PointStatus.value]);
   }();
@@ -13375,7 +13385,7 @@
                         }
                         ;
                         if (matchKeyInfo4(function(v10) {
-                          return member4(v10)(submit_keys2);
+                          return member5(v10)(submit_keys2);
                         })({
                           cmd: pure112(false),
                           shift: pure112(false),
@@ -13640,7 +13650,7 @@
       return "Editor";
     }
   })(ordUnit);
-  var component1 = /* @__PURE__ */ component3(showL);
+  var component1 = /* @__PURE__ */ component3(showString);
   var render4 = function(_state) {
     return div2([classes2(["App"])])([slot_2($$Proxy.value)(unit)(component1)({
       editor
