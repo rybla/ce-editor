@@ -5,7 +5,7 @@ import Prelude
 import Control.Monad.State (get, modify_)
 import Data.Array ((!!))
 import Data.Const (Const(..))
-import Data.Expr (Edit(..), Expr, Path, Point)
+import Data.Expr (Edit(..), EditInfo(..), Expr, Path, Point)
 import Data.Expr.Render (RenderArgs, renderFragment)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (fold, length, null)
@@ -172,16 +172,20 @@ render state =
         , HP.spellcheck false
         ]
     , HHK.div [ classes [ "menu" ] ]
-        $ state.menu_queried # mapWithIndex \i -> case _ of
-            Fragment_Edit frag _lazy_expr' ->
-              show i /\
-                HH.div
-                  [ classes $ fold [ [ "Edit" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
+        $ state.menu_queried # mapWithIndex \i edit_ ->
+            show i /\ HH.div
+              [ classes $ fold [ [ "Edit" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
+              case edit_ of
+                Edit (Insert_EditInfo info) _ ->
                   [ HH.div [ classes [ "Expr" ] ] $
-                      frag
+                      info.insertion
                         # renderFragment (renderArgs state.editor) (state.point # unwrap).path
                         # runRenderM
                   ]
+                Edit (Remove_EditInfo _) _ ->
+                  [ HH.div [] [ HH.text "remove" ]
+                  ]
+
     ]
 
 renderExpr :: forall l w i. Show l => Editor l -> Path -> Expr l -> RenderM (Array (HTML w i))

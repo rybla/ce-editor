@@ -2,6 +2,7 @@ module Ui.App1.Editor where
 
 import Prelude
 
+import Control.Alternative ((<|>))
 import Control.Monad.State (get, modify)
 import Data.Expr (Edit(..), Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
@@ -31,7 +32,7 @@ import Ui.App1.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInp
 import Ui.App1.Point as Point
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
-import Utility (guardPure, isNonSpace, (:%=), (:=))
+import Utility (guardPure, isNonSpace, todo, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -183,46 +184,25 @@ handleAction (KeyDown_EditorAction event) = do
     _ | ki # Event.matchKeyInfo (_ == "c") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
-        Just handle -> do
-          let _ /\ _ /\ frag = state.root # Expr.Edit.cut handle
-          -- TODO: this should not snapshot
-          modifyEditorState _
-            { clipboard = pure frag
-            }
+        Just handle -> submitEdit $ state.root # Expr.Edit.cut handle
         _ -> pure unit
     -- delete
     _ | ki # Event.matchKeyInfo (_ == "Backspace") { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
-        Just handle -> do
-          let root' /\ handle' /\ _ = state.root # Expr.Edit.cut handle
-          modifyEditorState _
-            { root = root'
-            , initial_mb_handle = pure handle'
-            }
+        Just handle -> submitEdit $ state.root # Expr.Edit.cut handle
         _ -> pure unit
     -- cut
     _ | ki # Event.matchKeyInfo (_ == "x") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
-        Just handle -> do
-          let root' /\ handle' /\ frag = state.root # Expr.Edit.cut handle
-          modifyEditorState _
-            { root = root'
-            , initial_mb_handle = pure handle'
-            , clipboard = pure frag
-            }
+        Just handle -> submitEdit $ state.root # Expr.Edit.cut handle
         _ -> pure unit
     -- paste
     _ | ki # Event.matchKeyInfo (_ == "v") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle /\ state.clipboard of
-        Just handle /\ Just clipboard -> do
-          let root' /\ handle' = state.root # Expr.Edit.paste clipboard handle
-          modifyEditorState _
-            { root = root'
-            , initial_mb_handle = pure handle'
-            }
+        Just handle /\ Just clipboard -> submitEdit $ state.root # Expr.Edit.paste clipboard handle
         _ -> pure unit
     -- redo
     _ | ki # Event.matchKeyInfo (_ == "z") { cmd: pure true, shift: pure true, alt: pure false } -> do
@@ -334,11 +314,12 @@ modifyEditorState f = do
 --------------------------------------------------------------------------------
 
 submitEdit :: forall l. Show l => Edit l -> EditorM l Unit
-submitEdit (Fragment_Edit _frag lazy_result) = do
-  let root' /\ handle' = lazy_result # Lazy.force
-  modifyEditorState _
-    { root = root'
-    , initial_mb_handle = pure handle'
+submitEdit (Edit _ result_) = do
+  let result = result_ # Lazy.force
+  modifyEditorState \state -> state
+    { root = result.root
+    , initial_mb_handle = pure result.handle
+    , clipboard = result.clipboard <|> state.clipboard
     }
 
 --------------------------------------------------------------------------------

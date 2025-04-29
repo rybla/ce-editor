@@ -641,8 +641,19 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
 
 type EditMenu l = String -> Array (Edit l)
 
-data Edit l =
-  Fragment_Edit (Fragment l) (Lazy (Expr l /\ Handle))
+data Edit l = Edit (EditInfo l)
+  ( Lazy
+      { root :: Expr l
+      , handle :: Handle
+      , clipboard :: Maybe (Fragment l)
+      }
+  )
+
+data EditInfo l
+  = Insert_EditInfo
+      { insertion :: Fragment l
+      }
+  | Remove_EditInfo {}
 
 --------------------------------------------------------------------------------
 -- Utilities

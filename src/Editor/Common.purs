@@ -63,7 +63,8 @@ assembleExpr_default { label, kids, points } = do
     , [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text ")" ] ]
     ]
 
+-- TODO: this is an unnecessary layer
 mkPasteFragmentEdit ∷ ∀ (l ∷ Type). Show l ⇒ Expr l → Handle → Fragment l → Edit l
-mkPasteFragmentEdit root handle frag = Fragment_Edit frag $ Lazy.defer \_ -> Expr.Edit.paste frag handle root
+mkPasteFragmentEdit root handle insertion = root # Expr.Edit.paste insertion handle
 
 renderWarning msg = HH.div [ classes [ "Warning" ] ] [ HH.text msg ]

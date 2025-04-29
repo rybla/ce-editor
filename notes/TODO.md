@@ -5,7 +5,7 @@
 - [ ] figure out better way of visually representing both sides of the linebreak grammar construct
 - [ ] need to make re-rendering more efficient, since right now it grows asymptotically too fast. perhaps using nested and keyed elements will help with the Halogen diffing?
 - [ ] BUG: why is there one fewer indent than there should be at the beginning?
-- [ ] BUG: when paste a zipper, cursor doesnt go in riht place and sometimes duplicates
+- [ ] BUG: when paste a zipper, cursor doesnt go in right place and sometimes duplicates
 - [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything
 - [ ] BUG: dragging that lets the inner span be outside the outer span
 - [ ] BUG: redo takes two tries to work?? and can't redo final undo
