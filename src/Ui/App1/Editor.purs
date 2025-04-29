@@ -16,7 +16,8 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..))
+import Editor (Editor(..), runRenderM)
+import Editor.Common (RenderM)
 import Effect.Aff (Aff)
 import Effect.Ref as Ref
 import Effect.Unsafe (unsafePerformEffect)
@@ -439,15 +440,25 @@ render state =
   HHK.div [ classes [ "Editor" ] ]
     [ "root" /\
         HHK.div [ classes [ "root" ] ]
-          [ "0" /\ HH.div [ classes [ "Expr" ] ] (renderExpr state Nil state.root) ]
+          [ "0" /\
+              HH.div [ classes [ "Expr" ] ]
+                ( state.root
+                    # renderExpr state Nil
+                    # runRenderM
+                )
+          ]
     ]
 
-renderExpr :: forall l. Show l => EditorState l -> Path -> Expr l -> Array (EditorHTML l)
+renderExpr :: forall l. Show l => EditorState l -> Path -> Expr l -> RenderM (Array (EditorHTML l))
 renderExpr state@{ editor: Editor editor } path expr = do
-  Expr.Render.renderExpr { render_kid, render_point, assembleExpr: editor.assembleExpr } path expr
-  where
-  render_kid = renderExpr state
-  render_point = renderPoint state
+  Expr.Render.renderExpr
+    { indentLevel: 0
+    , render_kid: renderExpr state
+    , render_point: renderPoint state
+    , assembleExpr: editor.assembleExpr
+    }
+    path
+    expr
 
 renderPoint :: forall l. Show l => EditorState l -> Point -> EditorHTML l
 renderPoint state point =

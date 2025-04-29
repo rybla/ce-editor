@@ -2,16 +2,20 @@ module Editor.Common where
 
 import Prelude
 
+import Control.Monad.Reader (Reader, runReader)
 import Data.Array as Array
 import Data.Expr (Edit(..), EditMenu, Expr, Fragment, Handle)
 import Data.Expr.Edit as Expr.Edit
 import Data.Foldable (fold)
 import Data.Lazy as Lazy
 import Data.Maybe (Maybe, fromMaybe)
+import Data.Traversable (traverse)
+import Data.Tuple.Nested ((/\))
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Ui.Event (KeyInfo)
 import Ui.Halogen (classes)
+import Utility (todo)
 
 --------------------------------------------------------------------------------
 
@@ -28,21 +32,36 @@ data Editor l = Editor
 type AssembleExpr l =
   forall w i
    . { label :: l
-     , kids :: Array (Array (HTML w i))
+     , kids :: Array (RenderM (Array (HTML w i)))
      , points :: Array (HTML w i)
      }
-  -> Array (HTML w i)
+  -> RenderM (Array (HTML w i))
+
+type RenderM = Reader RenderCtx
+
+runRenderM :: forall a. RenderM a -> a
+runRenderM = flip runReader
+  { indentLevel: 0
+  }
+
+type RenderCtx =
+  { indentLevel :: Int
+  }
 
 --------------------------------------------------------------------------------
 
 assembleExpr_default :: forall l. Show l => AssembleExpr l
-assembleExpr_default { label, kids, points } = fold
-  [ [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "(" ] ]
-  , [ HH.div [ classes [ "label" ] ] [ HH.text $ show label ] ]
-  , Array.zipWith (\kid point -> [ point ] <> kid) kids points # fold
-  , [ points # Array.last # fromMaybe (renderWarning "missing last point") ]
-  , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ] ]
-  ]
+assembleExpr_default { label, kids, points } = do
+  kidsAndPoints <- map fold $ Array.zip points kids # traverse \(point /\ m_kid) -> do
+    kid <- m_kid
+    pure $ [ point ] <> kid
+  pure $ fold
+    [ [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "(" ] ]
+    , [ HH.div [ classes [ "label" ] ] [ HH.text $ show label ] ]
+    , kidsAndPoints
+    , [ points # Array.last # fromMaybe (renderWarning "missing last point") ]
+    , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ] ]
+    ]
 
 mkPasteFragmentEdit ∷ ∀ (l ∷ Type). Show l ⇒ Expr l → Handle → Fragment l → Edit l
 mkPasteFragmentEdit root handle frag = Fragment_Edit frag $ Lazy.defer \_ -> Expr.Edit.paste frag handle root

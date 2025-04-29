@@ -374,5 +374,28 @@
 }
 
 .Token.ghost {
+  display: flex;
+  align-items: center;
+  text-align: center;
+
+  white-space: nowrap;
+  font-size: 1em;
+
   color: color-mix(in hsl, black, transparent 80%);
+}
+
+.before-extra-Arg-kid,
+.after-extra-Arg-kid {
+  display: flex;
+  align-items: center;
+  text-align: center;
+
+  white-space: nowrap;
+  font-size: 1em;
+
+  color: red;
+}
+
+.before-empty-Arg-kids+.Point {
+  box-shadow: 0 0 0 0.1em red inset;
 }

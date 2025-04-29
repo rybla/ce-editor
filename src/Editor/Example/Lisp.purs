@@ -3,19 +3,26 @@ module Editor.Example.Lisp where
 import Data.Expr
 import Prelude
 
+import Control.Biapplicative (bipure)
+import Data.Array as Array
 import Data.Either (Either(..))
-import Data.Foldable (and, fold, or)
+import Data.Foldable (and, fold, length, or)
 import Data.List (List(..))
+import Data.Maybe (fromMaybe)
 import Data.Newtype (wrap)
 import Data.String as String
+import Data.TraversableWithIndex (traverseWithIndex)
+import Data.Tuple (Tuple)
+import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), mkPasteFragmentEdit)
+import Editor.Common (renderWarning)
 import Editor.Notation as Notation
 import Halogen.HTML as HH
 import Options.Applicative.Internal.Utils (startsWith)
 import Ui.Event (matchKeyInfo)
 import Ui.Halogen (classes)
-import Utility (isWhitespaceFree)
+import Utility (isWhitespaceFree, todo)
 
 data L
   = Root
@@ -108,13 +115,31 @@ editor = Editor
         root = Notation.parseString "Root [ \n \t * \n ]"
         group = Notation.parseString "( \n \t * \n )"
         integral = Notation.parseString "(∫ _ from _ to _ of _ )"
-        arg = Notation.parseString "*"
       in
         Notation.mkAssembleExpr case _ of
-          Root -> root
-          Group -> group
-          Integral -> integral
-          Arg -> arg
-          Symbol s -> [ Notation.Punc [ HH.div [ classes [ "Punctuation" ] ] [ HH.text s ] ] ]
+          { label: Root } -> Left root
+          { label: Group } -> Left group
+          { label: Integral } -> Left integral
+          args@{ label: Arg }
+            | length args.kids == 0 -> Right $ pure $
+                [ HH.div [ classes [ "before-empty-Arg-kids" ] ] []
+                , args.points # Array.last # fromMaybe (renderWarning $ "missing point #" <> show @Int (length args.points))
+                ]
+            | otherwise -> Right do
+                kids <- args.kids # traverseWithIndex \i -> map (i /\ _)
+                pure $ fold $
+                  [ fold $ Array.zipWith
+                      ( \point (i /\ kid) -> fold
+                          [ [ point ]
+                          , if i == 0 then [] else [ HH.div [ classes [ "Punctuation", "before-extra-Arg-kid" ] ] [ HH.text "[" ] ]
+                          , kid
+                          , if i == 0 then [] else [ HH.div [ classes [ "Punctuation", "after-extra-Arg-kid" ] ] [ HH.text "]" ] ]
+                          ]
+                      )
+                      args.points
+                      kids
+                  , [ args.points # Array.last # fromMaybe (renderWarning $ "missing point #" <> show @Int (length args.points)) ]
+                  ]
+          { label: Symbol s } -> Left [ Notation.Punc [ HH.div [ classes [ "Punctuation" ] ] [ HH.text s ] ] ]
   }
 

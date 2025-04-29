@@ -16,7 +16,8 @@ import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..))
+import Editor (Editor(..), RenderM)
+import Editor.Common (runRenderM)
 import Effect.Aff (Aff)
 import Effect.Class.Console as Console
 import Effect.Exception (throw)
@@ -177,11 +178,13 @@ render state =
                 HH.div
                   [ classes $ fold [ [ "Edit" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
                   [ HH.div [ classes [ "Expr" ] ] $
-                      frag # renderFragment (renderArgs state.editor) (state.point # unwrap).path
+                      frag
+                        # renderFragment (renderArgs state.editor) (state.point # unwrap).path
+                        # runRenderM
                   ]
     ]
 
-renderExpr :: forall l w i. Show l => Editor l -> Path -> Expr l -> Array (HTML w i)
+renderExpr :: forall l w i. Show l => Editor l -> Path -> Expr l -> RenderM (Array (HTML w i))
 renderExpr editor path expr = Expr.Render.renderExpr (renderArgs editor) path expr
 
 renderPoint :: forall l w i. Show l => Editor l -> Point -> HTML w i
@@ -189,7 +192,8 @@ renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]
 
 renderArgs :: forall l w i. Show l => Editor l -> RenderArgs l w i
 renderArgs (Editor editor) =
-  { render_kid: renderExpr (Editor editor)
+  { indentLevel: 0
+  , render_kid: renderExpr (Editor editor)
   , render_point: renderPoint (Editor editor)
   , assembleExpr: editor.assembleExpr
   }
