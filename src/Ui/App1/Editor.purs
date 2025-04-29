@@ -298,6 +298,19 @@ loadSnapshot s = do
     pure state.initial_mb_handle
 
 --------------------------------------------------------------------------------
+-- submitEdit
+--------------------------------------------------------------------------------
+
+submitEdit :: forall l. Show l => Edit l -> EditorM l Unit
+submitEdit (Edit _ result_) = do
+  let result = result_ # Lazy.force
+  modifyEditorState \state -> state
+    { root = result.root
+    , initial_mb_handle = pure $ normalizeHandle result.handle
+    , clipboard = result.clipboard <|> state.clipboard
+    }
+
+--------------------------------------------------------------------------------
 -- modifyEditorState
 --------------------------------------------------------------------------------
 
@@ -308,19 +321,6 @@ modifyEditorState f = do
     get >>= \state -> liftEffect $ state.ref_mb_dragOrigin := none
     state <- modify f
     pure state.initial_mb_handle
-
---------------------------------------------------------------------------------
--- submitEdit
---------------------------------------------------------------------------------
-
-submitEdit :: forall l. Show l => Edit l -> EditorM l Unit
-submitEdit (Edit _ result_) = do
-  let result = result_ # Lazy.force
-  modifyEditorState \state -> state
-    { root = result.root
-    , initial_mb_handle = pure result.handle
-    , clipboard = result.clipboard <|> state.clipboard
-    }
 
 --------------------------------------------------------------------------------
 -- setHandle

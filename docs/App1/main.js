@@ -13155,7 +13155,7 @@
           ref_history: state3.ref_history,
           ref_future: state3.ref_future,
           root: result.root,
-          initial_mb_handle: pure112(result.handle),
+          initial_mb_handle: pure112(normalizeHandle(result.handle)),
           clipboard: alt5(result.clipboard)(state3.clipboard)
         };
       });
