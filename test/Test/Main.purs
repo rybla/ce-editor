@@ -9,5 +9,5 @@ import Test.Spec.Runner.Node (runSpecAndExitProcess)
 
 main :: Effect Unit
 main = runSpecAndExitProcess [ consoleReporter ] do
-  Test.Expr.test
+  Test.Expr.spec
 

@@ -25,7 +25,7 @@ import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested (type (/\), (/\))
 import Debug as Debug
 import Pretty (class Pretty, parens, pretty)
-import Utility (extractAt_Array, extractSpan_Array, impossible, spaces, todo)
+import Utility (extractAt_Array, extractSpan_Array, impossible, spaces)
 
 --------------------------------------------------------------------------------
 
@@ -415,8 +415,7 @@ showSpanContext' :: forall l. Show l => (SpanContext l) -> String -> String
 showSpanContext' (SpanContext sc) s = showExprContext' sc._O $ showSpanTooth' sc._I s
 
 unSpanContext :: forall l. Show l => SpanContext l -> Span l -> Expr l
-unSpanContext (SpanContext sc) s = Debug.trace ("unSpanContext:\n  - outside: " <> show (SpanContext sc) <> "\n  - inside: " <> show s) \_ ->
-  unExprContext sc._O $ unSpanTooth sc._I s
+unSpanContext (SpanContext sc) s = unExprContext sc._O $ unSpanTooth sc._I s
 
 offset_inner_SpanContext :: forall l. (SpanContext l) -> Index
 offset_inner_SpanContext (SpanContext sc) = sc._I # offset_inner_SpanTooth

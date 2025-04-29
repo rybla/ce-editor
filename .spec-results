@@ -16,14 +16,14 @@
   [
     "Expr drag drag from a Cursor Handle's Right Point to a rightward sibling Point to adjust the Cursor Handle",
     {
-      "timestamp": "1745936271054.0",
+      "timestamp": "1745946632986.0",
       "success": true
     }
   ],
   [
     "Expr drag drag from an Inner Point to an Outer Right Point to make a Zipper Handle, where the innermost span is empty",
     {
-      "timestamp": "1745936271054.0",
+      "timestamp": "1745946632986.0",
       "success": true
     }
   ],
@@ -37,7 +37,7 @@
   [
     "Expr drag drag from an Inner Right Point to an Outer Right Point to make a Zipper Handle",
     {
-      "timestamp": "1745936271054.0",
+      "timestamp": "1745946632986.0",
       "success": true
     }
   ],
@@ -100,14 +100,14 @@
   [
     "Expr edit delete big zipper at top level",
     {
-      "timestamp": "1745946551891.0",
+      "timestamp": "1745946632986.0",
       "success": true
     }
   ],
   [
     "Expr edit delete zipper at top level",
     {
-      "timestamp": "1745946551891.0",
+      "timestamp": "1745946632986.0",
       "success": true
     }
   ],
@@ -186,6 +186,34 @@
     {
       "timestamp": "1744141158842.0",
       "success": false
+    }
+  ],
+  [
+    "Expr move movePoint (\"B\" % [(\"B\" % [(\"B\" % [(\"L\" % []),(\"L\" % [])]),(\"B\" % [(\"L\" % []),(\"L\" % [])])]),(\"B\" % [(\"B\" % [(\"L\" % []),(\"L\" % [])]),(\"B\" % [(\"L\" % []),(\"L\" % [])])])]) R (Point { j: (Index 0), path: ((Step 0) : (Step 0) : (Step 0) : Nil) }) == (Just (Point { j: (Index 1), path: ((Step 0) : (Step 0) : Nil) }))",
+    {
+      "timestamp": "1745946632986.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr move movePoint (\"B\" % [(\"B\" % [(\"B\" % [(\"L\" % []),(\"L\" % [])]),(\"B\" % [(\"L\" % []),(\"L\" % [])])]),(\"B\" % [(\"B\" % [(\"L\" % []),(\"L\" % [])]),(\"B\" % [(\"L\" % []),(\"L\" % [])])])]) R (Point { j: (Index 0), path: ((Step 0) : (Step 0) : Nil) }) == (Just (Point { j: (Index 0), path: ((Step 0) : (Step 0) : (Step 0) : Nil) }))",
+    {
+      "timestamp": "1745946632986.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr move movePoint (\"B\" % [(\"B\" % [(\"B\" % [(\"L\" % []),(\"L\" % [])]),(\"B\" % [(\"L\" % []),(\"L\" % [])])]),(\"B\" % [(\"B\" % [(\"L\" % []),(\"L\" % [])]),(\"B\" % [(\"L\" % []),(\"L\" % [])])])]) R (Point { j: (Index 0), path: ((Step 0) : Nil) }) == (Just (Point { j: (Index 0), path: ((Step 0) : (Step 0) : Nil) }))",
+    {
+      "timestamp": "1745946632986.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr move movePoint (\"B\" % [(\"B\" % [(\"B\" % [(\"L\" % []),(\"L\" % [])]),(\"B\" % [(\"L\" % []),(\"L\" % [])])]),(\"B\" % [(\"B\" % [(\"L\" % []),(\"L\" % [])]),(\"B\" % [(\"L\" % []),(\"L\" % [])])])]) R (Point { j: (Index 0), path: Nil }) == (Just (Point { j: (Index 0), path: ((Step 0) : Nil) }))",
+    {
+      "timestamp": "1745946632986.0",
+      "success": true
     }
   ],
   [

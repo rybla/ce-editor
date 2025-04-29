@@ -1,4 +1,4 @@
-module Test.Expr where
+module Test.Expr (spec) where
 
 import Data.Expr
 import Prelude
@@ -24,14 +24,14 @@ type L = String
 
 --------------------------------------------------------------------------------
 
-test :: Spec Unit
-test = Spec.describe "Expr" do
-  test_drag
-  test_move
-  test_edit
+spec :: Spec Unit
+spec = Spec.describe "Expr" do
+  spec_drag
+  spec_move
+  spec_edit
 
-test_drag :: Spec Unit
-test_drag = Spec.describe "drag" do
+spec_drag :: Spec Unit
+spec_drag = Spec.describe "drag" do
   Spec.it "drag from a Cursor Handle's Right Point to a rightward sibling Point to adjust the Cursor Handle" $ unsafePartial do
     let
       h = spanH { path: [ 0 ], j_L: 0, j_R: 1 } Right_SpanFocus
@@ -63,8 +63,8 @@ test_drag = Spec.describe "drag" do
       (Expr.Drag.drag h p_OR (example_expr 1 1))
       (pure h')
 
-test_move :: Spec Unit
-test_move = Spec.describe "move" do
+spec_move :: Spec Unit
+spec_move = Spec.describe "move" do
   mkTest_movePoint_R (example_expr 2 3)
     (point [] 0)
     (point [ 0 ] 0 # Just)
@@ -85,8 +85,8 @@ test_move = Spec.describe "move" do
         (Expr.Move.movePoint e Expr.Move.R p)
         mb_h
 
-test_edit :: Spec Unit
-test_edit = Spec.describeOnly "edit" do
+spec_edit :: Spec Unit
+spec_edit = Spec.describe "edit" do
   mkTest_EditAt "delete zipper at top level"
     { root: ("Root" % [ ("hello" % []), ("Group" % [ ("world" % []) ]) ])
     , handle: ZipperH_Handle (ZipperH { j_IL: (Index 0), j_IR: (Index 1), j_OL: (Index 1), j_OR: (Index 2), path_I: (NonEmpty (Step 1) Nil), path_O: Nil }) OuterLeft_ZipperFocus
