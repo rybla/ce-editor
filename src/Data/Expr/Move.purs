@@ -25,6 +25,7 @@ instance Eq Dir where
 fromKeyToDir :: String -> Maybe Dir
 fromKeyToDir "ArrowLeft" = Just L
 fromKeyToDir "ArrowRight" = Just R
+fromKeyToDir " " = Just R
 fromKeyToDir _ = Nothing
 
 movePointUntil :: forall l a. Show l => Expr l -> Dir -> Point -> (Point -> Maybe a) -> Maybe a

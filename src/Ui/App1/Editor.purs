@@ -186,7 +186,7 @@ handleAction (KeyDown_EditorAction event) = do
     _ | ki # Event.matchKeyInfo (_ == "c") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
-        Just handle -> submitEdit (state.root # Expr.Edit.cut handle) handle
+        Just handle -> submitEdit (state.root # Expr.Edit.delete handle) handle
         _ -> pure unit
     -- delete
     _ | ki # Event.matchKeyInfo (_ == "Backspace") { cmd: pure false, shift: pure false, alt: pure false } -> do
@@ -215,7 +215,7 @@ handleAction (KeyDown_EditorAction event) = do
       liftEffect $ event # Event.preventDefault
       undo
     -- open buffer
-    _ | ki # Event.matchKeyInfo (_ `Set.member` submit_keys) { cmd: pure false, shift: pure false, alt: pure false } -> do
+    _ | ki # Event.matchKeyInfo (_ `Set.member` openBuffer_keys) { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
@@ -263,7 +263,7 @@ handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_B
     Nothing -> bug "shouldn't be able to submit buffer if there is no handle"
     Just handle -> submitEdit edit handle
 
-submit_keys = Set.fromFoldable [ "Tab", " " ]
+openBuffer_keys = Set.fromFoldable [ "Tab" ]
 
 --------------------------------------------------------------------------------
 -- undo and redo

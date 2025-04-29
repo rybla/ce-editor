@@ -100,7 +100,7 @@ handleAction (KeyDown_BufferAction event) = do
   let ki = event # Event.fromEventToKeyInfo
   state <- get
   case unit of
-    _ | ki # Event.matchKeyInfo (_ `Set.member` submit_keys) { cmd: pure false, shift: pure false, alt: pure false } -> do
+    _ | ki # Event.matchKeyInfo (_ `Set.member` submitBuffer_keys) { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case state.option_i of
         Nothing -> pure unit
@@ -119,7 +119,7 @@ handleAction (QueryInput_BufferAction _event) = do
   query <- resizeQueryInput
   setQuery query
 
-submit_keys = Set.fromFoldable [ "Tab", " " ]
+submitBuffer_keys = Set.fromFoldable [ "Tab", " " ]
 
 resizeQueryInput = do
   elem <- H.getHTMLElementRef refLabel_input >>= fromMaybeM do liftEffect $ throw "TODO"

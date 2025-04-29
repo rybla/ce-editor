@@ -12293,7 +12293,7 @@
         return OuterLeft_ZipperFocus.value;
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr.Move (line 64, column 1 - line 64, column 53): " + [v.constructor.name, v1.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr.Move (line 65, column 1 - line 65, column 53): " + [v.constructor.name, v1.constructor.name]);
     };
   };
   var moveSpanFocus = function(v) {
@@ -12306,7 +12306,7 @@
         return Left_SpanFocus.value;
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr.Move (line 60, column 1 - line 60, column 47): " + [v.constructor.name, v1.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr.Move (line 61, column 1 - line 61, column 47): " + [v.constructor.name, v1.constructor.name]);
     };
   };
   var movePoint = function(dictShow) {
@@ -12469,7 +12469,7 @@
                     return;
                   }
                   ;
-                  throw new Error("Failed pattern match at Data.Expr.Move (line 36, column 16 - line 38, column 23): " + [v1.constructor.name]);
+                  throw new Error("Failed pattern match at Data.Expr.Move (line 37, column 16 - line 39, column 23): " + [v1.constructor.name]);
                 }
                 ;
                 if (v2 instanceof Just) {
@@ -12477,7 +12477,7 @@
                   return pure19(v2.value0);
                 }
                 ;
-                throw new Error("Failed pattern match at Data.Expr.Move (line 35, column 10 - line 39, column 21): " + [v2.constructor.name]);
+                throw new Error("Failed pattern match at Data.Expr.Move (line 36, column 10 - line 40, column 21): " + [v2.constructor.name]);
               }
               ;
               while (!$tco_done) {
@@ -12495,7 +12495,7 @@
               return go2(v.value0);
             }
             ;
-            throw new Error("Failed pattern match at Data.Expr.Move (line 31, column 28 - line 33, column 17): " + [v.constructor.name]);
+            throw new Error("Failed pattern match at Data.Expr.Move (line 32, column 28 - line 34, column 17): " + [v.constructor.name]);
           };
         };
       };
@@ -12515,7 +12515,7 @@
         return new ZipperH_Handle(v1.value0, moveZipperFocus(v)(v1.value1));
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr.Move (line 55, column 1 - line 55, column 43): " + [v.constructor.name, v1.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr.Move (line 56, column 1 - line 56, column 43): " + [v.constructor.name, v1.constructor.name]);
     };
   };
   var fromKeyToDir = function(v) {
@@ -12524,6 +12524,10 @@
     }
     ;
     if (v === "ArrowRight") {
+      return new Just(R.value);
+    }
+    ;
+    if (v === " ") {
       return new Just(R.value);
     }
     ;
@@ -12554,7 +12558,7 @@
       return pure19(new SpanH_Handle(getOuterSpanH_ZipperH(v.value0), Left_SpanFocus.value));
     }
     ;
-    throw new Error("Failed pattern match at Data.Expr.Move (line 74, column 1 - line 74, column 33): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Data.Expr.Move (line 75, column 1 - line 75, column 33): " + [v.constructor.name]);
   };
 
   // output/Data.Expr.Render/index.js
@@ -13225,7 +13229,7 @@
     Next2.value = new Next2();
     return Next2;
   }();
-  var submit_keys = /* @__PURE__ */ fromFoldable4(foldableArray)(ordString)(["Tab", " "]);
+  var submitBuffer_keys = /* @__PURE__ */ fromFoldable4(foldableArray)(ordString)(["Tab", " "]);
   var setQuery$prime = function(query3) {
     return function(state3) {
       var menu_queried = state3.menu(query3);
@@ -13367,7 +13371,7 @@
       var ki = fromEventToKeyInfo(v.value0);
       return bind9(get4)(function(state3) {
         if (matchKeyInfo3(function(v12) {
-          return member4(v12)(submit_keys);
+          return member4(v12)(submitBuffer_keys);
         })({
           cmd: pure21(false),
           shift: pure21(false),
@@ -13702,7 +13706,6 @@
   var matchMapKeyInfo3 = /* @__PURE__ */ matchMapKeyInfo()();
   var bind22 = /* @__PURE__ */ bind(bindMaybe);
   var guardPure2 = /* @__PURE__ */ guardPure(alternativeMaybe);
-  var submit_keys2 = /* @__PURE__ */ fromFoldable7(ordString)(["Tab", " "]);
   var ss_ZipperH_Handle_OuterRight_Focus = /* @__PURE__ */ function() {
     return fromFoldable1([ZipperH_Handle_OuterRight_PointStatus.value, RightFocus_PointStatus.value]);
   }();
@@ -13786,6 +13789,7 @@
       return div3([classes2(["Editor"])])([new Tuple("root", div3([classes2(["root"])])([new Tuple("0", div2([classes2(["Expr"])])(runRenderM(renderExpr1(state3)(Nil.value)(state3.root))))]))]);
     };
   };
+  var openBuffer_keys = /* @__PURE__ */ fromFoldable7(ordString)(["Tab"]);
   var modifyHandle = function(b2) {
     return function(mb_handle) {
       var modifyClass = function(p3) {
@@ -14029,8 +14033,8 @@
   };
   var handleAction3 = function(dictShow) {
     var submitEdit1 = submitEdit(dictShow);
-    var cut3 = cut(dictShow);
     var $$delete7 = $$delete5(dictShow);
+    var cut3 = cut(dictShow);
     var paste3 = paste(dictShow);
     var movePointUntil2 = movePointUntil(dictShow);
     var drag3 = drag(dictShow);
@@ -14156,7 +14160,7 @@
                         })(ki)) {
                           return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                             if (mb_handle instanceof Just) {
-                              return submitEdit1(cut3(mb_handle.value0)(v1.root))(mb_handle.value0);
+                              return submitEdit1($$delete7(mb_handle.value0)(v1.root))(mb_handle.value0);
                             }
                             ;
                             return pure24(unit);
@@ -14237,7 +14241,7 @@
                         }
                         ;
                         if (matchKeyInfo4(function(v10) {
-                          return member5(v10)(submit_keys2);
+                          return member5(v10)(openBuffer_keys);
                         })({
                           cmd: pure112(false),
                           shift: pure112(false),
