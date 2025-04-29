@@ -11706,11 +11706,11 @@
               ;
               if (startsWith(query3)("group")) {
                 if (handle instanceof Point_Handle) {
-                  return [pasteGroup_Span(root)(handle), pasteLiteral1(root)(handle)(query3)];
+                  return [pasteLiteral1(root)(handle)(query3), pasteGroup_Span(root)(handle)];
                 }
                 ;
                 if (handle instanceof SpanH_Handle) {
-                  return [pasteGroup_Zipper(root)(handle), pasteLiteral1(root)(handle)(query3)];
+                  return [pasteLiteral1(root)(handle)(query3), pasteGroup_Zipper(root)(handle)];
                 }
                 ;
                 if (handle instanceof ZipperH_Handle) {
@@ -11722,11 +11722,11 @@
               ;
               if (startsWith(query3)("integral")) {
                 if (handle instanceof Point_Handle) {
-                  return [pasteIntegral_Zipper(root)(handle), pasteLiteral1(root)(handle)(query3)];
+                  return [pasteLiteral1(root)(handle)(query3), pasteIntegral_Zipper(root)(handle)];
                 }
                 ;
                 if (handle instanceof SpanH_Handle) {
-                  return [pasteIntegral_Zipper(root)(handle), pasteLiteral1(root)(handle)(query3)];
+                  return [pasteLiteral1(root)(handle)(query3), pasteIntegral_Zipper(root)(handle)];
                 }
                 ;
                 if (handle instanceof ZipperH_Handle) {
@@ -11738,18 +11738,18 @@
               ;
               if (startsWith(query3)("linebreak")) {
                 if (handle instanceof Point_Handle) {
-                  return [pasteLineBreak_Span(root)(handle), pasteLiteral1(root)(handle)(query3)];
+                  return [pasteLiteral1(root)(handle)(query3), pasteLineBreak_Span(root)(handle)];
                 }
                 ;
                 if (handle instanceof SpanH_Handle) {
-                  return [pasteLineBreak_Span(root)(handle), pasteLiteral1(root)(handle)(query3)];
+                  return [pasteLiteral1(root)(handle)(query3), pasteLineBreak_Span(root)(handle)];
                 }
                 ;
                 if (handle instanceof ZipperH_Handle) {
                   return [];
                 }
                 ;
-                return [];
+                throw new Error("Failed pattern match at Editor.Example.Lisp (line 59, column 68 - line 69, column 19): " + [handle.constructor.name]);
               }
               ;
               if (isWhitespaceFree(query3)) {
@@ -11765,7 +11765,7 @@
                   return [];
                 }
                 ;
-                throw new Error("Failed pattern match at Editor.Example.Lisp (line 71, column 45 - line 74, column 39): " + [handle.constructor.name]);
+                throw new Error("Failed pattern match at Editor.Example.Lisp (line 70, column 45 - line 73, column 39): " + [handle.constructor.name]);
               }
               ;
               return none3;
@@ -11814,7 +11814,7 @@
             return and3([isValidPoint(expr)(p2["_OL"]), isValidPoint(expr)(p2["_IL"]), isValidPoint(expr)(p2["_IR"]), isValidPoint(expr)(p2["_OR"])]);
           }
           ;
-          throw new Error("Failed pattern match at Editor.Example.Lisp (line 84, column 36 - line 91, column 36): " + [handle.constructor.name]);
+          throw new Error("Failed pattern match at Editor.Example.Lisp (line 83, column 36 - line 90, column 36): " + [handle.constructor.name]);
         };
       },
       assembleExpr: function() {
