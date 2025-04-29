@@ -636,7 +636,7 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
     if i /= i' then Id_Diff else go path e'
 
 --------------------------------------------------------------------------------
--- Utilities
+-- Edit
 --------------------------------------------------------------------------------
 
 type EditMenu l = String -> Array (Edit l)
