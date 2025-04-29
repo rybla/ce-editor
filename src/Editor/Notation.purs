@@ -78,19 +78,19 @@ mkAssembleExpr getTokens args = case args # getTokens of
   Left tokens -> tokens # foldMap case _ of
     All opt -> do
       ctx <- ask
-      kids <- local (prop (Proxy @"indentLevel") (_ + 1)) do
+      kids <- local (prop (Proxy @"indentLevel") (if opt.indented then (_ + 1) else identity)) do
         sequence args.kids
       pure $ fold
-        [ if opt.indented then linebreak <> indentations (ctx.indentLevel - 1) else []
+        [ if opt.indented then linebreak <> indentations ctx.indentLevel else []
         , Array.zipWith (\kid point -> [ point ] <> kid) kids args.points # fold
         , [ args.points # Array.last # fromMaybe do renderWarning $ "missing point #" <> show @Int (length args.points) ]
         ]
     Kid i opt -> do
       ctx <- ask
-      kid <- local (prop (Proxy @"indentLevel") (_ + 1)) do
+      kid <- local (prop (Proxy @"indentLevel") (if opt.indented then (_ + 1) else identity)) do
         args.kids Array.!! i # fromMaybe do pure [ renderWarning $ "missing kid #" <> show i ]
       pure $ fold
-        [ if opt.indented then linebreak <> indentations (ctx.indentLevel - 1) else []
+        [ if opt.indented then linebreak <> indentations ctx.indentLevel else []
         , kid
         ]
     Point i -> pure [ args.points Array.!! i # fromMaybe (renderWarning $ "missing point #" <> show i) ]
@@ -98,6 +98,7 @@ mkAssembleExpr getTokens args = case args # getTokens of
   Right es -> es
 
 linebreak = [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ], HH.div [ classes [ "Token break" ] ] [] ]
-indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "⇥" ] ]
+-- indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "⇥" ] ]
+indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "│" ] ]
 indentations n = Array.replicate n indentation # fold
 

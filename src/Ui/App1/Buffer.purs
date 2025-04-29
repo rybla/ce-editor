@@ -118,7 +118,7 @@ handleAction (QueryInput_BufferAction _event) = do
   query <- resizeQueryInput
   setQuery query
 
-submit_keys = Set.fromFoldable [ "Enter", "Tab", " " ]
+submit_keys = Set.fromFoldable [ "Tab", " " ]
 
 resizeQueryInput = do
   elem <- H.getHTMLElementRef refLabel_input >>= fromMaybeM do liftEffect $ throw "TODO"
@@ -192,7 +192,7 @@ renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]
 
 renderArgs :: forall l w i. Show l => Editor l -> RenderArgs l w i
 renderArgs (Editor editor) =
-  { indentLevel: 0
+  { indentLevel: 1
   , render_kid: renderExpr (Editor editor)
   , render_point: renderPoint (Editor editor)
   , assembleExpr: editor.assembleExpr

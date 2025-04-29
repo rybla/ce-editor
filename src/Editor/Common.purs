@@ -41,7 +41,7 @@ type RenderM = Reader RenderCtx
 
 runRenderM :: forall a. RenderM a -> a
 runRenderM = flip runReader
-  { indentLevel: 0
+  { indentLevel: 1
   }
 
 type RenderCtx =

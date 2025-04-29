@@ -277,7 +277,7 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
 handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput bufferOption))) = do
   submitEdit bufferOption
 
-submit_keys = Set.fromFoldable [ "Enter", "Tab", " " ]
+submit_keys = Set.fromFoldable [ "Tab", " " ]
 
 --------------------------------------------------------------------------------
 -- undo and redo
@@ -452,7 +452,7 @@ render state =
 renderExpr :: forall l. Show l => EditorState l -> Path -> Expr l -> RenderM (Array (EditorHTML l))
 renderExpr state@{ editor: Editor editor } path expr = do
   Expr.Render.renderExpr
-    { indentLevel: 0
+    { indentLevel: 1
     , render_kid: renderExpr state
     , render_point: renderPoint state
     , assembleExpr: editor.assembleExpr

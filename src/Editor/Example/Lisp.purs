@@ -5,7 +5,7 @@ import Prelude
 
 import Data.Array as Array
 import Data.Either (Either(..))
-import Data.Foldable (and, fold, length, or)
+import Data.Foldable (and, fold, length)
 import Data.List (List(..), (:))
 import Data.Maybe (fromMaybe)
 import Data.Newtype (wrap)
@@ -23,111 +23,64 @@ import Ui.Event (matchKeyInfo)
 import Ui.Halogen (classes)
 import Utility (isWhitespaceFree)
 
-type L = String
-
-isValidPoint :: Expr L -> Point -> Boolean
-isValidPoint expr (Point p) = e'.l `Set.member` ls
-  where
-  Expr e' = (expr # atSubExpr p.path).here
-  ls = Set.fromFoldable [ "Root", "Group", "Arg", "LineBreak" ]
-
 editor :: Editor L
 editor = Editor
   { name: "Lisp"
   , initial_expr: "Root" % []
   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
   , getEditMenu:
-      let
-        pasteLiteral root handle query = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ query % [] ]
-
-        pasteGroup_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "Group" % [] ]
-        pasteGroup_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
-          { kids_L: []
-          , inside: SpanContext
-              { _O: ExprContext Nil
-              , _I: SpanTooth { l: "Group", kids_L: [], kids_R: [] }
-              }
-          , kids_R: []
-          }
-
-        pasteIntegral_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "Integral" % [ "Arg" % [], "Arg" % [], "Arg" % [], "Arg" % [] ] ]
-
-        pasteIntegral_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
-          { kids_L: []
-          , inside: SpanContext
-              { _O: ExprContext $ Tooth { l: "Integral", kids_L: [ "Arg" % [], "Arg" % [], "Arg" % [] ], kids_R: [] } : Nil
-              , _I: SpanTooth { l: "Arg", kids_L: [], kids_R: [] }
-              }
-          , kids_R: []
-          }
-
-        pasteLineBreak_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "LineBreak" % [] ]
-        pasteLineBreak_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
-          { kids_L: []
-          , inside: SpanContext
-              { _O: ExprContext Nil
-              , _I: SpanTooth { l: "LineBreak", kids_L: [], kids_R: [] }
-              }
-          , kids_R: []
-          }
-      in
-        \root handle query -> fold
-          [ case query of
-              "" -> []
-              _ | "group" # startsWith (String.Pattern query) -> case handle of
-                Point_Handle _ ->
-                  [ pasteGroup_Span root handle
-                  , pasteLiteral root handle query
-                  ]
-                SpanH_Handle _ _ ->
-                  [ pasteGroup_Zipper root handle
-                  , pasteLiteral root handle query
-                  ]
-                ZipperH_Handle _ _ ->
-                  [ pasteGroup_Zipper root handle
-                  ]
-              _ | "integral" # startsWith (String.Pattern query) -> case handle of
-                Point_Handle _ ->
-                  [ pasteIntegral_Span root handle
-                  , pasteLiteral root handle query
-                  ]
-                SpanH_Handle _ _ ->
-                  [ pasteIntegral_Zipper root handle
-                  , pasteLiteral root handle query
-                  ]
-                ZipperH_Handle _ _ ->
-                  [ pasteIntegral_Zipper root handle
-                  ]
-              _ | "linebreak" # startsWith (String.Pattern query) -> case handle of
-                Point_Handle _ ->
-                  [ pasteLineBreak_Span root handle
-                  , pasteLiteral root handle query
-                  ]
-                SpanH_Handle _ _ ->
-                  [ pasteLineBreak_Zipper root handle
-                  , pasteLiteral root handle query
-                  ]
-                ZipperH_Handle _ _ ->
-                  [ pasteLineBreak_Zipper root handle
-                  ]
-                _ -> []
-              _ | query # isWhitespaceFree -> case handle of
-                Point_Handle _ -> [ pasteLiteral root handle query ]
-                SpanH_Handle _ _ -> [ pasteLiteral root handle query ]
-                ZipperH_Handle _ _ -> []
-              _ ->
-                none
-          ]
+      \root handle query -> fold
+        [ case query of
+            "" -> []
+            _ | "group" # startsWith (String.Pattern query) -> case handle of
+              Point_Handle _ ->
+                [ pasteGroup_Span root handle
+                , pasteLiteral root handle query
+                ]
+              SpanH_Handle _ _ ->
+                [ pasteGroup_Zipper root handle
+                , pasteLiteral root handle query
+                ]
+              ZipperH_Handle _ _ ->
+                [ pasteGroup_Zipper root handle
+                ]
+            _ | "integral" # startsWith (String.Pattern query) -> case handle of
+              Point_Handle _ ->
+                [ pasteIntegral_Zipper root handle
+                , pasteLiteral root handle query
+                ]
+              SpanH_Handle _ _ ->
+                [ pasteIntegral_Zipper root handle
+                , pasteLiteral root handle query
+                ]
+              ZipperH_Handle _ _ ->
+                [ pasteIntegral_Zipper root handle
+                ]
+            _ | "linebreak" # startsWith (String.Pattern query) -> case handle of
+              Point_Handle _ ->
+                [ pasteLineBreak_Zipper root handle
+                , pasteLiteral root handle query
+                ]
+              SpanH_Handle _ _ ->
+                [ pasteLineBreak_Zipper root handle
+                , pasteLiteral root handle query
+                ]
+              ZipperH_Handle _ _ ->
+                [ pasteLineBreak_Zipper root handle
+                ]
+              _ -> []
+            _ | query # isWhitespaceFree -> case handle of
+              Point_Handle _ -> [ pasteLiteral root handle query ]
+              SpanH_Handle _ _ -> [ pasteLiteral root handle query ]
+              ZipperH_Handle _ _ -> []
+            _ ->
+              none
+        ]
   , getShortcut: \root handle ki -> case unit of
       _ | ki # matchKeyInfo (_ == "(") { cmd: pure false, alt: pure false } ->
-        pure $ mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
-          { kids_L: []
-          , inside: SpanContext
-              { _O: ExprContext Nil
-              , _I: SpanTooth { l: "Group", kids_L: [], kids_R: [] }
-              }
-          , kids_R: []
-          }
+        pure $ pasteGroup_Zipper root handle
+      _ | ki # matchKeyInfo (_ == "Enter") { cmd: pure false, alt: pure false } ->
+        pure $ pasteLineBreak_Zipper root handle
       _ -> none
   , isValidHandle: \expr handle -> case handle of
       Point_Handle p -> and [ isValidPoint expr p ]
@@ -143,7 +96,7 @@ editor = Editor
         group = Notation.parseString "'(' * ')'"
         integral = Notation.parseString "'(' ∫ _ from _ to _ of _ ')'"
         -- linebreak = Notation.parseString "begin \n* end"
-        linebreak = Notation.parseString "\n*"
+        linebreak = Notation.parseString "\n* \n"
       in
         Notation.mkAssembleExpr case _ of
           { label: "Root" } -> Left root
@@ -170,6 +123,46 @@ editor = Editor
                       kids
                   , [ args.points # Array.last # fromMaybe do renderWarning $ "missing point #" <> show @Int (length args.points) ]
                   ]
-          { label } -> Left [ Notation.Punc do pure [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text label ] ] ]
+          { label } -> Left [ Notation.Punc do pure [ HH.div [ classes [ "Token", "punctuation", "keyword" ] ] [ HH.text label ] ] ]
   }
 
+type L = String
+
+isValidPoint :: Expr L -> Point -> Boolean
+isValidPoint expr (Point p) = e'.l `Set.member` ls
+  where
+  Expr e' = (expr # atSubExpr p.path).here
+  ls = Set.fromFoldable [ "Root", "Group", "Arg", "LineBreak" ]
+
+pasteLiteral root handle query = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ query % [] ]
+
+pasteGroup_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "Group" % [] ]
+pasteGroup_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
+  { kids_L: []
+  , inside: SpanContext
+      { _O: ExprContext Nil
+      , _I: SpanTooth { l: "Group", kids_L: [], kids_R: [] }
+      }
+  , kids_R: []
+  }
+
+pasteIntegral_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "Integral" % [ "Arg" % [], "Arg" % [], "Arg" % [], "Arg" % [] ] ]
+
+pasteIntegral_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
+  { kids_L: []
+  , inside: SpanContext
+      { _O: ExprContext $ Tooth { l: "Integral", kids_L: [ "Arg" % [], "Arg" % [], "Arg" % [] ], kids_R: [] } : Nil
+      , _I: SpanTooth { l: "Arg", kids_L: [], kids_R: [] }
+      }
+  , kids_R: []
+  }
+
+pasteLineBreak_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "LineBreak" % [] ]
+pasteLineBreak_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
+  { kids_L: []
+  , inside: SpanContext
+      { _O: ExprContext Nil
+      , _I: SpanTooth { l: "LineBreak", kids_L: [], kids_R: [] }
+      }
+  , kids_R: []
+  }
