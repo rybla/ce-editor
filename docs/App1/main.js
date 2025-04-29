@@ -9121,6 +9121,9 @@
   var pretty = function(dict) {
     return dict.pretty;
   };
+  var parens = function(s) {
+    return "(" + (s + ")");
+  };
 
   // output/Data.Profunctor.Strong/index.js
   var strongFn = {
@@ -9368,9 +9371,6 @@
       };
     };
   };
-  var parens = function(s) {
-    return "(" + (s + ")");
-  };
   var modifyFlipped = function(r) {
     return function(f) {
       return void1(modify(f)(r));
@@ -9457,8 +9457,41 @@
   var append12 = /* @__PURE__ */ append(semigroupArray);
   var map21 = /* @__PURE__ */ map(functorArray);
   var genericShowConstructor2 = /* @__PURE__ */ genericShowConstructor(genericShowArgsNoArguments);
-  var genericShowConstructor1 = /* @__PURE__ */ genericShowConstructor(/* @__PURE__ */ genericShowArgsArgument(showInt));
   var showRecord2 = /* @__PURE__ */ showRecord()();
+  var kids_LIsSymbol = {
+    reflectSymbol: function() {
+      return "kids_L";
+    }
+  };
+  var showRecordFieldsCons2 = /* @__PURE__ */ showRecordFieldsCons(kids_LIsSymbol);
+  var kids_RIsSymbol = {
+    reflectSymbol: function() {
+      return "kids_R";
+    }
+  };
+  var showRecordFieldsCons1 = /* @__PURE__ */ showRecordFieldsCons(kids_RIsSymbol);
+  var lIsSymbol = {
+    reflectSymbol: function() {
+      return "l";
+    }
+  };
+  var showRecordFieldsConsNil2 = /* @__PURE__ */ showRecordFieldsConsNil(lIsSymbol);
+  var ToothIsSymbol = {
+    reflectSymbol: function() {
+      return "Tooth";
+    }
+  };
+  var genericShowConstructor1 = /* @__PURE__ */ genericShowConstructor(/* @__PURE__ */ genericShowArgsArgument(showInt));
+  var SpanIsSymbol = {
+    reflectSymbol: function() {
+      return "Span";
+    }
+  };
+  var SpanToothIsSymbol = {
+    reflectSymbol: function() {
+      return "SpanTooth";
+    }
+  };
   var jIsSymbol = {
     reflectSymbol: function() {
       return "j";
@@ -9509,50 +9542,6 @@
       return "path_O";
     }
   };
-  var kidsIsSymbol = {
-    reflectSymbol: function() {
-      return "kids";
-    }
-  };
-  var showRecordFieldsCons2 = /* @__PURE__ */ showRecordFieldsCons(kidsIsSymbol);
-  var lIsSymbol = {
-    reflectSymbol: function() {
-      return "l";
-    }
-  };
-  var showRecordFieldsConsNil2 = /* @__PURE__ */ showRecordFieldsConsNil(lIsSymbol);
-  var ExprIsSymbol = {
-    reflectSymbol: function() {
-      return "Expr";
-    }
-  };
-  var SpanIsSymbol = {
-    reflectSymbol: function() {
-      return "Span";
-    }
-  };
-  var kids_LIsSymbol = {
-    reflectSymbol: function() {
-      return "kids_L";
-    }
-  };
-  var showRecordFieldsCons1 = /* @__PURE__ */ showRecordFieldsCons(kids_LIsSymbol);
-  var kids_RIsSymbol = {
-    reflectSymbol: function() {
-      return "kids_R";
-    }
-  };
-  var showRecordFieldsCons22 = /* @__PURE__ */ showRecordFieldsCons(kids_RIsSymbol);
-  var SpanToothIsSymbol = {
-    reflectSymbol: function() {
-      return "SpanTooth";
-    }
-  };
-  var ToothIsSymbol = {
-    reflectSymbol: function() {
-      return "Tooth";
-    }
-  };
   var ExprContextIsSymbol = {
     reflectSymbol: function() {
       return "ExprContext";
@@ -9563,7 +9552,7 @@
       return "_I";
     }
   };
-  var showRecordFieldsCons3 = /* @__PURE__ */ showRecordFieldsCons(_IIsSymbol);
+  var showRecordFieldsCons22 = /* @__PURE__ */ showRecordFieldsCons(_IIsSymbol);
   var _OIsSymbol = {
     reflectSymbol: function() {
       return "_O";
@@ -9580,7 +9569,7 @@
       return "inside";
     }
   };
-  var showRecordFieldsCons4 = /* @__PURE__ */ showRecordFieldsCons(insideIsSymbol);
+  var showRecordFieldsCons3 = /* @__PURE__ */ showRecordFieldsCons(insideIsSymbol);
   var showRecordFieldsConsNil22 = /* @__PURE__ */ showRecordFieldsConsNil(kids_RIsSymbol);
   var ZipperIsSymbol = {
     reflectSymbol: function() {
@@ -9612,12 +9601,12 @@
       return "Remove_EditInfo";
     }
   });
-  var showRecordFieldsCons5 = /* @__PURE__ */ showRecordFieldsCons({
+  var showRecordFieldsCons4 = /* @__PURE__ */ showRecordFieldsCons({
     reflectSymbol: function() {
       return "clipboard";
     }
   });
-  var showRecordFieldsCons6 = /* @__PURE__ */ showRecordFieldsCons({
+  var showRecordFieldsCons5 = /* @__PURE__ */ showRecordFieldsCons({
     reflectSymbol: function() {
       return "handle";
     }
@@ -9779,6 +9768,14 @@
     };
     return Edit2;
   }();
+  var showExpr = function(dictShow) {
+    var show12 = show(dictShow);
+    return {
+      show: function(v) {
+        return parens(show12(v.l) + (" % " + show(showArray(showExpr(dictShow)))(v.kids)));
+      }
+    };
+  };
   var semiringIndex = semiringInt;
   var ringStep = ringInt;
   var sub1 = /* @__PURE__ */ sub(ringStep);
@@ -9889,6 +9886,15 @@
     }
   };
   var genericShow22 = /* @__PURE__ */ genericShow(genericTooth_);
+  var showTooth = function(dictShow) {
+    var showArray2 = showArray(showExpr(dictShow));
+    var genericShow18 = genericShow22(genericShowConstructor(genericShowArgsArgument(showRecord2(showRecordFieldsCons2(showRecordFieldsCons1(showRecordFieldsConsNil2(dictShow))(showArray2))(showArray2))))(ToothIsSymbol));
+    return {
+      show: function(x) {
+        return genericShow18(x);
+      }
+    };
+  };
   var genericStep_ = {
     to: function(x) {
       return x;
@@ -9918,6 +9924,14 @@
     }
   };
   var genericShow4 = /* @__PURE__ */ genericShow(genericSpan_);
+  var showSpan = function(dictShow) {
+    var genericShow18 = genericShow4(genericShowConstructor(genericShowArgsArgument(showArray(showExpr(dictShow))))(SpanIsSymbol));
+    return {
+      show: function(x) {
+        return genericShow18(x);
+      }
+    };
+  };
   var genericSpanTooth_ = {
     to: function(x) {
       return x;
@@ -9927,6 +9941,15 @@
     }
   };
   var genericShow5 = /* @__PURE__ */ genericShow(genericSpanTooth_);
+  var showSpanTooth = function(dictShow) {
+    var showArray2 = showArray(showExpr(dictShow));
+    var genericShow18 = genericShow5(genericShowConstructor(genericShowArgsArgument(showRecord2(showRecordFieldsCons2(showRecordFieldsCons1(showRecordFieldsConsNil2(dictShow))(showArray2))(showArray2))))(SpanToothIsSymbol));
+    return {
+      show: function(x) {
+        return genericShow18(x);
+      }
+    };
+  };
   var genericSpanH_ = {
     to: function(x) {
       return x;
@@ -10113,49 +10136,6 @@
     }
   };
   var genericShow13 = /* @__PURE__ */ genericShow(genericFragment_);
-  var genericExpr_ = {
-    to: function(x) {
-      return x;
-    },
-    from: function(x) {
-      return x;
-    }
-  };
-  var genericShow14 = /* @__PURE__ */ genericShow(genericExpr_);
-  var showExpr = function(dictShow) {
-    var showRecordFieldsCons7 = showRecordFieldsCons2(showRecordFieldsConsNil2(dictShow));
-    return {
-      show: function(x) {
-        return genericShow14(genericShowConstructor(genericShowArgsArgument(showRecord2(showRecordFieldsCons7(showArray(showExpr(dictShow))))))(ExprIsSymbol))(x);
-      }
-    };
-  };
-  var showSpan = function(dictShow) {
-    var genericShow19 = genericShow4(genericShowConstructor(genericShowArgsArgument(showArray(showExpr(dictShow))))(SpanIsSymbol));
-    return {
-      show: function(x) {
-        return genericShow19(x);
-      }
-    };
-  };
-  var showSpanTooth = function(dictShow) {
-    var showArray2 = showArray(showExpr(dictShow));
-    var genericShow19 = genericShow5(genericShowConstructor(genericShowArgsArgument(showRecord2(showRecordFieldsCons1(showRecordFieldsCons22(showRecordFieldsConsNil2(dictShow))(showArray2))(showArray2))))(SpanToothIsSymbol));
-    return {
-      show: function(x) {
-        return genericShow19(x);
-      }
-    };
-  };
-  var showTooth = function(dictShow) {
-    var showArray2 = showArray(showExpr(dictShow));
-    var genericShow19 = genericShow22(genericShowConstructor(genericShowArgsArgument(showRecord2(showRecordFieldsCons1(showRecordFieldsCons22(showRecordFieldsConsNil2(dictShow))(showArray2))(showArray2))))(ToothIsSymbol));
-    return {
-      show: function(x) {
-        return genericShow19(x);
-      }
-    };
-  };
   var genericExprContext_ = {
     to: function(x) {
       return x;
@@ -10164,37 +10144,37 @@
       return x;
     }
   };
-  var genericShow15 = /* @__PURE__ */ genericShow(genericExprContext_);
+  var genericShow14 = /* @__PURE__ */ genericShow(genericExprContext_);
   var showExprContext = function(dictShow) {
-    var genericShow19 = genericShow15(genericShowConstructor(genericShowArgsArgument(showList(showTooth(dictShow))))(ExprContextIsSymbol));
+    var genericShow18 = genericShow14(genericShowConstructor(genericShowArgsArgument(showList(showTooth(dictShow))))(ExprContextIsSymbol));
     return {
       show: function(x) {
-        return genericShow19(x);
+        return genericShow18(x);
       }
     };
   };
   var showSpanContext = function(dictShow) {
-    var genericShow19 = genericShow7(genericShowConstructor(genericShowArgsArgument(showRecord2(showRecordFieldsCons3(showRecordFieldsConsNil1(showExprContext(dictShow)))(showSpanTooth(dictShow)))))(SpanContextIsSymbol));
+    var genericShow18 = genericShow7(genericShowConstructor(genericShowArgsArgument(showRecord2(showRecordFieldsCons22(showRecordFieldsConsNil1(showExprContext(dictShow)))(showSpanTooth(dictShow)))))(SpanContextIsSymbol));
     return {
       show: function(x) {
-        return genericShow19(x);
+        return genericShow18(x);
       }
     };
   };
   var showZipper = function(dictShow) {
     var showArray2 = showArray(showExpr(dictShow));
-    var genericShow19 = genericShow2(genericShowConstructor(genericShowArgsArgument(showRecord2(showRecordFieldsCons4(showRecordFieldsCons1(showRecordFieldsConsNil22(showArray2))(showArray2))(showSpanContext(dictShow)))))(ZipperIsSymbol));
+    var genericShow18 = genericShow2(genericShowConstructor(genericShowArgsArgument(showRecord2(showRecordFieldsCons3(showRecordFieldsCons2(showRecordFieldsConsNil22(showArray2))(showArray2))(showSpanContext(dictShow)))))(ZipperIsSymbol));
     return {
       show: function(x) {
-        return genericShow19(x);
+        return genericShow18(x);
       }
     };
   };
   var showFragment = function(dictShow) {
-    var genericShow19 = genericShow13(genericShowSum(genericShowConstructor(genericShowArgsArgument(showSpan(dictShow)))(Span_FragmentIsSymbol))(genericShowConstructor(genericShowArgsArgument(showZipper(dictShow)))(Zipper_FragmentIsSymbol)));
+    var genericShow18 = genericShow13(genericShowSum(genericShowConstructor(genericShowArgsArgument(showSpan(dictShow)))(Span_FragmentIsSymbol))(genericShowConstructor(genericShowArgsArgument(showZipper(dictShow)))(Zipper_FragmentIsSymbol)));
     return {
       show: function(x) {
-        return genericShow19(x);
+        return genericShow18(x);
       }
     };
   };
@@ -10206,7 +10186,7 @@
       return new Product(x.value0, x.value1);
     }
   };
-  var genericShow16 = /* @__PURE__ */ genericShow(genericEdit_);
+  var genericShow15 = /* @__PURE__ */ genericShow(genericEdit_);
   var genericEditInfo_ = {
     to: function(x) {
       if (x instanceof Inl) {
@@ -10231,20 +10211,20 @@
       throw new Error("Failed pattern match at Data.Expr (line 738, column 1 - line 738, column 39): " + [x.constructor.name]);
     }
   };
-  var genericShow17 = /* @__PURE__ */ genericShow(genericEditInfo_);
+  var genericShow16 = /* @__PURE__ */ genericShow(genericEditInfo_);
   var showEditInfo = function(dictShow) {
-    var genericShow19 = genericShow17(genericShowSum(genericShowConstructor(genericShowArgsArgument(showRecord2(showRecordFieldsConsNil3(showFragment(dictShow)))))(Insert_EditInfoIsSymbol))(genericShowConstructor22));
+    var genericShow18 = genericShow16(genericShowSum(genericShowConstructor(genericShowArgsArgument(showRecord2(showRecordFieldsConsNil3(showFragment(dictShow)))))(Insert_EditInfoIsSymbol))(genericShowConstructor22));
     return {
       show: function(x) {
-        return genericShow19(x);
+        return genericShow18(x);
       }
     };
   };
   var showEdit = function(dictShow) {
-    var genericShow19 = genericShow16(genericShowConstructor(genericShowArgsProduct(genericShowArgsArgument(showEditInfo(dictShow)))(genericShowArgsArgument(showLazy(showRecord2(showRecordFieldsCons5(showRecordFieldsCons6(showRecordFieldsConsNil4(showExpr(dictShow)))(showHandle))(showMaybe(showFragment(dictShow))))))))(EditIsSymbol));
+    var genericShow18 = genericShow15(genericShowConstructor(genericShowArgsProduct(genericShowArgsArgument(showEditInfo(dictShow)))(genericShowArgsArgument(showLazy(showRecord2(showRecordFieldsCons4(showRecordFieldsCons5(showRecordFieldsConsNil4(showExpr(dictShow)))(showHandle))(showMaybe(showFragment(dictShow))))))))(EditIsSymbol));
     return {
       show: function(x) {
-        return genericShow19(x);
+        return genericShow18(x);
       }
     };
   };
@@ -13134,7 +13114,7 @@
       throw new Error("Failed pattern match at Ui.App1.Common (line 126, column 1 - line 126, column 38): " + [x.constructor.name]);
     }
   };
-  var genericShow18 = /* @__PURE__ */ genericShow(genericPointStatus_)(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor3({
+  var genericShow17 = /* @__PURE__ */ genericShow(genericPointStatus_)(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor3({
     reflectSymbol: function() {
       return "Point_Handle_PointStatus";
     }
@@ -13175,7 +13155,7 @@
   var genericCompare3 = /* @__PURE__ */ genericCompare(genericPointStatus_)(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(/* @__PURE__ */ genericOrdSum2(genericOrdConstructor2)))))))));
   var showPointStatus = {
     show: function(x) {
-      return genericShow18(x);
+      return genericShow17(x);
     }
   };
   var eqPointStatus = {

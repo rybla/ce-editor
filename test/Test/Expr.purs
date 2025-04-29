@@ -8,13 +8,11 @@ import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit (EditAt)
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
-import Data.Lazy (defer)
 import Data.Lazy as Lazy
 import Data.List (List(..))
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe')
 import Data.NonEmpty (NonEmpty(..))
-import Data.Unfoldable (none)
 import Partial.Unsafe (unsafePartial)
 import Pretty (pretty)
 import Test.Spec (Spec)
@@ -89,16 +87,18 @@ test_move = Spec.describe "move" do
 
 test_edit :: Spec Unit
 test_edit = Spec.describeOnly "edit" do
-  mkTest_Edit
-    { root: (Expr { kids: [ (Expr { kids: [], l: "hello" }), (Expr { kids: [ (Expr { kids: [], l: "world" }) ], l: "Group" }) ], l: "Root" })
-    , handle: (ZipperH_Handle (ZipperH { j_IL: (Index 0), j_IR: (Index 1), j_OL: (Index 1), j_OR: (Index 2), path_I: (NonEmpty (Step 1) Nil), path_O: Nil }) OuterLeft_ZipperFocus)
-    , clipboard: Nothing
-    }
-    ((Edit (Remove_EditInfo {}) (defer \_ -> { clipboard: Nothing, handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 2), path: Nil }) Left_SpanFocus), root: (Expr { kids: [ (Expr { kids: [], l: "hello" }) ], l: "Root" }) })))
-    { root: (Expr { kids: [ (Expr { kids: [], l: "hello" }) ], l: "Root" })
-    , handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 2), path: Nil }) Left_SpanFocus)
-    , clipboard: Nothing
-    }
+  do
+    let handle = ZipperH_Handle (ZipperH { j_IL: (Index 0), j_IR: (Index 1), j_OL: (Index 1), j_OR: (Index 2), path_I: (NonEmpty (Step 1) Nil), path_O: Nil }) OuterLeft_ZipperFocus
+    mkTest_EditAt
+      { root: ("Root" % [ ("hello" % []), ("Group" % [ ("world" % []) ]) ])
+      , handle
+      , clipboard: Nothing
+      }
+      Expr.Edit.delete
+      { root: ("Root" % [ ("hello" % []) ])
+      , handle: Point_Handle $ point [] 1
+      , clipboard: Nothing
+      }
   pure unit
   where
   mkTest_Edit
@@ -118,15 +118,15 @@ test_edit = Spec.describeOnly "edit" do
     -> EditAt L
     -> PureEditorState L
     -> Spec Unit
-  mkTest_EditAt state editAt state' =
+  mkTest_EditAt state editAt state'_expected =
     let
       edit = editAt state.handle state.root
     in
       Spec.it ("apply edit " <> pretty edit) do
-        let Edit _ result = edit
-        shouldEqual show
-          (Lazy.force result)
-          (state')
+        let state'_actual = applyEdit edit state
+        shouldEqual show state'_actual.root state'_expected.root
+        shouldEqual show state'_actual.handle state'_expected.handle
+        shouldEqual show state'_actual.clipboard state'_expected.clipboard
 
 --------------------------------------------------------------------------------
 -- Utilities

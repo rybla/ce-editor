@@ -70,6 +70,20 @@
     }
   ],
   [
+    "Expr edit apply edit (Edit (Remove_EditInfo {}) (defer \\_ -> { clipboard: Nothing, handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 1), path: Nil }) Left_SpanFocus), root: (\"Root\" % [(\"hello\" % [])]) }))",
+    {
+      "timestamp": "1745940968951.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr edit apply edit (Edit (Remove_EditInfo {}) (defer \\_ -> { clipboard: Nothing, handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 2), path: Nil }) Left_SpanFocus), root: (\"Root\" % [(\"hello\" % [])]) }))",
+    {
+      "timestamp": "1745940777713.0",
+      "success": false
+    }
+  ],
+  [
     "Expr edit apply edit (Edit (Remove_EditInfo {}) (defer \\_ -> { clipboard: Nothing, handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 2), path: Nil }) Left_SpanFocus), root: (Expr { kids: [(Expr { kids: [], l: \"hello\" })], l: \"Root\" }) }))",
     {
       "timestamp": "1745939654178.0",

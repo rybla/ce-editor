@@ -171,7 +171,7 @@ cut (ZipperH_Handle (ZipperH zh) zf) e =
               ( SpanH
                   { path: zh.path_O
                   , j_L: zh.j_OL
-                  , j_R: zh.j_OR
+                  , j_R: zh.j_OL + (at_zh.inside # offset_Span)
                   }
               )
               ( case zf of

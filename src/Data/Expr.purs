@@ -23,8 +23,8 @@ import Data.String as String
 import Data.Traversable (class Traversable, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested (type (/\), (/\))
-import Pretty (class Pretty, pretty)
-import Utility (extractAt_Array, extractSpan_Array, impossible, parens, spaces)
+import Pretty (class Pretty, parens, pretty)
+import Utility (extractAt_Array, extractSpan_Array, impossible, spaces)
 
 --------------------------------------------------------------------------------
 
@@ -122,7 +122,7 @@ derive instance Generic (Expr l) _
 derive instance Newtype (Expr l) _
 
 instance Show l => Show (Expr l) where
-  show x = genericShow x
+  show (Expr { l, kids }) = parens $ show l <> " % " <> show kids
 
 instance Show l => Pretty (Expr l) where
   pretty (Expr e) | Array.null e.kids = show e.l
