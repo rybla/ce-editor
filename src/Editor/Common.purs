@@ -56,11 +56,11 @@ assembleExpr_default { label, kids, points } = do
     kid <- m_kid
     pure $ [ point ] <> kid
   pure $ fold
-    [ [ HH.div [ classes [ "Punctuation" ] ] [ HH.text "(" ] ]
+    [ [ HH.div [ classes [ "punctuation" ] ] [ HH.text "(" ] ]
     , [ HH.div [ classes [ "label" ] ] [ HH.text $ show label ] ]
     , kidsAndPoints
     , [ points # Array.last # fromMaybe (renderWarning "missing last point") ]
-    , [ HH.div [ classes [ "Punctuation" ] ] [ HH.text ")" ] ]
+    , [ HH.div [ classes [ "punctuation" ] ] [ HH.text ")" ] ]
     ]
 
 mkPasteFragmentEdit ∷ ∀ (l ∷ Type). Show l ⇒ Expr l → Handle → Fragment l → Edit l

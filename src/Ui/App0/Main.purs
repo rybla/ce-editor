@@ -333,7 +333,7 @@ assembleUiExpr path_ref elem_expr label kids = do
   -- open
   when (config.displayStyle == Inline_DisplayStyle) do
     elem_open <- lift $ elem_expr # Element.createChild "div"
-    lift $ elem_open # Element.addClass "Punctuation"
+    lift $ elem_open # Element.addClass "punctuation"
     lift $ elem_open # Element.toNode # Node.setTextContent case label of
       L { dat: Root } -> ""
       _ -> "("
@@ -363,7 +363,7 @@ assembleUiExpr path_ref elem_expr label kids = do
   -- close
   when (config.displayStyle == Inline_DisplayStyle) do
     elem_close <- lift $ elem_expr # Element.createChild "div"
-    lift $ elem_close # Element.addClass "Punctuation"
+    lift $ elem_close # Element.addClass "punctuation"
     lift $ elem_close # Element.toNode # Node.setTextContent case label of
       L { dat: Root } -> ""
       _ -> ")"

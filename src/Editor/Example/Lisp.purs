@@ -112,8 +112,8 @@ editor = Editor
         p = getEndPoints_ZipperH zh
   , assembleExpr:
       let
-        root = Notation.parseString "Root [ \n \t * \n ]"
-        group = Notation.parseString "( \n \t * \n )"
+        root = Notation.parseString "*"
+        group = Notation.parseString "( \n* )"
         integral = Notation.parseString "(∫ _ from _ to _ of _ )"
       in
         Notation.mkAssembleExpr case _ of
@@ -131,15 +131,15 @@ editor = Editor
                   [ fold $ Array.zipWith
                       ( \point (i /\ kid) -> fold
                           [ [ point ]
-                          , if i == 0 then [] else [ HH.div [ classes [ "Punctuation", "before-extra-Arg-kid" ] ] [ HH.text "[" ] ]
+                          , if i == 0 then [] else [ HH.div [ classes [ "punctuation", "before-extra-Arg-kid" ] ] [ HH.text "[" ] ]
                           , kid
-                          , if i == 0 then [] else [ HH.div [ classes [ "Punctuation", "after-extra-Arg-kid" ] ] [ HH.text "]" ] ]
+                          , if i == 0 then [] else [ HH.div [ classes [ "punctuation", "after-extra-Arg-kid" ] ] [ HH.text "]" ] ]
                           ]
                       )
                       args.points
                       kids
-                  , [ args.points # Array.last # fromMaybe (renderWarning $ "missing point #" <> show @Int (length args.points)) ]
+                  , [ args.points # Array.last # fromMaybe do renderWarning $ "missing point #" <> show @Int (length args.points) ]
                   ]
-          { label: Symbol s } -> Left [ Notation.Punc [ HH.div [ classes [ "Punctuation" ] ] [ HH.text s ] ] ]
+          { label: Symbol s } -> Left [ Notation.Punc do pure [ HH.div [ classes [ "punctuation" ] ] [ HH.text s ] ] ]
   }
 

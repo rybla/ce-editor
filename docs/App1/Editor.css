@@ -53,7 +53,6 @@
     &>.Punctuation {
       display: flex;
       align-items: center;
-      text-align: center;
 
       white-space: nowrap;
       font-size: 1em;
@@ -356,8 +355,8 @@
 
 .Token.punctuation {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  text-align: center;
 
   white-space: nowrap;
   font-size: 1em;
@@ -368,31 +367,20 @@
   height: 0;
 }
 
-.Token.indent {
-  white-space: nowrap;
+.Token.indentation {
   width: 2em;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
 }
 
 .Token.ghost {
-  display: flex;
-  align-items: center;
-  text-align: center;
-
-  white-space: nowrap;
-  font-size: 1em;
-
   color: color-mix(in hsl, black, transparent 80%);
 }
 
 .before-extra-Arg-kid,
 .after-extra-Arg-kid {
-  display: flex;
-  align-items: center;
-  text-align: center;
-
-  white-space: nowrap;
-  font-size: 1em;
-
   color: red;
 }
 

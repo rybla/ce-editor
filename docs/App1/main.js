@@ -1228,6 +1228,7 @@
       };
     };
   };
+  var ordBooleanImpl = unsafeCompareImpl;
   var ordIntImpl = unsafeCompareImpl;
   var ordStringImpl = unsafeCompareImpl;
   var ordCharImpl = unsafeCompareImpl;
@@ -1459,6 +1460,14 @@
       }
     };
   }();
+  var ordBoolean = /* @__PURE__ */ function() {
+    return {
+      compare: ordBooleanImpl(LT.value)(EQ.value)(GT.value),
+      Eq0: function() {
+        return eqBoolean;
+      }
+    };
+  }();
   var compareRecord = function(dict) {
     return dict.compareRecord;
   };
@@ -1561,8 +1570,27 @@
   };
 
   // output/Data.Bounded/index.js
+  var ordRecord2 = /* @__PURE__ */ ordRecord();
+  var topRecord = function(dict) {
+    return dict.topRecord;
+  };
   var top = function(dict) {
     return dict.top;
+  };
+  var boundedRecordNil = {
+    topRecord: function(v) {
+      return function(v1) {
+        return {};
+      };
+    },
+    bottomRecord: function(v) {
+      return function(v1) {
+        return {};
+      };
+    },
+    OrdRecord0: function() {
+      return ordRecordNil;
+    }
   };
   var boundedChar = {
     top: topChar,
@@ -1571,8 +1599,68 @@
       return ordChar;
     }
   };
+  var boundedBoolean = {
+    top: true,
+    bottom: false,
+    Ord0: function() {
+      return ordBoolean;
+    }
+  };
+  var bottomRecord = function(dict) {
+    return dict.bottomRecord;
+  };
+  var boundedRecord = function() {
+    return function(dictBoundedRecord) {
+      var ordRecord1 = ordRecord2(dictBoundedRecord.OrdRecord0());
+      return {
+        top: topRecord(dictBoundedRecord)($$Proxy.value)($$Proxy.value),
+        bottom: bottomRecord(dictBoundedRecord)($$Proxy.value)($$Proxy.value),
+        Ord0: function() {
+          return ordRecord1;
+        }
+      };
+    };
+  };
   var bottom = function(dict) {
     return dict.bottom;
+  };
+  var boundedRecordCons = function(dictIsSymbol) {
+    var reflectSymbol2 = reflectSymbol(dictIsSymbol);
+    return function(dictBounded) {
+      var top12 = top(dictBounded);
+      var bottom12 = bottom(dictBounded);
+      var Ord0 = dictBounded.Ord0();
+      return function() {
+        return function() {
+          return function(dictBoundedRecord) {
+            var topRecord1 = topRecord(dictBoundedRecord);
+            var bottomRecord1 = bottomRecord(dictBoundedRecord);
+            var ordRecordCons2 = ordRecordCons(dictBoundedRecord.OrdRecord0())()(dictIsSymbol)(Ord0);
+            return {
+              topRecord: function(v) {
+                return function(rowProxy) {
+                  var tail2 = topRecord1($$Proxy.value)(rowProxy);
+                  var key2 = reflectSymbol2($$Proxy.value);
+                  var insert7 = unsafeSet(key2);
+                  return insert7(top12)(tail2);
+                };
+              },
+              bottomRecord: function(v) {
+                return function(rowProxy) {
+                  var tail2 = bottomRecord1($$Proxy.value)(rowProxy);
+                  var key2 = reflectSymbol2($$Proxy.value);
+                  var insert7 = unsafeSet(key2);
+                  return insert7(bottom12)(tail2);
+                };
+              },
+              OrdRecord0: function() {
+                return ordRecordCons2;
+              }
+            };
+          };
+        };
+      };
+    };
   };
 
   // output/Data.Show/foreign.js
@@ -2186,6 +2274,14 @@
     return x;
   };
 
+  // output/Control.Monad.Reader.Class/index.js
+  var local = function(dict) {
+    return dict.local;
+  };
+  var ask = function(dict) {
+    return dict.ask;
+  };
+
   // output/Data.HeytingAlgebra/foreign.js
   var boolConj = function(b1) {
     return function(b2) {
@@ -2431,6 +2527,13 @@
   var ReaderT = function(x) {
     return x;
   };
+  var withReaderT = function(f) {
+    return function(v) {
+      return function($152) {
+        return v(f($152));
+      };
+    };
+  };
   var mapReaderT = function(f) {
     return function(v) {
       return function($154) {
@@ -2502,6 +2605,36 @@
       }(),
       Apply0: function() {
         return applyReaderT1;
+      }
+    };
+  };
+  var monadReaderT = function(dictMonad) {
+    var applicativeReaderT1 = applicativeReaderT(dictMonad.Applicative0());
+    var bindReaderT1 = bindReaderT(dictMonad.Bind1());
+    return {
+      Applicative0: function() {
+        return applicativeReaderT1;
+      },
+      Bind1: function() {
+        return bindReaderT1;
+      }
+    };
+  };
+  var monadAskReaderT = function(dictMonad) {
+    var monadReaderT1 = monadReaderT(dictMonad);
+    return {
+      ask: pure(dictMonad.Applicative0()),
+      Monad0: function() {
+        return monadReaderT1;
+      }
+    };
+  };
+  var monadReaderReaderT = function(dictMonad) {
+    var monadAskReaderT1 = monadAskReaderT(dictMonad);
+    return {
+      local: withReaderT,
+      MonadAsk0: function() {
+        return monadAskReaderT1;
       }
     };
   };
@@ -5347,6 +5480,7 @@
       return slice(0)(n)(xs);
     };
   };
+  var replicate = /* @__PURE__ */ runFn2(replicateImpl);
   var range2 = /* @__PURE__ */ runFn2(rangeImpl);
   var $$null3 = function(xs) {
     return length4(xs) === 0;
@@ -10157,48 +10291,61 @@
   };
 
   // output/Editor.Notation/index.js
+  var fold3 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
+  var foldMap2 = /* @__PURE__ */ foldMap(foldableArray)(/* @__PURE__ */ monoidReaderT(applicativeIdentity)(monoidArray));
+  var bind5 = /* @__PURE__ */ bind(/* @__PURE__ */ bindReaderT(bindIdentity));
+  var ask2 = /* @__PURE__ */ ask(/* @__PURE__ */ monadAskReaderT(monadIdentity));
+  var local2 = /* @__PURE__ */ local(/* @__PURE__ */ monadReaderReaderT(monadIdentity));
+  var prop5 = /* @__PURE__ */ prop3({
+    reflectSymbol: function() {
+      return "indentLevel";
+    }
+  })()();
+  var applicativeReaderT2 = /* @__PURE__ */ applicativeReaderT(applicativeIdentity);
+  var sequence2 = /* @__PURE__ */ sequence(traversableArray)(applicativeReaderT2);
+  var pure10 = /* @__PURE__ */ pure(applicativeReaderT2);
+  var append7 = /* @__PURE__ */ append(semigroupArray);
+  var show4 = /* @__PURE__ */ show(showInt);
+  var length8 = /* @__PURE__ */ length(foldableArray)(semiringInt);
   var applicativeStateT2 = /* @__PURE__ */ applicativeStateT(monadIdentity);
-  var pure10 = /* @__PURE__ */ pure(applicativeStateT2);
+  var pure14 = /* @__PURE__ */ pure(applicativeStateT2);
   var bindStateT2 = /* @__PURE__ */ bindStateT(monadIdentity);
-  var bind5 = /* @__PURE__ */ bind(bindStateT2);
+  var bind16 = /* @__PURE__ */ bind(bindStateT2);
   var monadStateStateT2 = /* @__PURE__ */ monadStateStateT(monadIdentity);
   var get3 = /* @__PURE__ */ get(monadStateStateT2);
   var discard5 = /* @__PURE__ */ discard(discardUnit)(bindStateT2);
   var modifying2 = /* @__PURE__ */ modifying(monadStateStateT2);
-  var prop5 = /* @__PURE__ */ prop3({
+  var prop12 = /* @__PURE__ */ prop3({
     reflectSymbol: function() {
       return "kid";
     }
   })()();
-  var prop12 = /* @__PURE__ */ prop3({
+  var prop23 = /* @__PURE__ */ prop3({
     reflectSymbol: function() {
       return "point";
     }
   })()();
   var traverse2 = /* @__PURE__ */ traverse(traversableArray)(applicativeStateT2);
-  var foldMap2 = /* @__PURE__ */ foldMap(foldableArray)(/* @__PURE__ */ monoidReaderT(applicativeIdentity)(monoidArray));
-  var bind16 = /* @__PURE__ */ bind(/* @__PURE__ */ bindReaderT(bindIdentity));
-  var applicativeReaderT2 = /* @__PURE__ */ applicativeReaderT(applicativeIdentity);
-  var sequence2 = /* @__PURE__ */ sequence(traversableArray)(applicativeReaderT2);
-  var pure14 = /* @__PURE__ */ pure(applicativeReaderT2);
-  var fold3 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
-  var append7 = /* @__PURE__ */ append(semigroupArray);
-  var show4 = /* @__PURE__ */ show(showInt);
-  var length8 = /* @__PURE__ */ length(foldableArray)(semiringInt);
   var All = /* @__PURE__ */ function() {
-    function All2() {
-    }
-    ;
-    All2.value = new All2();
-    return All2;
-  }();
-  var Kid = /* @__PURE__ */ function() {
-    function Kid2(value0) {
+    function All2(value0) {
       this.value0 = value0;
     }
     ;
+    All2.create = function(value0) {
+      return new All2(value0);
+    };
+    return All2;
+  }();
+  var Kid = /* @__PURE__ */ function() {
+    function Kid2(value0, value1) {
+      this.value0 = value0;
+      this.value1 = value1;
+    }
+    ;
     Kid2.create = function(value0) {
-      return new Kid2(value0);
+      return function(value1) {
+        return new Kid2(value0, value1);
+      };
     };
     return Kid2;
   }();
@@ -10222,46 +10369,10 @@
     };
     return Punc2;
   }();
-  var parseWord = function(v) {
-    if (v === "*") {
-      return pure10(All.value);
-    }
-    ;
-    if (v === "_") {
-      return bind5(get3)(function(v1) {
-        return discard5(modifying2(prop5($$Proxy.value)(strongFn))(function(v2) {
-          return v2 + 1 | 0;
-        }))(function() {
-          return pure10(new Kid(v1.kid));
-        });
-      });
-    }
-    ;
-    if (v === "|") {
-      return bind5(get3)(function(v1) {
-        return discard5(modifying2(prop12($$Proxy.value)(strongFn))(function(v2) {
-          return v2 + 1 | 0;
-        }))(function() {
-          return pure10(new Point(v1.point));
-        });
-      });
-    }
-    ;
-    if (v === "\n") {
-      return pure10(new Punc([div2([classes2(["Token punctuation ghost"])])([text5("\u23CE")]), div2([classes2(["Token break"])])([])]));
-    }
-    ;
-    if (v === "	") {
-      return pure10(new Punc([div2([classes2(["Token punctuation ghost"])])([text5("\u21E5")])]));
-    }
-    ;
-    return pure10(new Punc([div2([classes2(["Token punctuation"])])([text5(v)])]));
-  };
-  var parseString = function(notation) {
-    return flip(evalState)({
-      kid: 0,
-      point: 0
-    })(traverse2(parseWord)(split(" ")(notation)));
+  var linebreak = [/* @__PURE__ */ div2([/* @__PURE__ */ classes2(["Token punctuation ghost"])])([/* @__PURE__ */ text5("\u23CE")]), /* @__PURE__ */ div2([/* @__PURE__ */ classes2(["Token break"])])([])];
+  var indentation = [/* @__PURE__ */ div2([/* @__PURE__ */ classes2(["Token punctuation indentation ghost"])])([/* @__PURE__ */ text5("\u21E5")])];
+  var indentations = function(n) {
+    return fold3(replicate(n)(indentation));
   };
   var mkAssembleExpr = function(getTokens) {
     return function(args) {
@@ -10269,28 +10380,50 @@
       if (v instanceof Left) {
         return foldMap2(function(v1) {
           if (v1 instanceof All) {
-            return bind16(sequence2(args.kids))(function(kids) {
-              return pure14(fold3([fold3(zipWith(function(kid) {
-                return function(point) {
-                  return append7([point])(kid);
-                };
-              })(kids)(args.points)), [fromMaybe(renderWarning("missing point #" + show4(length8(args.points))))(last(args.points))]]));
+            return bind5(ask2)(function(ctx) {
+              return bind5(local2(prop5($$Proxy.value)(strongFn)(function(v2) {
+                return v2 + 1 | 0;
+              }))(sequence2(args.kids)))(function(kids) {
+                return pure10(fold3([function() {
+                  if (v1.value0.indented) {
+                    return append7(linebreak)(indentations(ctx.indentLevel));
+                  }
+                  ;
+                  return [];
+                }(), fold3(zipWith(function(kid) {
+                  return function(point) {
+                    return append7([point])(kid);
+                  };
+                })(kids)(args.points)), [fromMaybe(renderWarning("missing point #" + show4(length8(args.points))))(last(args.points))]]));
+              });
             });
           }
           ;
           if (v1 instanceof Kid) {
-            return fromMaybe(pure14([renderWarning("missing kid #" + show4(v1.value0))]))(index2(args.kids)(v1.value0));
+            return bind5(ask2)(function(ctx) {
+              return bind5(local2(prop5($$Proxy.value)(strongFn)(function(v2) {
+                return v2 + 1 | 0;
+              }))(fromMaybe(pure10([renderWarning("missing kid #" + show4(v1.value0))]))(index2(args.kids)(v1.value0))))(function(kid) {
+                return pure10(fold3([function() {
+                  if (v1.value1.indented) {
+                    return append7(linebreak)(indentations(ctx.indentLevel));
+                  }
+                  ;
+                  return [];
+                }(), kid]));
+              });
+            });
           }
           ;
           if (v1 instanceof Point) {
-            return pure14([fromMaybe(renderWarning("missing point #" + show4(v1.value0)))(index2(args.points)(v1.value0))]);
+            return pure10([fromMaybe(renderWarning("missing point #" + show4(v1.value0)))(index2(args.points)(v1.value0))]);
           }
           ;
           if (v1 instanceof Punc) {
-            return pure14(v1.value0);
+            return v1.value0;
           }
           ;
-          throw new Error("Failed pattern match at Editor.Notation (line 61, column 35 - line 70, column 23): " + [v1.constructor.name]);
+          throw new Error("Failed pattern match at Editor.Notation (line 77, column 35 - line 96, column 22): " + [v1.constructor.name]);
         })(v.value0);
       }
       ;
@@ -10298,8 +10431,70 @@
         return v.value0;
       }
       ;
-      throw new Error("Failed pattern match at Editor.Notation (line 60, column 33 - line 71, column 17): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Editor.Notation (line 76, column 33 - line 97, column 17): " + [v.constructor.name]);
     };
+  };
+  var defaultKidTokenOptions = /* @__PURE__ */ bottom(/* @__PURE__ */ boundedRecord()(/* @__PURE__ */ boundedRecordCons({
+    reflectSymbol: function() {
+      return "indented";
+    }
+  })(boundedBoolean)()()(boundedRecordNil)));
+  var parseWord = function(v) {
+    if (v === "*") {
+      return pure14(new All(defaultKidTokenOptions));
+    }
+    ;
+    if (v === "\n*") {
+      return pure14(new All({
+        indented: true
+      }));
+    }
+    ;
+    if (v === "_") {
+      return bind16(get3)(function(v1) {
+        return discard5(modifying2(prop12($$Proxy.value)(strongFn))(function(v2) {
+          return v2 + 1 | 0;
+        }))(function() {
+          return pure14(new Kid(v1.kid, defaultKidTokenOptions));
+        });
+      });
+    }
+    ;
+    if (v === "\n_") {
+      return bind16(get3)(function(v1) {
+        return discard5(modifying2(prop12($$Proxy.value)(strongFn))(function(v2) {
+          return v2 + 1 | 0;
+        }))(function() {
+          return pure14(new Kid(v1.kid, {
+            indented: true
+          }));
+        });
+      });
+    }
+    ;
+    if (v === "|") {
+      return bind16(get3)(function(v1) {
+        return discard5(modifying2(prop23($$Proxy.value)(strongFn))(function(v2) {
+          return v2 + 1 | 0;
+        }))(function() {
+          return pure14(new Point(v1.point));
+        });
+      });
+    }
+    ;
+    if (v === "\n") {
+      return pure14(new Punc(bind5(ask2)(function(ctx) {
+        return pure10(append7(linebreak)(indentations(ctx.indentLevel)));
+      })));
+    }
+    ;
+    return pure14(new Punc(pure10([div2([classes2(["Token punctuation"])])([text5(v)])])));
+  };
+  var parseString = function(notation) {
+    return flip(evalState)({
+      kid: 0,
+      point: 0
+    })(traverse2(parseWord)(split(" ")(notation)));
   };
 
   // output/Data.String.CodePoints/foreign.js
@@ -10714,9 +10909,9 @@
         };
       },
       assembleExpr: function() {
-        var root = parseString("Root [ \n 	 * \n ]");
+        var root = parseString("*");
         var integral = parseString("(\u222B _ from _ to _ of _ )");
-        var group4 = parseString("( \n 	 * \n )");
+        var group4 = parseString("( \n* )");
         return mkAssembleExpr(function(v) {
           if (v.label instanceof Root) {
             return new Left(root);
@@ -10766,10 +10961,10 @@
           }
           ;
           if (v.label instanceof $$Symbol) {
-            return new Left([new Punc([div2([classes2(["Punctuation"])])([text5(v.label.value0)])])]);
+            return new Left([new Punc(pure16([div2([classes2(["Punctuation"])])([text5(v.label.value0)])]))]);
           }
           ;
-          throw new Error("Failed pattern match at Editor.Example.Lisp (line 119, column 33 - line 143, column 111): " + [v.constructor.name]);
+          throw new Error("Failed pattern match at Editor.Example.Lisp (line 119, column 33 - line 143, column 119): " + [v.constructor.name]);
         });
       }()
     });
