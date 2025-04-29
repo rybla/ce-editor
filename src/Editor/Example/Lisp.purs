@@ -34,40 +34,39 @@ editor = Editor
             "" -> []
             _ | "group" # startsWith (String.Pattern query) -> case handle of
               Point_Handle _ ->
-                [ pasteGroup_Span root handle
-                , pasteLiteral root handle query
+                [ pasteLiteral root handle query
+                , pasteGroup_Span root handle
                 ]
               SpanH_Handle _ _ ->
-                [ pasteGroup_Zipper root handle
-                , pasteLiteral root handle query
+                [ pasteLiteral root handle query
+                , pasteGroup_Zipper root handle
                 ]
               ZipperH_Handle _ _ ->
                 [ pasteGroup_Zipper root handle
                 ]
             _ | "integral" # startsWith (String.Pattern query) -> case handle of
               Point_Handle _ ->
-                [ pasteIntegral_Zipper root handle
-                , pasteLiteral root handle query
+                [ pasteLiteral root handle query
+                , pasteIntegral_Zipper root handle
                 ]
               SpanH_Handle _ _ ->
-                [ pasteIntegral_Zipper root handle
-                , pasteLiteral root handle query
+                [ pasteLiteral root handle query
+                , pasteIntegral_Zipper root handle
                 ]
               ZipperH_Handle _ _ ->
                 [ pasteIntegral_Zipper root handle
                 ]
             _ | "linebreak" # startsWith (String.Pattern query) -> case handle of
               Point_Handle _ ->
-                [ pasteLineBreak_Span root handle
-                , pasteLiteral root handle query
+                [ pasteLiteral root handle query
+                , pasteLineBreak_Span root handle
                 ]
               SpanH_Handle _ _ ->
-                [ pasteLineBreak_Span root handle
-                , pasteLiteral root handle query
+                [ pasteLiteral root handle query
+                , pasteLineBreak_Span root handle
                 ]
               ZipperH_Handle _ _ ->
                 []
-              _ -> []
             _ | query # isWhitespaceFree -> case handle of
               Point_Handle _ -> [ pasteLiteral root handle query ]
               SpanH_Handle _ _ -> [ pasteLiteral root handle query ]
