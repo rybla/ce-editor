@@ -745,7 +745,7 @@
       function kill2(error4, par2, cb2) {
         var step3 = par2;
         var head5 = null;
-        var tail2 = null;
+        var tail3 = null;
         var count = 0;
         var kills2 = {};
         var tmp, kid;
@@ -768,11 +768,11 @@
                 break loop;
               }
               step3 = head5._2;
-              if (tail2 === null) {
+              if (tail3 === null) {
                 head5 = null;
               } else {
-                head5 = tail2._1;
-                tail2 = tail2._2;
+                head5 = tail3._1;
+                tail3 = tail3._2;
               }
               break;
             case MAP:
@@ -781,7 +781,7 @@
             case APPLY:
             case ALT:
               if (head5) {
-                tail2 = new Aff2(CONS, head5, tail2);
+                tail3 = new Aff2(CONS, head5, tail3);
               }
               head5 = step3;
               step3 = step3._1;
@@ -799,7 +799,7 @@
         }
         return kills2;
       }
-      function join4(result, head5, tail2) {
+      function join4(result, head5, tail3) {
         var fail2, step3, lhs, rhs, tmp, kid;
         if (util.isLeft(result)) {
           fail2 = result;
@@ -844,10 +844,10 @@
                     delete kills[kid];
                     if (tmp) {
                       tmp = false;
-                    } else if (tail2 === null) {
+                    } else if (tail3 === null) {
                       join4(fail2, null, null);
                     } else {
-                      join4(fail2, tail2._1, tail2._2);
+                      join4(fail2, tail3._1, tail3._2);
                     }
                   };
                 });
@@ -881,10 +881,10 @@
                     delete kills[kid];
                     if (tmp) {
                       tmp = false;
-                    } else if (tail2 === null) {
+                    } else if (tail3 === null) {
                       join4(step3, null, null);
                     } else {
-                      join4(step3, tail2._1, tail2._2);
+                      join4(step3, tail3._1, tail3._2);
                     }
                   };
                 });
@@ -895,11 +895,11 @@
               }
               break;
           }
-          if (tail2 === null) {
+          if (tail3 === null) {
             head5 = null;
           } else {
-            head5 = tail2._1;
-            tail2 = tail2._2;
+            head5 = tail3._1;
+            tail3 = tail3._2;
           }
         }
       }
@@ -916,7 +916,7 @@
         var status = CONTINUE;
         var step3 = par;
         var head5 = null;
-        var tail2 = null;
+        var tail3 = null;
         var tmp, fid;
         loop: while (true) {
           tmp = null;
@@ -926,21 +926,21 @@
               switch (step3.tag) {
                 case MAP:
                   if (head5) {
-                    tail2 = new Aff2(CONS, head5, tail2);
+                    tail3 = new Aff2(CONS, head5, tail3);
                   }
                   head5 = new Aff2(MAP, step3._1, EMPTY, EMPTY);
                   step3 = step3._2;
                   break;
                 case APPLY:
                   if (head5) {
-                    tail2 = new Aff2(CONS, head5, tail2);
+                    tail3 = new Aff2(CONS, head5, tail3);
                   }
                   head5 = new Aff2(APPLY, EMPTY, step3._2, EMPTY);
                   step3 = step3._1;
                   break;
                 case ALT:
                   if (head5) {
-                    tail2 = new Aff2(CONS, head5, tail2);
+                    tail3 = new Aff2(CONS, head5, tail3);
                   }
                   head5 = new Aff2(ALT, EMPTY, step3._2, EMPTY);
                   step3 = step3._1;
@@ -949,7 +949,7 @@
                   fid = fiberId++;
                   status = RETURN;
                   tmp = step3;
-                  step3 = new Aff2(FORKED, fid, new Aff2(CONS, head5, tail2), EMPTY);
+                  step3 = new Aff2(FORKED, fid, new Aff2(CONS, head5, tail3), EMPTY);
                   tmp = Fiber(util, supervisor, tmp);
                   tmp.onComplete({
                     rethrow: false,
@@ -973,11 +973,11 @@
               } else {
                 head5._2 = step3;
                 step3 = head5;
-                if (tail2 === null) {
+                if (tail3 === null) {
                   head5 = null;
                 } else {
-                  head5 = tail2._1;
-                  tail2 = tail2._2;
+                  head5 = tail3._1;
+                  tail3 = tail3._2;
                 }
               }
           }
@@ -1306,10 +1306,10 @@
             eqRecord: function(v) {
               return function(ra) {
                 return function(rb) {
-                  var tail2 = eqRecord1($$Proxy.value)(ra)(rb);
+                  var tail3 = eqRecord1($$Proxy.value)(ra)(rb);
                   var key2 = reflectSymbol2($$Proxy.value);
                   var get7 = unsafeGet(key2);
-                  return eq32(get7(ra))(get7(rb)) && tail2;
+                  return eq32(get7(ra))(get7(rb)) && tail3;
                 };
               };
             }
@@ -1644,18 +1644,18 @@
             return {
               topRecord: function(v) {
                 return function(rowProxy) {
-                  var tail2 = topRecord1($$Proxy.value)(rowProxy);
+                  var tail3 = topRecord1($$Proxy.value)(rowProxy);
                   var key2 = reflectSymbol2($$Proxy.value);
                   var insert7 = unsafeSet(key2);
-                  return insert7(top12)(tail2);
+                  return insert7(top12)(tail3);
                 };
               },
               bottomRecord: function(v) {
                 return function(rowProxy) {
-                  var tail2 = bottomRecord1($$Proxy.value)(rowProxy);
+                  var tail3 = bottomRecord1($$Proxy.value)(rowProxy);
                   var key2 = reflectSymbol2($$Proxy.value);
                   var insert7 = unsafeSet(key2);
-                  return insert7(bottom12)(tail2);
+                  return insert7(bottom12)(tail3);
                 };
               },
               OrdRecord0: function() {
@@ -1759,10 +1759,10 @@
         return {
           showRecordFields: function(v) {
             return function(record) {
-              var tail2 = showRecordFields1($$Proxy.value)(record);
+              var tail3 = showRecordFields1($$Proxy.value)(record);
               var key2 = reflectSymbol2($$Proxy.value);
               var focus3 = unsafeGet(key2)(record);
-              return " " + (key2 + (": " + (show12(focus3) + ("," + tail2))));
+              return " " + (key2 + (": " + (show12(focus3) + ("," + tail3))));
             };
           }
         };
@@ -3947,6 +3947,9 @@
     };
     return NonEmpty2;
   }();
+  var tail = function(v) {
+    return v.value1;
+  };
   var singleton2 = function(dictPlus) {
     var empty9 = empty(dictPlus);
     return function(a2) {
@@ -9778,6 +9781,7 @@
   };
   var semiringIndex = semiringInt;
   var ringIndex = ringInt;
+  var sub1 = /* @__PURE__ */ sub(ringIndex);
   var prettyStep = {
     pretty: function(v) {
       return "|" + show3(v);
@@ -9831,7 +9835,7 @@
         return OuterRight_ZipperFocus.value;
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 603, column 1 - line 603, column 38): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 611, column 1 - line 611, column 38): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof OuterLeft_ZipperFocus) {
@@ -9850,7 +9854,7 @@
         return new Inr(new Inr(new Inr(NoArguments.value)));
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 603, column 1 - line 603, column 38): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 611, column 1 - line 611, column 38): " + [x.constructor.name]);
     }
   };
   var genericShow1 = /* @__PURE__ */ genericShow(genericZipperFocus_)(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor2({
@@ -9966,7 +9970,7 @@
         return Right_SpanFocus.value;
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 585, column 1 - line 585, column 36): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 593, column 1 - line 593, column 36): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof Left_SpanFocus) {
@@ -9977,7 +9981,7 @@
         return new Inr(NoArguments.value);
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 585, column 1 - line 585, column 36): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 593, column 1 - line 593, column 36): " + [x.constructor.name]);
     }
   };
   var genericShow6 = /* @__PURE__ */ genericShow(genericSpanFocus_)(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor2({
@@ -10073,7 +10077,7 @@
         return new ZipperH_Handle(x.value0.value0.value0, x.value0.value0.value1);
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 570, column 1 - line 570, column 33): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 578, column 1 - line 578, column 33): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof Point_Handle) {
@@ -10088,7 +10092,7 @@
         return new Inr(new Inr(new Product(x.value0, x.value1)));
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 570, column 1 - line 570, column 33): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 578, column 1 - line 578, column 33): " + [x.constructor.name]);
     }
   };
   var genericShow12 = /* @__PURE__ */ genericShow(genericHandle_)(/* @__PURE__ */ genericShowSum(/* @__PURE__ */ genericShowConstructor(/* @__PURE__ */ genericShowArgsArgument(showPoint))({
@@ -10119,7 +10123,7 @@
         return new Zipper_Fragment(x.value0);
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 645, column 1 - line 645, column 39): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 653, column 1 - line 653, column 39): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof Span_Fragment) {
@@ -10130,7 +10134,7 @@
         return new Inr(x.value0);
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 645, column 1 - line 645, column 39): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 653, column 1 - line 653, column 39): " + [x.constructor.name]);
     }
   };
   var genericShow13 = /* @__PURE__ */ genericShow(genericFragment_);
@@ -10195,7 +10199,7 @@
         return new Remove_EditInfo(x.value0);
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 724, column 1 - line 724, column 39): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 732, column 1 - line 732, column 39): " + [x.constructor.name]);
     },
     from: function(x) {
       if (x instanceof Insert_EditInfo) {
@@ -10206,7 +10210,7 @@
         return new Inr(x.value0);
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr (line 724, column 1 - line 724, column 39): " + [x.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr (line 732, column 1 - line 732, column 39): " + [x.constructor.name]);
     }
   };
   var genericShow16 = /* @__PURE__ */ genericShow(genericEditInfo_);
@@ -10641,7 +10645,7 @@
       };
     }
     ;
-    throw new Error("Failed pattern match at Data.Expr (line 625, column 1 - line 625, column 33): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Data.Expr (line 633, column 1 - line 633, column 33): " + [v.constructor.name]);
   };
   var getInnerSpanH_ZipperH = function(v) {
     return {
@@ -10705,6 +10709,18 @@
     };
     return go2(Nil.value);
   };
+  var atIndexSpan_Span = function(i_L) {
+    return function(i_R) {
+      return function(v) {
+        var v1 = extractSpan_Array(unwrap4(i_L))(unwrap4(i_R))(v);
+        return {
+          "_L": v1.before,
+          "_R": v1.after,
+          here: v1.here
+        };
+      };
+    };
+  };
   var atIndexSpan_Expr = function(i_L) {
     return function(i_R) {
       return function(v) {
@@ -10752,25 +10768,29 @@
     };
   };
   var atZipper = function(dictShow) {
-    var atSubExpr1 = atSubExpr(dictShow);
     var atSpan1 = atSpan(dictShow);
+    var atSubExpr1 = atSubExpr(dictShow);
+    var getKid_Expr1 = getKid_Expr(dictShow);
     return function(v) {
       return function(e) {
-        var at_path_O = atSubExpr1(v.path_O)(e);
+        var j = getIndexesAroundStep(head(v.path_I));
+        var at_span_O = atSpan1({
+          path: v.path_O,
+          j_L: v.j_OL,
+          j_R: v.j_OR
+        })(e);
+        var at_span_M = atIndexSpan_Span(sub1(j["_L"])(v.j_OL))(sub1(j["_R"])(v.j_OL))(at_span_O.here);
+        var at_expr_O = atSubExpr1(v.path_O)(e);
         var at_span_I = atSpan1({
+          path: tail(v.path_I),
           j_L: v.j_IL,
-          j_R: v.j_IR,
-          path: fromNePath(v.path_I)
-        })(at_path_O.here);
-        var at_span_O = atIndexSpan_Expr(v.j_OL)(v.j_OR)(at_path_O.here);
+          j_R: v.j_IR
+        })(fromMaybe$prime(impossible("index out of bounds"))(getKid_Expr1(head(v.path_I))(at_expr_O.here)));
         return {
-          outside: {
-            "_O": at_path_O.outside,
-            "_I": at_span_O.outside
-          },
+          outside: at_span_O.outside,
           here: {
-            kids_L: unwrap4(at_span_O.outside).kids_L,
-            kids_R: unwrap4(at_span_O.outside).kids_L,
+            kids_L: unwrap4(at_span_M["_L"]),
+            kids_R: unwrap4(at_span_M["_R"]),
             inside: at_span_I.outside
           },
           inside: at_span_I.here

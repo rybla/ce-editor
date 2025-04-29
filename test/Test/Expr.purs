@@ -108,6 +108,45 @@ spec_edit = Spec.describe "edit" do
     , handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 2), path: Nil }) Left_SpanFocus)
     , clipboard: Nothing
     }
+
+  mkTest_EditAt "cut a zipper"
+    { root: ("Root" % [ ("a" % []), ("Group" % [ ("b" % []), ("c" % []) ]) ])
+    , handle:
+        ( ZipperH_Handle
+            ( ZipperH
+                { j_IL: (Index 0)
+                , j_IR: (Index 2)
+                , j_OL: (Index 1)
+                , j_OR: (Index 2)
+                , path_I: (NonEmpty (Step 1) Nil)
+                , path_O: Nil
+                }
+            )
+            InnerLeft_ZipperFocus
+        )
+    , clipboard: Nothing
+    }
+    Expr.Edit.cut
+    { root: ("Root" % [ ("a" % []), ("b" % []), ("c" % []) ])
+    , handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 3), path: Nil }) Left_SpanFocus)
+    , clipboard:
+        ( Just
+            ( Zipper_Fragment
+                ( Zipper
+                    { kids_L: []
+                    , kids_R: []
+                    , inside:
+                        ( SpanContext
+                            { _O: ExprContext Nil
+                            , _I: SpanTooth { l: "Group", kids_L: [], kids_R: [] }
+                            }
+                        )
+                    }
+                )
+            )
+        )
+    }
+
   pure unit
   where
   mkTest_Edit

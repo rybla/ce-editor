@@ -17,13 +17,13 @@ import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe', isJust, maybe)
 import Data.Newtype (class Newtype, unwrap)
 import Data.NonEmpty (NonEmpty, (:|))
+import Data.NonEmpty as Ne
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.String as String
 import Data.Traversable (class Traversable, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested (type (/\), (/\))
-import Debug as Debug
 import Pretty (class Pretty, parens, pretty)
 import Utility (extractAt_Array, extractSpan_Array, impossible, spaces)
 
@@ -547,18 +547,26 @@ getTotalInnerPath_ZipperH (ZipperH h) = case h.path_O of
 
 atZipper :: forall l. Show l => ZipperH -> Expr l -> { outside :: SpanContext l, here :: Zipper l, inside :: Span l }
 atZipper (ZipperH h) e =
-  { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
+  { outside: at_span_O.outside
   , here: Zipper
-      { kids_L: (at_span_O.outside # unwrap).kids_L
-      , kids_R: (at_span_O.outside # unwrap).kids_L
+      { kids_L: at_span_M._L # unwrap
+      , kids_R: at_span_M._R # unwrap
       , inside: at_span_I.outside
       }
   , inside: at_span_I.here
   }
   where
-  at_path_O = e # atSubExpr h.path_O
-  at_span_O = at_path_O.here # atIndexSpan_Expr h.j_OL h.j_OR
-  at_span_I = at_path_O.here # atSpan (SpanH { j_L: h.j_IL, j_R: h.j_IR, path: h.path_I # fromNePath })
+  at_expr_O = e # atSubExpr h.path_O
+  at_span_O = e # atSpan (SpanH { path: h.path_O, j_L: h.j_OL, j_R: h.j_OR })
+
+  j = h.path_I # Ne.head # getIndexesAroundStep
+  at_span_M = at_span_O.here # atIndexSpan_Span (j._L - h.j_OL) (j._R - h.j_OL)
+
+  at_span_I =
+    at_expr_O.here
+      # getKid_Expr (h.path_I # Ne.head)
+      # fromMaybe' (impossible "index out of bounds")
+      # atSpan (SpanH { path: h.path_I # Ne.tail, j_L: h.j_IL, j_R: h.j_IR })
 
 --------------------------------------------------------------------------------
 
