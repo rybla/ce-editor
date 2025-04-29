@@ -2,6 +2,7 @@ module Ui.App1.Buffer where
 
 import Prelude
 
+import Control.Monad.Reader (runReader)
 import Control.Monad.State (get, modify_)
 import Data.Array ((!!))
 import Data.Const (Const(..))
@@ -180,7 +181,9 @@ render state =
                   [ HH.div [ classes [ "Expr" ] ] $
                       info.insertion
                         # renderFragment (renderArgs state.editor) (state.point # unwrap).path
-                        # runRenderM
+                        # flip runReader
+                            { indentLevel: 0
+                            }
                   ]
                 Edit (Remove_EditInfo _) _ ->
                   [ HH.div [] [ HH.text "remove" ]
@@ -196,8 +199,7 @@ renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]
 
 renderArgs :: forall l w i. Show l => Editor l -> RenderArgs l w i
 renderArgs (Editor editor) =
-  { indentLevel: 1
-  , render_kid: renderExpr (Editor editor)
+  { render_kid: renderExpr (Editor editor)
   , render_point: renderPoint (Editor editor)
   , assembleExpr: editor.assembleExpr
   }

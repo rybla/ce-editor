@@ -465,8 +465,7 @@ render state =
 renderExpr :: forall l. Show l => EditorState l -> Path -> Expr l -> RenderM (Array (EditorHTML l))
 renderExpr state@{ editor: Editor editor } path expr = do
   Expr.Render.renderExpr
-    { indentLevel: 1
-    , render_kid: renderExpr state
+    { render_kid: renderExpr state
     , render_point: renderPoint state
     , assembleExpr: editor.assembleExpr
     }

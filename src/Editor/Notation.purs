@@ -78,7 +78,7 @@ mkAssembleExpr getTokens args = case args # getTokens of
   Left tokens -> tokens # foldMap case _ of
     All opt -> do
       ctx <- ask
-      kids <- local (prop (Proxy @"indentLevel") (if opt.indented then (_ + 1) else identity)) do
+      kids <- local (prop (Proxy @"indentLevel") (_ + 1)) do
         sequence args.kids
       pure $ fold
         [ if opt.indented then linebreak <> indentations ctx.indentLevel else []
@@ -87,7 +87,7 @@ mkAssembleExpr getTokens args = case args # getTokens of
         ]
     Kid i opt -> do
       ctx <- ask
-      kid <- local (prop (Proxy @"indentLevel") (if opt.indented then (_ + 1) else identity)) do
+      kid <- local (prop (Proxy @"indentLevel") (_ + 1)) do
         args.kids Array.!! i # fromMaybe do pure [ renderWarning $ "missing kid #" <> show i ]
       pure $ fold
         [ if opt.indented then linebreak <> indentations ctx.indentLevel else []

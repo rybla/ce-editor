@@ -58,16 +58,15 @@ editor = Editor
                 ]
             _ | "linebreak" # startsWith (String.Pattern query) -> case handle of
               Point_Handle _ ->
-                [ pasteLineBreak_Zipper root handle
+                [ pasteLineBreak_Span root handle
                 , pasteLiteral root handle query
                 ]
               SpanH_Handle _ _ ->
-                [ pasteLineBreak_Zipper root handle
+                [ pasteLineBreak_Span root handle
                 , pasteLiteral root handle query
                 ]
               ZipperH_Handle _ _ ->
-                [ pasteLineBreak_Zipper root handle
-                ]
+                []
               _ -> []
             _ | query # isWhitespaceFree -> case handle of
               Point_Handle _ -> [ pasteLiteral root handle query ]
@@ -80,7 +79,7 @@ editor = Editor
       _ | ki # matchKeyInfo (_ == "(") { cmd: pure false, alt: pure false } ->
         pure $ pasteGroup_Zipper root handle
       _ | ki # matchKeyInfo (_ == "Enter") { cmd: pure false, alt: pure false } ->
-        pure $ pasteLineBreak_Zipper root handle
+        pure $ pasteLineBreak_Span root handle
       _ -> none
   , isValidHandle: \expr handle -> case handle of
       Point_Handle p -> and [ isValidPoint expr p ]
@@ -96,7 +95,8 @@ editor = Editor
         group = Notation.parseString "'(' * ')'"
         integral = Notation.parseString "'(' ∫ _ from _ to _ of _ ')'"
         -- linebreak = Notation.parseString "begin \n* end"
-        linebreak = Notation.parseString "\n* \n"
+        -- linebreak = Notation.parseString "\n* \n"
+        linebreak = Notation.parseString "\n"
       in
         Notation.mkAssembleExpr case _ of
           { label: "Root" } -> Left root
@@ -132,7 +132,7 @@ isValidPoint :: Expr L -> Point -> Boolean
 isValidPoint expr (Point p) = e'.l `Set.member` ls
   where
   Expr e' = (expr # atSubExpr p.path).here
-  ls = Set.fromFoldable [ "Root", "Group", "Arg", "LineBreak" ]
+  ls = Set.fromFoldable [ "Root", "Group", "Arg" ]
 
 pasteLiteral root handle query = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ query % [] ]
 
@@ -158,11 +158,13 @@ pasteIntegral_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Frag
   }
 
 pasteLineBreak_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "LineBreak" % [] ]
-pasteLineBreak_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
-  { kids_L: []
-  , inside: SpanContext
-      { _O: ExprContext Nil
-      , _I: SpanTooth { l: "LineBreak", kids_L: [], kids_R: [] }
-      }
-  , kids_R: []
-  }
+
+-- pasteLineBreak_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "LineBreak" % [] ]
+-- pasteLineBreak_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
+--   { kids_L: []
+--   , inside: SpanContext
+--       { _O: ExprContext Nil
+--       , _I: SpanTooth { l: "LineBreak", kids_L: [], kids_R: [] }
+--       }
+--   , kids_R: []
+--   }

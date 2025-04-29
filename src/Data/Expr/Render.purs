@@ -13,8 +13,7 @@ import Halogen.HTML as HH
 import Ui.Halogen (classes)
 
 type RenderArgs l w i =
-  { indentLevel :: Int
-  , render_kid :: Path -> Expr l -> RenderM (Array (HTML w i))
+  { render_kid :: Path -> Expr l -> RenderM (Array (HTML w i))
   , render_point :: Point -> HTML w i
   , assembleExpr :: AssembleExpr l
   }
