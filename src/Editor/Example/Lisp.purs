@@ -94,8 +94,6 @@ editor = Editor
         root = Notation.parseString "*"
         group = Notation.parseString "'(' * ')'"
         integral = Notation.parseString "'(' ∫ _ from _ to _ of _ ')'"
-        -- linebreak = Notation.parseString "begin \n* end"
-        -- linebreak = Notation.parseString "\n* \n"
         linebreak = Notation.parseString "\n"
       in
         Notation.mkAssembleExpr case _ of
@@ -159,12 +157,3 @@ pasteIntegral_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Frag
 
 pasteLineBreak_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "LineBreak" % [] ]
 
--- pasteLineBreak_Span root handle = mkPasteFragmentEdit root handle $ Span_Fragment $ Span [ "LineBreak" % [] ]
--- pasteLineBreak_Zipper root handle = mkPasteFragmentEdit root handle $ Zipper_Fragment $ Zipper
---   { kids_L: []
---   , inside: SpanContext
---       { _O: ExprContext Nil
---       , _I: SpanTooth { l: "LineBreak", kids_L: [], kids_R: [] }
---       }
---   , kids_R: []
---   }
