@@ -2,7 +2,7 @@ module Data.Expr where
 
 import Prelude
 
-import Control.Alternative (guard)
+import Control.Alternative (guard, (<|>))
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Either (Either(..))
@@ -11,6 +11,7 @@ import Data.Foldable (class Foldable, foldr, length)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.Lazy (Lazy)
+import Data.Lazy (force) as Lazy
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe', isJust, maybe)
@@ -22,7 +23,7 @@ import Data.String as String
 import Data.Traversable (class Traversable, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested (type (/\), (/\))
-import Halogen.HTML (PlainHTML)
+import Pretty (class Pretty, pretty)
 import Utility (extractAt_Array, extractSpan_Array, impossible, parens, spaces)
 
 --------------------------------------------------------------------------------
@@ -30,9 +31,13 @@ import Utility (extractAt_Array, extractSpan_Array, impossible, parens, spaces)
 newtype Step = Step Int
 
 derive instance Newtype Step _
+derive instance Generic Step _
 
 instance Show Step where
-  show (Step i) = "|" <> show i
+  show x = genericShow x
+
+instance Pretty Step where
+  pretty (Step i) = "|" <> show i
 
 derive instance Eq Step
 
@@ -52,7 +57,7 @@ atStep :: forall l. Show l => Step -> Expr l -> { outside :: Tooth l, here :: Ex
 atStep i (Expr e) = { outside: Tooth { l: e.l, kids_L, kids_R }, here }
   where
   { before: kids_L, here, after: kids_R } = e.kids # extractAt_Array (unwrap i)
-    # fromMaybe' (impossible $ "atStep " <> show i <> " " <> show (Expr e))
+    # fromMaybe' (impossible $ "atStep " <> pretty i <> " " <> pretty (Expr e))
 
 atSteps ∷ ∀ l. Show l ⇒ Expr l → Array { here :: Expr l, outside ∷ Tooth l }
 atSteps e = e # getSteps # map \i -> e # atStep i
@@ -62,9 +67,13 @@ atSteps e = e # getSteps # map \i -> e # atStep i
 newtype Index = Index Int
 
 derive instance Newtype Index _
+derive instance Generic Index _
 
 instance Show Index where
-  show (Index i) = "." <> show i
+  show x = genericShow x
+
+instance Pretty Index where
+  pretty (Index i) = "." <> show i
 
 derive instance Eq Index
 
@@ -113,8 +122,11 @@ derive instance Generic (Expr l) _
 derive instance Newtype (Expr l) _
 
 instance Show l => Show (Expr l) where
-  show (Expr e) | Array.null e.kids = show e.l
-  show (Expr e) = parens $ Array.intercalate " " ([ show e.l, "%" ] <> (e.kids # map show))
+  show x = genericShow x
+
+instance Show l => Pretty (Expr l) where
+  pretty (Expr e) | Array.null e.kids = show e.l
+  pretty (Expr e) = parens $ Array.intercalate " " ([ show e.l, "%" ] <> (e.kids # map pretty))
 
 instance Eq l => Eq (Expr l) where
   eq x = genericEq x
@@ -168,12 +180,18 @@ derive instance Newtype (Span l) _
 instance Show l => Show (Span l) where
   show x = genericShow x
 
+instance Show l => Pretty (Span l) where
+  pretty (Span es) = es # map pretty # String.joinWith " "
+
+instance Eq l => Eq (Span l) where
+  eq x = genericEq x
+
 derive instance Functor Span
 derive instance Foldable Span
 derive instance Traversable Span
 
 getKid_Span :: forall l. Show l => Step -> Span l -> Expr l
-getKid_Span i (Span es) = es Array.!! unwrap i # fromMaybe' (impossible $ "getKid_Span " <> show i <> " " <> show (Span es))
+getKid_Span i (Span es) = es Array.!! unwrap i # fromMaybe' (impossible $ "getKid_Span " <> pretty i <> " " <> pretty (Span es))
 
 atIndexSpan_Span :: forall l. Index -> Index -> Span l -> { _L :: Span l, _R :: Span l, here :: Span l }
 atIndexSpan_Span i_L i_R (Span es) = { _L: Span left, _R: Span right, here: Span es }
@@ -187,11 +205,11 @@ offset_Span (Span es) = Index $ es # Array.length
 
 type Path = List Step
 
-show_Path :: Path -> String
-show_Path steps = "[" <> (steps # map show # List.intercalate " ") <> "]"
+pretty_Path :: Path -> String
+pretty_Path steps = "[" <> (steps # map pretty # List.intercalate " ") <> "]"
 
-showNePath :: NePath -> String
-showNePath nepath = show_Path (nepath # fromNePath)
+pretty_NePath :: NePath -> String
+pretty_NePath nepath = pretty_Path (nepath # fromNePath)
 
 atSubExpr :: forall l. Show l => Path -> Expr l -> { outside :: List (Tooth l), here :: Expr l }
 atSubExpr = go Nil
@@ -234,7 +252,10 @@ derive instance Generic Point _
 derive instance Newtype Point _
 
 instance Show Point where
-  show (Point p) = parens $ show_Path p.path <> " △ " <> show p.j
+  show x = genericShow x
+
+instance Pretty Point where
+  pretty (Point p) = parens $ pretty_Path p.path <> " △ " <> pretty p.j
 
 instance Eq Point where
   eq x = genericEq x
@@ -253,14 +274,19 @@ derive instance Generic (Tooth l) _
 derive instance Newtype (Tooth l) _
 
 instance Show l => Show (Tooth l) where
-  show t = "{{ " <> showTooth' t "{{}}" <> " }}"
+  show x = genericShow x
+
+instance Show l => Pretty (Tooth l) where
+  pretty t = "{{ " <> showTooth' t "{{}}" <> " }}"
+
+derive newtype instance Eq l => Eq (Tooth l)
 
 derive instance Functor Tooth
 derive instance Foldable Tooth
 derive instance Traversable Tooth
 
 showTooth' :: forall l. Show l => (Tooth l) -> String -> String
-showTooth' (Tooth t) s = parens $ Array.intercalate " " $ [ show t.l, "%" ] <> (t.kids_L # map show) <> [ s ] <> (t.kids_R # map show)
+showTooth' (Tooth t) s = parens $ Array.intercalate " " $ [ show t.l, "%" ] <> (t.kids_L # map pretty) <> [ s ] <> (t.kids_R # map pretty)
 
 -- isRoot_Tooth :: forall l. (Tooth l) -> Boolean
 -- isRoot_Tooth (Tooth t) = t.l == Root
@@ -296,14 +322,19 @@ derive instance Generic (SpanTooth l) _
 derive instance Newtype (SpanTooth l) _
 
 instance Show l => Show (SpanTooth l) where
-  show st = "{{ " <> showSpanTooth' st "{{}}" <> " }}"
+  show x = genericShow x
+
+instance Show l => Pretty (SpanTooth l) where
+  pretty st = "{{ " <> showSpanTooth' st "{{}}" <> " }}"
+
+derive newtype instance Eq l => Eq (SpanTooth l)
 
 derive instance Functor SpanTooth
 derive instance Foldable SpanTooth
 derive instance Traversable SpanTooth
 
 showSpanTooth' :: forall l. Show l => (SpanTooth l) -> String -> String
-showSpanTooth' (SpanTooth st) s = parens $ Array.intercalate " " $ [ show st.l, "%" ] <> (st.kids_L # map show) <> [ s ] <> (st.kids_R # map show)
+showSpanTooth' (SpanTooth st) s = parens $ Array.intercalate " " $ [ show st.l, "%" ] <> (st.kids_L # map pretty) <> [ s ] <> (st.kids_R # map pretty)
 
 unSpanTooth :: forall l. (SpanTooth l) -> Span l -> Expr l
 unSpanTooth (SpanTooth b) s = Expr { l: b.l, kids: b.kids_L <> unwrap s <> b.kids_R }
@@ -336,7 +367,12 @@ derive instance Generic (ExprContext l) _
 derive instance Newtype (ExprContext l) _
 
 instance Show l => Show (ExprContext l) where
-  show ec = "{{ " <> showExprContext' ec "{{}}" <> " }}"
+  show x = genericShow x
+
+instance Show l => Pretty (ExprContext l) where
+  pretty ec = "{{ " <> showExprContext' ec "{{}}" <> " }}"
+
+derive newtype instance Eq l => Eq (ExprContext l)
 
 derive instance Functor ExprContext
 derive instance Foldable ExprContext
@@ -363,7 +399,12 @@ derive instance Generic (SpanContext l) _
 derive instance Newtype (SpanContext l) _
 
 instance Show l => Show (SpanContext l) where
-  show (SpanContext sc@{ _O: ExprContext ts }) = "{{ " <> foldr showTooth' (show sc._I) ts <> " }}"
+  show x = genericShow x
+
+instance Show l => Pretty (SpanContext l) where
+  pretty (SpanContext sc@{ _O: ExprContext ts }) = "{{ " <> foldr showTooth' (pretty sc._I) ts <> " }}"
+
+derive newtype instance Eq l => Eq (SpanContext l)
 
 derive instance Functor SpanContext
 derive instance Foldable SpanContext
@@ -386,17 +427,23 @@ getPath_SpanContext (SpanContext sc) = sc._O # getPath_ExprContext
 newtype Zipper l = Zipper { kids_L :: Array (Expr l), kids_R :: Array (Expr l), inside :: SpanContext l }
 
 derive instance Newtype (Zipper l) _
+derive instance Generic (Zipper l) _
 
 instance Show l => Show (Zipper l) where
-  show (Zipper z) =
+  show x = genericShow x
+
+instance Show l => Pretty (Zipper l) where
+  pretty (Zipper z) =
     "{{ "
       <>
-        ( [ z.kids_L # map show # Array.intercalate " "
+        ( [ z.kids_L # map pretty # Array.intercalate " "
           , showSpanContext' z.inside "{{}}"
-          , z.kids_R # map show # Array.intercalate " "
+          , z.kids_R # map pretty # Array.intercalate " "
           ] # Array.intercalate " "
         )
       <> " }}"
+
+derive newtype instance Eq l => Eq (Zipper l)
 
 derive instance Functor Zipper
 derive instance Foldable Zipper
@@ -427,8 +474,11 @@ derive instance Generic SpanH _
 derive instance Newtype SpanH _
 
 instance Show SpanH where
-  show (SpanH h) =
-    spaces [ "[[", show_Path h.path, "|", show h.j_L, "…", show h.j_R, "]]" ]
+  show x = genericShow x
+
+instance Pretty SpanH where
+  pretty (SpanH h) =
+    spaces [ "[[", pretty_Path h.path, "|", pretty h.j_L, "…", pretty h.j_R, "]]" ]
 
 instance Eq SpanH where
   eq x = genericEq x
@@ -466,8 +516,11 @@ derive instance Generic ZipperH _
 derive instance Newtype ZipperH _
 
 instance Show ZipperH where
-  show (ZipperH h) =
-    spaces [ "[[", show_Path h.path_O, "|", show h.j_OL, "…", show h.j_OR, "|", showNePath h.path_I, "|", show h.j_IL, "…", show h.j_IR, "]]" ]
+  show x = genericShow x
+
+instance Pretty ZipperH where
+  pretty (ZipperH h) =
+    spaces [ "[[", pretty_Path h.path_O, "|", pretty h.j_OL, "…", pretty h.j_OR, "|", pretty_NePath h.path_I, "|", pretty h.j_IL, "…", pretty h.j_IR, "]]" ]
 
 instance Eq ZipperH where
   eq x = genericEq x
@@ -531,9 +584,12 @@ data Handle
 derive instance Generic Handle _
 
 instance Show Handle where
-  show (Point_Handle p) = "[[ " <> show p <> " ]]"
-  show (SpanH_Handle h focus) = show h <> " @ " <> show focus
-  show (ZipperH_Handle h focus) = show h <> " @ " <> show focus
+  show x = genericShow x
+
+instance Pretty Handle where
+  pretty (Point_Handle p) = "[[ " <> pretty p <> " ]]"
+  pretty (SpanH_Handle h focus) = pretty h <> " @ " <> pretty focus
+  pretty (ZipperH_Handle h focus) = pretty h <> " @ " <> pretty focus
 
 instance Eq Handle where
   eq x = genericEq x
@@ -546,8 +602,11 @@ instance Eq SpanFocus where
   eq x = genericEq x
 
 instance Show SpanFocus where
-  show Left_SpanFocus = "L"
-  show Right_SpanFocus = "R"
+  show x = genericShow x
+
+instance Pretty SpanFocus where
+  pretty Left_SpanFocus = "L"
+  pretty Right_SpanFocus = "R"
 
 data ZipperFocus
   = OuterLeft_ZipperFocus
@@ -561,10 +620,13 @@ instance Eq ZipperFocus where
   eq x = genericEq x
 
 instance Show ZipperFocus where
-  show OuterLeft_ZipperFocus = "OL"
-  show InnerLeft_ZipperFocus = "IL"
-  show InnerRight_ZipperFocus = "IR"
-  show OuterRight_ZipperFocus = "OR"
+  show x = genericShow x
+
+instance Pretty ZipperFocus where
+  pretty OuterLeft_ZipperFocus = "OL"
+  pretty InnerLeft_ZipperFocus = "IL"
+  pretty InnerRight_ZipperFocus = "IR"
+  pretty OuterRight_ZipperFocus = "OR"
 
 defaultHandle :: Handle
 defaultHandle = Point_Handle $ Point { path: Nil, j: Index 0 }
@@ -599,6 +661,13 @@ derive instance Generic (Fragment l) _
 instance Show l => Show (Fragment l) where
   show x = genericShow x
 
+instance Show l => Pretty (Fragment l) where
+  pretty (Span_Fragment s) = pretty s
+  pretty (Zipper_Fragment z) = pretty z
+
+instance Eq l => Eq (Fragment l) where
+  eq x = genericEq x
+
 derive instance Functor Fragment
 derive instance Foldable Fragment
 derive instance Traversable Fragment
@@ -616,12 +685,15 @@ data Diff l
 derive instance Generic (Diff l) _
 
 instance Show l => Show (Diff l) where
-  show Id_Diff = "_"
-  show (Inject_Diff kids) = "(_ % " <> (kids # map show # String.joinWith " ") <> ")"
-  show (DeleteTooth_Diff i d) = "-(_ % ... -[" <> show i <> "]: " <> show d <> " ... )"
-  show (InsertTooth_Diff t d) = "+(_ % ... +[" <> show (t # getStep) <> "]: " <> show d <> " ... )"
-  show (ReplaceSpan_Diff j0 j1 span) = "//(_ % ... [" <> show j0 <> "] " <> (span # unwrap # map show # String.joinWith " ") <> " [" <> show j1 <> " ... )"
-  show (Replace_Diff e) = "//" <> show e
+  show x = genericShow x
+
+instance Show l => Pretty (Diff l) where
+  pretty Id_Diff = "_"
+  pretty (Inject_Diff kids) = "(_ % " <> (kids # map pretty # String.joinWith " ") <> ")"
+  pretty (DeleteTooth_Diff i d) = "-(_ % ... -[" <> pretty i <> "]: " <> pretty d <> " ... )"
+  pretty (InsertTooth_Diff t d) = "+(_ % ... +[" <> pretty (t # getStep) <> "]: " <> pretty d <> " ... )"
+  pretty (ReplaceSpan_Diff j0 j1 span) = "//(_ % ... [" <> pretty j0 <> "] " <> (span # unwrap # map pretty # String.joinWith " ") <> " [" <> pretty j1 <> " ... )"
+  pretty (Replace_Diff e) = "//" <> pretty e
 
 atInjectDiff :: forall l l'. Show l => NePath -> (Expr l -> Diff l') -> Expr l -> Diff l'
 atInjectDiff (i0 :| path0) f = goStep i0 path0
@@ -649,11 +721,43 @@ data Edit l = Edit (EditInfo l)
       }
   )
 
+derive instance Generic (Edit l) _
+
+instance Show l => Show (Edit l) where
+  show x = genericShow x
+
+instance Show l => Pretty (Edit l) where
+  pretty x = show x
+
 data EditInfo l
   = Insert_EditInfo
       { insertion :: Fragment l
       }
   | Remove_EditInfo {}
+
+derive instance Generic (EditInfo l) _
+
+instance Show l => Show (EditInfo l) where
+  show x = genericShow x
+
+instance Show l => Pretty (EditInfo l) where
+  pretty x = show x
+
+type PureEditorState l =
+  { root :: Expr l
+  , handle :: Handle
+  , clipboard :: Maybe (Fragment l)
+  }
+
+applyEdit :: forall l. Show l => Edit l -> PureEditorState l -> PureEditorState l
+applyEdit (Edit _ result_) state =
+  let
+    result = result_ # Lazy.force
+  in
+    { root: result.root
+    , handle: normalizeHandle result.handle
+    , clipboard: result.clipboard <|> state.clipboard
+    }
 
 --------------------------------------------------------------------------------
 -- Utilities

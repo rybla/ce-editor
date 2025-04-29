@@ -23,6 +23,7 @@ import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
+import Pretty (pretty)
 import Prim.Row (class Nub, class Union)
 import Ui.Element (addClass, appendChild, body, create, createChild, doc, removeChild, removeClass, replaceChild, setText) as Element
 import Ui.Event (KeyInfo(..))
@@ -133,7 +134,7 @@ getUiPoints_UiExpr e = ((e # unwrap).l # unwrap).meta.uips
 createEditor :: Element -> Effect UiEditor
 createEditor parent = do
   let expr_ = mkExpr (mkL Root {}) [ config.initialExpr ]
-  Console.logShow expr_
+  Console.log $ pretty expr_
 
   ctx <- newCtx
 
@@ -224,7 +225,7 @@ eventListenerInfo_keydown_Editor = Element.doc # Document.toEventTarget # addEve
                     t = Tooth { l: mkL (String ki.key) {}, kids_L: [], kids_R: [] }
                     diff = expr # atInjectDiff nepath \_expr' ->
                       InsertTooth_Diff t Id_Diff
-                  Console.log $ "diff = " <> show diff
+                  Console.log $ "diff = " <> pretty diff
                   setHandle none
                   updateUiExprViaDiff_root diff
             _ -> pure unit -- TODO: other kinds of insert
@@ -293,7 +294,7 @@ type EditorM = ReaderT Ctx Effect
 
 createUiExpr :: Path -> PureExpr -> EditorM UiExpr
 createUiExpr path (Expr expr) = do
-  Console.log $ "createUiExpr: " <> show (Expr expr)
+  Console.log $ "createUiExpr: " <> pretty (Expr expr)
 
   createUiExpr' path expr.l (Expr expr # rangeKidSteps) \i -> do
     kid <- Expr expr # getKid_Expr i # fromMaybeM do lift $ throw $ "kid index out of bounds"
@@ -387,7 +388,7 @@ assembleUiExpr path_ref elem_expr label kids = do
 createUiPoint :: Point -> EditorM UiPoint
 createUiPoint (Point point0) = do
   ctx <- ask
-  Console.log $ "createUiPoint " <> show (Point point0)
+  Console.log $ "createUiPoint " <> pretty (Point point0)
 
   pointRef <- lift $ Ref.new (Point point0)
 
@@ -521,7 +522,7 @@ updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) = do
     ({ _L: Step 0, _R: Step $ kids_L_length + kids_R_length } # rangeSteps)
     \i -> do
       if i < Step kids_L_length then do
-        kid <- tooth.kids_L Array.!! unwrap i # fromMaybeM do lift $ throw $ "updateUiExprViaDiff InsertTooth_Diff: step out-of-bounds: " <> show i
+        kid <- tooth.kids_L Array.!! unwrap i # fromMaybeM do lift $ throw $ "updateUiExprViaDiff InsertTooth_Diff: step out-of-bounds: " <> pretty i
         uie_kid <- createUiExpr (path `List.snoc` i) kid
         pure uie_kid
       else if i == Step kids_L_length then do
@@ -531,7 +532,7 @@ updateUiExprViaDiff _ path mb_parent e (InsertTooth_Diff (Tooth tooth) d) = do
         lift $ e_parent_placeholder # Element.setText "{{e_parent_placeholder}}"
         updateUiExprViaDiff true (path `List.snoc` i) (Just e_parent_placeholder) e d
       else do
-        kid <- tooth.kids_R Array.!! ((-kids_L_length) + (-1) + unwrap i) # fromMaybeM do lift $ throw $ "updateUiExprViaDiff InsertTooth_Diff: step out-of-bounds: " <> show i
+        kid <- tooth.kids_R Array.!! ((-kids_L_length) + (-1) + unwrap i) # fromMaybeM do lift $ throw $ "updateUiExprViaDiff InsertTooth_Diff: step out-of-bounds: " <> pretty i
         uie_kid <- createUiExpr (path `List.snoc` i) kid
         pure uie_kid
 

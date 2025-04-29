@@ -4,11 +4,13 @@ import Prelude
 
 import Control.Alternative ((<|>))
 import Control.Monad.State (get, modify)
-import Data.Expr (Edit(..), Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
+import Data.Array as Array
+import Data.Expr (Edit(..), Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
 import Data.Expr.Render as Expr.Render
+import Data.Foldable (fold)
 import Data.Lazy as Lazy
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..), isJust)
@@ -30,10 +32,11 @@ import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
 import Ui.App1.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot)
+import Ui.App1.Config as Config
 import Ui.App1.Point as Point
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
-import Utility (guardPure, isNonSpace, todo, (:%=), (:=))
+import Utility (bug, guardPure, isNonSpace, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -111,9 +114,9 @@ handleAction (KeyDown_EditorAction event) = do
     _ -> pure unit
   else case unit of
     -- shortcut
-    _ | Just handle <- mb_handle, Just bufferOption <- ki # editor.getShortcut state.root handle -> do
+    _ | Just handle <- mb_handle, Just edit <- ki # editor.getShortcut state.root handle -> do
       liftEffect $ event # Event.preventDefault
-      submitEdit bufferOption
+      submitEdit edit handle
     -- move
     _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
@@ -185,25 +188,25 @@ handleAction (KeyDown_EditorAction event) = do
     _ | ki # Event.matchKeyInfo (_ == "c") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
-        Just handle -> submitEdit $ state.root # Expr.Edit.cut handle
+        Just handle -> submitEdit (state.root # Expr.Edit.cut handle) handle
         _ -> pure unit
     -- delete
     _ | ki # Event.matchKeyInfo (_ == "Backspace") { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
-        Just handle -> submitEdit $ state.root # Expr.Edit.delete handle
+        Just handle -> submitEdit (state.root # Expr.Edit.delete handle) handle
         _ -> pure unit
     -- cut
     _ | ki # Event.matchKeyInfo (_ == "x") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
-        Just handle -> submitEdit $ state.root # Expr.Edit.cut handle
+        Just handle -> submitEdit (state.root # Expr.Edit.cut handle) handle
         _ -> pure unit
     -- paste
     _ | ki # Event.matchKeyInfo (_ == "v") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle /\ state.clipboard of
-        Just handle /\ Just clipboard -> submitEdit $ state.root # Expr.Edit.paste clipboard handle
+        Just handle /\ Just clipboard -> submitEdit (state.root # Expr.Edit.paste clipboard handle) handle
         _ -> pure unit
     -- redo
     _ | ki # Event.matchKeyInfo (_ == "z") { cmd: pure true, shift: pure true, alt: pure false } -> do
@@ -255,8 +258,12 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
           Just h' -> do
             when (editor.isValidHandle state.root h) do
               setHandle (pure h')
-handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput bufferOption))) = do
-  submitEdit bufferOption
+handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput edit))) = do
+  state <- get
+  mb_handle <- liftEffect do state.ref_mb_handle # Ref.read
+  case mb_handle of
+    Nothing -> bug "shouldn't be able to submit buffer if there is no handle"
+    Just handle -> submitEdit edit handle
 
 submit_keys = Set.fromFoldable [ "Tab", " " ]
 
@@ -302,13 +309,31 @@ loadSnapshot s = do
 -- submitEdit
 --------------------------------------------------------------------------------
 
-submitEdit :: forall l. Show l => Edit l -> EditorM l Unit
-submitEdit (Edit _ result_) = do
-  let result = result_ # Lazy.force
-  modifyEditorState \state -> state
-    { root = result.root
-    , initial_mb_handle = pure $ normalizeHandle result.handle
-    , clipboard = result.clipboard <|> state.clipboard
+submitEdit :: forall l. Show l => Edit l -> Handle -> EditorM l Unit
+submitEdit edit handle = do
+  state <- get
+  let
+    input =
+      { root: state.root
+      , handle
+      , clipboard: state.clipboard
+      }
+    output = applyEdit edit input
+  when Config.log_edits do
+    Console.log $ Array.replicate 10 "====" # fold
+    Console.log "guard (Config.log_edits = true)"
+    Console.log ""
+    Console.log "edit:"
+    Console.log $ show edit
+    Console.log $ "input state:"
+    Console.log $ "{ root: " <> show input.root <> "\n, handle: " <> show input.handle <> "\n, clipboard: " <> show input.clipboard <> "\n}"
+    Console.log $ "output state:"
+    Console.log $ "{ root: " <> show output.root <> "\n, handle: " <> show output.handle <> "\n, clipboard: " <> show output.clipboard <> "\n}"
+    Console.log $ Array.replicate 10 "====" # fold
+  modifyEditorState _
+    { root = output.root
+    , initial_mb_handle = pure output.handle
+    , clipboard = output.clipboard
     }
 
 --------------------------------------------------------------------------------
@@ -337,10 +362,10 @@ setHandle' :: forall l. EditorM l (Maybe Handle) -> EditorM l Unit
 setHandle' m_mb_handle = do
   state <- get
   mb_handle_old <- liftEffect $ Ref.read state.ref_mb_handle
-  Console.log $ "[Editor.setHandle'] mb_handle_old = " <> show mb_handle_old
+  -- Console.log $ "[Editor.setHandle'] mb_handle_old = " <> show mb_handle_old
   modifyHandle false mb_handle_old
   mb_handle_new <- m_mb_handle
-  Console.log $ "[Editor.setHandle'] mb_handle_new = " <> show mb_handle_new
+  -- Console.log $ "[Editor.setHandle'] mb_handle_new = " <> show mb_handle_new
   modifyHandle true mb_handle_new
   liftEffect $ state.ref_mb_handle := mb_handle_new
 

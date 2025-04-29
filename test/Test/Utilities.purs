@@ -9,15 +9,15 @@ import Test.Spec.Assertions (fail)
 shouldEqual
   :: forall m t
    . MonadThrow Error m
-  => Show t
   => Eq t
-  => t
+  => (t -> String)
+  -> t
   -> t
   -> m Unit
-shouldEqual v1 v2 =
+shouldEqual toString v1 v2 =
   when (v1 /= v2)
     $ fail
-    $ show v1 <> " ≠\n  " <> show v2 <> "\n"
+    $ toString v1 <> " ≠\n  " <> toString v2 <> "\n"
 
 throw = throwError <<< error
 

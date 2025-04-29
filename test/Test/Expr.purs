@@ -5,10 +5,18 @@ import Prelude
 
 import Data.Array as Array
 import Data.Expr.Drag as Expr.Drag
+import Data.Expr.Edit (EditAt)
+import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
+import Data.Lazy (defer)
+import Data.Lazy as Lazy
+import Data.List (List(..))
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe')
+import Data.NonEmpty (NonEmpty(..))
+import Data.Unfoldable (none)
 import Partial.Unsafe (unsafePartial)
+import Pretty (pretty)
 import Test.Spec (Spec)
 import Test.Spec as Spec
 import Test.Utilities (shouldEqual)
@@ -22,6 +30,7 @@ test :: Spec Unit
 test = Spec.describe "Expr" do
   test_drag
   test_move
+  test_edit
 
 test_drag :: Spec Unit
 test_drag = Spec.describe "drag" do
@@ -31,23 +40,32 @@ test_drag = Spec.describe "drag" do
       p = point [ 0 ] 2
       h'@(SpanH_Handle sh _) = spanH { path: [ 0 ], j_L: 0, j_R: 2 } Right_SpanFocus
       hp = sh # getEndPoints_SpanH
-    areOrderedSiblings_Point hp._L p `shouldEqual` true
-    Expr.Drag.drag h p (example_expr 2 2) `shouldEqual` pure h'
+    shouldEqual show
+      (areOrderedSiblings_Point hp._L p)
+      true
+    shouldEqual show
+      (Expr.Drag.drag h p (example_expr 2 2))
+      (pure h')
 
   Spec.it "drag from an Inner Right Point to an Outer Right Point to make a Zipper Handle" do
     let
       h = Point_Handle $ point [ 0 ] 2
       p_OR = point [] 1
       h' = zipperH { path_O: [], j_OL: 0, j_OR: 1, path_I: [ 0 ], j_IL: 0, j_IR: 2 } OuterRight_ZipperFocus
-    Expr.Drag.drag h p_OR (example_expr 2 2) `shouldEqual` pure h'
+    shouldEqual show
+      (Expr.Drag.drag h p_OR (example_expr 2 2))
+      (pure h')
 
   Spec.it "drag from an Inner Point to an Outer Right Point to make a Zipper Handle, where the innermost span is empty" do
     let
       h = Point_Handle $ point [ 0 ] 0
       p_OR = point [] 1
       h' = zipperH { path_O: [], j_OL: 0, j_OR: 1, path_I: [ 0 ], j_IL: 0, j_IR: 0 } OuterRight_ZipperFocus
-    Expr.Drag.drag h p_OR (example_expr 1 1) `shouldEqual` pure h'
+    shouldEqual show
+      (Expr.Drag.drag h p_OR (example_expr 1 1))
+      (pure h')
 
+test_move :: Spec Unit
 test_move = Spec.describe "move" do
   mkTest_movePoint_R (example_expr 2 3)
     (point [] 0)
@@ -65,7 +83,50 @@ test_move = Spec.describe "move" do
   where
   mkTest_movePoint_R e p mb_h =
     Spec.it ("movePoint " <> show e <> " " <> show Expr.Move.R <> " " <> show p <> " == " <> show mb_h) do
-      Expr.Move.movePoint e Expr.Move.R p `shouldEqual` mb_h
+      shouldEqual show
+        (Expr.Move.movePoint e Expr.Move.R p)
+        mb_h
+
+test_edit :: Spec Unit
+test_edit = Spec.describeOnly "edit" do
+  mkTest_Edit
+    { root: (Expr { kids: [ (Expr { kids: [], l: "hello" }), (Expr { kids: [ (Expr { kids: [], l: "world" }) ], l: "Group" }) ], l: "Root" })
+    , handle: (ZipperH_Handle (ZipperH { j_IL: (Index 0), j_IR: (Index 1), j_OL: (Index 1), j_OR: (Index 2), path_I: (NonEmpty (Step 1) Nil), path_O: Nil }) OuterLeft_ZipperFocus)
+    , clipboard: Nothing
+    }
+    ((Edit (Remove_EditInfo {}) (defer \_ -> { clipboard: Nothing, handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 2), path: Nil }) Left_SpanFocus), root: (Expr { kids: [ (Expr { kids: [], l: "hello" }) ], l: "Root" }) })))
+    { root: (Expr { kids: [ (Expr { kids: [], l: "hello" }) ], l: "Root" })
+    , handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 2), path: Nil }) Left_SpanFocus)
+    , clipboard: Nothing
+    }
+  pure unit
+  where
+  mkTest_Edit
+    :: PureEditorState L
+    -> Edit L
+    -> PureEditorState L
+    -> Spec Unit
+  mkTest_Edit state edit state' =
+    Spec.it ("apply edit " <> pretty edit) do
+      let Edit _ result = edit
+      shouldEqual show
+        (Lazy.force result)
+        (state')
+
+  mkTest_EditAt
+    :: PureEditorState L
+    -> EditAt L
+    -> PureEditorState L
+    -> Spec Unit
+  mkTest_EditAt state editAt state' =
+    let
+      edit = editAt state.handle state.root
+    in
+      Spec.it ("apply edit " <> pretty edit) do
+        let Edit _ result = edit
+        shouldEqual show
+          (Lazy.force result)
+          (state')
 
 --------------------------------------------------------------------------------
 -- Utilities

@@ -63,6 +63,27 @@
     }
   ],
   [
+    "Expr edit apply edit (Edit (Remove_EditInfo {}) (defer \\_ -> { clipboard: Nothing, handle: (Point_Handle (Point { j: (Index 0), path: Nil })), root: (Expr { kids: [(Expr { kids: [], l: \"hello\" }),(Expr { kids: [(Expr { kids: [], l: \"world\" })], l: \"group\" })], l: \"Root\" }) }))",
+    {
+      "timestamp": "1745938293496.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr edit apply edit (Edit (Remove_EditInfo {}) (defer \\_ -> { clipboard: Nothing, handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 2), path: Nil }) Left_SpanFocus), root: (Expr { kids: [(Expr { kids: [], l: \"hello\" })], l: \"Root\" }) }))",
+    {
+      "timestamp": "1745939654178.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr edit apply edit (Edit (Remove_EditInfo {}) (defer \\_ -> { clipboard: Nothing, handle: [[ ([] △ .0) ]], root: (\"Root\" % \"hello\" (\"group\" % \"world\")) })) to { clipboard: Nothing, handle: [[ ([] △ .0) ]], root: (\"Root\" % \"hello\" (\"group\" % \"world\")) }",
+    {
+      "timestamp": "1745937350963.0",
+      "success": true
+    }
+  ],
+  [
     "Expr isAncestorSibling simple",
     {
       "timestamp": "1743112530767.0",

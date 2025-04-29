@@ -7,6 +7,7 @@ import Data.Lazy as Lazy
 import Data.List ((:))
 import Data.Unfoldable (none)
 
+-- TODO: change this to take { root :: Expr L , handle :: Handle , clipboard :: Maybe (Fragment L) }
 type EditAt l = Handle -> Expr l -> Edit l
 
 --------------------------------------------------------------------------------
