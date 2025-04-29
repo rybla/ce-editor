@@ -23,8 +23,9 @@ import Data.String as String
 import Data.Traversable (class Traversable, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested (type (/\), (/\))
+import Debug as Debug
 import Pretty (class Pretty, parens, pretty)
-import Utility (extractAt_Array, extractSpan_Array, impossible, spaces)
+import Utility (extractAt_Array, extractSpan_Array, impossible, spaces, todo)
 
 --------------------------------------------------------------------------------
 
@@ -413,8 +414,9 @@ derive instance Traversable SpanContext
 showSpanContext' :: forall l. Show l => (SpanContext l) -> String -> String
 showSpanContext' (SpanContext sc) s = showExprContext' sc._O $ showSpanTooth' sc._I s
 
-unSpanContext :: forall l. (SpanContext l) -> Span l -> Expr l
-unSpanContext (SpanContext sc) s = unExprContext sc._O $ unSpanTooth sc._I s
+unSpanContext :: forall l. Show l => SpanContext l -> Span l -> Expr l
+unSpanContext (SpanContext sc) s = Debug.trace ("unSpanContext:\n  - outside: " <> show (SpanContext sc) <> "\n  - inside: " <> show s) \_ ->
+  unExprContext sc._O $ unSpanTooth sc._I s
 
 offset_inner_SpanContext :: forall l. (SpanContext l) -> Index
 offset_inner_SpanContext (SpanContext sc) = sc._I # offset_inner_SpanTooth
@@ -449,7 +451,7 @@ derive instance Functor Zipper
 derive instance Foldable Zipper
 derive instance Traversable Zipper
 
-unZipper :: forall l. Zipper l -> Span l -> Span l
+unZipper :: forall l. Show l => Zipper l -> Span l -> Span l
 unZipper (Zipper z) s = Span $ z.kids_L <> [ unSpanContext z.inside s ] <> z.kids_R
 
 offset_outer_Zipper :: forall l. Zipper l -> { _L :: Index, _R :: Index }
@@ -546,33 +548,18 @@ getTotalInnerPath_ZipperH (ZipperH h) = case h.path_O of
 
 atZipper :: forall l. Show l => ZipperH -> Expr l -> { outside :: SpanContext l, here :: Zipper l, inside :: Span l }
 atZipper (ZipperH h) e =
-  case h.path_I of
-    -- Nil ->
-    --   { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
-    --   , here: Zipper
-    --       { kids_L: unwrap at_kid_M._L
-    --       , kids_R: unwrap at_kid_M._R
-    --       , inside: Nothing
-    --       }
-    --   , inside: at_kid_M.here
-    --   }
-    --   where
-    --   at_kid_M = at_span_O.here # atIndexSpan_Span (h.j_IL - h.j_OL) (h.j_IR - h.j_OL)
-    i_I :| path_I ->
-      { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
-      , here: Zipper
-          { kids_L: (unwrap at_kid_M.outside).kids_L
-          , kids_R: (unwrap at_kid_M.outside).kids_R
-          , inside: at_span_I.outside
-          }
-      , inside: at_span_I.here
+  { outside: SpanContext { _O: ExprContext at_path_O.outside, _I: at_span_O.outside }
+  , here: Zipper
+      { kids_L: (at_span_O.outside # unwrap).kids_L
+      , kids_R: (at_span_O.outside # unwrap).kids_L
+      , inside: at_span_I.outside
       }
-      where
-      at_kid_M = at_path_O.here # atStep (i_I - (Step ((unwrap at_span_O.outside).kids_L # Array.length)))
-      at_span_I = at_kid_M.here # atSpan (SpanH { j_L: h.j_IL, j_R: h.j_IR, path: path_I })
+  , inside: at_span_I.here
+  }
   where
   at_path_O = e # atSubExpr h.path_O
   at_span_O = at_path_O.here # atIndexSpan_Expr h.j_OL h.j_OR
+  at_span_I = at_path_O.here # atSpan (SpanH { j_L: h.j_IL, j_R: h.j_IR, path: h.path_I # fromNePath })
 
 --------------------------------------------------------------------------------
 

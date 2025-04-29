@@ -98,6 +98,20 @@
     }
   ],
   [
+    "Expr edit delete big zipper at top level",
+    {
+      "timestamp": "1745946551891.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr edit delete zipper at top level",
+    {
+      "timestamp": "1745946551891.0",
+      "success": true
+    }
+  ],
+  [
     "Expr isAncestorSibling simple",
     {
       "timestamp": "1743112530767.0",

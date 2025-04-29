@@ -2,16 +2,14 @@ module Ui.App1.Editor where
 
 import Prelude
 
-import Control.Alternative ((<|>))
 import Control.Monad.State (get, modify)
 import Data.Array as Array
-import Data.Expr (Edit(..), Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
+import Data.Expr (Edit, Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (fold)
-import Data.Lazy as Lazy
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..), isJust)
 import Data.Newtype (unwrap)
@@ -318,7 +316,6 @@ submitEdit edit handle = do
       , handle
       , clipboard: state.clipboard
       }
-    output = applyEdit edit input
   when Config.log_edits do
     Console.log $ Array.replicate 10 "====" # fold
     Console.log "guard (Config.log_edits = true)"
@@ -327,6 +324,8 @@ submitEdit edit handle = do
     Console.log $ show edit
     Console.log $ "input state:"
     Console.log $ "{ root: " <> show input.root <> "\n, handle: " <> show input.handle <> "\n, clipboard: " <> show input.clipboard <> "\n}"
+  let output = applyEdit edit input
+  when Config.log_edits do
     Console.log $ "output state:"
     Console.log $ "{ root: " <> show output.root <> "\n, handle: " <> show output.handle <> "\n, clipboard: " <> show output.clipboard <> "\n}"
     Console.log $ Array.replicate 10 "====" # fold
