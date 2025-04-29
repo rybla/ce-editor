@@ -87,7 +87,7 @@ handleQuery (Const x) = absurd x
 handleAction :: forall l. BufferAction -> BufferM l Unit
 
 handleAction Initialize_BufferAction = do
-  Console.log "[Buffer] initialize"
+  -- Console.log "[Buffer] initialize"
   H.getHTMLElementRef refLabel_input >>= \mb_elem_input -> do
     elem_input <- mb_elem_input # fromMaybeM do liftEffect $ throw "[Buffer] input element doesn't exist"
     liftEffect $ elem_input # HTMLElement.focus
