@@ -20,6 +20,7 @@ import Data.Unfoldable (none)
 import Editor (Editor(..), runRenderM)
 import Editor.Common (RenderM)
 import Effect.Aff (Aff)
+import Effect.Class.Console as Console
 import Effect.Ref as Ref
 import Effect.Unsafe (unsafePerformEffect)
 import Halogen (liftEffect)
@@ -190,7 +191,7 @@ handleAction (KeyDown_EditorAction event) = do
     _ | ki # Event.matchKeyInfo (_ == "Backspace") { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
-        Just handle -> submitEdit $ state.root # Expr.Edit.cut handle
+        Just handle -> submitEdit $ state.root # Expr.Edit.delete handle
         _ -> pure unit
     -- cut
     _ | ki # Event.matchKeyInfo (_ == "x") { cmd: pure true, shift: pure false, alt: pure false } -> do
@@ -336,9 +337,10 @@ setHandle' :: forall l. EditorM l (Maybe Handle) -> EditorM l Unit
 setHandle' m_mb_handle = do
   state <- get
   mb_handle_old <- liftEffect $ Ref.read state.ref_mb_handle
+  Console.log $ "[Editor.setHandle'] mb_handle_old = " <> show mb_handle_old
   modifyHandle false mb_handle_old
   mb_handle_new <- m_mb_handle
-  -- Console.log $ "[Editor] setHandle " <> show mb_handle_new
+  Console.log $ "[Editor.setHandle'] mb_handle_new = " <> show mb_handle_new
   modifyHandle true mb_handle_new
   liftEffect $ state.ref_mb_handle := mb_handle_new
 
@@ -347,10 +349,16 @@ modifyHandle b mb_handle = do
   let
     modifyClass :: Point -> Set PointStatus -> EditorM l Unit
     modifyClass p ss' =
-      if b then
-        H.tell (Proxy @"Point") p $ ModifyStatuses_PointQuery (_ `Set.union` ss')
-      else
-        H.tell (Proxy @"Point") p $ ModifyStatuses_PointQuery (_ `Set.difference` ss')
+      if b then do
+        -- H.tell (Proxy @"Point") p $ ModifyStatuses_PointQuery (_ `Set.union` ss')
+        success <- map isJust $ H.request (Proxy @"Point") p $ const $ ModifyStatuses_PointQuery (_ `Set.union` ss') unit
+        unless success do
+          Console.log $ "[Editor.modifyHandle] failed to request Point " <> show p
+      else do
+        -- H.tell (Proxy @"Point") p $ ModifyStatuses_PointQuery (_ `Set.difference` ss')
+        success <- map isJust $ H.request (Proxy @"Point") p $ const $ ModifyStatuses_PointQuery (_ `Set.difference` ss') unit
+        unless success do
+          Console.log $ "[Editor.modifyHandle] failed to request Point " <> show p
   case mb_handle of
     Nothing -> pure unit
     Just (Point_Handle p) -> do

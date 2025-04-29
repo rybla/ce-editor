@@ -16,14 +16,14 @@
   [
     "Expr drag drag from a Cursor Handle's Right Point to a rightward sibling Point to adjust the Cursor Handle",
     {
-      "timestamp": "1744828665945.0",
+      "timestamp": "1745936271054.0",
       "success": true
     }
   ],
   [
     "Expr drag drag from an Inner Point to an Outer Right Point to make a Zipper Handle, where the innermost span is empty",
     {
-      "timestamp": "1744828665945.0",
+      "timestamp": "1745936271054.0",
       "success": true
     }
   ],
@@ -37,7 +37,7 @@
   [
     "Expr drag drag from an Inner Right Point to an Outer Right Point to make a Zipper Handle",
     {
-      "timestamp": "1744828665945.0",
+      "timestamp": "1745936271054.0",
       "success": true
     }
   ],
@@ -137,6 +137,34 @@
     {
       "timestamp": "1744141158842.0",
       "success": false
+    }
+  ],
+  [
+    "Expr move movePoint (B % (B % (B % L L) (B % L L)) (B % (B % L L) (B % L L))) R ([] △ .0) == (Just ([|0] △ .0))",
+    {
+      "timestamp": "1745936271054.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr move movePoint (B % (B % (B % L L) (B % L L)) (B % (B % L L) (B % L L))) R ([|0 |0 |0] △ .0) == (Just ([|0 |0] △ .1))",
+    {
+      "timestamp": "1745936271054.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr move movePoint (B % (B % (B % L L) (B % L L)) (B % (B % L L) (B % L L))) R ([|0 |0] △ .0) == (Just ([|0 |0 |0] △ .0))",
+    {
+      "timestamp": "1745936271054.0",
+      "success": true
+    }
+  ],
+  [
+    "Expr move movePoint (B % (B % (B % L L) (B % L L)) (B % (B % L L) (B % L L))) R ([|0] △ .0) == (Just ([|0 |0] △ .0))",
+    {
+      "timestamp": "1745936271054.0",
+      "success": true
     }
   ],
   [

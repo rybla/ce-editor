@@ -7,11 +7,13 @@ import Data.Lazy as Lazy
 import Data.List ((:))
 import Data.Unfoldable (none)
 
+type EditAt l = Handle -> Expr l -> Edit l
+
 --------------------------------------------------------------------------------
 -- paste
 --------------------------------------------------------------------------------
 
-paste :: forall l. Show l => Fragment l -> Handle -> Expr l -> Edit l
+paste :: forall l. Show l => Fragment l -> EditAt l
 
 -- to paste s:Span at p:Point, splice s at p.
 paste insertion@(Span_Fragment s) (Point_Handle (Point p)) e =
@@ -132,7 +134,12 @@ paste insertion@(Zipper_Fragment z) (ZipperH_Handle (ZipperH zh) zf) e =
 -- cut
 --------------------------------------------------------------------------------
 
-cut :: forall l. Show l => Handle -> Expr l -> Edit l
+delete :: forall l. Show l => EditAt l
+delete h e = Edit info $ result # map _ { clipboard = none }
+  where
+  Edit info result = cut h e
+
+cut :: forall l. Show l => EditAt l
 cut (Point_Handle p) e =
   Edit (Remove_EditInfo {}) $ Lazy.defer \_ ->
     { root: e
@@ -177,4 +184,3 @@ cut (ZipperH_Handle (ZipperH zh) zf) e =
     }
   where
   at_zh = e # atZipper (ZipperH zh)
-
