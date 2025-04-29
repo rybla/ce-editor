@@ -2,6 +2,7 @@
 
 ## halogen-simplified
 
+- [ ] why is there one fewer indent than there should be at the beginning?
 - [ ] figure out better way of visually representing both sides of the linebreak grammar construct
 - [ ] do nested indentation levels
 - [ ] BUG: when paste a zipper, cursor doesnt go in riht place and sometimes duplicates
