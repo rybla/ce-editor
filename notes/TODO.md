@@ -1,17 +1,9 @@
 # TODO
 
-## halogen-simplified
-
 - [ ] refactor to allow for diagnostics reporting some places
   - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
 - [ ] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
-- [ ] BUG: why is there one fewer indent than there should be at the beginning?
-- [ ] BUG: when paste a zipper, cursor doesnt go in right place and sometimes duplicates
-- [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything
-- [ ] BUG: dragging that lets the inner span be outside the outer span
-- [ ] BUG: redo takes two tries to work?? and can't redo final undo
 - [ ] need to make re-rendering more efficient, since right now it grows asymptotically too fast. perhaps using nested and keyed elements will help with the Halogen diffing?
-- [x] BUG: cursor isn't placed correctly after inserting a zipper at a zipper handle
 - [x] figure out better way of visually representing both sides of the linebreak grammar construct
 - [x] do nested indentation levels
 - [x] rendering organization
@@ -27,7 +19,6 @@
     - [x] Editor's bufferOptions should receive Handle and root Expr instead of just Point
   - [x] edit an existing label (i.e. re-query it??)
     - VETO: actually no -- can just delete and re-wrap just as easily, and that's what you'd do in text anyway
-  - [x] BUG: cycling is off by 1 somtimes
 - [x] give Editor interface to custom rendering
 - [x] make stuff in `Ui.Editor` generic over label
 - [x] undo/redo
@@ -37,7 +28,20 @@
 - [x] escape action
 - [x] drag from one point to another
 
-## direct-dom-manipulation
+## Bugs
+
+- [ ] BUG: redo takes two tries to work?? and can't redo final undo
+- [ ] BUG: dragging that lets the inner span be outside the outer span
+  - [ ] what caused this???
+- [x] BUG: why is there one fewer indent than there should be at the beginning?
+- [x] BUG: when paste a zipper, cursor doesnt go in right place and sometimes duplicates
+- [x] BUG: when delete a zipper, if its only 1 deep, then lose everything
+- [x] BUG: cursor isn't placed correctly after inserting a zipper at a zipper handle
+- [x] BUG: cycling is off by 1 somtimes in edit menu (via up/down arrows)
+
+## Old Stuff
+
+### branch = "direct-dom-manipulation"
 
 - [ ] InsertSpanTooth_Diff
 - [ ] DeleteSpanTooth_Diff
@@ -57,7 +61,7 @@
   - solved by not using Components
 
 
-# halogen
+### branch = "halogen"
 
 - [x] drag from one point to another
   - [x] save origin point until done dragging
