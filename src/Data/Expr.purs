@@ -466,6 +466,13 @@ offset_inner_Zipper (Zipper z) = z.inside # offset_inner_SpanContext
 getPath_Zipper :: forall l. Zipper l -> Path
 getPath_Zipper (Zipper z) = getPath_SpanContext z.inside
 
+fromSpanContextToZipper :: forall l. SpanContext l -> Zipper l
+fromSpanContextToZipper sc = Zipper
+  { kids_L: []
+  , kids_R: []
+  , inside: sc
+  }
+
 --------------------------------------------------------------------------------
 
 newtype SpanH = SpanH
@@ -716,7 +723,7 @@ type M = Writer (Array Diagnostic)
 -- Edit
 --------------------------------------------------------------------------------
 
-type EditMenu l = String -> Array (MaybeT M (Edit l))
+type EditMenu l = String -> Array (String /\ MaybeT M (Edit l))
 
 type EditAt l = PureEditorState l -> MaybeT M (Edit l)
 

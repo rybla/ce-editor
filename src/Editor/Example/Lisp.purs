@@ -36,45 +36,45 @@ editor = Editor
           "" -> []
           _ | "group" # startsWith (String.Pattern query) -> case state.mb_handle of
             Just (Point_Handle _) ->
-              [ pasteLiteral query state
-              , pasteGroup_Span state
+              [ "literal" /\ pasteLiteral query state
+              , "group" /\ pasteGroup_Span state
               ]
             Just (SpanH_Handle _ _) ->
-              [ pasteLiteral query state
-              , pasteGroup_Zipper state
+              [ "literal" /\ pasteLiteral query state
+              , "group" /\ pasteGroup_Zipper state
               ]
             Just (ZipperH_Handle _ _) ->
-              [ pasteGroup_Zipper state
+              [ "group" /\ pasteGroup_Zipper state
               ]
             _ -> none
           _ | "integral" # startsWith (String.Pattern query) -> case state.mb_handle of
             Just (Point_Handle _) ->
-              [ pasteLiteral query state
-              , pasteIntegral_Zipper state
+              [ "literal" /\ pasteLiteral query state
+              , "integral" /\ pasteIntegral_Zipper state
               ]
             Just (SpanH_Handle _ _) ->
-              [ pasteLiteral query state
-              , pasteIntegral_Zipper state
+              [ "literal" /\ pasteLiteral query state
+              , "integral" /\ pasteIntegral_Zipper state
               ]
             Just (ZipperH_Handle _ _) ->
-              [ pasteIntegral_Zipper state
+              [ "integral" /\ pasteIntegral_Zipper state
               ]
             _ -> none
           _ | "linebreak" # startsWith (String.Pattern query) -> case state.mb_handle of
             Just (Point_Handle _) ->
-              [ pasteLiteral query state
-              , pasteLineBreak_Span state
+              [ "literal" /\ pasteLiteral query state
+              , "linebreak" /\ pasteLineBreak_Span state
               ]
             Just (SpanH_Handle _ _) ->
-              [ pasteLiteral query state
-              , pasteLineBreak_Span state
+              [ "literal" /\ pasteLiteral query state
+              , "linebreak" /\ pasteLineBreak_Span state
               ]
             Just (ZipperH_Handle _ _) ->
               none
             _ -> none
           _ | query # isWhitespaceFree -> case state.mb_handle of
-            Just (Point_Handle _) -> [ pasteLiteral query state ]
-            Just (SpanH_Handle _ _) -> [ pasteLiteral query state ]
+            Just (Point_Handle _) -> [ "literal" /\ pasteLiteral query state ]
+            Just (SpanH_Handle _ _) -> [ "literal" /\ pasteLiteral query state ]
             Just (ZipperH_Handle _ _) -> none
             _ -> none
           _ ->

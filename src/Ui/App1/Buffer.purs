@@ -110,7 +110,7 @@ handleAction (KeyDown_BufferAction event) = do
       case state.option_i of
         Nothing -> pure unit
         Just i -> do
-          o <- state.menu_queried !! i # fromMaybeM do liftEffect $ throw "impossible for option_i to be out of bounds of menu_queried"
+          _key /\ o <- state.menu_queried !! i # fromMaybeM do liftEffect $ throw "impossible for option_i to be out of bounds of menu_queried"
           H.raise $ SubmitBuffer_BufferOutput o
     _ | Just cd <- ki # Event.matchMapKeyInfo fromKeyToCycleDir { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
@@ -146,7 +146,9 @@ setQuery' query state = state
   { query = query
   , option_i = if null menu_queried then none else pure 0
   -- TODO: for now, just ignore the diagnostics
-  , menu_queried = menu_queried # foldMap (runMaybeT >>> runWriter >>> fst >>> Array.fromFoldable)
+  , menu_queried = menu_queried # foldMap \(key /\ x) -> case x # runMaybeT # runWriter of
+      Nothing /\ _diagnostics -> none
+      Just edit /\ _diagnostics -> [ key /\ edit ]
   }
   where
   menu_queried = state.menu query
@@ -179,8 +181,8 @@ render state =
         , HP.spellcheck false
         ]
     , HHK.div [ classes [ "menu" ] ]
-        $ state.menu_queried # mapWithIndex \i edit_ ->
-            show i /\ HH.div
+        $ state.menu_queried # mapWithIndex \i (key /\ edit_) ->
+            key /\ HH.div
               [ classes $ fold [ [ "Edit" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
               case edit_ of
                 Edit { info: Insert_EditInfo info } ->

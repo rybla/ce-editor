@@ -11,6 +11,7 @@ import Data.Maybe (Maybe(..))
 import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
 import Data.Show.Generic (genericShow)
+import Data.Tuple.Nested (type (/\), (/\))
 import Editor (Editor)
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -184,7 +185,7 @@ type BufferState l =
   , query :: String
   , menu :: EditMenu l
   , option_i :: Maybe Int
-  , menu_queried :: Array (Edit l)
+  , menu_queried :: Array (String /\ Edit l)
   }
 
 data BufferAction

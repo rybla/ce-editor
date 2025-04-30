@@ -4,14 +4,16 @@ import Prelude
 
 -- import Editor.Example.Editor2 as ExampleEditor
 -- import Editor.Example.Editor3 as ExampleEditor
-import Editor.Example.Lisp as ExampleEditor
+-- import Editor.Example.Lisp as ExampleEditor
 -- import Editor.Example.LispPlus as ExampleEditor
+import Editor.Example.ULC as ExampleEditor
+
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
 import Type.Proxy (Proxy(..))
 import Ui.App1.Common (AppAction, AppInput, AppOutput, AppQuery, AppSlots, AppState, AppHTML)
-import Ui.App1.Console as Console
+-- import Ui.App1.Console as Console
 import Ui.App1.Editor as Editor
 import Ui.Halogen (classes)
 

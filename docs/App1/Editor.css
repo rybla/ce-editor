@@ -357,13 +357,14 @@
 
 .Token {
 
-  &.punctuation {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  white-space: pre;
+  font-size: 1em;
 
-    white-space: nowrap;
-    font-size: 1em;
+  &.punctuation {
+    color: gray;
   }
 
   &.keyword {
@@ -377,9 +378,6 @@
 
   &.indentation {
     width: 2em;
-
-    display: flex;
-    flex-direction: row;
     justify-content: flex-end;
   }
 
@@ -394,5 +392,19 @@
 
   &.before-empty-Arg-kids+.Point {
     box-shadow: 0 0 0 0.1em red inset;
+  }
+
+  &.beforeHolePoint,
+  &.afterHolePoint {
+    width: var(--Handle--width);
+  }
+
+  &.beforeHolePoint+.Point {
+    box-shadow: 0 0 0 0.1em red inset;
+  }
+
+  &.beforeExtraKid,
+  &.afterExtraKid {
+    color: red;
   }
 }

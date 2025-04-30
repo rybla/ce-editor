@@ -102,3 +102,7 @@ linebreak = [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ]
 indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "│" ] ]
 indentations n = Array.replicate n indentation # fold
 
+punctuation str = [ HH.div [ classes [ "Token punctuation" ] ] [ HH.text str ] ]
+keyword str = [ HH.div [ classes [ "Token keyword" ] ] [ HH.text str ] ]
+literal str = [ HH.div [ classes [ "Token literal" ] ] [ HH.text str ] ]
+
