@@ -1,5 +1,7 @@
 # TODO
 
+- [ ] use `alt+arrow` to move across siblings
+  - [ ] need a difference key to cycle handle foci
 - [ ] refactor to allow for diagnostics reporting some places
   - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
 - [ ] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
@@ -33,6 +35,7 @@
 
 - [ ] BUG: dragging that lets the inner span be outside the outer span
   - [ ] what caused this???
+- [x] BUG: copy does delete instead of copy (need to implement copy)
 - [x] BUG: redo takes two tries to work?? and can't redo final undo
     - turned out I want dropping a snapshot by not using the current state snapshot in `undo` and `redo`
 - [x] BUG: why is there one fewer indent than there should be at the beginning?

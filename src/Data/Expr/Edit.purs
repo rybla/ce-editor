@@ -156,21 +156,58 @@ insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (ZipperH_Handle 
 paste :: forall l. Show l => EditAt l
 paste state = do
   frag <- state.clipboard # fromMaybeM do
-    tell [ Diagnostic.text "warning" "can't past esince clipboard" ]
+    tell [ Diagnostic.text "warning" "can't paste since clipboard is empty" ]
     empty
   insert frag state
 
 --------------------------------------------------------------------------------
--- cut
+-- copy
+--------------------------------------------------------------------------------
+
+copy :: forall l. Show l => EditAt l
+
+copy state@{ mb_handle: Just (Point_Handle _) } =
+  pure $ Edit
+    { info: Copy_EditInfo {}
+    , output: Lazy.defer \_ -> do
+        pure state { clipboard = pure $ Span_Fragment $ Span none }
+    }
+
+copy state@{ root: e, mb_handle: Just (SpanH_Handle (SpanH sh) _sf) } =
+  pure $ Edit
+    { info: Copy_EditInfo {}
+    , output: Lazy.defer \_ -> do
+        let at_sh = e # atSpan (SpanH sh)
+        pure state { clipboard = pure $ Span_Fragment at_sh.here }
+    }
+
+copy state@{ root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) _zf) } =
+  pure $ Edit
+    { info: Copy_EditInfo {}
+    , output: Lazy.defer \_ -> do
+        let at_zh = e # atZipper (ZipperH zh)
+        pure state { clipboard = pure $ Zipper_Fragment at_zh.here }
+    }
+
+copy { mb_handle: Nothing } = empty
+
+--------------------------------------------------------------------------------
+-- delete
+--
+-- same as cut except preserves clipboard.
 --------------------------------------------------------------------------------
 
 delete :: forall l. Show l => EditAt l
 delete state = do
   Edit edit <- cut state
-  pure $ Edit edit { output = edit.output # map (map _ { clipboard = none }) }
+  pure $ Edit edit { output = edit.output # map (map _ { clipboard = state.clipboard }) }
+
+--------------------------------------------------------------------------------
+-- cut
+-- law: cut = copy >>> delete
+--------------------------------------------------------------------------------
 
 cut :: forall l. Show l => EditAt l
-cut { mb_handle: Nothing } = empty
 
 cut { root: e, mb_handle: Just (Point_Handle p) } =
   pure $ Edit
@@ -185,46 +222,46 @@ cut { root: e, mb_handle: Just (Point_Handle p) } =
 cut { root: e, mb_handle: Just (SpanH_Handle (SpanH sh) _sf) } =
   pure $ Edit
     { info: Remove_EditInfo {}
-    , output: Lazy.defer \_ -> pure
-        { root: unSpanContext at_sh.outside (Span none)
-        , mb_handle: Just $ Point_Handle (SpanH sh # getEndPoints_SpanH)._L
-        , clipboard: pure $ Span_Fragment at_sh.here
-        }
+    , output: Lazy.defer \_ -> do
+        let at_sh = e # atSpan (SpanH sh)
+        pure
+          { root: unSpanContext at_sh.outside (Span none)
+          , mb_handle: Just $ Point_Handle (SpanH sh # getEndPoints_SpanH)._L
+          , clipboard: pure $ Span_Fragment at_sh.here
+          }
     }
-  where
-  at_sh = e # atSpan (SpanH sh)
 
 cut { root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) zf) } =
   pure $ Edit
     { info: Remove_EditInfo {}
-    , output: Lazy.defer \_ -> pure
-        { root: unSpanContext at_zh.outside at_zh.inside
-        , mb_handle: Just
-            if zh.j_IL == zh.j_IR then
-              Point_Handle
-                ( Point
-                    { path: zh.path_O
-                    , j: zh.j_OL
-                    }
-                )
-            else
-              SpanH_Handle
-                ( SpanH
-                    { path: zh.path_O
-                    , j_L: zh.j_OL
-                    , j_R: zh.j_OL + (at_zh.inside # offset_Span)
-                    }
-                )
-                ( case zf of
-                    OuterLeft_ZipperFocus -> Left_SpanFocus
-                    InnerLeft_ZipperFocus -> Left_SpanFocus
-                    InnerRight_ZipperFocus -> Right_SpanFocus
-                    OuterRight_ZipperFocus -> Right_SpanFocus
-                )
-
-        , clipboard: pure $ Zipper_Fragment at_zh.here
-        }
+    , output: Lazy.defer \_ -> do
+        let at_zh = e # atZipper (ZipperH zh)
+        pure
+          { root: unSpanContext at_zh.outside at_zh.inside
+          , mb_handle: Just
+              if zh.j_IL == zh.j_IR then
+                Point_Handle
+                  ( Point
+                      { path: zh.path_O
+                      , j: zh.j_OL
+                      }
+                  )
+              else
+                SpanH_Handle
+                  ( SpanH
+                      { path: zh.path_O
+                      , j_L: zh.j_OL
+                      , j_R: zh.j_OL + (at_zh.inside # offset_Span)
+                      }
+                  )
+                  ( case zf of
+                      OuterLeft_ZipperFocus -> Left_SpanFocus
+                      InnerLeft_ZipperFocus -> Left_SpanFocus
+                      InnerRight_ZipperFocus -> Right_SpanFocus
+                      OuterRight_ZipperFocus -> Right_SpanFocus
+                  )
+          , clipboard: pure $ Zipper_Fragment at_zh.here
+          }
     }
-  where
-  at_zh = e # atZipper (ZipperH zh)
 
+cut { mb_handle: Nothing } = empty

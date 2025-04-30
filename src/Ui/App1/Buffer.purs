@@ -10,7 +10,7 @@ import Control.Monad.Writer (runWriter, runWriterT)
 import Data.Array ((!!))
 import Data.Array as Array
 import Data.Const (Const(..))
-import Data.Expr (Edit_(..), EditInfo(..), Expr, Path, Point)
+import Data.Expr (EditInfo(..), Edit_(..), Expr, Path, Point)
 import Data.Expr.Render (RenderArgs, renderFragment)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (fold, foldMap, length, null)
@@ -195,6 +195,9 @@ render state =
                   ]
                 Edit { info: Remove_EditInfo _ } ->
                   [ HH.div [] [ HH.text "remove" ]
+                  ]
+                Edit { info: Copy_EditInfo _ } ->
+                  [ HH.div [] [ HH.text "copy" ]
                   ]
 
     ]

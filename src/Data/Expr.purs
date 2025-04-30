@@ -760,10 +760,9 @@ instance Show l => Pretty (Edit_ l a) where
   pretty x = show x
 
 data EditInfo l
-  = Insert_EditInfo
-      { insertion :: Fragment l
-      }
+  = Insert_EditInfo { insertion :: Fragment l }
   | Remove_EditInfo {}
+  | Copy_EditInfo {}
 
 derive instance Generic (EditInfo l) _
 

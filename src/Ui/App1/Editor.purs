@@ -189,7 +189,7 @@ handleAction (KeyDown_EditorAction event) = do
     -- copy
     _ | ki # Event.matchKeyInfo (_ == "c") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
-      submitEditAt Expr.Edit.delete
+      submitEditAt Expr.Edit.copy
     -- delete
     _ | ki # Event.matchKeyInfo (_ == "Backspace") { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
