@@ -11,6 +11,7 @@
 - [ ] BUG: dragging that lets the inner span be outside the outer span
 - [ ] BUG: redo takes two tries to work?? and can't redo final undo
 - [ ] need to make re-rendering more efficient, since right now it grows asymptotically too fast. perhaps using nested and keyed elements will help with the Halogen diffing?
+- [x] BUG: cursor isn't placed correctly after inserting a zipper at a zipper handle
 - [x] figure out better way of visually representing both sides of the linebreak grammar construct
 - [x] do nested indentation levels
 - [x] rendering organization

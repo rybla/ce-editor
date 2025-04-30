@@ -149,6 +149,17 @@ spec_edit = Spec.describe "edit" do
         )
     }
 
+  mkTest_EditAt "paste a zipper in place of a zipper"
+    { root: ("Root" % [ ("App" % [ ("Var" % [ ("x" % []) ]), ("Var" % [ ("c" % []) ]), ("Var" % [ ("y" % []) ]) ]) ])
+    , mb_handle: (Just (ZipperH_Handle (ZipperH { j_IL: (Index 1), j_IR: (Index 2), j_OL: (Index 0), j_OR: (Index 1), path_I: (NonEmpty (Step 0) Nil), path_O: Nil }) InnerLeft_ZipperFocus))
+    , clipboard: (Just (Zipper_Fragment (Zipper { inside: (SpanContext { _I: (SpanTooth { kids_L: [ ("Var" % [ ("a" % []) ]), ("Var" % [ ("b" % []) ]) ], kids_R: [ ("Var" % [ ("d" % []) ]), ("Var" % [ ("e" % []) ]) ], l: "App" }), _O: (ExprContext Nil) }), kids_L: [], kids_R: [] })))
+    }
+    Expr.Edit.paste
+    { root: ("Root" % [ ("App" % [ ("Var" % [ ("a" % []) ]), ("Var" % [ ("b" % []) ]), ("Var" % [ ("c" % []) ]), ("Var" % [ ("d" % []) ]), ("Var" % [ ("e" % []) ]) ]) ])
+    , mb_handle: (Just (SpanH_Handle (SpanH { j_L: (Index 2), j_R: (Index 3), path: ((Step 0) : Nil) }) Left_SpanFocus))
+    , clipboard: (Just (Zipper_Fragment (Zipper { inside: (SpanContext { _I: (SpanTooth { kids_L: [ ("Var" % [ ("a" % []) ]), ("Var" % [ ("b" % []) ]) ], kids_R: [ ("Var" % [ ("d" % []) ]), ("Var" % [ ("e" % []) ]) ], l: "App" }), _O: (ExprContext Nil) }), kids_L: [], kids_R: [] })))
+    }
+
   pure unit
   where
   mkTest_EditAt

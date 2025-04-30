@@ -1,4 +1,4 @@
-module Editor.Example.ULC where
+module Editor.Example.ULCv0 where
 
 import Data.Expr
 import Prelude
@@ -33,7 +33,7 @@ type L = String
 
 editor :: Editor L
 editor = Editor
-  { name: "ULCv1"
+  { name: "UlcV0"
   , initial_expr: "Root" % []
   , initial_handle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu: \state -> case _ of
@@ -86,7 +86,7 @@ editor = Editor
         "LamBody" /\ [ p0, p1 ] /\ [ k0 ] -> pure $ fold [ [ p0 ], k0, [ p1 ] ]
         "LamBody" /\ ps /\ ks -> pure $ fold $ Array.zipWith (\p k -> [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks <> [ ps # Array.last # fromMaybe ]
         -- 
-        "App" /\ _ /\ [ k0, k1 ] -> pure $ fold [ punctuation "(", k0, k1, punctuation ")" ]
+        "App" /\ _ /\ [ k0, k1 ] -> pure $ fold [ k0, punctuation "(", k1, punctuation ")" ]
         "App" /\ _ /\ _ -> assembleExpr_default args
         -- 
         "AppFunc" /\ [ p ] /\ [] -> pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]

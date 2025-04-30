@@ -1,4 +1,4 @@
-module Editor.Example.ULC where
+module Editor.Example.UlcV1 where
 
 import Data.Expr
 import Prelude
@@ -33,7 +33,7 @@ type L = String
 
 editor :: Editor L
 editor = Editor
-  { name: "ULCv1"
+  { name: "UlcV1"
   , initial_expr: "Root" % []
   , initial_handle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu: \state -> case _ of
@@ -42,8 +42,7 @@ editor = Editor
         , "LamBody" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamBody) state
         ]
       "app" ->
-        [ "AppFunc" /\ Expr.Edit.insert (Zipper_Fragment zipper_AppFunc) state
-        , "AppArgs" /\ Expr.Edit.insert (Zipper_Fragment zipper_AppArgs) state
+        [ "App" /\ Expr.Edit.insert (Zipper_Fragment zipper_App) state
         ]
       "let" ->
         [ "LetVar" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetVar) state
@@ -56,6 +55,8 @@ editor = Editor
   , getShortcut: \ki state -> case unit of
       _ | ki # matchKeyInfo (_ == "Enter") { cmd: pure false, alt: pure false } ->
         Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
+      _ | ki # matchKeyInfo (_ == "(") { cmd: pure false, alt: pure false } ->
+        Expr.Edit.insert (Zipper_Fragment zipper_App) state
       _ -> empty
   , isValidHandle: \root handle -> case handle of
       Point_Handle p -> and [ isValidPoint root p ]
@@ -86,15 +87,7 @@ editor = Editor
         "LamBody" /\ [ p0, p1 ] /\ [ k0 ] -> pure $ fold [ [ p0 ], k0, [ p1 ] ]
         "LamBody" /\ ps /\ ks -> pure $ fold $ Array.zipWith (\p k -> [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks <> [ ps # Array.last # fromMaybe ]
         -- 
-        "App" /\ _ /\ [ k0, k1 ] -> pure $ fold [ punctuation "(", k0, k1, punctuation ")" ]
-        "App" /\ _ /\ _ -> assembleExpr_default args
-        -- 
-        "AppFunc" /\ [ p ] /\ [] -> pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
-        "AppFunc" /\ [ p0, p1 ] /\ [ k0 ] -> pure $ fold [ [ p0 ], k0, [ p1 ] ]
-        "AppFunc" /\ ps /\ ks -> pure $ fold $ fold $ [ Array.zipWith (\p k -> [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks, [ ps # Array.last # fromMaybe ] ]
-        -- 
-        "AppArgs" /\ [ p ] /\ [] -> pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
-        "AppArgs" /\ ps /\ ks -> pure $ fold $ fold $ [ Array.zipWith (\p k -> [ p ] <> k <> punctuation " ,") ps (Array.dropEnd 1 ks), [ ps # Array.dropEnd 1 # Array.last # fromMaybe ], [ ks # Array.last # fold ], [ ps # Array.last # fromMaybe ] ]
+        "App" /\ ps /\ ks -> pure $ fold $ fold $ [ [ punctuation "(" ], Array.zipWith (\p k -> [ p ] <> k) ps ks, [ ps # Array.last # fromMaybe ], [ punctuation ")" ] ]
         -- 
         "Let" /\ _ /\ [ k0, k1, k2 ] -> pure $ fold [ punctuation "(", keyword "let", k0, punctuation "=", k1, keyword "in", k2, punctuation ")" ]
         "Let" /\ _ /\ _ -> assembleExpr_default args
@@ -131,7 +124,7 @@ isValidPoint expr (Point p) = e'.l `Set.member` ls
   ls = Set.fromFoldable $ fold
     [ [ "Root" ]
     , [ "LamParams", "LamBody" ]
-    , [ "AppFunc", "AppArgs" ]
+    , [ "App" ]
     , [ "LetVar", "LetImpl", "LetBody" ]
     ]
 
@@ -151,9 +144,8 @@ zipper_LamBody = (expr_Lam # atPoint (Point { path: Step 1 : Nil, j: Index 0 }))
 
 -- App
 
-expr_App = "App" % [ "AppFunc" % [], "AppArgs" % [] ]
-zipper_AppFunc = (expr_App # atPoint (Point { path: Step 0 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
-zipper_AppArgs = (expr_App # atPoint (Point { path: Step 1 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
+expr_App = "App" % []
+zipper_App = (expr_App # atPoint (Point { path: Nil, j: Index 0 })).outside # fromSpanContextToZipper
 
 -- Let
 

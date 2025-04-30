@@ -347,8 +347,11 @@ unSpanTooth (SpanTooth b) s = Expr { l: b.l, kids: b.kids_L <> unwrap s <> b.kid
 offset_outer_SpanTooth :: forall l. (SpanTooth l) -> { _L :: Index, _R :: Index }
 offset_outer_SpanTooth (SpanTooth st) = { _L: Index $ st.kids_L # Array.length, _R: Index $ st.kids_R # Array.length }
 
-offset_inner_SpanTooth :: forall l. (SpanTooth l) -> Index
-offset_inner_SpanTooth (SpanTooth st) = Index $ st.kids_L # Array.length
+offset_innerLeft_SpanTooth :: forall l. (SpanTooth l) -> Index
+offset_innerLeft_SpanTooth (SpanTooth st) = Index $ st.kids_L # Array.length
+
+offset_innerRight_SpanTooth :: forall l. (SpanTooth l) -> Index
+offset_innerRight_SpanTooth (SpanTooth st) = Index $ st.kids_L # Array.length
 
 mapStepsAndKids_SpanTooth :: forall l a. (Step -> Expr l -> a) -> Array a -> SpanTooth l -> Array a
 mapStepsAndKids_SpanTooth f as (SpanTooth t) = (t.kids_L <#> Left) <> (Right <$> as) <> (t.kids_R <#> Left) # mapWithIndex \i -> case _ of
@@ -421,8 +424,11 @@ showSpanContext' (SpanContext sc) s = showExprContext' sc._O $ showSpanTooth' sc
 unSpanContext :: forall l. Show l => SpanContext l -> Span l -> Expr l
 unSpanContext (SpanContext sc) s = unExprContext sc._O $ unSpanTooth sc._I s
 
-offset_inner_SpanContext :: forall l. (SpanContext l) -> Index
-offset_inner_SpanContext (SpanContext sc) = sc._I # offset_inner_SpanTooth
+offset_innerLeft_SpanContext :: forall l. (SpanContext l) -> Index
+offset_innerLeft_SpanContext (SpanContext sc) = sc._I # offset_innerLeft_SpanTooth
+
+offset_innerRight_SpanContext :: forall l. (SpanContext l) -> Index
+offset_innerRight_SpanContext (SpanContext sc) = sc._I # offset_innerRight_SpanTooth
 
 getPath_SpanContext :: forall l. (SpanContext l) -> Path
 getPath_SpanContext (SpanContext sc) = sc._O # getPath_ExprContext
@@ -460,8 +466,11 @@ unZipper (Zipper z) s = Span $ z.kids_L <> [ unSpanContext z.inside s ] <> z.kid
 offset_outer_Zipper :: forall l. Zipper l -> { _L :: Index, _R :: Index }
 offset_outer_Zipper (Zipper z) = { _L: Index $ z.kids_L # Array.length, _R: Index $ z.kids_R # Array.length }
 
-offset_inner_Zipper :: forall l. Zipper l -> Index
-offset_inner_Zipper (Zipper z) = z.inside # offset_inner_SpanContext
+offset_innerLeft_Zipper :: forall l. Zipper l -> Index
+offset_innerLeft_Zipper (Zipper z) = z.inside # offset_innerLeft_SpanContext
+
+offset_innerRight_Zipper :: forall l. Zipper l -> Index
+offset_innerRight_Zipper (Zipper z) = z.inside # offset_innerRight_SpanContext
 
 getPath_Zipper :: forall l. Zipper l -> Path
 getPath_Zipper (Zipper z) = getPath_SpanContext z.inside
@@ -770,13 +779,14 @@ type PureEditorState l =
   , clipboard :: Maybe (Fragment l)
   }
 
+-- TODO: is this layer necessary? I used to merge with existing clipboard but that's already accounted for when the Edit is constructed, so no need to do it here
 applyEdit :: forall l. Show l => Edit l -> PureEditorState l -> MaybeT M (PureEditorState l)
-applyEdit (Edit edit) state = do
+applyEdit (Edit edit) _state = do
   state' <- edit.output # Lazy.force
   pure
     { root: state'.root
     , mb_handle: normalizeHandle <$> state'.mb_handle
-    , clipboard: state'.clipboard <|> state.clipboard
+    , clipboard: state'.clipboard
     }
 
 --------------------------------------------------------------------------------
