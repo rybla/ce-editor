@@ -4,7 +4,7 @@ import Prelude
 
 import Control.Monad.Maybe.Trans (runMaybeT)
 import Control.Monad.State (get, modify)
-import Control.Monad.Writer (runWriter, runWriterT)
+import Control.Monad.Writer (runWriter)
 import Data.Array as Array
 import Data.Expr (Edit, Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), EditAt, applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
@@ -36,7 +36,7 @@ import Ui.App1.Config as Config
 import Ui.App1.Point as Point
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
-import Utility (bug, guardPure, isNonSpace, todo, (:%=), (:=))
+import Utility (guardPure, isNonSpace, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -261,32 +261,46 @@ openBuffer_keys = Set.fromFoldable [ "Tab" ]
 -- undo and redo
 --------------------------------------------------------------------------------
 
-snapshot :: forall l. EditorM l Unit
-snapshot = do
+getSnapshot :: forall l. EditorM l (Snapshot l)
+getSnapshot = do
   state <- get
   mb_handle <- liftEffect $ state.ref_mb_handle # Ref.read
-  liftEffect $ state.ref_history :%= ({ root: state.root, mb_handle } : _)
+  pure { root: state.root, mb_handle }
+
+saveSnapshot :: forall l. Show l => EditorM l Unit
+saveSnapshot = do
+  state <- get
+  s <- getSnapshot
+  when Config.log_undo_and_redo do
+    Console.log $ "[saveSnapshot] " <> show s
+  liftEffect $ state.ref_history :%= (s : _)
   liftEffect $ state.ref_future := none
 
-undo :: forall l. EditorM l Unit
+undo :: forall l. Show l => EditorM l Unit
 undo = do
   state <- get
+  when Config.log_undo_and_redo do
+    Console.log $ "[undo] " <> show state.root
   (liftEffect $ state.ref_history # Ref.read) >>= case _ of
     Nil -> pure unit
-    s : history' -> do
+    s' : history' -> do
+      s <- getSnapshot
       liftEffect $ state.ref_history := history'
       liftEffect $ state.ref_future :%= (s : _)
-      loadSnapshot s
+      loadSnapshot s'
 
-redo :: forall l. EditorM l Unit
+redo :: forall l. Show l => EditorM l Unit
 redo = do
   state <- get
+  when Config.log_undo_and_redo do
+    Console.log $ "[redo] " <> show state.root
   (liftEffect $ state.ref_future # Ref.read) >>= case _ of
     Nil -> pure unit
-    s : future' -> do
+    s' : future' -> do
+      s <- getSnapshot
       liftEffect $ state.ref_history :%= (s : _)
       liftEffect $ state.ref_future := future'
-      loadSnapshot s
+      loadSnapshot s'
 
 loadSnapshot :: forall l. Snapshot l -> EditorM l Unit
 loadSnapshot s = do
@@ -339,9 +353,9 @@ submitEdit edit = do
 -- modifyEditorState
 --------------------------------------------------------------------------------
 
-modifyEditorState :: forall l. (EditorState l -> EditorState l) -> EditorM l Unit
+modifyEditorState :: forall l. Show l => (EditorState l -> EditorState l) -> EditorM l Unit
 modifyEditorState f = do
-  snapshot
+  saveSnapshot
   setHandle' do
     get >>= \state -> liftEffect $ state.ref_mb_dragOrigin := none
     state <- modify f

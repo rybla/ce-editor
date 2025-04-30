@@ -30,9 +30,10 @@
 
 ## Bugs
 
-- [ ] BUG: redo takes two tries to work?? and can't redo final undo
 - [ ] BUG: dragging that lets the inner span be outside the outer span
   - [ ] what caused this???
+- [x] BUG: redo takes two tries to work?? and can't redo final undo
+    - turned out I want dropping a snapshot by not using the current state snapshot in `undo` and `redo`
 - [x] BUG: why is there one fewer indent than there should be at the beginning?
 - [x] BUG: when paste a zipper, cursor doesnt go in right place and sometimes duplicates
 - [x] BUG: when delete a zipper, if its only 1 deep, then lose everything
