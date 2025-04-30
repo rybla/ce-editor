@@ -183,7 +183,7 @@ render state =
             show i /\ HH.div
               [ classes $ fold [ [ "Edit" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
               case edit_ of
-                Edit (Insert_EditInfo info) _ ->
+                Edit { info: Insert_EditInfo info } ->
                   [ HH.div [ classes [ "Expr" ] ] $
                       info.insertion
                         # renderFragment (renderArgs state.editor) (state.point # unwrap).path
@@ -191,7 +191,7 @@ render state =
                             { indentLevel: 0
                             }
                   ]
-                Edit (Remove_EditInfo _) _ ->
+                Edit { info: Remove_EditInfo _ } ->
                   [ HH.div [] [ HH.text "remove" ]
                   ]
 

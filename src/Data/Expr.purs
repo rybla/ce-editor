@@ -728,18 +728,17 @@ type Edit l = Edit_ l
       }
   )
 
--- TODO: make this a record
-data Edit_ l a =
-  Edit
-    (EditInfo l)
-    (Lazy a)
+data Edit_ l a = Edit
+  { info :: EditInfo l
+  , output :: Lazy a
+  }
 
 derive instance Generic (Edit_ l a) _
 
 derive instance Functor (Edit_ l)
 
 instance Show l => Show (Edit_ l a) where
-  show x = x # map (const "_::Diagnostic") # genericShow
+  show x = x # map (const "_ :: Diagnostic") # genericShow
 
 instance Show l => Pretty (Edit_ l a) where
   pretty x = show x
@@ -765,8 +764,8 @@ type PureEditorState l =
   }
 
 applyEdit :: forall l. Show l => Edit l -> PureEditorState l -> MaybeT M (PureEditorState l)
-applyEdit (Edit _ result) state = do
-  state' <- result # Lazy.force
+applyEdit (Edit edit) state = do
+  state' <- edit.output # Lazy.force
   pure
     { root: state'.root
     , mb_handle: normalizeHandle <$> state'.mb_handle
