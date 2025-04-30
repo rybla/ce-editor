@@ -193,7 +193,7 @@ handleAction (KeyDown_EditorAction event) = do
     -- delete
     _ | ki # Event.matchKeyInfo (_ == "Backspace") { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
-      submitEditAt Expr.Edit.delete
+      submitEditAt $ Expr.Edit.delete' { isValidHandle: editor.isValidHandle }
     -- cut
     _ | ki # Event.matchKeyInfo (_ == "x") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault

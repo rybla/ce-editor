@@ -5,12 +5,14 @@ import Prelude
 
 import Control.Monad.Writer (tell)
 import Control.Plus (empty)
+import Data.Expr.Drag as Expr.Drag
+import Data.Expr.Move as Expr.Move
 import Data.Lazy as Lazy
 import Data.List ((:))
 import Data.Maybe (Maybe(..))
 import Data.Unfoldable (none)
 import Ui.DiagnosticsPanel.Common as Diagnostic
-import Utility (fromMaybeM)
+import Utility (fromMaybeM, guardPure)
 
 --------------------------------------------------------------------------------
 -- insert
@@ -194,13 +196,30 @@ copy { mb_handle: Nothing } = empty
 --------------------------------------------------------------------------------
 -- delete
 --
--- same as cut except preserves clipboard.
+-- same as cut except preserves clipboard
 --------------------------------------------------------------------------------
 
 delete :: forall l. Show l => EditAt l
 delete state = do
   Edit edit <- cut state
   pure $ Edit edit { output = edit.output # map (map _ { clipboard = state.clipboard }) }
+
+--------------------------------------------------------------------------------
+-- delete'
+--
+-- same as delete except when handle is a Point, first drags back one movement
+-- before deleting.
+--------------------------------------------------------------------------------
+
+delete' :: forall l. Show l => { isValidHandle :: Expr l -> Handle -> Boolean } -> EditAt l
+delete' { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } = do
+  let
+    mb_handle' = Expr.Move.movePointUntil state.root Expr.Move.L p0 \p ->
+      e # Expr.Drag.drag (Point_Handle p0) p >>= guardPure (isValidHandle e)
+  case mb_handle' of
+    Nothing -> empty
+    Just handle' -> delete state { mb_handle = Just handle' }
+delete' _ state = delete state
 
 --------------------------------------------------------------------------------
 -- cut
