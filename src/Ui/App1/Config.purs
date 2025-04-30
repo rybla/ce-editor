@@ -4,4 +4,5 @@ import Prelude
 
 log_edits = false
 
-log_undo_and_redo = true
+log_undo_and_redo = false
+
