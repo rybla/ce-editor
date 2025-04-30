@@ -3,6 +3,8 @@ module Data.Expr where
 import Prelude
 
 import Control.Alternative (guard, (<|>))
+import Control.Monad.Maybe.Trans (MaybeT)
+import Control.Monad.Writer (WriterT, Writer)
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Either (Either(..))
@@ -10,6 +12,7 @@ import Data.Eq.Generic (genericEq)
 import Data.Foldable (class Foldable, foldr, length)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Generic.Rep (class Generic)
+import Data.Identity (Identity)
 import Data.Lazy (Lazy)
 import Data.Lazy (force) as Lazy
 import Data.List (List(..), (:))
@@ -25,6 +28,7 @@ import Data.Traversable (class Traversable, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested (type (/\), (/\))
 import Pretty (class Pretty, parens, pretty)
+import Ui.DiagnosticsPanel.Common (Diagnostic)
 import Utility (extractAt_Array, extractSpan_Array, impossible, spaces)
 
 --------------------------------------------------------------------------------
@@ -702,25 +706,42 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
     if i /= i' then Id_Diff else go path e'
 
 --------------------------------------------------------------------------------
+-- M
+--------------------------------------------------------------------------------
+
+-- TODO: refactor this out
+type M = Writer (Array Diagnostic)
+
+--------------------------------------------------------------------------------
 -- Edit
 --------------------------------------------------------------------------------
 
-type EditMenu l = String -> Array (Edit l)
+type EditMenu l = String -> Array (MaybeT M (Edit l))
 
-data Edit l = Edit (EditInfo l)
-  ( Lazy
+type EditAt l = PureEditorState l -> MaybeT M (Edit l)
+
+type Edit l = Edit_ l
+  ( MaybeT M
       { root :: Expr l
-      , handle :: Handle
+      , mb_handle :: Maybe Handle
       , clipboard :: Maybe (Fragment l)
       }
   )
 
-derive instance Generic (Edit l) _
+-- TODO: make this a record
+data Edit_ l a =
+  Edit
+    (EditInfo l)
+    (Lazy a)
 
-instance Show l => Show (Edit l) where
-  show x = genericShow x
+derive instance Generic (Edit_ l a) _
 
-instance Show l => Pretty (Edit l) where
+derive instance Functor (Edit_ l)
+
+instance Show l => Show (Edit_ l a) where
+  show x = x # map (const "_::Diagnostic") # genericShow
+
+instance Show l => Pretty (Edit_ l a) where
   pretty x = show x
 
 data EditInfo l
@@ -739,18 +760,17 @@ instance Show l => Pretty (EditInfo l) where
 
 type PureEditorState l =
   { root :: Expr l
-  , handle :: Handle
+  , mb_handle :: Maybe Handle
   , clipboard :: Maybe (Fragment l)
   }
 
-applyEdit :: forall l. Show l => Edit l -> PureEditorState l -> PureEditorState l
-applyEdit (Edit _ result_) state =
-  let
-    result = result_ # Lazy.force
-  in
-    { root: result.root
-    , handle: normalizeHandle result.handle
-    , clipboard: result.clipboard <|> state.clipboard
+applyEdit :: forall l. Show l => Edit l -> PureEditorState l -> MaybeT M (PureEditorState l)
+applyEdit (Edit _ result) state = do
+  state' <- result # Lazy.force
+  pure
+    { root: state'.root
+    , mb_handle: normalizeHandle <$> state'.mb_handle
+    , clipboard: state'.clipboard <|> state.clipboard
     }
 
 --------------------------------------------------------------------------------

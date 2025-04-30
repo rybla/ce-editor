@@ -2,19 +2,24 @@ module Ui.App1.Buffer where
 
 import Prelude
 
+import Control.Applicative (pure)
+import Control.Monad.Maybe.Trans (runMaybeT)
 import Control.Monad.Reader (runReader)
 import Control.Monad.State (get, modify_)
+import Control.Monad.Writer (runWriter, runWriterT)
 import Data.Array ((!!))
+import Data.Array as Array
 import Data.Const (Const(..))
-import Data.Expr (Edit(..), EditInfo(..), Expr, Path, Point)
+import Data.Expr (Edit_(..), EditInfo(..), Expr, Path, Point)
 import Data.Expr.Render (RenderArgs, renderFragment)
 import Data.Expr.Render as Expr.Render
-import Data.Foldable (fold, length, null)
+import Data.Foldable (fold, foldMap, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), RenderM)
@@ -140,7 +145,8 @@ setQuery' :: forall l. String -> BufferState l -> BufferState l
 setQuery' query state = state
   { query = query
   , option_i = if null menu_queried then none else pure 0
-  , menu_queried = menu_queried
+  -- TODO: for now, just ignore the diagnostics
+  , menu_queried = menu_queried # foldMap (runMaybeT >>> runWriter >>> fst >>> Array.fromFoldable)
   }
   where
   menu_queried = state.menu query

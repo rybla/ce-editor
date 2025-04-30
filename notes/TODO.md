@@ -2,6 +2,9 @@
 
 ## halogen-simplified
 
+- [ ] refactor to allow for diagnostics reporting some places
+  - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
+- [ ] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
 - [ ] BUG: why is there one fewer indent than there should be at the beginning?
 - [ ] BUG: when paste a zipper, cursor doesnt go in right place and sometimes duplicates
 - [ ] BUG: when delete a zipper, if its only 1 deep, then lose everything

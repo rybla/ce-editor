@@ -2,9 +2,11 @@ module Ui.App1.Editor where
 
 import Prelude
 
+import Control.Monad.Maybe.Trans (runMaybeT)
 import Control.Monad.State (get, modify)
+import Control.Monad.Writer (runWriter, runWriterT)
 import Data.Array as Array
-import Data.Expr (Edit, Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
+import Data.Expr (Edit, Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), EditAt, applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
@@ -29,12 +31,12 @@ import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
-import Ui.App1.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot)
+import Ui.App1.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, toPureEditorState)
 import Ui.App1.Config as Config
 import Ui.App1.Point as Point
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
-import Utility (bug, guardPure, isNonSpace, (:%=), (:=))
+import Utility (bug, guardPure, isNonSpace, todo, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -93,6 +95,7 @@ handleAction (MouseUp_EditorAction _event) = do
 
 handleAction (KeyDown_EditorAction event) = do
   state@{ editor: Editor editor } <- get
+  purestate <- state # toPureEditorState # liftEffect
   mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
   mb_dragOrigin <- liftEffect $ Ref.read state.ref_mb_dragOrigin
   bufferIsOpen <- case mb_handle of
@@ -112,9 +115,10 @@ handleAction (KeyDown_EditorAction event) = do
     _ -> pure unit
   else case unit of
     -- shortcut
-    _ | Just handle <- mb_handle, Just edit <- ki # editor.getShortcut state.root handle -> do
+    _ | Just edit /\ _diagnostics <- editor.getShortcut ki purestate # runMaybeT # runWriter -> do
       liftEffect $ event # Event.preventDefault
-      submitEdit edit handle
+      -- TODO: report diagnostics
+      submitEdit edit
     -- move
     _ | Just dir <- ki # Event.matchMapKeyInfo Expr.Move.fromKeyToDir { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
@@ -185,27 +189,19 @@ handleAction (KeyDown_EditorAction event) = do
     -- copy
     _ | ki # Event.matchKeyInfo (_ == "c") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
-      case mb_handle of
-        Just handle -> submitEdit (state.root # Expr.Edit.delete handle) handle
-        _ -> pure unit
+      submitEditAt Expr.Edit.delete
     -- delete
     _ | ki # Event.matchKeyInfo (_ == "Backspace") { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
-      case mb_handle of
-        Just handle -> submitEdit (state.root # Expr.Edit.delete handle) handle
-        _ -> pure unit
+      submitEditAt Expr.Edit.delete
     -- cut
     _ | ki # Event.matchKeyInfo (_ == "x") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
-      case mb_handle of
-        Just handle -> submitEdit (state.root # Expr.Edit.cut handle) handle
-        _ -> pure unit
+      submitEditAt Expr.Edit.cut
     -- paste
     _ | ki # Event.matchKeyInfo (_ == "v") { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
-      case mb_handle /\ state.clipboard of
-        Just handle /\ Just clipboard -> submitEdit (state.root # Expr.Edit.paste clipboard handle) handle
-        _ -> pure unit
+      submitEditAt Expr.Edit.paste
     -- redo
     _ | ki # Event.matchKeyInfo (_ == "z") { cmd: pure true, shift: pure true, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
@@ -221,14 +217,14 @@ handleAction (KeyDown_EditorAction event) = do
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu: editor.getEditMenu state.root handle, query: "" }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu: editor.getEditMenu purestate, query: "" }
     _ | ki # Event.matchKeyInfo isNonSpace { cmd: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu: editor.getEditMenu state.root handle, query: (unwrap ki).key }
+          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu: editor.getEditMenu purestate, query: (unwrap ki).key }
     -- unrecognized keyboard event
     _ -> pure unit
 
@@ -257,11 +253,7 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
             when (editor.isValidHandle state.root h) do
               setHandle (pure h')
 handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput edit))) = do
-  state <- get
-  mb_handle <- liftEffect do state.ref_mb_handle # Ref.read
-  case mb_handle of
-    Nothing -> bug "shouldn't be able to submit buffer if there is no handle"
-    Just handle -> submitEdit edit handle
+  submitEdit edit
 
 openBuffer_keys = Set.fromFoldable [ "Tab" ]
 
@@ -307,15 +299,18 @@ loadSnapshot s = do
 -- submitEdit
 --------------------------------------------------------------------------------
 
-submitEdit :: forall l. Show l => Edit l -> Handle -> EditorM l Unit
-submitEdit edit handle = do
-  state <- get
-  let
-    input =
-      { root: state.root
-      , handle
-      , clipboard: state.clipboard
-      }
+submitEditAt :: forall l. Show l => EditAt l -> EditorM l Unit
+submitEditAt editAt = do
+  state <- get >>= (liftEffect <<< toPureEditorState)
+  let mb_edit /\ _diagnostics = state # editAt # runMaybeT # runWriter
+  -- TODO: report diagnostics
+  case mb_edit of
+    Nothing -> pure unit
+    Just edit -> submitEdit edit
+
+submitEdit :: forall l. Show l => Edit l -> EditorM l Unit
+submitEdit edit = do
+  input <- get >>= (liftEffect <<< toPureEditorState)
   when Config.log_edits do
     Console.log $ Array.replicate 10 "====" # fold
     Console.log "guard (Config.log_edits = true)"
@@ -323,17 +318,22 @@ submitEdit edit handle = do
     Console.log "edit:"
     Console.log $ show edit
     Console.log $ "input state:"
-    Console.log $ "{ root: " <> show input.root <> "\n, handle: " <> show input.handle <> "\n, clipboard: " <> show input.clipboard <> "\n}"
-  let output = applyEdit edit input
-  when Config.log_edits do
-    Console.log $ "output state:"
-    Console.log $ "{ root: " <> show output.root <> "\n, handle: " <> show output.handle <> "\n, clipboard: " <> show output.clipboard <> "\n}"
-    Console.log $ Array.replicate 10 "====" # fold
-  modifyEditorState _
-    { root = output.root
-    , initial_mb_handle = pure output.handle
-    , clipboard = output.clipboard
-    }
+    Console.log $ "{ root: " <> show input.root <> "\n, mb_handle: " <> show input.mb_handle <> "\n, clipboard: " <> show input.clipboard <> "\n}"
+  let mb_output /\ _diagnostics = applyEdit edit input # runMaybeT # runWriter
+  case mb_output of
+    Nothing -> do
+      -- TODO: report diagnostics
+      pure unit
+    Just output -> do
+      when Config.log_edits do
+        Console.log $ "output state:"
+        Console.log $ "{ root: " <> show output.root <> "\n, mb_handle: " <> show output.mb_handle <> "\n, clipboard: " <> show output.clipboard <> "\n}"
+        Console.log $ Array.replicate 10 "====" # fold
+      modifyEditorState _
+        { root = output.root
+        , initial_mb_handle = output.mb_handle
+        , clipboard = output.clipboard
+        }
 
 --------------------------------------------------------------------------------
 -- modifyEditorState

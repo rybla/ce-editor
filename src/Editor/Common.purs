@@ -2,20 +2,18 @@ module Editor.Common where
 
 import Prelude
 
+import Control.Monad.Maybe.Trans (MaybeT)
 import Control.Monad.Reader (Reader, runReader)
 import Data.Array as Array
-import Data.Expr (Edit(..), EditMenu, Expr, Fragment, Handle)
-import Data.Expr.Edit as Expr.Edit
+import Data.Expr (Edit, EditMenu, Expr, Handle, M, PureEditorState)
 import Data.Foldable (fold)
-import Data.Lazy as Lazy
-import Data.Maybe (Maybe, fromMaybe)
+import Data.Maybe (fromMaybe)
 import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Ui.Event (KeyInfo)
 import Ui.Halogen (classes)
-import Utility (todo)
 
 --------------------------------------------------------------------------------
 
@@ -23,8 +21,8 @@ data Editor l = Editor
   { name :: String
   , initial_expr :: Expr l
   , initial_handle :: Handle
-  , getEditMenu :: Expr l -> Handle -> EditMenu l
-  , getShortcut :: Expr l -> Handle -> KeyInfo -> Maybe (Edit l)
+  , getEditMenu :: PureEditorState l -> EditMenu l
+  , getShortcut :: KeyInfo -> PureEditorState l -> MaybeT M (Edit l)
   , isValidHandle :: Expr l -> Handle -> Boolean
   , assembleExpr :: AssembleExpr l
   }
@@ -62,9 +60,5 @@ assembleExpr_default { label, kids, points } = do
     , [ points # Array.last # fromMaybe (renderWarning "missing last point") ]
     , [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text ")" ] ]
     ]
-
--- TODO: this is an unnecessary layer
-mkPasteFragmentEdit ∷ ∀ (l ∷ Type). Show l ⇒ Expr l → Handle → Fragment l → Edit l
-mkPasteFragmentEdit root handle insertion = root # Expr.Edit.paste insertion handle
 
 renderWarning msg = HH.div [ classes [ "Warning" ] ] [ HH.text msg ]

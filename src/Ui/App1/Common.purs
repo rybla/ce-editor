@@ -4,16 +4,18 @@ import Prelude
 
 import Data.Const (Const)
 import Data.Eq.Generic (genericEq)
-import Data.Expr (Edit, EditMenu, Expr, Fragment, Handle, Point)
+import Data.Expr (Edit, EditMenu, Expr, Fragment, Handle, Point, PureEditorState)
 import Data.Generic.Rep (class Generic)
 import Data.List (List)
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
 import Data.Show.Generic (genericShow)
 import Editor (Editor)
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Ref (Ref)
+import Effect.Ref as Ref
 import Halogen as H
 import Web.Event.Event (Event)
 import Web.UIEvent.MouseEvent (MouseEvent)
@@ -65,6 +67,15 @@ type EditorState l =
   , ref_history :: Ref (List (Snapshot l))
   , ref_future :: Ref (List (Snapshot l))
   }
+
+toPureEditorState :: forall l. EditorState l -> Effect (PureEditorState l)
+toPureEditorState state = do
+  mb_handle <- state.ref_mb_handle # Ref.read
+  pure
+    { root: state.root
+    , mb_handle
+    , clipboard: state.clipboard
+    }
 
 type Snapshot l =
   { root :: Expr l

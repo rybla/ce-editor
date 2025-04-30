@@ -3,20 +3,21 @@ module Test.Expr (spec) where
 import Data.Expr
 import Prelude
 
+import Control.Monad.Maybe.Trans (runMaybeT)
+import Control.Monad.Writer (runWriter)
 import Data.Array as Array
 import Data.Expr.Drag as Expr.Drag
-import Data.Expr.Edit (EditAt)
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
-import Data.Lazy as Lazy
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe')
 import Data.NonEmpty (NonEmpty(..))
+import Data.Tuple.Nested ((/\))
 import Partial.Unsafe (unsafePartial)
-import Pretty (pretty)
 import Test.Spec (Spec)
 import Test.Spec as Spec
+import Test.Spec.Assertions (fail)
 import Test.Utilities (shouldEqual)
 import Utility (impossible)
 
@@ -89,46 +90,47 @@ spec_edit :: Spec Unit
 spec_edit = Spec.describe "edit" do
   mkTest_EditAt "delete zipper at top level"
     { root: ("Root" % [ ("hello" % []), ("Group" % [ ("world" % []) ]) ])
-    , handle: ZipperH_Handle (ZipperH { j_IL: (Index 0), j_IR: (Index 1), j_OL: (Index 1), j_OR: (Index 2), path_I: (NonEmpty (Step 1) Nil), path_O: Nil }) OuterLeft_ZipperFocus
+    , mb_handle: Just (ZipperH_Handle (ZipperH { j_IL: (Index 0), j_IR: (Index 1), j_OL: (Index 1), j_OR: (Index 2), path_I: (NonEmpty (Step 1) Nil), path_O: Nil }) OuterLeft_ZipperFocus)
     , clipboard: Nothing
     }
     Expr.Edit.delete
     { root: ("Root" % [ ("hello" % []), ("world" % []) ])
-    , handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 2), path: Nil }) Left_SpanFocus)
+    , mb_handle: Just (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 2), path: Nil }) Left_SpanFocus)
     , clipboard: Nothing
     }
 
   mkTest_EditAt "delete big zipper at top level"
     { root: ("Root" % [ ("Group" % [ ("Group" % [ ("Group" % [ ("a" % []) ]) ]) ]), ("Group" % [ ("Group" % [ ("Group" % [ ("b" % []) ]) ]) ]) ])
-    , handle: (ZipperH_Handle (ZipperH { j_IL: (Index 0), j_IR: (Index 1), j_OL: (Index 1), j_OR: (Index 2), path_I: (NonEmpty (Step 1) ((Step 0) : (Step 0) : Nil)), path_O: Nil }) OuterLeft_ZipperFocus)
+    , mb_handle: Just (ZipperH_Handle (ZipperH { j_IL: (Index 0), j_IR: (Index 1), j_OL: (Index 1), j_OR: (Index 2), path_I: (NonEmpty (Step 1) ((Step 0) : (Step 0) : Nil)), path_O: Nil }) OuterLeft_ZipperFocus)
     , clipboard: Nothing
     }
     Expr.Edit.delete
     { root: ("Root" % [ ("Group" % [ ("Group" % [ ("Group" % [ ("a" % []) ]) ]) ]), ("b" % []) ])
-    , handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 2), path: Nil }) Left_SpanFocus)
+    , mb_handle: Just (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 2), path: Nil }) Left_SpanFocus)
     , clipboard: Nothing
     }
 
   mkTest_EditAt "cut a zipper"
     { root: ("Root" % [ ("a" % []), ("Group" % [ ("b" % []), ("c" % []) ]) ])
-    , handle:
-        ( ZipperH_Handle
-            ( ZipperH
-                { j_IL: (Index 0)
-                , j_IR: (Index 2)
-                , j_OL: (Index 1)
-                , j_OR: (Index 2)
-                , path_I: (NonEmpty (Step 1) Nil)
-                , path_O: Nil
-                }
-            )
-            InnerLeft_ZipperFocus
-        )
+    , mb_handle:
+        Just
+          ( ZipperH_Handle
+              ( ZipperH
+                  { j_IL: (Index 0)
+                  , j_IR: (Index 2)
+                  , j_OL: (Index 1)
+                  , j_OR: (Index 2)
+                  , path_I: (NonEmpty (Step 1) Nil)
+                  , path_O: Nil
+                  }
+              )
+              InnerLeft_ZipperFocus
+          )
     , clipboard: Nothing
     }
     Expr.Edit.cut
     { root: ("Root" % [ ("a" % []), ("b" % []), ("c" % []) ])
-    , handle: (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 3), path: Nil }) Left_SpanFocus)
+    , mb_handle: Just (SpanH_Handle (SpanH { j_L: (Index 1), j_R: (Index 3), path: Nil }) Left_SpanFocus)
     , clipboard:
         ( Just
             ( Zipper_Fragment
@@ -149,18 +151,6 @@ spec_edit = Spec.describe "edit" do
 
   pure unit
   where
-  mkTest_Edit
-    :: PureEditorState L
-    -> Edit L
-    -> PureEditorState L
-    -> Spec Unit
-  mkTest_Edit state edit state' =
-    Spec.it ("apply edit " <> pretty edit) do
-      let Edit _ result = edit
-      shouldEqual show
-        (Lazy.force result)
-        (state')
-
   mkTest_EditAt
     :: String
     -> PureEditorState L
@@ -168,14 +158,14 @@ spec_edit = Spec.describe "edit" do
     -> PureEditorState L
     -> Spec Unit
   mkTest_EditAt label state editAt state'_expected =
-    let
-      edit = editAt state.handle state.root
-    in
-      Spec.it label do
-        let state'_actual = applyEdit edit state
-        shouldEqual show state'_actual.root state'_expected.root
-        shouldEqual show state'_actual.handle state'_expected.handle
-        shouldEqual show state'_actual.clipboard state'_expected.clipboard
+    Spec.it label case editAt state # runMaybeT # runWriter of
+      Nothing /\ _diagnostics -> fail "editAt"
+      Just edit /\ _diagnoistics -> case applyEdit edit state # runMaybeT # runWriter of
+        Nothing /\ _diagnostics -> fail "applyEdit"
+        Just state'_actual /\ _diagnostics -> do
+          shouldEqual show state'_actual.root state'_expected.root
+          shouldEqual show state'_actual.mb_handle state'_expected.mb_handle
+          shouldEqual show state'_actual.clipboard state'_expected.clipboard
 
 --------------------------------------------------------------------------------
 -- Utilities
