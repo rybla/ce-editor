@@ -3,7 +3,7 @@ module Editor.Example.UlcV1 where
 import Data.Expr
 import Prelude
 
-import Control.Monad.Reader (ask)
+import Control.Monad.Reader (ask, local)
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Expr.Edit as Expr.Edit
@@ -68,46 +68,88 @@ editor = Editor
         p = getEndPoints_ZipperH zh
   , assembleExpr: \args -> do
       ctx <- ask
-      kids <- args.kids # sequence
-      case args.label /\ args.points /\ kids of
-        "Root" /\ ps /\ ks -> pure $ fold $ Array.zipWith (\p k -> [ p ] <> k) ps ks <> [ ps # Array.last # fromMaybe ]
+      case args.label /\ args.points /\ args.kids of
+        "Root" /\ ps /\ ks -> do
+          ks' <- ks # sequence
+          pure $ fold $ Array.zipWith (\p k -> [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ]
 
-        "LineBreak" /\ [ _p0 ] /\ [] -> pure $ fold [ linebreak, indentations ctx.indentLevel ]
-        "LineBreak" /\ _ /\ _ -> assembleExpr_default args
+        "LineBreak" /\ [ _p0 ] /\ [] -> do
+          pure $ fold [ linebreak, indentations ctx.indentLevel ]
+        "LineBreak" /\ _ /\ _ -> do
+          assembleExpr_default args
 
-        "Var" /\ [ _p0, _p1 ] /\ [ k0 ] -> pure $ fold [ k0 ]
+        "Var" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
+          k0' <- k0
+          pure $ fold [ k0' ]
 
-        "Lam" /\ _ /\ [ k0, k1 ] -> pure $ fold [ punctuation "(", keyword "λ", k0, keyword ".", k1, punctuation ")" ]
-        "Lam" /\ _ /\ _ -> assembleExpr_default args
+        "Lam" /\ _ /\ [ k0, k1 ] -> do
+          k0' <- increaseIndentLevel do k0
+          k1' <- increaseIndentLevel do k1
+          pure $ fold [ punctuation "(", keyword "λ", k0', keyword ".", k1', punctuation ")" ]
+        "Lam" /\ _ /\ _ -> do
+          assembleExpr_default args
         -- 
-        "LamParams" /\ [ p ] /\ [] -> pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
-        "LamParams" /\ ps /\ ks -> pure $ fold $ Array.zipWith (\p k -> [ p ] <> k) ps ks <> [ ps # Array.last # fromMaybe ]
+        "LamParams" /\ [ p ] /\ [] -> do
+          pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
+        "LamParams" /\ ps /\ ks -> do
+          ks' <- ks # sequence
+          pure $ fold $ Array.zipWith (\p k -> do [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ]
         -- 
-        "LamBody" /\ [ p ] /\ [] -> pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
-        "LamBody" /\ [ p0, p1 ] /\ [ k0 ] -> pure $ fold [ [ p0 ], k0, [ p1 ] ]
-        "LamBody" /\ ps /\ ks -> pure $ fold $ Array.zipWith (\p k -> [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks <> [ ps # Array.last # fromMaybe ]
+        "LamBody" /\ [ p ] /\ [] -> do
+          pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
+        "LamBody" /\ [ p0, p1 ] /\ [ k0 ] -> do
+          k0' <- k0
+          pure $ fold [ [ p0 ], k0', [ p1 ] ]
+        "LamBody" /\ ps /\ ks -> do
+          ks' <- ks # sequence
+          pure $ fold $ Array.zipWith (\p k -> do [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks' <> [ ps # Array.last # fromMaybe ]
         -- 
-        "App" /\ ps /\ ks -> pure $ fold $ fold $ [ [ punctuation "(" ], Array.zipWith (\p k -> [ p ] <> k) ps ks, [ ps # Array.last # fromMaybe ], [ punctuation ")" ] ]
+        "App" /\ ps /\ ks -> do
+          ks' <- increaseIndentLevel do ks # sequence
+          pure $ fold $ fold $ [ [ punctuation "(" ], Array.zipWith (\p k -> do [ p ] <> k) ps ks', [ ps # Array.last # fromMaybe ], [ punctuation ")" ] ]
         -- 
-        "Let" /\ _ /\ [ k0, k1, k2 ] -> pure $ fold [ punctuation "(", keyword "let", k0, punctuation "=", k1, keyword "in", k2, punctuation ")" ]
-        "Let" /\ _ /\ _ -> assembleExpr_default args
+        "Let" /\ _ /\ [ k0, k1, k2 ] -> do
+          k0' <- increaseIndentLevel do k0
+          k1' <- increaseIndentLevel do k1
+          k2' <- increaseIndentLevel do k2
+          pure $ fold [ punctuation "(", keyword "let", k0', punctuation "=", k1', keyword "in", k2', punctuation ")" ]
+        "Let" /\ _ /\ _ -> do
+          assembleExpr_default args
         -- 
-        "LetVar" /\ [ p ] /\ [] -> pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
-        "LetVar" /\ [ p0, p1 ] /\ [ k0 ] -> pure $ fold [ [ p0 ], k0, [ p1 ] ]
-        "LetVar" /\ ps /\ ks -> pure $ fold $ Array.zipWith (\p k -> [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks <> [ ps # Array.last # fromMaybe ]
+        "LetVar" /\ [ p ] /\ [] -> do
+          pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
+        "LetVar" /\ [ p0, p1 ] /\ [ k0 ] -> do
+          k0' <- k0
+          pure $ fold [ [ p0 ], k0', [ p1 ] ]
+        "LetVar" /\ ps /\ ks -> do
+          ks' <- ks # sequence
+          pure $ fold $ Array.zipWith (\p k -> do [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks' <> [ ps # Array.last # fromMaybe ]
         -- 
-        "LetImpl" /\ [ p ] /\ [] -> pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
-        "LetImpl" /\ [ p0, p1 ] /\ [ k0 ] -> pure $ fold [ [ p0 ], k0, [ p1 ] ]
-        "LetImpl" /\ ps /\ ks -> pure $ fold $ Array.zipWith (\p k -> [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks <> [ ps # Array.last # fromMaybe ]
+        "LetImpl" /\ [ p ] /\ [] -> do
+          pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
+        "LetImpl" /\ [ p0, p1 ] /\ [ k0 ] -> do
+          k0' <- k0
+          pure $ fold [ [ p0 ], k0', [ p1 ] ]
+        "LetImpl" /\ ps /\ ks -> do
+          ks' <- ks # sequence
+          pure $ fold $ Array.zipWith (\p k -> do [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks' <> [ ps # Array.last # fromMaybe ]
         -- 
-        "LetBody" /\ [ p ] /\ [] -> pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
-        "LetBody" /\ [ p0, p1 ] /\ [ k0 ] -> pure $ fold [ [ p0 ], k0, [ p1 ] ]
-        "LetBody" /\ ps /\ ks -> pure $ fold $ Array.zipWith (\p k -> [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks <> [ ps # Array.last # fromMaybe ]
+        "LetBody" /\ [ p ] /\ [] -> do
+          pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
+        "LetBody" /\ [ p0, p1 ] /\ [ k0 ] -> do
+          k0' <- k0
+          pure $ fold [ [ p0 ], k0', [ p1 ] ]
+        "LetBody" /\ ps /\ ks -> do
+          ks' <- ks # sequence
+          pure $ fold $ Array.zipWith (\p k -> do [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks' <> [ ps # Array.last # fromMaybe ]
         --
-        str /\ [ _p0 ] /\ [] -> pure $ fold [ literal str ]
+        str /\ [ _p0 ] /\ [] -> do
+          pure $ fold [ literal str ]
         -- 
         _ -> assembleExpr_default args
   }
+
+increaseIndentLevel = local \ctx -> ctx { indentLevel = ctx.indentLevel + 1 }
 
 beforeHolePoint = [ HH.div [ classes [ "Token", "beforeHolePoint" ] ] [ HH.text "" ] ]
 afterHolePoint = [ HH.div [ classes [ "Token", "afterHolePoint" ] ] [ HH.text "" ] ]

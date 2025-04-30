@@ -4,6 +4,7 @@
   - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
 - [ ] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
 - [ ] need to make re-rendering more efficient, since right now it grows asymptotically too fast. perhaps using nested and keyed elements will help with the Halogen diffing?
+- [x] implement indentation in UlcV1
 - [x] figure out better way of visually representing both sides of the linebreak grammar construct
 - [x] do nested indentation levels
 - [x] rendering organization

@@ -2297,6 +2297,9 @@
   };
 
   // output/Control.Monad.Reader.Class/index.js
+  var local = function(dict) {
+    return dict.local;
+  };
   var ask = function(dict) {
     return dict.ask;
   };
@@ -2692,6 +2695,13 @@
   var ReaderT = function(x) {
     return x;
   };
+  var withReaderT = function(f) {
+    return function(v) {
+      return function($152) {
+        return v(f($152));
+      };
+    };
+  };
   var mapReaderT = function(f) {
     return function(v) {
       return function($154) {
@@ -2784,6 +2794,15 @@
       ask: pure(dictMonad.Applicative0()),
       Monad0: function() {
         return monadReaderT1;
+      }
+    };
+  };
+  var monadReaderReaderT = function(dictMonad) {
+    var monadAskReaderT1 = monadAskReaderT(dictMonad);
+    return {
+      local: withReaderT,
+      MonadAsk0: function() {
+        return monadAskReaderT1;
       }
     };
   };
@@ -11250,11 +11269,9 @@
     };
     return Editor2;
   }();
-  var runRenderM = /* @__PURE__ */ function() {
-    return flip(runReader)({
-      indentLevel: -1 | 0
-    });
-  }();
+  var runRenderM = /* @__PURE__ */ flip(runReader)({
+    indentLevel: 0
+  });
   var renderWarning = function(msg) {
     return div2([classes2(["Warning"])])([text5(msg)]);
   };
@@ -11403,6 +11420,21 @@
   var indentations = function(n) {
     return fold4(replicate(n)(indentation));
   };
+  var increaseIndentLevel = function(dictMonadReader) {
+    return local(dictMonadReader)(function(ctx) {
+      var $46 = {};
+      for (var $47 in ctx) {
+        if ({}.hasOwnProperty.call(ctx, $47)) {
+          $46[$47] = ctx[$47];
+        }
+        ;
+      }
+      ;
+      $46.indentLevel = ctx.indentLevel + 1 | 0;
+      return $46;
+    });
+  };
+  var increaseIndentLevel1 = /* @__PURE__ */ increaseIndentLevel(/* @__PURE__ */ monadReaderReaderT(monadIdentity));
   var expr_Var = function(x) {
     return mkExpr("Var")([mkExpr(x)([])]);
   };
@@ -11519,134 +11551,166 @@
       },
       assembleExpr: function(args) {
         return bind9(ask2)(function(ctx) {
-          return bind9(sequence2(args.kids))(function(kids) {
-            var v = new Tuple(args.label, new Tuple(args.points, kids));
-            if (v.value0 === "Root") {
+          var v = new Tuple(args.label, new Tuple(args.points, args.kids));
+          if (v.value0 === "Root") {
+            return bind9(sequence2(v.value1.value1))(function(ks$prime) {
               return pure18(fold4(append8(zipWith(function(p2) {
                 return function(k) {
                   return append8([p2])(k);
                 };
-              })(v.value1.value0)(v.value1.value1))([fromMaybe3(last(v.value1.value0))])));
-            }
-            ;
-            if (v.value0 === "LineBreak" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
-              return pure18(fold4([linebreak, indentations(ctx.indentLevel)]));
-            }
-            ;
-            if (v.value0 === "LineBreak") {
-              return assembleExpr_default2(args);
-            }
-            ;
-            if (v.value0 === "Var" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
-              return pure18(fold4([v["value1"]["value1"][0]]));
-            }
-            ;
-            if (v.value0 === "Lam" && v.value1.value1.length === 2) {
-              return pure18(fold4([punctuation("("), keyword("\u03BB"), v["value1"]["value1"][0], keyword("."), v["value1"]["value1"][1], punctuation(")")]));
-            }
-            ;
-            if (v.value0 === "Lam") {
-              return assembleExpr_default2(args);
-            }
-            ;
-            if (v.value0 === "LamParams" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
-              return pure18(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
-            }
-            ;
-            if (v.value0 === "LamParams") {
+              })(v.value1.value0)(ks$prime))([fromMaybe3(last(v.value1.value0))])));
+            });
+          }
+          ;
+          if (v.value0 === "LineBreak" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
+            return pure18(fold4([linebreak, indentations(ctx.indentLevel)]));
+          }
+          ;
+          if (v.value0 === "LineBreak") {
+            return assembleExpr_default2(args);
+          }
+          ;
+          if (v.value0 === "Var" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
+            return bind9(v["value1"]["value1"][0])(function(k0$prime) {
+              return pure18(fold4([k0$prime]));
+            });
+          }
+          ;
+          if (v.value0 === "Lam" && v.value1.value1.length === 2) {
+            return bind9(increaseIndentLevel1(v["value1"]["value1"][0]))(function(k0$prime) {
+              return bind9(increaseIndentLevel1(v["value1"]["value1"][1]))(function(k1$prime) {
+                return pure18(fold4([punctuation("("), keyword("\u03BB"), k0$prime, keyword("."), k1$prime, punctuation(")")]));
+              });
+            });
+          }
+          ;
+          if (v.value0 === "Lam") {
+            return assembleExpr_default2(args);
+          }
+          ;
+          if (v.value0 === "LamParams" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
+            return pure18(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
+          }
+          ;
+          if (v.value0 === "LamParams") {
+            return bind9(sequence2(v.value1.value1))(function(ks$prime) {
               return pure18(fold4(append8(zipWith(function(p2) {
                 return function(k) {
                   return append8([p2])(k);
                 };
-              })(v.value1.value0)(v.value1.value1))([fromMaybe3(last(v.value1.value0))])));
-            }
-            ;
-            if (v.value0 === "LamBody" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
-              return pure18(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
-            }
-            ;
-            if (v.value0 === "LamBody" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
-              return pure18(fold4([[v["value1"]["value0"][0]], v["value1"]["value1"][0], [v["value1"]["value0"][1]]]));
-            }
-            ;
-            if (v.value0 === "LamBody") {
+              })(v.value1.value0)(ks$prime))([fromMaybe3(last(v.value1.value0))])));
+            });
+          }
+          ;
+          if (v.value0 === "LamBody" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
+            return pure18(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
+          }
+          ;
+          if (v.value0 === "LamBody" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
+            return bind9(v["value1"]["value1"][0])(function(k0$prime) {
+              return pure18(fold4([[v["value1"]["value0"][0]], k0$prime, [v["value1"]["value0"][1]]]));
+            });
+          }
+          ;
+          if (v.value0 === "LamBody") {
+            return bind9(sequence2(v.value1.value1))(function(ks$prime) {
               return pure18(fold4(append8(zipWith(function(p2) {
                 return function(k) {
                   return append8([p2])(append8(beforeExtraKid)(append8(k)(afterExtraKid)));
                 };
-              })(v.value1.value0)(v.value1.value1))([fromMaybe3(last(v.value1.value0))])));
-            }
-            ;
-            if (v.value0 === "App") {
+              })(v.value1.value0)(ks$prime))([fromMaybe3(last(v.value1.value0))])));
+            });
+          }
+          ;
+          if (v.value0 === "App") {
+            return bind9(increaseIndentLevel1(sequence2(v.value1.value1)))(function(ks$prime) {
               return pure18(fold4(fold4([[punctuation("(")], zipWith(function(p2) {
                 return function(k) {
                   return append8([p2])(k);
                 };
-              })(v.value1.value0)(v.value1.value1), [fromMaybe3(last(v.value1.value0))], [punctuation(")")]])));
-            }
-            ;
-            if (v.value0 === "Let" && v.value1.value1.length === 3) {
-              return pure18(fold4([punctuation("("), keyword("let"), v["value1"]["value1"][0], punctuation("="), v["value1"]["value1"][1], keyword("in"), v["value1"]["value1"][2], punctuation(")")]));
-            }
-            ;
-            if (v.value0 === "Let") {
-              return assembleExpr_default2(args);
-            }
-            ;
-            if (v.value0 === "LetVar" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
-              return pure18(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
-            }
-            ;
-            if (v.value0 === "LetVar" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
-              return pure18(fold4([[v["value1"]["value0"][0]], v["value1"]["value1"][0], [v["value1"]["value0"][1]]]));
-            }
-            ;
-            if (v.value0 === "LetVar") {
-              return pure18(fold4(append8(zipWith(function(p2) {
-                return function(k) {
-                  return append8([p2])(append8(beforeExtraKid)(append8(k)(afterExtraKid)));
-                };
-              })(v.value1.value0)(v.value1.value1))([fromMaybe3(last(v.value1.value0))])));
-            }
-            ;
-            if (v.value0 === "LetImpl" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
-              return pure18(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
-            }
-            ;
-            if (v.value0 === "LetImpl" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
-              return pure18(fold4([[v["value1"]["value0"][0]], v["value1"]["value1"][0], [v["value1"]["value0"][1]]]));
-            }
-            ;
-            if (v.value0 === "LetImpl") {
-              return pure18(fold4(append8(zipWith(function(p2) {
-                return function(k) {
-                  return append8([p2])(append8(beforeExtraKid)(append8(k)(afterExtraKid)));
-                };
-              })(v.value1.value0)(v.value1.value1))([fromMaybe3(last(v.value1.value0))])));
-            }
-            ;
-            if (v.value0 === "LetBody" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
-              return pure18(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
-            }
-            ;
-            if (v.value0 === "LetBody" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
-              return pure18(fold4([[v["value1"]["value0"][0]], v["value1"]["value1"][0], [v["value1"]["value0"][1]]]));
-            }
-            ;
-            if (v.value0 === "LetBody") {
-              return pure18(fold4(append8(zipWith(function(p2) {
-                return function(k) {
-                  return append8([p2])(append8(beforeExtraKid)(append8(k)(afterExtraKid)));
-                };
-              })(v.value1.value0)(v.value1.value1))([fromMaybe3(last(v.value1.value0))])));
-            }
-            ;
-            if (v.value1.value0.length === 1 && v.value1.value1.length === 0) {
-              return pure18(fold4([literal(v.value0)]));
-            }
-            ;
+              })(v.value1.value0)(ks$prime), [fromMaybe3(last(v.value1.value0))], [punctuation(")")]])));
+            });
+          }
+          ;
+          if (v.value0 === "Let" && v.value1.value1.length === 3) {
+            return bind9(increaseIndentLevel1(v["value1"]["value1"][0]))(function(k0$prime) {
+              return bind9(increaseIndentLevel1(v["value1"]["value1"][1]))(function(k1$prime) {
+                return bind9(increaseIndentLevel1(v["value1"]["value1"][2]))(function(k2$prime) {
+                  return pure18(fold4([punctuation("("), keyword("let"), k0$prime, punctuation("="), k1$prime, keyword("in"), k2$prime, punctuation(")")]));
+                });
+              });
+            });
+          }
+          ;
+          if (v.value0 === "Let") {
             return assembleExpr_default2(args);
-          });
+          }
+          ;
+          if (v.value0 === "LetVar" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
+            return pure18(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
+          }
+          ;
+          if (v.value0 === "LetVar" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
+            return bind9(v["value1"]["value1"][0])(function(k0$prime) {
+              return pure18(fold4([[v["value1"]["value0"][0]], k0$prime, [v["value1"]["value0"][1]]]));
+            });
+          }
+          ;
+          if (v.value0 === "LetVar") {
+            return bind9(sequence2(v.value1.value1))(function(ks$prime) {
+              return pure18(fold4(append8(zipWith(function(p2) {
+                return function(k) {
+                  return append8([p2])(append8(beforeExtraKid)(append8(k)(afterExtraKid)));
+                };
+              })(v.value1.value0)(ks$prime))([fromMaybe3(last(v.value1.value0))])));
+            });
+          }
+          ;
+          if (v.value0 === "LetImpl" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
+            return pure18(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
+          }
+          ;
+          if (v.value0 === "LetImpl" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
+            return bind9(v["value1"]["value1"][0])(function(k0$prime) {
+              return pure18(fold4([[v["value1"]["value0"][0]], k0$prime, [v["value1"]["value0"][1]]]));
+            });
+          }
+          ;
+          if (v.value0 === "LetImpl") {
+            return bind9(sequence2(v.value1.value1))(function(ks$prime) {
+              return pure18(fold4(append8(zipWith(function(p2) {
+                return function(k) {
+                  return append8([p2])(append8(beforeExtraKid)(append8(k)(afterExtraKid)));
+                };
+              })(v.value1.value0)(ks$prime))([fromMaybe3(last(v.value1.value0))])));
+            });
+          }
+          ;
+          if (v.value0 === "LetBody" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
+            return pure18(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
+          }
+          ;
+          if (v.value0 === "LetBody" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
+            return bind9(v["value1"]["value1"][0])(function(k0$prime) {
+              return pure18(fold4([[v["value1"]["value0"][0]], k0$prime, [v["value1"]["value0"][1]]]));
+            });
+          }
+          ;
+          if (v.value0 === "LetBody") {
+            return bind9(sequence2(v.value1.value1))(function(ks$prime) {
+              return pure18(fold4(append8(zipWith(function(p2) {
+                return function(k) {
+                  return append8([p2])(append8(beforeExtraKid)(append8(k)(afterExtraKid)));
+                };
+              })(v.value1.value0)(ks$prime))([fromMaybe3(last(v.value1.value0))])));
+            });
+          }
+          ;
+          if (v.value1.value0.length === 1 && v.value1.value1.length === 0) {
+            return pure18(fold4([literal(v.value0)]));
+          }
+          ;
+          return assembleExpr_default2(args);
         });
       }
     });
@@ -12938,7 +13002,7 @@
   };
 
   // output/Ui.App1.Config/index.js
-  var log_undo_and_redo = true;
+  var log_undo_and_redo = false;
   var log_edits = false;
 
   // output/Web.Event.Event/foreign.js
