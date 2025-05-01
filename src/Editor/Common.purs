@@ -5,11 +5,14 @@ import Prelude
 import Control.Monad.Maybe.Trans (MaybeT)
 import Control.Monad.Reader (Reader, runReader)
 import Data.Array as Array
+import Data.Bifunctor (lmap)
+import Data.Either (either)
+import Data.Either.Nested (type (\/))
 import Data.Expr (Edit, EditMenu, Expr, Handle, M, PureEditorState)
 import Data.Foldable (fold)
 import Data.Maybe (fromMaybe)
 import Data.Traversable (traverse)
-import Data.Tuple.Nested ((/\))
+import Data.Tuple.Nested (type (/\), (/\))
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Ui.Event (KeyInfo)
@@ -35,6 +38,8 @@ type AssembleExpr l =
      }
   -> RenderM (Array (HTML w i))
 
+--------------------------------------------------------------------------------
+
 type RenderM = Reader RenderCtx
 
 runRenderM :: forall a. RenderM a -> a
@@ -45,6 +50,18 @@ runRenderM = flip runReader
 type RenderCtx =
   { indentLevel :: Int
   }
+
+--------------------------------------------------------------------------------
+
+type ExprHTML w i = KeyHTML w i \/ KeyHTML w i
+type KeyHTML w i = String /\ HTML w i
+
+type RenderedExprInfo =
+  { id :: String
+  }
+
+fromExprHTML :: forall w i. RenderedExprInfo -> ExprHTML w i -> KeyHTML w i
+fromExprHTML info = either (lmap ((info.id <> "_") <> _)) identity
 
 --------------------------------------------------------------------------------
 
