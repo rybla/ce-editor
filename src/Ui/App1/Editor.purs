@@ -6,7 +6,7 @@ import Control.Monad.Maybe.Trans (runMaybeT)
 import Control.Monad.State (get, modify)
 import Control.Monad.Writer (runWriter)
 import Data.Array as Array
-import Data.Expr (Edit, Expr, Handle(..), Path, Point, SpanFocus(..), SpanH(..), ZipperFocus(..), EditAt, applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
+import Data.Expr (Edit, EditAt, Expr, Fragment(..), Handle(..), Path, Point, Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
@@ -32,6 +32,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
+import Ui.App1.Browser (navigator_clibpoard_writeText)
 import Ui.App1.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, toPureEditorState)
 import Ui.App1.Config as Config
 import Ui.App1.Point as Point
@@ -192,6 +193,12 @@ handleAction (KeyDown_EditorAction event) = do
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "c", cmd, not_shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
       submitEditAt Expr.Edit.copy
+      state' <- get
+      case state'.clipboard of
+        Just (Span_Fragment (Span es)) -> do
+          let Editor editor = state'.editor
+          liftEffect $ navigator_clibpoard_writeText $ String.joinWith "\n" $ map editor.toString es
+        _ -> pure unit
     -- delete
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault

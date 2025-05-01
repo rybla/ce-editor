@@ -1,0 +1,5 @@
+- clicking on atom
+  - half and half atom should corrresponds to the point before and after
+  - when drag, should get the whole atom even if you are only over part of it 
+- when press arrow at a span, goes to left or right side correspondingly 
+- double click a label to start a query there that you're ediitng 

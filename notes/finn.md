@@ -1,0 +1,7 @@
+- selecting entire subexpr vs just parens around 
+- pasting zipper 
+  - _replaces_ when at zipper
+  - _wraps_ when at span 
+    - should probably replace, since that's what happens when you paste at a selection 
+  - no strong intuition about what should happen when you delete a zipper (where cursor goes)
+- fake parens in rendering can be confusing

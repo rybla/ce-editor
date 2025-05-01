@@ -11,6 +11,7 @@ import Data.Foldable (and, fold)
 import Data.List (List(..), (:))
 import Data.Newtype (unwrap, wrap)
 import Data.Set as Set
+import Data.String as String
 import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe)
@@ -48,6 +49,7 @@ editor = Editor
         [ "LetVar" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetVar) state
         , "LetImpl" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetImpl) state
         , "LetBody" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetBody) state
+        , "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var "let" ])) state
         ]
       query ->
         [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
@@ -147,6 +149,15 @@ editor = Editor
           pure $ fold [ literal str ]
         -- 
         _ -> assembleExpr_default args
+  , toString:
+      let
+        f = case _ of
+          Expr { l: "Root", kids } -> kids # map f # String.joinWith "\n"
+          Expr { l: "Var", kids: [ Expr { l: x, kids: [] } ] } -> x
+          Expr { l: "App", kids } -> "(" <> (kids # map f # String.joinWith " ") <> ")"
+          Expr _ -> "unimplemented"
+      in
+        f
   }
 
 increaseIndentLevel = local \ctx -> ctx { indentLevel = ctx.indentLevel + 1 }

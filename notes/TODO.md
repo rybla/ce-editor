@@ -1,6 +1,10 @@
 # TODO
 
+- [ ] look into workshops and small conferences to submit to -- HCI focussed but also with PL people 
+  - [ ] HATRA doesn't count as full submission for dissertation
+
 - [ ] make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
+  - [ ] FIRST: use browser tools to profile how long rendering takes
 - [ ] refactor to allow for diagnostics reporting some places
   - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
 - [ ] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.

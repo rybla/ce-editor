@@ -1,0 +1,13 @@
+- tab should go ot other side of parens  (move forward)
+  - shifts should go in other direction
+- shift-space should go back 
+  - special case
+- close paren should move past a paren
+- when delete a paren, should go inside teh right of hte selection 
+- to put a zipper around something, place cursor _before_ it rather than around 
+- when move across grouping boundaries, doesnt quite go where expected (when move from inner to outer, should go to the innermost)
+- when paste a zipper at a zipper,  is intuitive 
+- grouping with "(" should be more intuitive
+- dont like in text editors when inserting right paren for you
+  - IMPORTANT: need to be able to type ")" to go past it too
+- zap movement doesnt need to be invertible

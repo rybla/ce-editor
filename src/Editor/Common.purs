@@ -25,6 +25,7 @@ data Editor l = Editor
   , getShortcut :: KeyInfo -> PureEditorState l -> MaybeT M (Edit l)
   , isValidHandle :: Expr l -> Handle -> Boolean
   , assembleExpr :: AssembleExpr l
+  , toString :: Expr l -> String
   }
 
 type AssembleExpr l =

@@ -114,6 +114,7 @@ editor = Editor
         str /\ [ _p0 ] /\ [] -> pure $ fold [ literal str ]
         -- 
         _ -> assembleExpr_default args
+  , toString: const "unimplemented"
   }
 
 beforeHolePoint = [ HH.div [ classes [ "Token", "beforeHolePoint" ] ] [ HH.text "" ] ]

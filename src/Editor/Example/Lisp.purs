@@ -127,6 +127,7 @@ editor = Editor
                   , [ args.points # Array.last # fromMaybe do renderWarning $ "missing point #" <> show @Int (length args.points) ]
                   ]
           { label } -> Left [ Notation.Punc do pure [ HH.div [ classes [ "Token", "punctuation", "keyword" ] ] [ HH.text label ] ] ]
+  , toString: const "unimplemented"
   }
 
 isValidPoint :: Expr L -> Point -> Boolean

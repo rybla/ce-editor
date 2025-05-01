@@ -1,0 +1,9 @@
+- used arrow keys to try to submit query
+- when paste a zipper at a span, expect to replace span 
+- when paste a zipper at a zipper,
+  - 1. wraps around the inside 
+- close paren should zap other end to where you put hte new close paren (like if entering text and tehre wasnt a close paren put)
+- delete at the end of a let
+- up/down movement
+- moving cursor in a zipper slection position is more intuition
+- feels like figuring out where th parentheses should go automatically at fist rather than you managing it explciitly
