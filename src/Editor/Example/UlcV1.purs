@@ -153,6 +153,7 @@ editor = Editor
       let
         f = case _ of
           Expr { l: "Root", kids } -> kids # map f # String.joinWith "\n"
+          Expr { l: "LineBreak", kids: [] } -> "\n"
           Expr { l: "Var", kids: [ Expr { l: x, kids: [] } ] } -> x
           Expr { l: "App", kids } -> "(" <> (kids # map f # String.joinWith " ") <> ")"
           Expr _ -> "unimplemented"

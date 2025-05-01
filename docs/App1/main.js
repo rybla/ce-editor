@@ -12773,6 +12773,10 @@
             return joinWith("\n")(map28(f)(v.kids));
           }
           ;
+          if (v.l === "LineBreak" && v.kids.length === 0) {
+            return "\n";
+          }
+          ;
           if (v.l === "Var" && (v.kids.length === 1 && v["kids"][0].kids.length === 0)) {
             return v["kids"][0].l;
           }
