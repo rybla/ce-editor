@@ -17,6 +17,7 @@ import Data.Maybe (Maybe(..), isJust)
 import Data.Newtype (unwrap)
 import Data.Set (Set)
 import Data.Set as Set
+import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), runRenderM)
@@ -198,7 +199,6 @@ handleAction (KeyDown_EditorAction event) = do
     -- delete sibling
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, alt ] -> do
       liftEffect $ event # Event.preventDefault
-      Console.log "delete sibling"
       submitEditAt $ Expr.Edit.delete'_sibling { isValidHandle: editor.isValidHandle }
     -- cut
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "x", cmd, not_shift, not_alt ] -> do
@@ -331,24 +331,40 @@ submitEditAt editAt = do
 submitEdit :: forall l. Show l => Edit l -> EditorM l Unit
 submitEdit edit = do
   input <- get >>= (liftEffect <<< toPureEditorState)
-  when Config.log_edits do
-    Console.log $ Array.replicate 10 "====" # fold
-    Console.log "guard (Config.log_edits = true)"
-    Console.log ""
-    Console.log "edit:"
-    Console.log $ show edit
-    Console.log $ "input state:"
-    Console.log $ "{ root: " <> show input.root <> "\n, mb_handle: " <> show input.mb_handle <> "\n, clipboard: " <> show input.clipboard <> "\n}"
+
   let mb_output /\ _diagnostics = applyEdit edit input # runMaybeT # runWriter
   case mb_output of
     Nothing -> do
+      when Config.log_edits do
+        Console.log $ String.joinWith "\n"
+          [ Array.replicate 10 "====" # fold
+          , "[log_edits]"
+          , ""
+          , "edit:"
+          , show edit
+          , "input state:"
+          , "{ root: " <> show input.root <> "\n, mb_handle: " <> show input.mb_handle <> "\n, clipboard: " <> show input.clipboard <> "\n}"
+          , "output state:"
+          , "{{failed}}"
+          , Array.replicate 10 "====" # fold
+          ]
       -- TODO: report diagnostics
       pure unit
     Just output -> do
       when Config.log_edits do
-        Console.log $ "output state:"
-        Console.log $ "{ root: " <> show output.root <> "\n, mb_handle: " <> show output.mb_handle <> "\n, clipboard: " <> show output.clipboard <> "\n}"
-        Console.log $ Array.replicate 10 "====" # fold
+        Console.log $ String.joinWith "\n"
+          [ Array.replicate 10 "====" # fold
+          , "[log_edits]"
+          , ""
+          , "edit:"
+          , show edit
+          , "input state:"
+          , "{ root: " <> show input.root <> "\n, mb_handle: " <> show input.mb_handle <> "\n, clipboard: " <> show input.clipboard <> "\n}"
+          , "output state:"
+          , "{ root: " <> show output.root <> "\n, mb_handle: " <> show output.mb_handle <> "\n, clipboard: " <> show output.clipboard <> "\n}"
+          , Array.replicate 10 "====" # fold
+          , Array.replicate 10 "====" # fold
+          ]
       modifyEditorState _
         { root = output.root
         , initial_mb_handle = output.mb_handle
