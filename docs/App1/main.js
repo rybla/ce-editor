@@ -11254,16 +11254,58 @@
                     var v11 = function(v12) {
                       var v13 = function(v14) {
                         var v15 = function(v16) {
-                          return Nothing.value;
+                          var v17 = function(v18) {
+                            var v19 = function(v20) {
+                              return Nothing.value;
+                            };
+                            if (dir2 instanceof R_sibling) {
+                              var $107 = lessThan2(v.j)(extreme_j["_R"]);
+                              if ($107) {
+                                var $108 = getStepsAroundIndex(v.j)["_R"];
+                                return new Just({
+                                  path: v.path,
+                                  j: add2(v.j)(1)
+                                });
+                              }
+                              ;
+                              return v19(true);
+                            }
+                            ;
+                            return v19(true);
+                          };
+                          if (dir2 instanceof R) {
+                            var $110 = lessThan2(v.j)(extreme_j["_R"]);
+                            if ($110) {
+                              var $111 = getStepsAroundIndex(v.j)["_R"];
+                              var $112 = getKid_Expr2($111)(at_e.here);
+                              if ($112 instanceof Just) {
+                                return new Just({
+                                  path: append7(v.path)(new Cons($111, Nil.value)),
+                                  j: getExtremeIndexes($112.value0)["_L"]
+                                });
+                              }
+                              ;
+                              return v17(true);
+                            }
+                            ;
+                            return v17(true);
+                          }
+                          ;
+                          return v17(true);
                         };
-                        if (dir2 instanceof R_sibling) {
-                          var $103 = lessThan2(v.j)(extreme_j["_R"]);
-                          if ($103) {
-                            var $104 = getStepsAroundIndex(v.j)["_R"];
-                            return new Just({
-                              path: v.path,
-                              j: add2(v.j)(1)
-                            });
+                        if (dir2 instanceof R) {
+                          var $115 = lessThan2(v.j)(extreme_j["_R"]);
+                          if ($115) {
+                            var $116 = getStepsAroundIndex(v.j)["_R"];
+                            var $117 = getKid_Expr2($116)(at_e.here);
+                            if ($117 instanceof Nothing) {
+                              return new Just({
+                                path: v.path,
+                                j: add2(v.j)(1)
+                              });
+                            }
+                            ;
+                            return v15(true);
                           }
                           ;
                           return v15(true);
@@ -11271,15 +11313,14 @@
                         ;
                         return v15(true);
                       };
-                      if (dir2 instanceof R) {
-                        var $106 = lessThan2(v.j)(extreme_j["_R"]);
-                        if ($106) {
-                          var $107 = getStepsAroundIndex(v.j)["_R"];
-                          var $108 = getKid_Expr2($107)(at_e.here);
-                          if ($108 instanceof Just) {
+                      if (dir2 instanceof R_sibling) {
+                        var $119 = eq5(v.j)(extreme_j["_R"]);
+                        if ($119) {
+                          var $120 = unsnoc(v.path);
+                          if ($120 instanceof Just) {
                             return new Just({
-                              path: append7(v.path)(new Cons($107, Nil.value)),
-                              j: getExtremeIndexes($108.value0)["_L"]
+                              path: $120.value0.init,
+                              j: getIndexesAroundStep($120.value0.last)["_R"]
                             });
                           }
                           ;
@@ -11292,14 +11333,13 @@
                       return v13(true);
                     };
                     if (dir2 instanceof R) {
-                      var $111 = lessThan2(v.j)(extreme_j["_R"]);
-                      if ($111) {
-                        var $112 = getStepsAroundIndex(v.j)["_R"];
-                        var $113 = getKid_Expr2($112)(at_e.here);
-                        if ($113 instanceof Nothing) {
+                      var $125 = eq5(v.j)(extreme_j["_R"]);
+                      if ($125) {
+                        var $126 = unsnoc(v.path);
+                        if ($126 instanceof Just) {
                           return new Just({
-                            path: v.path,
-                            j: add2(v.j)(1)
+                            path: $126.value0.init,
+                            j: getIndexesAroundStep($126.value0.last)["_R"]
                           });
                         }
                         ;
@@ -11311,18 +11351,14 @@
                     ;
                     return v11(true);
                   };
-                  if (dir2 instanceof R) {
-                    var $115 = eq5(v.j)(extreme_j["_R"]);
-                    if ($115) {
-                      var $116 = unsnoc(v.path);
-                      if ($116 instanceof Just) {
-                        return new Just({
-                          path: $116.value0.init,
-                          j: getIndexesAroundStep($116.value0.last)["_R"]
-                        });
-                      }
-                      ;
-                      return v9(true);
+                  if (dir2 instanceof L_sibling) {
+                    var $131 = lessThan2(extreme_j["_L"])(v.j);
+                    if ($131) {
+                      var $132 = getStepsAroundIndex(v.j)["_L"];
+                      return new Just({
+                        path: v.path,
+                        j: sub3(v.j)(1)
+                      });
                     }
                     ;
                     return v9(true);
@@ -11330,14 +11366,19 @@
                   ;
                   return v9(true);
                 };
-                if (dir2 instanceof L_sibling) {
-                  var $121 = lessThan2(extreme_j["_L"])(v.j);
-                  if ($121) {
-                    var $122 = getStepsAroundIndex(v.j)["_L"];
-                    return new Just({
-                      path: v.path,
-                      j: sub3(v.j)(1)
-                    });
+                if (dir2 instanceof L) {
+                  var $134 = lessThan2(extreme_j["_L"])(v.j);
+                  if ($134) {
+                    var $135 = getStepsAroundIndex(v.j)["_L"];
+                    var $136 = getKid_Expr2($135)(at_e.here);
+                    if ($136 instanceof Nothing) {
+                      return new Just({
+                        path: v.path,
+                        j: sub3(v.j)(1)
+                      });
+                    }
+                    ;
+                    return v7(true);
                   }
                   ;
                   return v7(true);
@@ -11346,14 +11387,14 @@
                 return v7(true);
               };
               if (dir2 instanceof L) {
-                var $124 = lessThan2(extreme_j["_L"])(v.j);
-                if ($124) {
-                  var $125 = getStepsAroundIndex(v.j)["_L"];
-                  var $126 = getKid_Expr2($125)(at_e.here);
-                  if ($126 instanceof Nothing) {
+                var $138 = lessThan2(extreme_j["_L"])(v.j);
+                if ($138) {
+                  var $139 = getStepsAroundIndex(v.j)["_L"];
+                  var $140 = getKid_Expr2($139)(at_e.here);
+                  if ($140 instanceof Just) {
                     return new Just({
-                      path: v.path,
-                      j: sub3(v.j)(1)
+                      path: append7(v.path)(new Cons($139, Nil.value)),
+                      j: getExtremeIndexes($140.value0)["_R"]
                     });
                   }
                   ;
@@ -11365,15 +11406,14 @@
               ;
               return v5(true);
             };
-            if (dir2 instanceof L) {
-              var $128 = lessThan2(extreme_j["_L"])(v.j);
-              if ($128) {
-                var $129 = getStepsAroundIndex(v.j)["_L"];
-                var $130 = getKid_Expr2($129)(at_e.here);
-                if ($130 instanceof Just) {
+            if (dir2 instanceof L_sibling) {
+              var $143 = eq5(extreme_j["_L"])(v.j);
+              if ($143) {
+                var $144 = unsnoc(v.path);
+                if ($144 instanceof Just) {
                   return new Just({
-                    path: append7(v.path)(new Cons($129, Nil.value)),
-                    j: getExtremeIndexes($130.value0)["_R"]
+                    path: $144.value0.init,
+                    j: getIndexesAroundStep($144.value0.last)["_L"]
                   });
                 }
                 ;
@@ -11386,13 +11426,13 @@
             return v3(true);
           };
           if (dir2 instanceof L) {
-            var $133 = eq5(extreme_j["_L"])(v.j);
-            if ($133) {
-              var $134 = unsnoc(v.path);
-              if ($134 instanceof Just) {
+            var $149 = eq5(extreme_j["_L"])(v.j);
+            if ($149) {
+              var $150 = unsnoc(v.path);
+              if ($150 instanceof Just) {
                 return new Just({
-                  path: $134.value0.init,
-                  j: getIndexesAroundStep($134.value0.last)["_L"]
+                  path: $150.value0.init,
+                  j: getIndexesAroundStep($150.value0.last)["_L"]
                 });
               }
               ;
@@ -12518,11 +12558,11 @@
           ;
           if (v.value0 === "LamBody") {
             return bind10(sequence2(v.value1.value1))(function(ks$prime) {
-              return pure110(fold4(append10(zipWith(function(p2) {
+              return pure110(fold4(append10([beforeExtraKid])(append10(zipWith(function(p2) {
                 return function(k) {
-                  return append10([p2])(append10(beforeExtraKid)(append10(k)(afterExtraKid)));
+                  return append10([p2])(k);
                 };
-              })(v.value1.value0)(ks$prime))([fromMaybe3(last(v.value1.value0))])));
+              })(v.value1.value0)(ks$prime))(append10([fromMaybe3(last(v.value1.value0))])([afterExtraKid])))));
             });
           }
           ;
@@ -12562,11 +12602,11 @@
           ;
           if (v.value0 === "LetVar") {
             return bind10(sequence2(v.value1.value1))(function(ks$prime) {
-              return pure110(fold4(append10(zipWith(function(p2) {
+              return pure110(fold4(append10([beforeExtraKid])(append10(zipWith(function(p2) {
                 return function(k) {
-                  return append10([p2])(append10(beforeExtraKid)(append10(k)(afterExtraKid)));
+                  return append10([p2])(k);
                 };
-              })(v.value1.value0)(ks$prime))([fromMaybe3(last(v.value1.value0))])));
+              })(v.value1.value0)(ks$prime))(append10([fromMaybe3(last(v.value1.value0))])([afterExtraKid])))));
             });
           }
           ;
@@ -12582,11 +12622,11 @@
           ;
           if (v.value0 === "LetImpl") {
             return bind10(sequence2(v.value1.value1))(function(ks$prime) {
-              return pure110(fold4(append10(zipWith(function(p2) {
+              return pure110(fold4(append10([beforeExtraKid])(append10(zipWith(function(p2) {
                 return function(k) {
-                  return append10([p2])(append10(beforeExtraKid)(append10(k)(afterExtraKid)));
+                  return append10([p2])(k);
                 };
-              })(v.value1.value0)(ks$prime))([fromMaybe3(last(v.value1.value0))])));
+              })(v.value1.value0)(ks$prime))(append10([fromMaybe3(last(v.value1.value0))])([afterExtraKid])))));
             });
           }
           ;
@@ -12602,11 +12642,11 @@
           ;
           if (v.value0 === "LetBody") {
             return bind10(sequence2(v.value1.value1))(function(ks$prime) {
-              return pure110(fold4(append10(zipWith(function(p2) {
+              return pure110(fold4(append10([beforeExtraKid])(append10(zipWith(function(p2) {
                 return function(k) {
-                  return append10([p2])(append10(beforeExtraKid)(append10(k)(afterExtraKid)));
+                  return append10([p2])(k);
                 };
-              })(v.value1.value0)(ks$prime))([fromMaybe3(last(v.value1.value0))])));
+              })(v.value1.value0)(ks$prime))(append10([fromMaybe3(last(v.value1.value0))])([afterExtraKid])))));
             });
           }
           ;

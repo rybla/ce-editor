@@ -24,7 +24,7 @@ import Ui.Halogen (classes)
 
 t = x
   | (λ x+ . t)
-  | (t t+)
+  | (t*)
   | (let x = t in t)
 
 -}
@@ -102,7 +102,7 @@ editor = Editor
           pure $ fold [ [ p0 ], k0', [ p1 ] ]
         "LamBody" /\ ps /\ ks -> do
           ks' <- ks # sequence
-          pure $ fold $ Array.zipWith (\p k -> do [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks' <> [ ps # Array.last # fromMaybe ]
+          pure $ fold $ [ beforeExtraKid ] <> Array.zipWith (\p k -> do [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ] <> [ afterExtraKid ]
         -- 
         "App" /\ ps /\ ks -> do
           ks' <- increaseIndentLevel do ks # sequence
@@ -123,7 +123,7 @@ editor = Editor
           pure $ fold [ [ p0 ], k0', [ p1 ] ]
         "LetVar" /\ ps /\ ks -> do
           ks' <- ks # sequence
-          pure $ fold $ Array.zipWith (\p k -> do [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks' <> [ ps # Array.last # fromMaybe ]
+          pure $ fold $ [ beforeExtraKid ] <> Array.zipWith (\p k -> do [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ] <> [ afterExtraKid ]
         -- 
         "LetImpl" /\ [ p ] /\ [] -> do
           pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
@@ -132,7 +132,7 @@ editor = Editor
           pure $ fold [ [ p0 ], k0', [ p1 ] ]
         "LetImpl" /\ ps /\ ks -> do
           ks' <- ks # sequence
-          pure $ fold $ Array.zipWith (\p k -> do [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks' <> [ ps # Array.last # fromMaybe ]
+          pure $ fold $ [ beforeExtraKid ] <> Array.zipWith (\p k -> do [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ] <> [ afterExtraKid ]
         -- 
         "LetBody" /\ [ p ] /\ [] -> do
           pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
@@ -141,7 +141,7 @@ editor = Editor
           pure $ fold [ [ p0 ], k0', [ p1 ] ]
         "LetBody" /\ ps /\ ks -> do
           ks' <- ks # sequence
-          pure $ fold $ Array.zipWith (\p k -> do [ p ] <> beforeExtraKid <> k <> afterExtraKid) ps ks' <> [ ps # Array.last # fromMaybe ]
+          pure $ fold $ [ beforeExtraKid ] <> Array.zipWith (\p k -> do [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ] <> [ afterExtraKid ]
         --
         str /\ [ _p0 ] /\ [] -> do
           pure $ fold [ literal str ]
