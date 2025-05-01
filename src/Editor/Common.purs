@@ -20,19 +20,23 @@ import Ui.Halogen (classes)
 
 --------------------------------------------------------------------------------
 
-data Editor l = Editor
+type Label c r = { con :: c | r }
+type Label' c = Label c (meta :: { id :: String })
+
+-- | c is type of constructors
+data Editor c = Editor
   { name :: String
-  , initial_expr :: Expr l
+  , initial_expr :: Expr (Label' c)
   , initial_handle :: Handle
-  , getEditMenu :: PureEditorState l -> EditMenu l
-  , getShortcut :: KeyInfo -> PureEditorState l -> MaybeT M (Edit l)
-  , isValidHandle :: Expr l -> Handle -> Boolean
-  , assembleExpr :: AssembleExpr l
+  , getEditMenu :: PureEditorState (Label' c) -> EditMenu (Label' c)
+  , getShortcut :: KeyInfo -> PureEditorState (Label' c) -> MaybeT M (Edit (Label' c))
+  , isValidHandle :: Expr (Label' c) -> Handle -> Boolean
+  , assembleExpr :: AssembleExpr c
   }
 
-type AssembleExpr l =
+type AssembleExpr c =
   forall w i
-   . { label :: l
+   . { label :: Label' c
      , kids :: Array (RenderM (Array (HTML w i)))
      , points :: Array (HTML w i)
      }
@@ -65,7 +69,7 @@ fromExprHTML info = either (lmap ((info.id <> "_") <> _)) identity
 
 --------------------------------------------------------------------------------
 
-assembleExpr_default :: forall l. Show l => AssembleExpr l
+assembleExpr_default :: forall c. Show c => AssembleExpr c
 assembleExpr_default { label, kids, points } = do
   kidsAndPoints <- map fold $ Array.zip points kids # traverse \(point /\ m_kid) -> do
     kid <- m_kid
