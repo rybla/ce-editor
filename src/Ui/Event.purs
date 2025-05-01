@@ -118,12 +118,12 @@ matchKeyInfo
   ∷ ∀ (r ∷ Row Type) (r' ∷ Row Type)
   . Union r (alt :: Maybe Boolean, cmd :: Maybe Boolean, shift :: Maybe Boolean) r'
   ⇒ Nub r' (alt :: Maybe Boolean, cmd :: Maybe Boolean, shift :: Maybe Boolean)
-  ⇒ (String → Boolean)
+  ⇒ (KeyInfo → Boolean)
   → Record r
   → KeyInfo
   → Boolean
 matchKeyInfo f r_ (KeyInfo ki) = and
-  [ f ki.key
+  [ f (KeyInfo ki)
   , r.cmd # maybe true (r'.cmd == _)
   , r.shift # maybe true (r'.shift == _)
   ]
@@ -135,12 +135,12 @@ matchMapKeyInfo
   ∷ ∀ (r ∷ Row Type) (r' ∷ Row Type) (b ∷ Type)
   . Union r (alt :: Maybe Boolean, cmd :: Maybe Boolean, shift :: Maybe Boolean) r'
   ⇒ Nub r' (alt :: Maybe Boolean, cmd :: Maybe Boolean, shift :: Maybe Boolean)
-  ⇒ (String → Maybe b)
+  ⇒ (KeyInfo → Maybe b)
   → Record r
   → KeyInfo
   → Maybe b
 matchMapKeyInfo f r_ (KeyInfo ki) = do
-  a <- f ki.key
+  a <- f (KeyInfo ki)
   guard $ and
     [ r.cmd # maybe true (r'.cmd == _)
     , r.shift # maybe true (r'.shift == _)

@@ -1,11 +1,11 @@
 # TODO
 
-- [ ] use `alt+arrow` to move across siblings
-  - [ ] need a difference key to cycle handle foci
 - [ ] refactor to allow for diagnostics reporting some places
   - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
 - [ ] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
 - [ ] need to make re-rendering more efficient, since right now it grows asymptotically too fast. perhaps using nested and keyed elements will help with the Halogen diffing?
+- [x] use `alt+<arrow>` to move across siblings
+  - [x] need a difference key to cycle handle foci: `cmd+<arrow>`
 - [x] make delete do something useful at a Point
   - [x] delete' is same as delete except when handle is a Point, first drags back one movement before deleting.
 - [x] implement indentation in UlcV1
@@ -37,6 +37,7 @@
 
 - [ ] BUG: dragging that lets the inner span be outside the outer span
   - [ ] what caused this???
+- [ ] BUG: during dragging, something messes up here when I move from down-right and it goes down-left instead???
 - [x] BUG: copy does delete instead of copy (need to implement copy)
 - [x] BUG: redo takes two tries to work?? and can't redo final undo
     - turned out I want dropping a snapshot by not using the current state snapshot in `undo` and `redo`

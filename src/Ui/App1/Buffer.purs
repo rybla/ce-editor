@@ -105,14 +105,14 @@ handleAction (KeyDown_BufferAction event) = do
   let ki = event # Event.fromEventToKeyInfo
   state <- get
   case unit of
-    _ | ki # Event.matchKeyInfo (_ `Set.member` submitBuffer_keys) { cmd: pure false, shift: pure false, alt: pure false } -> do
+    _ | ki # Event.matchKeyInfo (unwrap >>> _.key >>> (_ `Set.member` submitBuffer_keys)) { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case state.option_i of
         Nothing -> pure unit
         Just i -> do
           _key /\ o <- state.menu_queried !! i # fromMaybeM do liftEffect $ throw "impossible for option_i to be out of bounds of menu_queried"
           H.raise $ SubmitBuffer_BufferOutput o
-    _ | Just cd <- ki # Event.matchMapKeyInfo fromKeyToCycleDir { cmd: pure false, shift: pure false, alt: pure false } -> do
+    _ | Just cd <- ki # Event.matchMapKeyInfo (unwrap >>> _.key >>> fromKeyToCycleDir) { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case state.option_i /\ cd of
         Just i /\ Prev -> modify_ _ { option_i = pure $ (i - 1) `mod` (state.menu_queried # length) }

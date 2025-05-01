@@ -9,7 +9,7 @@ import Data.Array as Array
 import Data.Expr.Edit as Expr.Edit
 import Data.Foldable (and, fold)
 import Data.List (List(..), (:))
-import Data.Newtype (wrap)
+import Data.Newtype (unwrap, wrap)
 import Data.Set as Set
 import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
@@ -53,9 +53,9 @@ editor = Editor
         [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
         ]
   , getShortcut: \ki state -> case unit of
-      _ | ki # matchKeyInfo (_ == "Enter") { cmd: pure false, alt: pure false } ->
+      _ | ki # matchKeyInfo (unwrap >>> _.key >>> (_ == "Enter")) { cmd: pure false, alt: pure false } ->
         Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
-      _ | ki # matchKeyInfo (_ == "(") { cmd: pure false, alt: pure false } ->
+      _ | ki # matchKeyInfo (unwrap >>> _.key >>> (_ == "(")) { cmd: pure false, alt: pure false } ->
         Expr.Edit.insert (Zipper_Fragment zipper_App) state
       _ -> empty
   , isValidHandle: \root handle -> case handle of

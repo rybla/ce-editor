@@ -10,7 +10,7 @@ import Data.Expr.Edit as Expr.Edit
 import Data.Foldable (and, fold, length)
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Newtype (wrap)
+import Data.Newtype (unwrap, wrap)
 import Data.Set as Set
 import Data.String as String
 import Data.TraversableWithIndex (traverseWithIndex)
@@ -81,9 +81,9 @@ editor = Editor
             none
       ]
   , getShortcut: \ki state -> case unit of
-      _ | ki # matchKeyInfo (_ == "(") { cmd: pure false, alt: pure false } ->
+      _ | ki # matchKeyInfo (unwrap >>> _.key >>> (_ == "(")) { cmd: pure false, alt: pure false } ->
         pasteGroup_Zipper state
-      _ | ki # matchKeyInfo (_ == "Enter") { cmd: pure false, alt: pure false } ->
+      _ | ki # matchKeyInfo (unwrap >>> _.key >>> (_ == "Enter")) { cmd: pure false, alt: pure false } ->
         pasteLineBreak_Span state
       _ -> empty
   , isValidHandle: \expr handle -> case handle of
