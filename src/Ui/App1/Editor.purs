@@ -34,6 +34,7 @@ import Type.Prelude (Proxy(..))
 import Ui.App1.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, toPureEditorState)
 import Ui.App1.Config as Config
 import Ui.App1.Point as Point
+import Ui.Event (KeyInfo(..))
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
 import Ui.Halogen (classes)
 import Utility (guardPure, isNonSpace, (:%=), (:=))
@@ -138,7 +139,6 @@ handleAction (KeyDown_EditorAction event) = do
               liftEffect $ state.ref_mb_dragOrigin := none
               setHandle (Just handle')
     -- drag move
-    -- _ | Just dir <- ki # Event.matchMapKeyInfo (unwrap >>> _.key >>> Expr.Move.fromKeyToDir) { cmd: pure false, shift: pure true, alt: pure false } -> do
     _ | Just dir <- Expr.Move.fromKeyInfoToDragMoveDir ki -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
@@ -192,9 +192,14 @@ handleAction (KeyDown_EditorAction event) = do
       liftEffect $ event # Event.preventDefault
       submitEditAt Expr.Edit.copy
     -- delete
-    _ | ki # Event.matchKeyInfo (unwrap >>> _.key >>> (_ == "Backspace")) { cmd: pure false, shift: pure false, alt: pure false } -> do
+    _ | ki == KeyInfo { key: "Backspace", cmd: false, shift: false, alt: false } -> do
       liftEffect $ event # Event.preventDefault
       submitEditAt $ Expr.Edit.delete' { isValidHandle: editor.isValidHandle }
+    -- delete sibling
+    _ | ki == KeyInfo { key: "Backspace", cmd: false, shift: false, alt: true } -> do
+      liftEffect $ event # Event.preventDefault
+      Console.log "delete sibling"
+      submitEditAt $ Expr.Edit.delete'_sibling { isValidHandle: editor.isValidHandle }
     -- cut
     _ | ki # Event.matchKeyInfo (unwrap >>> _.key >>> (_ == "x")) { cmd: pure true, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault

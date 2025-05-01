@@ -221,6 +221,16 @@ delete' { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } =
     Just handle' -> delete state { mb_handle = Just handle' }
 delete' _ state = delete state
 
+delete'_sibling :: forall l. Show l => { isValidHandle :: Expr l -> Handle -> Boolean } -> EditAt l
+delete'_sibling { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } = do
+  let
+    mb_handle' = Expr.Move.movePointUntil state.root Expr.Move.L_sibling p0 \p ->
+      e # Expr.Drag.drag (Point_Handle p0) p >>= guardPure (isValidHandle e)
+  case mb_handle' of
+    Nothing -> empty
+    Just handle' -> delete state { mb_handle = Just handle' }
+delete'_sibling _ state = delete state
+
 --------------------------------------------------------------------------------
 -- cut
 -- law: cut = copy >>> delete
