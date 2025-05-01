@@ -11,7 +11,7 @@ import Data.Array ((!!))
 import Data.Array as Array
 import Data.Const (Const(..))
 import Data.Expr (EditInfo(..), Edit_(..), Expr, Path, Point)
-import Data.Expr.Render (RenderArgs, renderFragment)
+import Data.Expr.Render (RenderArgs)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (fold, foldMap, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -39,7 +39,7 @@ import Ui.App1.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, Buffe
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchKeyInfoPattern', matchMapKeyInfo) as Event
 import Ui.Event (keyMember, not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (fromMaybeM)
+import Utility (fromMaybeM, todo)
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -188,11 +188,12 @@ render state =
               case edit_ of
                 Edit { info: Insert_EditInfo info } ->
                   [ HH.div [ classes [ "Expr" ] ] $
-                      info.insertion
-                        # renderFragment (renderArgs state.editor) (state.point # unwrap).path
-                        # flip runReader
-                            { indentLevel: 0
-                            }
+                      -- info.insertion
+                      --   # renderFragment (renderArgs state.editor) (state.point # unwrap).path
+                      --   # flip runReader
+                      --       { indentLevel: 0
+                      --       }
+                      [ HH.text "{{TODO: re-implement renderFragment}}" ]
                   ]
                 Edit { info: Remove_EditInfo _ } ->
                   [ HH.div [] [ HH.text "remove" ]
