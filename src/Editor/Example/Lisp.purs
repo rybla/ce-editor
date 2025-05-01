@@ -10,7 +10,7 @@ import Data.Expr.Edit as Expr.Edit
 import Data.Foldable (and, fold, length)
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Newtype (unwrap, wrap)
+import Data.Newtype (wrap)
 import Data.Set as Set
 import Data.String as String
 import Data.TraversableWithIndex (traverseWithIndex)
@@ -20,7 +20,7 @@ import Editor.Common (Editor(..), renderWarning)
 import Editor.Notation as Notation
 import Halogen.HTML as HH
 import Options.Applicative.Internal.Utils (startsWith)
-import Ui.Event (matchKeyInfo)
+import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 import Utility (isWhitespaceFree)
 
@@ -81,9 +81,9 @@ editor = Editor
             none
       ]
   , getShortcut: \ki state -> case unit of
-      _ | ki # matchKeyInfo (unwrap >>> _.key >>> (_ == "(")) { cmd: pure false, alt: pure false } ->
+      _ | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] -> do
         pasteGroup_Zipper state
-      _ | ki # matchKeyInfo (unwrap >>> _.key >>> (_ == "Enter")) { cmd: pure false, alt: pure false } ->
+      _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] -> do
         pasteLineBreak_Span state
       _ -> empty
   , isValidHandle: \expr handle -> case handle of

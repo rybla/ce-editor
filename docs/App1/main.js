@@ -119,20 +119,20 @@
   };
   var applySecond = function(dictApply) {
     var apply1 = apply(dictApply);
-    var map31 = map(dictApply.Functor0());
+    var map33 = map(dictApply.Functor0());
     return function(a2) {
       return function(b2) {
-        return apply1(map31($$const(identity2))(a2))(b2);
+        return apply1(map33($$const(identity2))(a2))(b2);
       };
     };
   };
   var lift2 = function(dictApply) {
     var apply1 = apply(dictApply);
-    var map31 = map(dictApply.Functor0());
+    var map33 = map(dictApply.Functor0());
     return function(f) {
       return function(a2) {
         return function(b2) {
-          return apply1(map31(f)(a2))(b2);
+          return apply1(map33(f)(a2))(b2);
         };
       };
     };
@@ -143,7 +143,7 @@
     return dict.pure;
   };
   var unless = function(dictApplicative) {
-    var pure114 = pure(dictApplicative);
+    var pure113 = pure(dictApplicative);
     return function(v) {
       return function(v1) {
         if (!v) {
@@ -151,7 +151,7 @@
         }
         ;
         if (v) {
-          return pure114(unit);
+          return pure113(unit);
         }
         ;
         throw new Error("Failed pattern match at Control.Applicative (line 68, column 1 - line 68, column 65): " + [v.constructor.name, v1.constructor.name]);
@@ -159,7 +159,7 @@
     };
   };
   var when = function(dictApplicative) {
-    var pure114 = pure(dictApplicative);
+    var pure113 = pure(dictApplicative);
     return function(v) {
       return function(v1) {
         if (v) {
@@ -167,7 +167,7 @@
         }
         ;
         if (!v) {
-          return pure114(unit);
+          return pure113(unit);
         }
         ;
         throw new Error("Failed pattern match at Control.Applicative (line 63, column 1 - line 63, column 63): " + [v.constructor.name, v1.constructor.name]);
@@ -176,10 +176,10 @@
   };
   var liftA1 = function(dictApplicative) {
     var apply2 = apply(dictApplicative.Apply0());
-    var pure114 = pure(dictApplicative);
+    var pure113 = pure(dictApplicative);
     return function(f) {
       return function(a2) {
-        return apply2(pure114(f))(a2);
+        return apply2(pure113(f))(a2);
       };
     };
   };
@@ -2123,10 +2123,10 @@
   var $$try = function(dictMonadError) {
     var catchError1 = catchError(dictMonadError);
     var Monad0 = dictMonadError.MonadThrow0().Monad0();
-    var map31 = map(Monad0.Bind1().Apply0().Functor0());
+    var map33 = map(Monad0.Bind1().Apply0().Functor0());
     var pure25 = pure(Monad0.Applicative0());
     return function(a2) {
-      return catchError1(map31(Right.create)(a2))(function($52) {
+      return catchError1(map33(Right.create)(a2))(function($52) {
         return pure25(Left.create($52));
       });
     };
@@ -2423,11 +2423,11 @@
   var eqTuple = function(dictEq) {
     var eq7 = eq(dictEq);
     return function(dictEq1) {
-      var eq15 = eq(dictEq1);
+      var eq14 = eq(dictEq1);
       return {
         eq: function(x) {
           return function(y) {
-            return eq7(x.value0)(y.value0) && eq15(x.value1)(y.value1);
+            return eq7(x.value0)(y.value0) && eq14(x.value1)(y.value1);
           };
         }
       };
@@ -2833,10 +2833,10 @@
     };
   };
   var functorWriterT = function(dictFunctor) {
-    var map31 = map(dictFunctor);
+    var map33 = map(dictFunctor);
     return {
       map: function(f) {
-        return mapWriterT(map31(function(v) {
+        return mapWriterT(map33(function(v) {
           return new Tuple(f(v.value0), v.value1);
         }));
       }
@@ -2847,7 +2847,7 @@
     return function(dictApply) {
       var apply2 = apply(dictApply);
       var Functor0 = dictApply.Functor0();
-      var map31 = map(Functor0);
+      var map33 = map(Functor0);
       var functorWriterT1 = functorWriterT(Functor0);
       return {
         apply: function(v) {
@@ -2857,7 +2857,7 @@
                 return new Tuple(v3.value0(v4.value0), append11(v3.value1)(v4.value1));
               };
             };
-            return apply2(map31(k)(v))(v1);
+            return apply2(map33(k)(v))(v1);
           };
         },
         Functor0: function() {
@@ -2872,14 +2872,14 @@
     return function(dictBind) {
       var bind20 = bind(dictBind);
       var Apply0 = dictBind.Apply0();
-      var map31 = map(Apply0.Functor0());
+      var map33 = map(Apply0.Functor0());
       var applyWriterT2 = applyWriterT1(Apply0);
       return {
         bind: function(v) {
           return function(k) {
             return bind20(v)(function(v1) {
               var v2 = k(v1.value0);
-              return map31(function(v3) {
+              return map33(function(v3) {
                 return new Tuple(v3.value0, append11(v1.value1)(v3.value1));
               })(v2);
             });
@@ -3215,7 +3215,7 @@
       };
     }
     return function(apply2) {
-      return function(map31) {
+      return function(map33) {
         return function(pure25) {
           return function(f) {
             return function(array) {
@@ -3224,14 +3224,14 @@
                   case 0:
                     return pure25([]);
                   case 1:
-                    return map31(array1)(f(array[bot]));
+                    return map33(array1)(f(array[bot]));
                   case 2:
-                    return apply2(map31(array2)(f(array[bot])))(f(array[bot + 1]));
+                    return apply2(map33(array2)(f(array[bot])))(f(array[bot + 1]));
                   case 3:
-                    return apply2(apply2(map31(array3)(f(array[bot])))(f(array[bot + 1])))(f(array[bot + 2]));
+                    return apply2(apply2(map33(array3)(f(array[bot])))(f(array[bot + 1])))(f(array[bot + 2]));
                   default:
                     var pivot = bot + Math.floor((top2 - bot) / 4) * 2;
-                    return apply2(map31(concat2)(go2(bot, pivot)))(go2(pivot, top2));
+                    return apply2(map33(concat2)(go2(bot, pivot)))(go2(pivot, top2));
                 }
               }
               return go2(0, array.length);
@@ -7342,13 +7342,13 @@
   var foldFree = function(dictMonadRec) {
     var Monad0 = dictMonadRec.Monad0();
     var map113 = map(Monad0.Bind1().Apply0().Functor0());
-    var pure114 = pure(Monad0.Applicative0());
+    var pure113 = pure(Monad0.Applicative0());
     var tailRecM4 = tailRecM(dictMonadRec);
     return function(k) {
       var go2 = function(f) {
         var v = toView(f);
         if (v instanceof Return) {
-          return map113(Done.create)(pure114(v.value0));
+          return map113(Done.create)(pure113(v.value0));
         }
         ;
         if (v instanceof Bind) {
@@ -7593,9 +7593,9 @@
           return function(p2) {
             return function(q2) {
               return liftF(new ChildQuery2(mkChildQueryBox(new ChildQuery(function(dictApplicative) {
-                var pure114 = pure(dictApplicative);
+                var pure113 = pure(dictApplicative);
                 return function(k) {
-                  var $177 = maybe(pure114(Nothing.value))(k);
+                  var $177 = maybe(pure113(Nothing.value))(k);
                   var $178 = lookup23(label5)(p2);
                   return function($179) {
                     return $177($178($179));
@@ -9424,7 +9424,6 @@
     };
   };
   var isNonSpace_regex = /* @__PURE__ */ fromRight$prime(/* @__PURE__ */ impossible("failed to compile isNonSpace_regex"))(/* @__PURE__ */ regex("^\\s*\\S\\s*$")(mempty2));
-  var isNonSpace = /* @__PURE__ */ test(isNonSpace_regex);
   var lookup_unsafe = function(k) {
     return function(a2) {
       return fromMaybe$prime(function(v) {
@@ -12291,21 +12290,82 @@
   var guard2 = /* @__PURE__ */ guard(alternativeMaybe);
   var and2 = /* @__PURE__ */ and(foldableArray)(heytingAlgebraBoolean);
   var pure18 = /* @__PURE__ */ pure(applicativeMaybe);
-  var eqKeyInfo = /* @__PURE__ */ eqRec()(/* @__PURE__ */ eqRowCons(/* @__PURE__ */ eqRowCons(/* @__PURE__ */ eqRowCons(/* @__PURE__ */ eqRowCons(eqRowNil)()({
-    reflectSymbol: function() {
-      return "shift";
+  var map27 = /* @__PURE__ */ map(functorArray);
+  var member3 = /* @__PURE__ */ member2(ordString);
+  var KeyEq = /* @__PURE__ */ function() {
+    function KeyEq2(value0) {
+      this.value0 = value0;
     }
-  })(eqBoolean))()(keyIsSymbol)(eqString))()({
-    reflectSymbol: function() {
-      return "cmd";
+    ;
+    KeyEq2.create = function(value0) {
+      return new KeyEq2(value0);
+    };
+    return KeyEq2;
+  }();
+  var KeyMember = /* @__PURE__ */ function() {
+    function KeyMember2(value0) {
+      this.value0 = value0;
     }
-  })(eqBoolean))()({
-    reflectSymbol: function() {
-      return "alt";
+    ;
+    KeyMember2.create = function(value0) {
+      return new KeyMember2(value0);
+    };
+    return KeyMember2;
+  }();
+  var KeyRegex = /* @__PURE__ */ function() {
+    function KeyRegex2(value0) {
+      this.value0 = value0;
     }
-  })(eqBoolean));
-  var shiftKey = /* @__PURE__ */ lookup_unsafe("shiftKey");
-  var metaKey = /* @__PURE__ */ lookup_unsafe("metaKey");
+    ;
+    KeyRegex2.create = function(value0) {
+      return new KeyRegex2(value0);
+    };
+    return KeyRegex2;
+  }();
+  var CmdEq = /* @__PURE__ */ function() {
+    function CmdEq2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    CmdEq2.create = function(value0) {
+      return new CmdEq2(value0);
+    };
+    return CmdEq2;
+  }();
+  var AltEq = /* @__PURE__ */ function() {
+    function AltEq2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    AltEq2.create = function(value0) {
+      return new AltEq2(value0);
+    };
+    return AltEq2;
+  }();
+  var ShiftEq = /* @__PURE__ */ function() {
+    function ShiftEq2(value0) {
+      this.value0 = value0;
+    }
+    ;
+    ShiftEq2.create = function(value0) {
+      return new ShiftEq2(value0);
+    };
+    return ShiftEq2;
+  }();
+  var shiftKey_Event = /* @__PURE__ */ lookup_unsafe("shiftKey");
+  var shift = /* @__PURE__ */ function() {
+    return new ShiftEq(true);
+  }();
+  var not_shift = /* @__PURE__ */ function() {
+    return new ShiftEq(false);
+  }();
+  var not_cmd = /* @__PURE__ */ function() {
+    return new CmdEq(false);
+  }();
+  var not_alt = /* @__PURE__ */ function() {
+    return new AltEq(false);
+  }();
+  var metaKey_Event = /* @__PURE__ */ lookup_unsafe("metaKey");
   var matchMapKeyInfo = function() {
     return function() {
       return function(f) {
@@ -12333,56 +12393,81 @@
       };
     };
   };
-  var matchKeyInfo = function() {
-    return function() {
-      return function(f) {
-        return function(r_) {
-          return function(v) {
-            var r$prime = $$delete6($$Proxy.value)(v);
-            var r = merge2(r_)({
-              cmd: Nothing.value,
-              shift: Nothing.value,
-              alt: Nothing.value
-            });
-            return and2([f(v), maybe(true)(function(v1) {
-              return r$prime.cmd === v1;
-            })(r.cmd), maybe(true)(function(v1) {
-              return r$prime.shift === v1;
-            })(r.shift)]);
-          };
-        };
-      };
+  var matchKeyInfoPattern = function(v) {
+    return function(v1) {
+      return and2(map27(function(v2) {
+        if (v2 instanceof KeyEq) {
+          return v1.key === v2.value0;
+        }
+        ;
+        if (v2 instanceof KeyMember) {
+          return member3(v1.key)(v2.value0);
+        }
+        ;
+        if (v2 instanceof KeyRegex) {
+          return test(v2.value0)(v1.key);
+        }
+        ;
+        if (v2 instanceof CmdEq) {
+          return v1.cmd === v2.value0;
+        }
+        ;
+        if (v2 instanceof AltEq) {
+          return v1.alt === v2.value0;
+        }
+        ;
+        if (v2 instanceof ShiftEq) {
+          return v1.shift === v2.value0;
+        }
+        ;
+        throw new Error("Failed pattern match at Ui.Event (line 142, column 73 - line 148, column 39): " + [v2.constructor.name]);
+      })(v));
     };
   };
+  var matchKeyInfoPattern$prime = function(xs) {
+    return matchKeyInfoPattern(xs);
+  };
+  var keyRegex = /* @__PURE__ */ function() {
+    return KeyRegex.create;
+  }();
+  var keyMember = /* @__PURE__ */ function() {
+    return KeyMember.create;
+  }();
+  var keyEq = /* @__PURE__ */ function() {
+    return KeyEq.create;
+  }();
   var key = /* @__PURE__ */ lookup_unsafe("key");
-  var ctrlKey = /* @__PURE__ */ lookup_unsafe("ctrlKey");
-  var altKey = /* @__PURE__ */ lookup_unsafe("altKey");
+  var ctrlKey_Event = /* @__PURE__ */ lookup_unsafe("ctrlKey");
+  var cmd = /* @__PURE__ */ function() {
+    return new CmdEq(true);
+  }();
+  var altKey_Event = /* @__PURE__ */ lookup_unsafe("altKey");
   var fromEventToKeyInfo = function(e) {
     return {
       key: key(e),
-      cmd: ctrlKey(e) || metaKey(e),
-      alt: altKey(e),
-      shift: shiftKey(e)
+      cmd: ctrlKey_Event(e) || metaKey_Event(e),
+      alt: altKey_Event(e),
+      shift: shiftKey_Event(e)
     };
   };
+  var alt5 = /* @__PURE__ */ function() {
+    return new AltEq(true);
+  }();
 
   // output/Editor.Example.UlcV1/index.js
   var atSubExpr2 = /* @__PURE__ */ atSubExpr(showString);
   var fromFoldable5 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordString);
   var fold4 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
-  var member3 = /* @__PURE__ */ member2(ordString);
+  var member4 = /* @__PURE__ */ member2(ordString);
   var atPoint2 = /* @__PURE__ */ atPoint(showString);
   var insert8 = /* @__PURE__ */ insert6(showString);
-  var matchKeyInfo2 = /* @__PURE__ */ matchKeyInfo()();
-  var unwrap6 = /* @__PURE__ */ unwrap();
-  var pure19 = /* @__PURE__ */ pure(applicativeMaybe);
   var empty10 = /* @__PURE__ */ empty(/* @__PURE__ */ plusMaybeT(/* @__PURE__ */ monadWriterT(monoidArray)(monadIdentity)));
   var and3 = /* @__PURE__ */ and(foldableArray)(heytingAlgebraBoolean);
   var bind10 = /* @__PURE__ */ bind(/* @__PURE__ */ bindReaderT(bindIdentity));
   var ask2 = /* @__PURE__ */ ask(/* @__PURE__ */ monadAskReaderT(monadIdentity));
   var applicativeReaderT3 = /* @__PURE__ */ applicativeReaderT(applicativeIdentity);
   var sequence2 = /* @__PURE__ */ sequence(traversableArray)(applicativeReaderT3);
-  var pure110 = /* @__PURE__ */ pure(applicativeReaderT3);
+  var pure19 = /* @__PURE__ */ pure(applicativeReaderT3);
   var append10 = /* @__PURE__ */ append(semigroupArray);
   var fromMaybe3 = /* @__PURE__ */ fromMaybe2(unfoldableArray);
   var assembleExpr_default2 = /* @__PURE__ */ assembleExpr_default(showString);
@@ -12391,7 +12476,7 @@
     return function(v) {
       var v1 = atSubExpr2(v.path)(expr).here;
       var ls = fromFoldable5(fold4([["Root"], ["LamParams", "LamBody"], ["App"], ["LetVar", "LetImpl", "LetBody"]]));
-      return member3(v1.l)(ls);
+      return member4(v1.l)(ls);
     };
   };
   var indentation = [/* @__PURE__ */ div2([/* @__PURE__ */ classes2(["Token punctuation indentation ghost"])])([/* @__PURE__ */ text5("\u2502")])];
@@ -12400,16 +12485,16 @@
   };
   var increaseIndentLevel = function(dictMonadReader) {
     return local(dictMonadReader)(function(ctx) {
-      var $50 = {};
-      for (var $51 in ctx) {
-        if ({}.hasOwnProperty.call(ctx, $51)) {
-          $50[$51] = ctx[$51];
+      var $40 = {};
+      for (var $41 in ctx) {
+        if ({}.hasOwnProperty.call(ctx, $41)) {
+          $40[$41] = ctx[$41];
         }
         ;
       }
       ;
-      $50.indentLevel = ctx.indentLevel + 1 | 0;
-      return $50;
+      $40.indentLevel = ctx.indentLevel + 1 | 0;
+      return $40;
     });
   };
   var increaseIndentLevel1 = /* @__PURE__ */ increaseIndentLevel(/* @__PURE__ */ monadReaderReaderT(monadIdentity));
@@ -12487,29 +12572,11 @@
       },
       getShortcut: function(ki) {
         return function(state3) {
-          if (matchKeyInfo2(function($185) {
-            return /* @__PURE__ */ function(v) {
-              return v === "Enter";
-            }(function(v) {
-              return v.key;
-            }(unwrap6($185)));
-          })({
-            cmd: pure19(false),
-            alt: pure19(false)
-          })(ki)) {
+          if (matchKeyInfoPattern$prime([keyEq("Enter"), not_cmd, not_alt])(ki)) {
             return insert8(new Span_Fragment([expr_LineBreak]))(state3);
           }
           ;
-          if (matchKeyInfo2(function($186) {
-            return /* @__PURE__ */ function(v) {
-              return v === "(";
-            }(function(v) {
-              return v.key;
-            }(unwrap6($186)));
-          })({
-            cmd: pure19(false),
-            alt: pure19(false)
-          })(ki)) {
+          if (matchKeyInfoPattern$prime([keyEq("("), not_cmd, not_alt])(ki)) {
             return insert8(new Zipper_Fragment(zipper_App))(state3);
           }
           ;
@@ -12540,7 +12607,7 @@
           var v = new Tuple(args.label, new Tuple(args.points, args.kids));
           if (v.value0 === "Root") {
             return bind10(sequence2(v.value1.value1))(function(ks$prime) {
-              return pure110(fold4(append10(zipWith(function(p2) {
+              return pure19(fold4(append10(zipWith(function(p2) {
                 return function(k) {
                   return append10([p2])(k);
                 };
@@ -12549,7 +12616,7 @@
           }
           ;
           if (v.value0 === "LineBreak" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
-            return pure110(fold4([linebreak, indentations(ctx.indentLevel)]));
+            return pure19(fold4([linebreak, indentations(ctx.indentLevel)]));
           }
           ;
           if (v.value0 === "LineBreak") {
@@ -12558,14 +12625,14 @@
           ;
           if (v.value0 === "Var" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
             return bind10(v["value1"]["value1"][0])(function(k0$prime) {
-              return pure110(fold4([k0$prime]));
+              return pure19(fold4([k0$prime]));
             });
           }
           ;
           if (v.value0 === "Lam" && v.value1.value1.length === 2) {
             return bind10(increaseIndentLevel1(v["value1"]["value1"][0]))(function(k0$prime) {
               return bind10(increaseIndentLevel1(v["value1"]["value1"][1]))(function(k1$prime) {
-                return pure110(fold4([punctuation("("), keyword("\u03BB"), k0$prime, keyword("."), k1$prime, punctuation(")")]));
+                return pure19(fold4([punctuation("("), keyword("\u03BB"), k0$prime, keyword("."), k1$prime, punctuation(")")]));
               });
             });
           }
@@ -12575,12 +12642,12 @@
           }
           ;
           if (v.value0 === "LamParams" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
-            return pure110(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
+            return pure19(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
           }
           ;
           if (v.value0 === "LamParams") {
             return bind10(sequence2(v.value1.value1))(function(ks$prime) {
-              return pure110(fold4(append10(zipWith(function(p2) {
+              return pure19(fold4(append10(zipWith(function(p2) {
                 return function(k) {
                   return append10([p2])(k);
                 };
@@ -12589,18 +12656,18 @@
           }
           ;
           if (v.value0 === "LamBody" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
-            return pure110(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
+            return pure19(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
           }
           ;
           if (v.value0 === "LamBody" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
             return bind10(v["value1"]["value1"][0])(function(k0$prime) {
-              return pure110(fold4([[v["value1"]["value0"][0]], k0$prime, [v["value1"]["value0"][1]]]));
+              return pure19(fold4([[v["value1"]["value0"][0]], k0$prime, [v["value1"]["value0"][1]]]));
             });
           }
           ;
           if (v.value0 === "LamBody") {
             return bind10(sequence2(v.value1.value1))(function(ks$prime) {
-              return pure110(fold4(append10([beforeExtraKid])(append10(zipWith(function(p2) {
+              return pure19(fold4(append10([beforeExtraKid])(append10(zipWith(function(p2) {
                 return function(k) {
                   return append10([p2])(k);
                 };
@@ -12610,7 +12677,7 @@
           ;
           if (v.value0 === "App") {
             return bind10(increaseIndentLevel1(sequence2(v.value1.value1)))(function(ks$prime) {
-              return pure110(fold4(fold4([[punctuation("(")], zipWith(function(p2) {
+              return pure19(fold4(fold4([[punctuation("(")], zipWith(function(p2) {
                 return function(k) {
                   return append10([p2])(k);
                 };
@@ -12622,7 +12689,7 @@
             return bind10(increaseIndentLevel1(v["value1"]["value1"][0]))(function(k0$prime) {
               return bind10(increaseIndentLevel1(v["value1"]["value1"][1]))(function(k1$prime) {
                 return bind10(increaseIndentLevel1(v["value1"]["value1"][2]))(function(k2$prime) {
-                  return pure110(fold4([punctuation("("), keyword("let"), k0$prime, punctuation("="), k1$prime, keyword("in"), k2$prime, punctuation(")")]));
+                  return pure19(fold4([punctuation("("), keyword("let"), k0$prime, punctuation("="), k1$prime, keyword("in"), k2$prime, punctuation(")")]));
                 });
               });
             });
@@ -12633,18 +12700,18 @@
           }
           ;
           if (v.value0 === "LetVar" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
-            return pure110(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
+            return pure19(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
           }
           ;
           if (v.value0 === "LetVar" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
             return bind10(v["value1"]["value1"][0])(function(k0$prime) {
-              return pure110(fold4([[v["value1"]["value0"][0]], k0$prime, [v["value1"]["value0"][1]]]));
+              return pure19(fold4([[v["value1"]["value0"][0]], k0$prime, [v["value1"]["value0"][1]]]));
             });
           }
           ;
           if (v.value0 === "LetVar") {
             return bind10(sequence2(v.value1.value1))(function(ks$prime) {
-              return pure110(fold4(append10([beforeExtraKid])(append10(zipWith(function(p2) {
+              return pure19(fold4(append10([beforeExtraKid])(append10(zipWith(function(p2) {
                 return function(k) {
                   return append10([p2])(k);
                 };
@@ -12653,18 +12720,18 @@
           }
           ;
           if (v.value0 === "LetImpl" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
-            return pure110(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
+            return pure19(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
           }
           ;
           if (v.value0 === "LetImpl" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
             return bind10(v["value1"]["value1"][0])(function(k0$prime) {
-              return pure110(fold4([[v["value1"]["value0"][0]], k0$prime, [v["value1"]["value0"][1]]]));
+              return pure19(fold4([[v["value1"]["value0"][0]], k0$prime, [v["value1"]["value0"][1]]]));
             });
           }
           ;
           if (v.value0 === "LetImpl") {
             return bind10(sequence2(v.value1.value1))(function(ks$prime) {
-              return pure110(fold4(append10([beforeExtraKid])(append10(zipWith(function(p2) {
+              return pure19(fold4(append10([beforeExtraKid])(append10(zipWith(function(p2) {
                 return function(k) {
                   return append10([p2])(k);
                 };
@@ -12673,18 +12740,18 @@
           }
           ;
           if (v.value0 === "LetBody" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
-            return pure110(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
+            return pure19(fold4([beforeHolePoint, [v["value1"]["value0"][0]], afterHolePoint]));
           }
           ;
           if (v.value0 === "LetBody" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
             return bind10(v["value1"]["value1"][0])(function(k0$prime) {
-              return pure110(fold4([[v["value1"]["value0"][0]], k0$prime, [v["value1"]["value0"][1]]]));
+              return pure19(fold4([[v["value1"]["value0"][0]], k0$prime, [v["value1"]["value0"][1]]]));
             });
           }
           ;
           if (v.value0 === "LetBody") {
             return bind10(sequence2(v.value1.value1))(function(ks$prime) {
-              return pure110(fold4(append10([beforeExtraKid])(append10(zipWith(function(p2) {
+              return pure19(fold4(append10([beforeExtraKid])(append10(zipWith(function(p2) {
                 return function(k) {
                   return append10([p2])(k);
                 };
@@ -12693,7 +12760,7 @@
           }
           ;
           if (v.value1.value0.length === 1 && v.value1.value1.length === 0) {
-            return pure110(fold4([literal(v.value0)]));
+            return pure19(fold4([literal(v.value0)]));
           }
           ;
           return assembleExpr_default2(args);
@@ -12703,15 +12770,15 @@
   }();
 
   // output/Control.Monad.Writer/index.js
-  var unwrap7 = /* @__PURE__ */ unwrap();
+  var unwrap6 = /* @__PURE__ */ unwrap();
   var runWriter = function($5) {
-    return unwrap7(runWriterT($5));
+    return unwrap6(runWriterT($5));
   };
 
   // output/Data.Expr.Render/index.js
   var length8 = /* @__PURE__ */ length(foldableArray)(semiringInt);
   var fold5 = /* @__PURE__ */ fold(foldableArray)(/* @__PURE__ */ monoidReaderT(applicativeIdentity)(monoidArray));
-  var map27 = /* @__PURE__ */ map(functorArray);
+  var map28 = /* @__PURE__ */ map(functorArray);
   var pure20 = /* @__PURE__ */ pure(/* @__PURE__ */ applicativeReaderT(applicativeIdentity));
   var renderTooth = function(dictShow) {
     return function(args) {
@@ -12821,7 +12888,7 @@
     return function(args) {
       return function(path) {
         return function(v) {
-          return fold5(map27(renderExpr1(args)(path))(v));
+          return fold5(map28(renderExpr1(args)(path))(v));
         };
       };
     };
@@ -12833,7 +12900,7 @@
       return function(path) {
         return function(v) {
           return function(inside) {
-            return fold5([fold5(map27(renderExpr1(args)(path))(v.kids_L)), fold5([renderSpanContext1(args)(path)(v.inside)(inside)]), fold5(map27(renderExpr1(args)(path))(v.kids_R))]);
+            return fold5([fold5(map28(renderExpr1(args)(path))(v.kids_L)), fold5([renderSpanContext1(args)(path)(v.inside)(inside)]), fold5(map28(renderExpr1(args)(path))(v.kids_R))]);
           };
         };
       };
@@ -13371,7 +13438,7 @@
 
   // output/Data.String.CodePoints/index.js
   var fromEnum2 = /* @__PURE__ */ fromEnum(boundedEnumChar);
-  var map28 = /* @__PURE__ */ map(functorMaybe);
+  var map29 = /* @__PURE__ */ map(functorMaybe);
   var unfoldr2 = /* @__PURE__ */ unfoldr(unfoldableArray);
   var unsurrogate = function(lead) {
     return function(trail) {
@@ -13413,7 +13480,7 @@
     });
   };
   var unconsButWithTuple = function(s) {
-    return map28(function(v) {
+    return map29(function(v) {
       return new Tuple(v.head, v.tail);
     })(uncons5(s));
   };
@@ -13452,18 +13519,16 @@
   var value13 = /* @__PURE__ */ value12(isPropString);
   var mapWithIndex4 = /* @__PURE__ */ mapWithIndex(functorWithIndexArray);
   var notEq3 = /* @__PURE__ */ notEq(/* @__PURE__ */ eqMaybe(eqInt));
-  var unwrap8 = /* @__PURE__ */ unwrap();
+  var unwrap7 = /* @__PURE__ */ unwrap();
   var bind11 = /* @__PURE__ */ bind(bindHalogenM);
   var fromMaybeM3 = /* @__PURE__ */ fromMaybeM(applicativeHalogenM);
   var discard7 = /* @__PURE__ */ discard(discardUnit)(bindHalogenM);
   var max6 = /* @__PURE__ */ max(ordInt);
-  var pure111 = /* @__PURE__ */ pure(applicativeHalogenM);
+  var pure110 = /* @__PURE__ */ pure(applicativeHalogenM);
   var liftEffect7 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff));
   var bind17 = /* @__PURE__ */ bind(bindEffect);
   var $$void8 = /* @__PURE__ */ $$void(functorHalogenM);
   var get3 = /* @__PURE__ */ get(monadStateHalogenM);
-  var matchKeyInfo3 = /* @__PURE__ */ matchKeyInfo()();
-  var member4 = /* @__PURE__ */ member2(ordString);
   var matchMapKeyInfo2 = /* @__PURE__ */ matchMapKeyInfo()();
   var mod2 = /* @__PURE__ */ mod(euclideanRingInt);
   var length11 = /* @__PURE__ */ length(foldableArray)(semiringInt);
@@ -13491,8 +13556,8 @@
         menu: state3.menu,
         query: query3,
         option_i: function() {
-          var $73 = $$null5(menu_queried);
-          if ($73) {
+          var $68 = $$null5(menu_queried);
+          if ($68) {
             return none4;
           }
           ;
@@ -13508,7 +13573,7 @@
             return [new Tuple(v1.value0, v2.value0.value0)];
           }
           ;
-          throw new Error("Failed pattern match at Ui.App1.Buffer (line 149, column 58 - line 151, column 51): " + [v2.constructor.name]);
+          throw new Error("Failed pattern match at Ui.App1.Buffer (line 150, column 58 - line 152, column 51): " + [v2.constructor.name]);
         })(menu_queried)
       };
     };
@@ -13551,8 +13616,8 @@
       return div2([classes2(fold6([["Buffer"]]))])([input2([classes2(["query"]), ref2(refLabel_input), value13(state3.query), onInput(QueryInput_BufferAction.create), spellcheck2(false)]), div3([classes2(["menu"])])(mapWithIndex4(function(i2) {
         return function(v) {
           return new Tuple(v.value0, div2([classes2(fold6([["Edit"], function() {
-            var $86 = notEq3(new Just(i2))(state3.option_i);
-            if ($86) {
+            var $81 = notEq3(new Just(i2))(state3.option_i);
+            if ($81) {
               return [];
             }
             ;
@@ -13561,7 +13626,7 @@
             if (v.value1.value0.info instanceof Insert_EditInfo) {
               return [div2([classes2(["Expr"])])(flip(runReader)({
                 indentLevel: 0
-              })(renderFragment2(renderArgs1(state3.editor))(unwrap8(state3.point).path)(v.value1.value0.info.value0.insertion)))];
+              })(renderFragment2(renderArgs1(state3.editor))(unwrap7(state3.point).path)(v.value1.value0.info.value0.insertion)))];
             }
             ;
             if (v.value1.value0.info instanceof Remove_EditInfo) {
@@ -13572,7 +13637,7 @@
               return [div2([])([text5("copy")])];
             }
             ;
-            throw new Error("Failed pattern match at Ui.App1.Buffer (line 187, column 15 - line 201, column 20): " + [v.value1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App1.Buffer (line 188, column 15 - line 202, column 20): " + [v.value1.constructor.name]);
           }()));
         };
       })(state3.menu_queried))]);
@@ -13584,7 +13649,7 @@
       return bind11(fromMaybeM3(liftEffect12($$throw("TODO")))(fromHTMLElement(elem3)))(function(inputElem) {
         return bind11(liftEffect12(value3(inputElem)))(function(value1) {
           return discard7(liftEffect12(setSize(max6(1)(length10(value1)))(inputElem)))(function() {
-            return pure111(value1);
+            return pure110(value1);
           });
         });
       });
@@ -13624,8 +13689,8 @@
       }))(function() {
         return bind11(liftEffect7(bind17(windowImpl)(document2)))(function(doc) {
           return discard7(subscribe$prime(function(_subId) {
-            return eventListener2(keydown)(toEventTarget(doc))(function($126) {
-              return pure21(KeyDown_BufferAction.create($126));
+            return eventListener2(keydown)(toEventTarget(doc))(function($121) {
+              return pure21(KeyDown_BufferAction.create($121));
             });
           }))(function() {
             return $$void8(resizeQueryInput1);
@@ -13637,20 +13702,10 @@
     if (v instanceof KeyDown_BufferAction) {
       var ki = fromEventToKeyInfo(v.value0);
       return bind11(get3)(function(state3) {
-        if (matchKeyInfo3(function($127) {
-          return function(v12) {
-            return member4(v12)(submitBuffer_keys);
-          }(function(v12) {
-            return v12.key;
-          }(unwrap8($127)));
-        })({
-          cmd: pure21(false),
-          shift: pure21(false),
-          alt: pure21(false)
-        })(ki)) {
+        if (matchKeyInfoPattern$prime([keyMember(submitBuffer_keys), not_cmd, not_alt])(ki)) {
           return discard7(liftEffect7(preventDefault(v.value0)))(function() {
             if (state3.option_i instanceof Nothing) {
-              return pure111(unit);
+              return pure110(unit);
             }
             ;
             if (state3.option_i instanceof Just) {
@@ -13659,56 +13714,56 @@
               });
             }
             ;
-            throw new Error("Failed pattern match at Ui.App1.Buffer (line 110, column 7 - line 114, column 48): " + [state3.option_i.constructor.name]);
+            throw new Error("Failed pattern match at Ui.App1.Buffer (line 111, column 7 - line 115, column 48): " + [state3.option_i.constructor.name]);
           });
         }
         ;
         var v1 = function(v2) {
-          return pure111(unit);
+          return pure110(unit);
         };
-        var $109 = matchMapKeyInfo2(function($128) {
+        var $104 = matchMapKeyInfo2(function($122) {
           return fromKeyToCycleDir(function(v2) {
             return v2.key;
-          }(unwrap8($128)));
+          }(unwrap7($122)));
         })({
           cmd: pure21(false),
           shift: pure21(false),
           alt: pure21(false)
         })(ki);
-        if ($109 instanceof Just) {
+        if ($104 instanceof Just) {
           return discard7(liftEffect7(preventDefault(v.value0)))(function() {
-            var v2 = new Tuple(state3.option_i, $109.value0);
+            var v2 = new Tuple(state3.option_i, $104.value0);
             if (v2.value0 instanceof Just && v2.value1 instanceof Prev) {
               return modify_3(function(v3) {
-                var $111 = {};
-                for (var $112 in v3) {
-                  if ({}.hasOwnProperty.call(v3, $112)) {
-                    $111[$112] = v3[$112];
+                var $106 = {};
+                for (var $107 in v3) {
+                  if ({}.hasOwnProperty.call(v3, $107)) {
+                    $106[$107] = v3[$107];
                   }
                   ;
                 }
                 ;
-                $111.option_i = pure21(mod2(v2.value0.value0 - 1 | 0)(length11(state3.menu_queried)));
-                return $111;
+                $106.option_i = pure21(mod2(v2.value0.value0 - 1 | 0)(length11(state3.menu_queried)));
+                return $106;
               });
             }
             ;
             if (v2.value0 instanceof Just && v2.value1 instanceof Next) {
               return modify_3(function(v3) {
-                var $117 = {};
-                for (var $118 in v3) {
-                  if ({}.hasOwnProperty.call(v3, $118)) {
-                    $117[$118] = v3[$118];
+                var $112 = {};
+                for (var $113 in v3) {
+                  if ({}.hasOwnProperty.call(v3, $113)) {
+                    $112[$113] = v3[$113];
                   }
                   ;
                 }
                 ;
-                $117.option_i = pure21(mod2(v2.value0.value0 + 1 | 0)(length11(state3.menu_queried)));
-                return $117;
+                $112.option_i = pure21(mod2(v2.value0.value0 + 1 | 0)(length11(state3.menu_queried)));
+                return $112;
               });
             }
             ;
-            return pure111(unit);
+            return pure110(unit);
           });
         }
         ;
@@ -13722,7 +13777,7 @@
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.App1.Buffer (line 93, column 1 - line 93, column 57): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.App1.Buffer (line 94, column 1 - line 94, column 57): " + [v.constructor.name]);
   };
   var $$eval = /* @__PURE__ */ function() {
     return mkEval({
@@ -13766,7 +13821,7 @@
   // output/Ui.App1.Point/index.js
   var fromFoldable6 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordPointStatus);
   var fold7 = /* @__PURE__ */ fold2(monoidArray);
-  var map29 = /* @__PURE__ */ map(functorArray);
+  var map30 = /* @__PURE__ */ map(functorArray);
   var show4 = /* @__PURE__ */ show(showPointStatus);
   var toUnfoldable6 = /* @__PURE__ */ toUnfoldable5(unfoldableArray);
   var foldMap3 = /* @__PURE__ */ foldMap(foldableMaybe)(monoidArray);
@@ -13790,7 +13845,7 @@
   var intersection3 = /* @__PURE__ */ intersection2(ordPointStatus);
   var pure23 = /* @__PURE__ */ pure(applicativeHalogenM);
   var liftEffect8 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff));
-  var pure112 = /* @__PURE__ */ pure(applicativeMaybe);
+  var pure111 = /* @__PURE__ */ pure(applicativeMaybe);
   var modify_4 = /* @__PURE__ */ modify_2(monadStateHalogenM);
   var get4 = /* @__PURE__ */ get(monadStateHalogenM);
   var put2 = /* @__PURE__ */ put(monadStateHalogenM);
@@ -13810,7 +13865,7 @@
   var render2 = function(dictShow) {
     var component12 = component(dictShow);
     return function(state3) {
-      return div2([ref2(refLabel_point), classes2(fold7([["Point"], map29(show4)(toUnfoldable6(state3.statuses)), foldMap3($$const(["bufferIsOpen"]))(state3.mb_bufferInput)])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(function() {
+      return div2([ref2(refLabel_point), classes2(fold7([["Point"], map30(show4)(toUnfoldable6(state3.statuses)), foldMap3($$const(["bufferIsOpen"]))(state3.mb_bufferInput)])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(function() {
         if (state3.mb_bufferInput instanceof Nothing) {
           return [div2([classes2(["Left"])])([]), div2([classes2(["Middle"])])([]), div2([classes2(["Right"])])([])];
         }
@@ -13862,7 +13917,7 @@
             throw new Error("Failed pattern match at Ui.App1.Point (line 54, column 7 - line 56, column 98): " + [mb_elem_this.constructor.name]);
           }));
         }))(function() {
-          return pure23(pure112(v.value1));
+          return pure23(pure111(v.value1));
         });
       });
     }
@@ -13880,13 +13935,13 @@
         $52.mb_bufferInput = v.value0;
         return $52;
       }))(function() {
-        return pure23(pure112(v.value1));
+        return pure23(pure111(v.value1));
       });
     }
     ;
     if (v instanceof GetBufferInput_PointQuery) {
       return bind18(get4)(function(state3) {
-        return pure23(pure112(v.value0(state3.mb_bufferInput)));
+        return pure23(pure111(v.value0(state3.mb_bufferInput)));
       });
     }
     ;
@@ -13922,11 +13977,11 @@
   var $$eval2 = /* @__PURE__ */ function() {
     return mkEval({
       finalize: defaultEval.finalize,
-      initialize: pure112(Initialize_PointAction.value),
+      initialize: pure111(Initialize_PointAction.value),
       handleQuery: handleQuery2,
       handleAction: handleAction2,
       receive: function($63) {
-        return pure112(Receive_PointAction.create($63));
+        return pure111(Receive_PointAction.create($63));
       }
     });
   }();
@@ -13953,7 +14008,7 @@
   };
   var slot3 = /* @__PURE__ */ slot()(PointIsSymbol)(ordPoint);
   var bind19 = /* @__PURE__ */ bind(bindHalogenM);
-  var map30 = /* @__PURE__ */ map(functorHalogenM);
+  var map31 = /* @__PURE__ */ map(functorHalogenM);
   var request2 = /* @__PURE__ */ request()(PointIsSymbol)(ordPoint);
   var union4 = /* @__PURE__ */ union3(ordPointStatus);
   var unless2 = /* @__PURE__ */ unless(applicativeHalogenM);
@@ -13984,13 +14039,10 @@
   var fold8 = /* @__PURE__ */ fold(foldableArray)(monoidString);
   var show1 = /* @__PURE__ */ show(showMaybe2);
   var bind110 = /* @__PURE__ */ bind(bindEffect);
-  var pure113 = /* @__PURE__ */ pure(applicativeMaybe);
+  var pure112 = /* @__PURE__ */ pure(applicativeMaybe);
   var join3 = /* @__PURE__ */ join(bindMaybe);
-  var matchKeyInfo4 = /* @__PURE__ */ matchKeyInfo()();
-  var unwrap9 = /* @__PURE__ */ unwrap();
   var tell4 = /* @__PURE__ */ tell2()(PointIsSymbol)(ordPoint);
-  var eq14 = /* @__PURE__ */ eq(eqKeyInfo);
-  var member5 = /* @__PURE__ */ member2(ordString);
+  var unwrap8 = /* @__PURE__ */ unwrap();
   var bind22 = /* @__PURE__ */ bind(bindMaybe);
   var guardPure3 = /* @__PURE__ */ guardPure(alternativeMaybe);
   var ss_ZipperH_Handle_OuterRight_Focus = /* @__PURE__ */ function() {
@@ -14070,14 +14122,14 @@
       var modifyClass = function(p3) {
         return function(ss$prime) {
           if (b2) {
-            return bind19(map30(isJust)(request2($$Proxy.value)(p3)($$const(new ModifyStatuses_PointQuery(function(v) {
+            return bind19(map31(isJust)(request2($$Proxy.value)(p3)($$const(new ModifyStatuses_PointQuery(function(v) {
               return union4(v)(ss$prime);
             }, unit)))))(function(success) {
               return unless2(success)(log4("[Editor.modifyHandle] failed to request Point " + show5(p3)));
             });
           }
           ;
-          return bind19(map30(isJust)(request2($$Proxy.value)(p3)($$const(new ModifyStatuses_PointQuery(function(v) {
+          return bind19(map31(isJust)(request2($$Proxy.value)(p3)($$const(new ModifyStatuses_PointQuery(function(v) {
             return difference4(v)(ss$prime);
           }, unit)))))(function(success) {
             return unless2(success)(log4("[Editor.modifyHandle] failed to request Point " + show5(p3)));
@@ -14178,17 +14230,17 @@
       return liftEffect9(writeFlipped(state3.ref_mb_dragOrigin)(none6));
     }))(function() {
       return bind19(modify5(function(v) {
-        var $172 = {};
-        for (var $173 in v) {
-          if ({}.hasOwnProperty.call(v, $173)) {
-            $172[$173] = v[$173];
+        var $147 = {};
+        for (var $148 in v) {
+          if ({}.hasOwnProperty.call(v, $148)) {
+            $147[$148] = v[$148];
           }
           ;
         }
         ;
-        $172.root = s.root;
-        $172.initial_mb_handle = s.mb_handle;
-        return $172;
+        $147.root = s.root;
+        $147.initial_mb_handle = s.mb_handle;
+        return $147;
       }))(function(state3) {
         return pure24(state3.initial_mb_handle);
       });
@@ -14276,8 +14328,8 @@
     var applyEdit2 = applyEdit(dictShow);
     var modifyEditorState1 = modifyEditorState(dictShow);
     return function(edit) {
-      return bind19(bind19(get5)(function($262) {
-        return liftEffect9(toPureEditorState($262));
+      return bind19(bind19(get5)(function($237) {
+        return liftEffect9(toPureEditorState($237));
       }))(function(input3) {
         return discard9(when5(log_edits)(discard9(log4(fold8(replicate(10)("===="))))(function() {
           return discard9(log4("guard (Config.log_edits = true)"))(function() {
@@ -14326,8 +14378,8 @@
   var submitEditAt = function(dictShow) {
     var submitEdit1 = submitEdit(dictShow);
     return function(editAt) {
-      return bind19(bind19(get5)(function($263) {
-        return liftEffect9(toPureEditorState($263));
+      return bind19(bind19(get5)(function($238) {
+        return liftEffect9(toPureEditorState($238));
       }))(function(state3) {
         var v = runWriter(runMaybeT(editAt(state3)));
         if (v.value0 instanceof Nothing) {
@@ -14384,13 +14436,13 @@
       if (v instanceof Initialize_EditorAction) {
         return bind19(liftEffect9(bind110(windowImpl)(document2)))(function(doc) {
           return discard9(subscribe$prime(function(_subId) {
-            return eventListener2(mouseup)(toEventTarget(doc))(function($264) {
-              return pure113(MouseUp_EditorAction.create($264));
+            return eventListener2(mouseup)(toEventTarget(doc))(function($239) {
+              return pure112(MouseUp_EditorAction.create($239));
             });
           }))(function() {
             return discard9(subscribe$prime(function(_subId) {
-              return eventListener2(keydown)(toEventTarget(doc))(function($265) {
-                return pure113(KeyDown_EditorAction.create($265));
+              return eventListener2(keydown)(toEventTarget(doc))(function($240) {
+                return pure112(KeyDown_EditorAction.create($240));
               });
             }))(function() {
               return handleAction3(dictShow)(Rerender_EditorAction.value);
@@ -14420,8 +14472,8 @@
                   }
                   ;
                   if (mb_handle instanceof Just) {
-                    return map30(function($266) {
-                      return isJust(join3($266));
+                    return map31(function($241) {
+                      return isJust(join3($241));
                     })(request2($$Proxy.value)(getFocusPoint(mb_handle.value0))(GetBufferInput_PointQuery.create));
                   }
                   ;
@@ -14429,17 +14481,7 @@
                 }())(function(bufferIsOpen) {
                   var ki = fromEventToKeyInfo(v.value0);
                   if (bufferIsOpen) {
-                    if (matchKeyInfo4(function($267) {
-                      return /* @__PURE__ */ function(v22) {
-                        return v22 === "Escape";
-                      }(function(v22) {
-                        return v22.key;
-                      }(unwrap9($267)));
-                    })({
-                      cmd: pure113(false),
-                      shift: pure113(false),
-                      alt: pure113(false)
-                    })(ki)) {
+                    if (matchKeyInfoPattern$prime([keyEq("Escape"), not_cmd, not_shift, not_alt])(ki)) {
                       return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                         if (mb_handle instanceof Nothing) {
                           return pure24(unit);
@@ -14460,17 +14502,7 @@
                     var v4 = function(v5) {
                       var v6 = function(v7) {
                         var v8 = function(v9) {
-                          if (matchKeyInfo4(function($268) {
-                            return /* @__PURE__ */ function(v10) {
-                              return v10 === "Escape";
-                            }(function(v10) {
-                              return v10.key;
-                            }(unwrap9($268)));
-                          })({
-                            cmd: pure113(false),
-                            shift: pure113(false),
-                            alt: pure113(false)
-                          })(ki)) {
+                          if (matchKeyInfoPattern$prime([keyEq("Escape"), not_cmd, not_shift, not_alt])(ki)) {
                             return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                               return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(none6)))(function() {
                                 if (mb_handle instanceof Just) {
@@ -14482,17 +14514,7 @@
                             });
                           }
                           ;
-                          if (matchKeyInfo4(function($269) {
-                            return /* @__PURE__ */ function(v10) {
-                              return v10 === "a";
-                            }(function(v10) {
-                              return v10.key;
-                            }(unwrap9($269)));
-                          })({
-                            cmd: pure113(true),
-                            shift: pure113(false),
-                            alt: pure113(false)
-                          })(ki)) {
+                          if (matchKeyInfoPattern$prime([keyEq("a"), cmd, not_shift, not_alt])(ki)) {
                             return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                               return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(none6)))(function() {
                                 var j = getExtremeIndexes(v1.root);
@@ -14501,33 +14523,18 @@
                                   j_L: j["_L"],
                                   j_R: j["_R"]
                                 }, Left_SpanFocus.value));
-                                return setHandle(pure113(h));
+                                return setHandle(pure112(h));
                               });
                             });
                           }
                           ;
-                          if (matchKeyInfo4(function($270) {
-                            return /* @__PURE__ */ function(v10) {
-                              return v10 === "c";
-                            }(function(v10) {
-                              return v10.key;
-                            }(unwrap9($270)));
-                          })({
-                            cmd: pure113(true),
-                            shift: pure113(false),
-                            alt: pure113(false)
-                          })(ki)) {
+                          if (matchKeyInfoPattern$prime([keyEq("c"), cmd, not_shift, not_alt])(ki)) {
                             return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                               return submitEditAt1(copy3);
                             });
                           }
                           ;
-                          if (eq14(ki)({
-                            key: "Backspace",
-                            cmd: false,
-                            shift: false,
-                            alt: false
-                          })) {
+                          if (matchKeyInfoPattern$prime([keyEq("Backspace"), cmd, not_shift, not_alt])(ki)) {
                             return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                               return submitEditAt1(delete$prime2({
                                 isValidHandle: v1.editor.value0.isValidHandle
@@ -14535,12 +14542,7 @@
                             });
                           }
                           ;
-                          if (eq14(ki)({
-                            key: "Backspace",
-                            cmd: false,
-                            shift: false,
-                            alt: true
-                          })) {
+                          if (matchKeyInfoPattern$prime([keyEq("Backspace"), not_cmd, not_shift, alt5])(ki)) {
                             return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                               return discard9(log4("delete sibling"))(function() {
                                 return submitEditAt1(delete$prime_sibling2({
@@ -14550,81 +14552,31 @@
                             });
                           }
                           ;
-                          if (matchKeyInfo4(function($271) {
-                            return /* @__PURE__ */ function(v10) {
-                              return v10 === "x";
-                            }(function(v10) {
-                              return v10.key;
-                            }(unwrap9($271)));
-                          })({
-                            cmd: pure113(true),
-                            shift: pure113(false),
-                            alt: pure113(false)
-                          })(ki)) {
+                          if (matchKeyInfoPattern$prime([keyEq("x"), cmd, not_shift, not_alt])(ki)) {
                             return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                               return submitEditAt1(cut3);
                             });
                           }
                           ;
-                          if (matchKeyInfo4(function($272) {
-                            return /* @__PURE__ */ function(v10) {
-                              return v10 === "v";
-                            }(function(v10) {
-                              return v10.key;
-                            }(unwrap9($272)));
-                          })({
-                            cmd: pure113(true),
-                            shift: pure113(false),
-                            alt: pure113(false)
-                          })(ki)) {
+                          if (matchKeyInfoPattern$prime([keyEq("v"), cmd, not_shift, not_alt])(ki)) {
                             return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                               return submitEditAt1(paste3);
                             });
                           }
                           ;
-                          if (matchKeyInfo4(function($273) {
-                            return /* @__PURE__ */ function(v10) {
-                              return v10 === "z";
-                            }(function(v10) {
-                              return v10.key;
-                            }(unwrap9($273)));
-                          })({
-                            cmd: pure113(true),
-                            shift: pure113(true),
-                            alt: pure113(false)
-                          })(ki)) {
+                          if (matchKeyInfoPattern$prime([keyEq("z"), cmd, shift, not_alt])(ki)) {
                             return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                               return redo1;
                             });
                           }
                           ;
-                          if (matchKeyInfo4(function($274) {
-                            return /* @__PURE__ */ function(v10) {
-                              return v10 === "z";
-                            }(function(v10) {
-                              return v10.key;
-                            }(unwrap9($274)));
-                          })({
-                            cmd: pure113(true),
-                            shift: pure113(false),
-                            alt: pure113(false)
-                          })(ki)) {
+                          if (matchKeyInfoPattern$prime([keyEq("z"), cmd, not_shift, not_alt])(ki)) {
                             return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                               return undo1;
                             });
                           }
                           ;
-                          if (matchKeyInfo4(function($275) {
-                            return function(v10) {
-                              return member5(v10)(openBuffer_keys);
-                            }(function(v10) {
-                              return v10.key;
-                            }(unwrap9($275)));
-                          })({
-                            cmd: pure113(false),
-                            shift: pure113(false),
-                            alt: pure113(false)
-                          })(ki)) {
+                          if (matchKeyInfoPattern$prime([keyMember(openBuffer_keys), not_cmd, not_shift, not_alt])(ki)) {
                             return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                               if (mb_handle instanceof Nothing) {
                                 return pure24(unit);
@@ -14632,7 +14584,7 @@
                               ;
                               if (mb_handle instanceof Just) {
                                 var point = getFocusPoint(mb_handle.value0);
-                                return tell4($$Proxy.value)(point)(SetBufferInput_PointQuery.create(pure113({
+                                return tell4($$Proxy.value)(point)(SetBufferInput_PointQuery.create(pure112({
                                   editor: new Editor(v1.editor.value0),
                                   point,
                                   menu: v1.editor.value0.getEditMenu(purestate),
@@ -14644,14 +14596,7 @@
                             });
                           }
                           ;
-                          if (matchKeyInfo4(function($276) {
-                            return isNonSpace(function(v10) {
-                              return v10.key;
-                            }(unwrap9($276)));
-                          })({
-                            cmd: pure113(false),
-                            alt: pure113(false)
-                          })(ki)) {
+                          if (matchKeyInfoPattern$prime([keyRegex(isNonSpace_regex), not_cmd, not_alt])(ki)) {
                             return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                               if (mb_handle instanceof Nothing) {
                                 return pure24(unit);
@@ -14659,11 +14604,11 @@
                               ;
                               if (mb_handle instanceof Just) {
                                 var point = getFocusPoint(mb_handle.value0);
-                                return tell4($$Proxy.value)(point)(SetBufferInput_PointQuery.create(pure113({
+                                return tell4($$Proxy.value)(point)(SetBufferInput_PointQuery.create(pure112({
                                   editor: new Editor(v1.editor.value0),
                                   point,
                                   menu: v1.editor.value0.getEditMenu(purestate),
-                                  query: unwrap9(ki).key
+                                  query: unwrap8(ki).key
                                 })));
                               }
                               ;
@@ -14673,8 +14618,8 @@
                           ;
                           return pure24(unit);
                         };
-                        var $211 = fromKeyInfoToCycle(ki);
-                        if ($211 instanceof Just) {
+                        var $186 = fromKeyInfoToCycle(ki);
+                        if ($186 instanceof Just) {
                           return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                             if (mb_handle instanceof Nothing) {
                               return pure24(unit);
@@ -14682,7 +14627,7 @@
                             ;
                             if (mb_handle instanceof Just) {
                               return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(none6)))(function() {
-                                return setHandle(pure113(cycleHandleFocus($211.value0)(mb_handle.value0)));
+                                return setHandle(pure112(cycleHandleFocus($186.value0)(mb_handle.value0)));
                               });
                             }
                             ;
@@ -14692,13 +14637,13 @@
                         ;
                         return v8(true);
                       };
-                      var $216 = fromKeyInfoToDragMoveDir(ki);
-                      if ($216 instanceof Just) {
+                      var $191 = fromKeyInfoToDragMoveDir(ki);
+                      if ($191 instanceof Just) {
                         return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                           if (mb_handle instanceof Nothing) {
                             return discard9(function() {
                               if (mb_dragOrigin instanceof Nothing) {
-                                return liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(pure113(v1.editor.value0.initial_handle)));
+                                return liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(pure112(v1.editor.value0.initial_handle)));
                               }
                               ;
                               if (mb_dragOrigin instanceof Just) {
@@ -14707,14 +14652,14 @@
                               ;
                               throw new Error("Failed pattern match at Ui.App1.Editor (line 147, column 11 - line 151, column 24): " + [mb_dragOrigin.constructor.name]);
                             }())(function() {
-                              return setHandle(pure113(v1.editor.value0.initial_handle));
+                              return setHandle(pure112(v1.editor.value0.initial_handle));
                             });
                           }
                           ;
                           if (mb_handle instanceof Just) {
                             return bind19(function() {
                               if (mb_dragOrigin instanceof Nothing) {
-                                return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(pure113(mb_handle.value0))))(function() {
+                                return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(pure112(mb_handle.value0))))(function() {
                                   return pure24(mb_handle.value0);
                                 });
                               }
@@ -14725,7 +14670,7 @@
                               ;
                               throw new Error("Failed pattern match at Ui.App1.Editor (line 155, column 25 - line 160, column 30): " + [mb_dragOrigin.constructor.name]);
                             }())(function(dragOrigin) {
-                              var v7 = movePointUntil2(v1.root)($216.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
+                              var v7 = movePointUntil2(v1.root)($191.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
                                 return bind22(drag3(dragOrigin)(p2)(v1.root))(guardPure3(v1.editor.value0.isValidHandle(v1.root)));
                               });
                               if (v7 instanceof Nothing) {
@@ -14733,7 +14678,7 @@
                               }
                               ;
                               if (v7 instanceof Just) {
-                                return setHandle(pure113(v7.value0));
+                                return setHandle(pure112(v7.value0));
                               }
                               ;
                               throw new Error("Failed pattern match at Ui.App1.Editor (line 161, column 11 - line 167, column 39): " + [v7.constructor.name]);
@@ -14746,17 +14691,17 @@
                       ;
                       return v6(true);
                     };
-                    var $227 = fromKeyInfoToMoveDir(ki);
-                    if ($227 instanceof Just) {
+                    var $202 = fromKeyInfoToMoveDir(ki);
+                    if ($202 instanceof Just) {
                       return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                         if (mb_handle instanceof Nothing) {
                           return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(none6)))(function() {
-                            return setHandle(pure113(v1.editor.value0.initial_handle));
+                            return setHandle(pure112(v1.editor.value0.initial_handle));
                           });
                         }
                         ;
                         if (mb_handle instanceof Just) {
-                          var v5 = movePointUntil2(v1.root)($227.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
+                          var v5 = movePointUntil2(v1.root)($202.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
                             return guardPure3(v1.editor.value0.isValidHandle(v1.root))(new Point_Handle(p2));
                           });
                           if (v5 instanceof Nothing) {
@@ -14780,10 +14725,10 @@
                     ;
                     return v4(true);
                   };
-                  var $234 = runWriter(runMaybeT(v1.editor.value0.getShortcut(ki)(purestate)));
-                  if ($234.value0 instanceof Just) {
+                  var $209 = runWriter(runMaybeT(v1.editor.value0.getShortcut(ki)(purestate)));
+                  if ($209.value0 instanceof Just) {
                     return discard9(liftEffect9(preventDefault(v.value0)))(function() {
-                      return submitEdit1($234.value0.value0);
+                      return submitEdit1($209.value0.value0);
                     });
                   }
                   ;
@@ -14799,16 +14744,16 @@
         return bind19(get5)(function(v1) {
           return bind19(liftEffect9(read(v1.ref_mb_handle)))(function(mb_handle) {
             if (mb_handle instanceof Nothing) {
-              return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(pure113(new Point_Handle(v.value0.value1)))))(function() {
-                return setHandle(pure113(new Point_Handle(v.value0.value1)));
+              return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(pure112(new Point_Handle(v.value0.value1)))))(function() {
+                return setHandle(pure112(new Point_Handle(v.value0.value1)));
               });
             }
             ;
             if (mb_handle instanceof Just) {
               return when5(v1.editor.value0.isValidHandle(v1.root)(mb_handle.value0))(function() {
                 var dragOrigin = getDragOrigin(mb_handle.value0)(v.value0.value1);
-                return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(pure113(dragOrigin))))(function() {
-                  return setHandle(pure113(dragOrigin));
+                return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(pure112(dragOrigin))))(function() {
+                  return setHandle(pure112(dragOrigin));
                 });
               }());
             }
@@ -14832,7 +14777,7 @@
               }
               ;
               if (v2 instanceof Just) {
-                return when5(v1.editor.value0.isValidHandle(v1.root)(mb_dragOrigin.value0))(setHandle(pure113(v2.value0)));
+                return when5(v1.editor.value0.isValidHandle(v1.root)(mb_dragOrigin.value0))(setHandle(pure112(v2.value0)));
               }
               ;
               throw new Error("Failed pattern match at Ui.App1.Editor (line 256, column 9 - line 260, column 34): " + [v2.constructor.name]);
@@ -14855,7 +14800,7 @@
       handleQuery: defaultEval.handleQuery,
       receive: defaultEval.receive,
       finalize: defaultEval.finalize,
-      initialize: pure113(Initialize_EditorAction.value),
+      initialize: pure112(Initialize_EditorAction.value),
       handleAction: handleAction3(dictShow)
     });
   };

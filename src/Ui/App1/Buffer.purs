@@ -36,7 +36,8 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
 import Ui.App1.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, BufferOutput(..), BufferQuery, BufferSlots, BufferState)
-import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchMapKeyInfo) as Event
+import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchKeyInfoPattern', matchMapKeyInfo) as Event
+import Ui.Event (keyMember, not_alt, not_cmd)
 import Ui.Halogen (classes)
 import Utility (fromMaybeM)
 import Web.Event.Event (preventDefault) as Event
@@ -105,7 +106,7 @@ handleAction (KeyDown_BufferAction event) = do
   let ki = event # Event.fromEventToKeyInfo
   state <- get
   case unit of
-    _ | ki # Event.matchKeyInfo (unwrap >>> _.key >>> (_ `Set.member` submitBuffer_keys)) { cmd: pure false, shift: pure false, alt: pure false } -> do
+    _ | ki # Event.matchKeyInfoPattern' [ keyMember submitBuffer_keys, not_cmd, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
       case state.option_i of
         Nothing -> pure unit

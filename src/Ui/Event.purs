@@ -4,9 +4,13 @@ import Prelude
 
 import Control.Alternative (guard)
 import Data.Array as Array
-import Data.Foldable (and)
+import Data.Foldable (all, and)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
+import Data.Set (Set)
+import Data.Set as Set
+import Data.String.Regex (Regex)
+import Data.String.Regex as Regex
 import Effect (Effect)
 import Prim.Row (class Nub, class Union)
 import Record as Record
@@ -58,17 +62,17 @@ addEventListenerWithOptions eventType options callback target = do
 key :: Event -> String
 key = lookup_unsafe "key"
 
-shiftKey :: Event -> Boolean
-shiftKey = lookup_unsafe "shiftKey"
+shiftKey_Event :: Event -> Boolean
+shiftKey_Event = lookup_unsafe "shiftKey"
 
-ctrlKey :: Event -> Boolean
-ctrlKey = lookup_unsafe "ctrlKey"
+ctrlKey_Event :: Event -> Boolean
+ctrlKey_Event = lookup_unsafe "ctrlKey"
 
-metaKey :: Event -> Boolean
-metaKey = lookup_unsafe "metaKey"
+metaKey_Event :: Event -> Boolean
+metaKey_Event = lookup_unsafe "metaKey"
 
-altKey :: Event -> Boolean
-altKey = lookup_unsafe "altKey"
+altKey_Event :: Event -> Boolean
+altKey_Event = lookup_unsafe "altKey"
 
 newtype KeyInfo = KeyInfo
   { key :: String
@@ -100,9 +104,9 @@ instance Show KeyInfo where
 fromEventToKeyInfo :: Event -> KeyInfo
 fromEventToKeyInfo e = KeyInfo
   { key: key e
-  , cmd: ctrlKey e || metaKey e
-  , alt: altKey e
-  , shift: shiftKey e
+  , cmd: ctrlKey_Event e || metaKey_Event e
+  , alt: altKey_Event e
+  , shift: shiftKey_Event e
   }
 
 mkKeyInfo
@@ -113,6 +117,41 @@ mkKeyInfo
   → Record r
   → KeyInfo
 mkKeyInfo k r = KeyInfo (Record.merge r { key: k, cmd: false, shift: false, alt: false })
+
+newtype KeyInfoPattern = KeyInfoPattern (Array KeyInfoPatternItem)
+
+data KeyInfoPatternItem
+  = KeyEq String
+  | KeyMember (Set String)
+  | KeyRegex Regex
+  | CmdEq Boolean
+  | AltEq Boolean
+  | ShiftEq Boolean
+
+keyEq = KeyEq
+keyMember = KeyMember
+keyRegex = KeyRegex
+cmd = CmdEq true
+not_cmd = CmdEq false
+alt = AltEq true
+not_alt = AltEq false
+shift = ShiftEq true
+not_shift = ShiftEq false
+
+matchKeyInfoPattern :: KeyInfoPattern -> KeyInfo -> Boolean
+matchKeyInfoPattern (KeyInfoPattern kpi) (KeyInfo ki) = and $ kpi # map case _ of
+  KeyEq key_ -> ki.key == key_
+  KeyMember keys -> Set.member ki.key keys
+  KeyRegex regex -> Regex.test regex ki.key
+  CmdEq cmd_ -> ki.cmd == cmd_
+  AltEq alt_ -> ki.alt == alt_
+  ShiftEq shift_ -> ki.shift == shift_
+
+matchKeyInfoPattern' xs = matchKeyInfoPattern (KeyInfoPattern xs)
+
+--------------------------------------------------------------------------------
+-- old stuff for matchKeyInfo and such
+--------------------------------------------------------------------------------
 
 matchKeyInfo
   ∷ ∀ (r ∷ Row Type) (r' ∷ Row Type)

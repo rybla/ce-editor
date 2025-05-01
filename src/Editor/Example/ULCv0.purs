@@ -17,7 +17,7 @@ import Data.Unfoldable (fromMaybe)
 import Editor.Common (Editor(..), assembleExpr_default)
 import Editor.Notation (keyword, literal, punctuation)
 import Halogen.HTML as HH
-import Ui.Event (matchKeyInfo)
+import Ui.Event (keyEq, matchKeyInfo, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 
 {-
@@ -54,7 +54,7 @@ editor = Editor
         [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
         ]
   , getShortcut: \ki state -> case unit of
-      _ | ki # matchKeyInfo (unwrap >>> _.key >>> (_ == "Enter")) { cmd: pure false, alt: pure false } ->
+      _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] -> do
         Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
       _ -> empty
   , isValidHandle: \root handle -> case handle of
