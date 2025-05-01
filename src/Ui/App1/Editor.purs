@@ -193,7 +193,7 @@ handleAction (KeyDown_EditorAction event) = do
       liftEffect $ event # Event.preventDefault
       submitEditAt Expr.Edit.copy
     -- delete
-    _ | ki # Event.matchKeyInfoPattern' [ keyEq "Backspace", cmd, not_shift, not_alt ] -> do
+    _ | ki # Event.matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
       submitEditAt $ Expr.Edit.delete' { isValidHandle: editor.isValidHandle }
     -- delete sibling
