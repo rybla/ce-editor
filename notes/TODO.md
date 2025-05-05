@@ -1,18 +1,21 @@
 # TODO
 
+- [ ] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
 - [ ] use different colors or something to show how something different will happen depending on what kind of insertion you're about to do or what is in your clipboard
-- [ ] when move across grouping boundaries, doesnt quite go where expected (when move from inner to outer, should go to the innermost)
+- [ ] refactor to allow for diagnostics reporting some places
+  - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
+
+- [ ] up/down movement
 - [ ] clicking on an atom
   - [ ] half and half atom should corrresponds to the point before and after
   - [ ] when drag, should get the whole atom even if you are only over part of it 
-- [ ] when delete right before a kid, the kid's kids could be spliced in place of it
+- [ ] when move across grouping boundaries, doesnt quite go where expected (when move from inner to outer, should go to the innermost)
+
+- [ ] IDEA: when delete right before a kid, the kid's kids could be spliced in place of it
   - but, this often breaks well-formedness
-- [ ] up/down movement
-- [ ] make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
-  - [ ] FIRST: use browser tools to profile how long rendering takes
-- [ ] refactor to allow for diagnostics reporting some places
-  - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
-- [ ] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
+- [ ] IDEA: make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
+  - [ ] **first**: use browser tools to profile how long rendering takes
+
 - [x] when delete zipper, should go at the left or right end of boundary span depending on focus of deleted zipper handle
 - [x] zap movement doesn't need to be invertible -- its ok that lateral movement at beginning/end of kids jumps up to parent and can't jump back down via lateral movement
 - [x] close paren should move forward
