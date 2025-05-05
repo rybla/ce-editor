@@ -1,6 +1,5 @@
 # TODO
 
-- [ ] close paren should move forward
 - [ ] when delete paren, should go inside the right of selection rather than select
 - [ ] when move across grouping boundaries, doesnt quite go where expected (when move from inner to outer, should go to the innermost)
 - [x] zap movement doesn't need to be invertible -- its ok that lateral movement at beginning/end of kids jumps up to parent and can't jump back down via lateral movement
@@ -12,13 +11,14 @@
 - [ ] when delete right before a kid, the kid's kids could be spliced in place of it
   - but, this often breaks well-formedness
 - [ ] up/down movement
-- [ ] what should happen when you delete at a zipper handle
 - [ ] unintuitive: nodes that have "fake" parens
 - [ ] make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
   - [ ] FIRST: use browser tools to profile how long rendering takes
 - [ ] refactor to allow for diagnostics reporting some places
   - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
 - [ ] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
+- [x] close paren should move forward
+  - VETO: this isn't just an s-expression editor
 - [x] tab moves forward
 - [x] shift+tab moves backward
 - [x] shift+space move backward
