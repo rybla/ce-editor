@@ -1,8 +1,22 @@
 # TODO
 
-- [ ] look into workshops and small conferences to submit to -- HCI focussed but also with PL people 
-  - [ ] HATRA doesn't count as full submission for dissertation
-
+- [ ] tab moves forward
+- [ ] shift+tab moves backward
+- [ ] shift+space move backward
+- [ ] close paren should move forward
+- [ ] when delete paren, should go inside the right of selection rather than select
+- [ ] when move across grouping boundaries, doesnt quite go where expected (when move from inner to outer, should go to the innermost)
+- [x] zap movement doesn't need to be invertible -- its ok that lateral movement at beginning/end of kids jumps up to parent and can't jump back down via lateral movement
+- [ ] clicking on an atom
+  - [ ] half and half atom should corrresponds to the point before and after
+  - [ ] when drag, should get the whole atom even if you are only over part of it 
+- [ ] unintuitive: paste a zipper at a span does not replace span, it wraps around
+  - [ ] use different colors or something to show how something different will happen depending on what kind of insertion you're about to do or what is in your clipboard
+- [ ] when delete right before a kid, the kid's kids could be spliced in place of it
+  - but, this often breaks well-formedness
+- [ ] up/down movement
+- [ ] what should happen when you delete at a zipper handle
+- [ ] unintuitive: nodes that have "fake" parens
 - [ ] make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
   - [ ] FIRST: use browser tools to profile how long rendering takes
 - [ ] refactor to allow for diagnostics reporting some places
