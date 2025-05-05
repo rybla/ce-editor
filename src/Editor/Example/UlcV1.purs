@@ -37,21 +37,23 @@ editor = Editor
   { name: "UlcV1"
   , initial_expr: "Root" % []
   , initial_handle: Point_Handle $ Point { path: mempty, j: wrap 0 }
-  , getEditMenu: \state -> case _ of
+  , getEditMenu: \state query -> case query of
       "lam" ->
-        [ "LamParams" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamParams) state
+        [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
+        , "LamParams" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamParams) state
         , "LamBody" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamBody) state
         ]
       "app" ->
-        [ "App" /\ Expr.Edit.insert (Zipper_Fragment zipper_App) state
+        [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
+        , "App" /\ Expr.Edit.insert (Zipper_Fragment zipper_App) state
         ]
       "let" ->
-        [ "LetVar" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetVar) state
+        [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
+        , "LetVar" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetVar) state
         , "LetImpl" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetImpl) state
         , "LetBody" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetBody) state
-        , "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var "let" ])) state
         ]
-      query ->
+      _ ->
         [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
         ]
   , getShortcut: \ki state -> case unit of
@@ -152,7 +154,7 @@ editor = Editor
   , toString:
       let
         f = case _ of
-          Expr { l: "Root", kids } -> kids # map f # String.joinWith "\n"
+          Expr { l: "Root", kids } -> kids # map f # String.joinWith " "
           Expr { l: "LineBreak", kids: [] } -> "\n"
           Expr { l: "Var", kids: [ Expr { l: x, kids: [] } ] } -> x
           Expr { l: "App", kids } -> "(" <> (kids # map f # String.joinWith " ") <> ")"

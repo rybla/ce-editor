@@ -1,4 +1,4 @@
-module Ui.App1.Browser where
+module Ui.Browser where
 
 import Prelude
 

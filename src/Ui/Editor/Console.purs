@@ -1,11 +1,11 @@
-module Ui.App1.Console where
+module Ui.Editor.Console where
 
 import Prelude
 
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
-import Ui.App1.Common (ConsoleAction, ConsoleInput, ConsoleOutput, ConsoleQuery, ConsoleSlots, ConsoleState, ConsoleHTML)
+import Ui.Editor.Common (ConsoleAction, ConsoleInput, ConsoleOutput, ConsoleQuery, ConsoleSlots, ConsoleState, ConsoleHTML)
 import Ui.Halogen (classes)
 
 component :: H.Component ConsoleQuery ConsoleInput ConsoleOutput Aff

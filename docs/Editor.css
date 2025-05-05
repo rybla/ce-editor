@@ -21,16 +21,11 @@
 }
 
 .Editor {
-  /* box-shadow: 0 0 0 1px black inset; */
-  /* scrollbar-width: 1em; */
+  flex: 1 1 auto;
 
-  /* flex: 1 0 auto; */
-  height: 100%;
   overflow-y: scroll;
-  /* width: 100%; */
-  width: calc(100% - 4em);
+  /* width: calc(100% - 4em); */
   padding: 2em;
-
 
   font-family: monospace;
 

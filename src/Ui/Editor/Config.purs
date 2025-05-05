@@ -1,4 +1,4 @@
-module Ui.App1.Config where
+module Ui.Editor.Config where
 
 import Prelude
 

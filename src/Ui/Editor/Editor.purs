@@ -1,9 +1,9 @@
-module Ui.App1.Editor where
+module Ui.Editor.Editor where
 
 import Prelude
 
 import Control.Monad.Maybe.Trans (runMaybeT)
-import Control.Monad.State (get, modify)
+import Control.Monad.State (get, modify, put)
 import Control.Monad.Writer (runWriter)
 import Data.Array as Array
 import Data.Expr (Edit, EditAt, Expr, Fragment(..), Handle(..), Path, Point, Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
@@ -32,10 +32,10 @@ import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
-import Ui.App1.Browser (navigator_clibpoard_writeText)
-import Ui.App1.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, toPureEditorState)
-import Ui.App1.Config as Config
-import Ui.App1.Point as Point
+import Ui.Browser (navigator_clibpoard_writeText)
+import Ui.Editor.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, toPureEditorState)
+import Ui.Editor.Config as Config
+import Ui.Editor.Point as Point
 import Ui.Event (alt, cmd, keyEq, keyMember, keyRegex, not_alt, not_cmd, not_shift, shift)
 import Ui.Event (fromEventToKeyInfo, matchKeyInfoPattern') as Event
 import Ui.Halogen (classes)
@@ -76,6 +76,7 @@ initialState _input@{ editor: Editor editor } =
 eval :: forall l a. Show l => H.HalogenQ EditorQuery (EditorAction l) (EditorInput l) a -> H.HalogenM (EditorState l) (EditorAction l) (EditorSlots l) EditorOutput Aff a
 eval = H.mkEval H.defaultEval
   { initialize = pure Initialize_EditorAction
+  , receive = pure <<< Receive_EditorAction
   , handleAction = handleAction
   }
 
@@ -86,6 +87,10 @@ handleAction Initialize_EditorAction = do
   doc <- liftEffect $ HTML.window >>= HTML.Window.document
   H.subscribe' \_subId -> HQE.eventListener MouseEventType.mouseup (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< MouseUp_EditorAction
   H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< KeyDown_EditorAction
+  handleAction Rerender_EditorAction
+
+handleAction (Receive_EditorAction input) = do
+  put $ initialState input
   handleAction Rerender_EditorAction
 
 handleAction Rerender_EditorAction = do

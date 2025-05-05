@@ -1,4 +1,4 @@
-module Ui.App1.Buffer where
+module Ui.Editor.Buffer where
 
 import Prelude
 
@@ -35,7 +35,7 @@ import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
-import Ui.App1.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, BufferOutput(..), BufferQuery, BufferSlots, BufferState)
+import Ui.Editor.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, BufferOutput(..), BufferQuery, BufferSlots, BufferState)
 import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchKeyInfoPattern', matchMapKeyInfo) as Event
 import Ui.Event (keyMember, not_alt, not_cmd)
 import Ui.Halogen (classes)

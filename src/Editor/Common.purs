@@ -28,6 +28,15 @@ data Editor l = Editor
   , toString :: Expr l -> String
   }
 
+newtype Editor_ExistsLabel = Editor_ExistsLabel (forall r. Editor_ExistsLabelK r -> r)
+type Editor_ExistsLabelK r = forall l. Show l => Editor l -> r
+
+mkEditor_ExistsLabel :: Editor_ExistsLabelK Editor_ExistsLabel
+mkEditor_ExistsLabel a = Editor_ExistsLabel \k -> k a
+
+runEditor_ExistsLabel :: forall r. Editor_ExistsLabelK r -> Editor_ExistsLabel -> r
+runEditor_ExistsLabel k1 (Editor_ExistsLabel k2) = k2 k1
+
 type AssembleExpr l =
   forall w i
    . { label :: l

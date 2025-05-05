@@ -1,4 +1,4 @@
-module Ui.App1.Common where
+module Ui.Editor.Common where
 
 import Prelude
 
@@ -13,6 +13,7 @@ import Data.Set (Set)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
 import Editor (Editor)
+import Editor.Common (Editor_ExistsLabel(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Ref (Ref)
@@ -32,9 +33,14 @@ type AppInput = {}
 
 type AppOutput = Void
 
-type AppState = {}
+type AppState =
+  { mb_editor :: Maybe Editor_ExistsLabel
+  }
 
-data AppAction = Initialize_AppAction
+data AppAction
+  = Initialize_AppAction
+  | SetEditor_AppAction Editor_ExistsLabel
+  | Pass_AppAction
 
 type AppSlots =
   ( "Editor" :: H.Slot EditorQuery EditorOutput Unit
@@ -85,6 +91,7 @@ type Snapshot l =
 
 data EditorAction l
   = Initialize_EditorAction
+  | Receive_EditorAction (EditorInput l)
   | PointOutput_EditorAction (PointOutput l)
   | MouseUp_EditorAction Event
   | KeyDown_EditorAction Event

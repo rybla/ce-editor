@@ -1,10 +1,10 @@
 module Data.Expr.Edit where
 
-import Data.Expr
 import Prelude
 
 import Control.Monad.Writer (tell)
 import Control.Plus (empty)
+import Data.Expr (EditAt, EditInfo(..), Edit_(..), Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), ZipperH(..), atPoint, atSpan, atZipper, fromNePath, getEndPoints_SpanH, getPath_Zipper, getStepsAroundIndex, getTotalInnerPath_ZipperH, offset_Span, offset_innerLeft_Zipper, offset_outer_Zipper, unSpanContext, unZipper)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Move as Expr.Move
 import Data.Lazy as Lazy

@@ -1,4 +1,4 @@
-module Ui.App1.Point where
+module Ui.Editor.Point where
 
 import Prelude
 
@@ -17,8 +17,8 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Type.Proxy (Proxy(..))
-import Ui.App1.Buffer as Buffer
-import Ui.App1.Common (PointAction(..), PointHTML, PointInput, PointM, PointOutput(..), PointQuery(..), PointSlots, PointState, PointStatus(..))
+import Ui.Editor.Buffer as Buffer
+import Ui.Editor.Common (PointAction(..), PointHTML, PointInput, PointM, PointOutput(..), PointQuery(..), PointSlots, PointState, PointStatus(..))
 import Ui.Element as Element
 import Ui.Halogen (classes)
 import Utility (prop)
