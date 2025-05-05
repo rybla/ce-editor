@@ -29,7 +29,6 @@ import Effect.Unsafe (unsafePerformEffect)
 import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
 import Ui.Browser (navigator_clibpoard_writeText)
@@ -498,16 +497,14 @@ ss_ZipperH_Handle_OuterRight_Focus = Set.fromFoldable [ ZipperH_Handle_OuterRigh
 
 render :: forall l. Show l => EditorState l -> EditorHTML l
 render state =
-  HHK.div [ classes [ "Editor" ] ]
-    [ "root" /\
-        HHK.div [ classes [ "root" ] ]
-          [ "0" /\
-              HH.div [ classes [ "Expr" ] ]
-                ( state.root
-                    # renderExpr state Nil
-                    # runRenderM
-                )
-          ]
+  HH.div [ classes [ "Editor" ] ]
+    [ HH.div [ classes [ "root" ] ]
+        [ HH.div [ classes [ "Expr" ] ]
+            ( state.root
+                # renderExpr state Nil
+                # runRenderM
+            )
+        ]
     ]
 
 renderExpr :: forall l. Show l => EditorState l -> Path -> Expr l -> RenderM (Array (EditorHTML l))
