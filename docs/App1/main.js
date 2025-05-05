@@ -11469,7 +11469,7 @@
                     return;
                   }
                   ;
-                  throw new Error("Failed pattern match at Data.Expr.Move (line 49, column 16 - line 51, column 23): " + [v1.constructor.name]);
+                  throw new Error("Failed pattern match at Data.Expr.Move (line 62, column 16 - line 64, column 23): " + [v1.constructor.name]);
                 }
                 ;
                 if (v2 instanceof Just) {
@@ -11477,7 +11477,7 @@
                   return pure11(v2.value0);
                 }
                 ;
-                throw new Error("Failed pattern match at Data.Expr.Move (line 48, column 10 - line 52, column 21): " + [v2.constructor.name]);
+                throw new Error("Failed pattern match at Data.Expr.Move (line 61, column 10 - line 65, column 21): " + [v2.constructor.name]);
               }
               ;
               while (!$tco_done) {
@@ -11495,21 +11495,13 @@
               return go2(v.value0);
             }
             ;
-            throw new Error("Failed pattern match at Data.Expr.Move (line 44, column 28 - line 46, column 17): " + [v.constructor.name]);
+            throw new Error("Failed pattern match at Data.Expr.Move (line 57, column 28 - line 59, column 17): " + [v.constructor.name]);
           };
         };
       };
     };
   };
   var fromKeyInfoToMoveDir = function(v) {
-    if (v.key === "ArrowLeft" && (!v.shift && (!v.alt && !v.cmd))) {
-      return new Just(L.value);
-    }
-    ;
-    if (v.key === "ArrowLeft" && (!v.shift && (v.alt && !v.cmd))) {
-      return new Just(L_sibling.value);
-    }
-    ;
     if (v.key === "ArrowRight" && (!v.shift && (!v.alt && !v.cmd))) {
       return new Just(R.value);
     }
@@ -11518,12 +11510,44 @@
       return new Just(R_sibling.value);
     }
     ;
+    if (v.key === "ArrowLeft" && (!v.shift && (!v.alt && !v.cmd))) {
+      return new Just(L.value);
+    }
+    ;
+    if (v.key === "ArrowLeft" && (!v.shift && (v.alt && !v.cmd))) {
+      return new Just(L_sibling.value);
+    }
+    ;
     if (v.key === " " && (!v.shift && (!v.alt && !v.cmd))) {
       return new Just(R.value);
     }
     ;
     if (v.key === " " && (!v.shift && (v.alt && !v.cmd))) {
       return new Just(R_sibling.value);
+    }
+    ;
+    if (v.key === " " && (v.shift && (!v.alt && !v.cmd))) {
+      return new Just(L.value);
+    }
+    ;
+    if (v.key === " " && (v.shift && (v.alt && !v.cmd))) {
+      return new Just(L_sibling.value);
+    }
+    ;
+    if (v.key === "Tab" && (!v.shift && (!v.alt && !v.cmd))) {
+      return new Just(R.value);
+    }
+    ;
+    if (v.key === "Tab" && (!v.shift && (v.alt && !v.cmd))) {
+      return new Just(R_sibling.value);
+    }
+    ;
+    if (v.key === "Tab" && (v.shift && (!v.alt && !v.cmd))) {
+      return new Just(L.value);
+    }
+    ;
+    if (v.key === "Tab" && (v.shift && (v.alt && !v.cmd))) {
+      return new Just(L_sibling.value);
     }
     ;
     return Nothing.value;
@@ -11591,7 +11615,7 @@
       return pure11(new SpanH_Handle(getOuterSpanH_ZipperH(v.value0), Left_SpanFocus.value));
     }
     ;
-    throw new Error("Failed pattern match at Data.Expr.Move (line 108, column 1 - line 108, column 33): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Data.Expr.Move (line 121, column 1 - line 121, column 33): " + [v.constructor.name]);
   };
   var cycleZipperFocus = function(v) {
     return function(v1) {
@@ -11627,7 +11651,7 @@
         return OuterLeft_ZipperFocus.value;
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr.Move (line 98, column 1 - line 98, column 56): " + [v.constructor.name, v1.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr.Move (line 111, column 1 - line 111, column 56): " + [v.constructor.name, v1.constructor.name]);
     };
   };
   var cycleSpanFocus = function(v) {
@@ -11640,7 +11664,7 @@
         return Left_SpanFocus.value;
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr.Move (line 94, column 1 - line 94, column 50): " + [v.constructor.name, v1.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr.Move (line 107, column 1 - line 107, column 50): " + [v.constructor.name, v1.constructor.name]);
     };
   };
   var cycleHandleFocus = function(v) {
@@ -11657,7 +11681,7 @@
         return new ZipperH_Handle(v1.value0, cycleZipperFocus(v)(v1.value1));
       }
       ;
-      throw new Error("Failed pattern match at Data.Expr.Move (line 89, column 1 - line 89, column 46): " + [v.constructor.name, v1.constructor.name]);
+      throw new Error("Failed pattern match at Data.Expr.Move (line 102, column 1 - line 102, column 46): " + [v.constructor.name, v1.constructor.name]);
     };
   };
 

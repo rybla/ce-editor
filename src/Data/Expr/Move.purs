@@ -23,12 +23,25 @@ instance Eq Dir where
   eq x = genericEq x
 
 fromKeyInfoToMoveDir :: KeyInfo -> Maybe Dir
-fromKeyInfoToMoveDir (KeyInfo { key: "ArrowLeft", shift: false, alt: false, cmd: false }) = Just L
-fromKeyInfoToMoveDir (KeyInfo { key: "ArrowLeft", shift: false, alt: true, cmd: false }) = Just L_sibling
+-- ArrowRight
 fromKeyInfoToMoveDir (KeyInfo { key: "ArrowRight", shift: false, alt: false, cmd: false }) = Just R
 fromKeyInfoToMoveDir (KeyInfo { key: "ArrowRight", shift: false, alt: true, cmd: false }) = Just R_sibling
+-- ArrowLeft
+fromKeyInfoToMoveDir (KeyInfo { key: "ArrowLeft", shift: false, alt: false, cmd: false }) = Just L
+fromKeyInfoToMoveDir (KeyInfo { key: "ArrowLeft", shift: false, alt: true, cmd: false }) = Just L_sibling
+-- Space
 fromKeyInfoToMoveDir (KeyInfo { key: " ", shift: false, alt: false, cmd: false }) = Just R
 fromKeyInfoToMoveDir (KeyInfo { key: " ", shift: false, alt: true, cmd: false }) = Just R_sibling
+-- Shift+Space
+fromKeyInfoToMoveDir (KeyInfo { key: " ", shift: true, alt: false, cmd: false }) = Just L
+fromKeyInfoToMoveDir (KeyInfo { key: " ", shift: true, alt: true, cmd: false }) = Just L_sibling
+-- Tab
+fromKeyInfoToMoveDir (KeyInfo { key: "Tab", shift: false, alt: false, cmd: false }) = Just R
+fromKeyInfoToMoveDir (KeyInfo { key: "Tab", shift: false, alt: true, cmd: false }) = Just R_sibling
+-- Shift+Tab
+fromKeyInfoToMoveDir (KeyInfo { key: "Tab", shift: true, alt: false, cmd: false }) = Just L
+fromKeyInfoToMoveDir (KeyInfo { key: "Tab", shift: true, alt: true, cmd: false }) = Just L_sibling
+-- 
 fromKeyInfoToMoveDir _ = Nothing
 
 fromKeyInfoToDragMoveDir :: KeyInfo -> Maybe Dir

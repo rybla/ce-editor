@@ -1,8 +1,5 @@
 # TODO
 
-- [ ] tab moves forward
-- [ ] shift+tab moves backward
-- [ ] shift+space move backward
 - [ ] close paren should move forward
 - [ ] when delete paren, should go inside the right of selection rather than select
 - [ ] when move across grouping boundaries, doesnt quite go where expected (when move from inner to outer, should go to the innermost)
@@ -22,6 +19,9 @@
 - [ ] refactor to allow for diagnostics reporting some places
   - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
 - [ ] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
+- [x] tab moves forward
+- [x] shift+tab moves backward
+- [x] shift+space move backward
 - [x] need to make re-rendering more efficient, since right now it grows asymptotically too fast. perhaps using nested and keyed elements will help with the Halogen diffing?
   - VETO: nesting is bad
 - [x] use `alt+<arrow>` to move across siblings
