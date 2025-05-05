@@ -10,8 +10,7 @@
     "start": "bun run build && bun run serve"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "purescript-language-server": "^0.18.4"
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
