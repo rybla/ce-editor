@@ -9,7 +9,7 @@ import Data.Array as Array
 import Data.Expr.Edit as Expr.Edit
 import Data.Foldable (and, fold)
 import Data.List (List(..), (:))
-import Data.Newtype (unwrap, wrap)
+import Data.Newtype (wrap)
 import Data.Set as Set
 import Data.String as String
 import Data.Traversable (sequence)
@@ -18,7 +18,7 @@ import Data.Unfoldable (fromMaybe)
 import Editor.Common (Editor(..), assembleExpr_default)
 import Editor.Notation (keyword, literal, punctuation)
 import Halogen.HTML as HH
-import Ui.Event (keyEq, matchKeyInfo, matchKeyInfoPattern', not_alt, not_cmd)
+import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 
 {-
@@ -35,8 +35,8 @@ type L = String
 editor :: Editor L
 editor = Editor
   { name: "UlcV1"
-  , initial_expr: "Root" % []
-  , initial_handle: Point_Handle $ Point { path: mempty, j: wrap 0 }
+  , initialExpr: "Root" % []
+  , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu: \state query -> case query of
       "lam" ->
         [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
@@ -151,7 +151,7 @@ editor = Editor
           pure $ fold [ literal str ]
         -- 
         _ -> assembleExpr_default args
-  , toString:
+  , printExpr:
       let
         f = case _ of
           Expr { l: "Root", kids } -> kids # map f # String.joinWith " "

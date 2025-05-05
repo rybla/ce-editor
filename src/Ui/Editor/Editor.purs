@@ -58,7 +58,7 @@ component = H.mkComponent { initialState, eval, render }
 initialState :: forall l. EditorInput l -> EditorState l
 initialState _input@{ editor: Editor editor } =
   { editor: Editor editor
-  , root: editor.initial_expr
+  , root: editor.initialExpr
   , initial_mb_handle
   , ref_mb_handle: unsafePerformEffect do Ref.new initial_mb_handle
   , ref_mb_dragOrigin: unsafePerformEffect do Ref.new none
@@ -133,7 +133,7 @@ handleAction (KeyDown_EditorAction event) = do
       case mb_handle of
         Nothing -> do
           liftEffect $ state.ref_mb_dragOrigin := none
-          setHandle $ pure editor.initial_handle
+          setHandle $ pure editor.initialHandle
         Just handle -> do
           case
             Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p ->
@@ -153,10 +153,10 @@ handleAction (KeyDown_EditorAction event) = do
           -- initialize dragOrigin
           case mb_dragOrigin of
             Nothing -> do
-              liftEffect $ state.ref_mb_dragOrigin := pure editor.initial_handle
+              liftEffect $ state.ref_mb_dragOrigin := pure editor.initialHandle
             Just _ -> do
               pure unit
-          setHandle $ pure editor.initial_handle
+          setHandle $ pure editor.initialHandle
         Just handle -> do
           -- initialize dragOrigin
           dragOrigin <- case mb_dragOrigin of
@@ -202,7 +202,7 @@ handleAction (KeyDown_EditorAction event) = do
       case state'.clipboard of
         Just (Span_Fragment (Span es)) -> do
           let Editor editor = state'.editor
-          liftEffect $ navigator_clibpoard_writeText $ String.joinWith "\n" $ map editor.toString es
+          liftEffect $ navigator_clibpoard_writeText $ String.joinWith "\n" $ map editor.printExpr es
         _ -> pure unit
     -- delete
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, not_alt ] -> do

@@ -29,8 +29,8 @@ type L = String
 editor :: Editor L
 editor = Editor
   { name: "Lisp"
-  , initial_expr: "Root" % []
-  , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
+  , initialExpr: "Root" % []
+  , initialHandle: Point_Handle (Point { path: mempty, j: wrap 0 })
   , getEditMenu: \state query -> fold
       [ case query of
           "" -> []
@@ -127,7 +127,7 @@ editor = Editor
                   , [ args.points # Array.last # fromMaybe do renderWarning $ "missing point #" <> show @Int (length args.points) ]
                   ]
           { label } -> Left [ Notation.Punc do pure [ HH.div [ classes [ "Token", "punctuation", "keyword" ] ] [ HH.text label ] ] ]
-  , toString: const "unimplemented"
+  , printExpr: const "unimplemented"
   }
 
 isValidPoint :: Expr L -> Point -> Boolean

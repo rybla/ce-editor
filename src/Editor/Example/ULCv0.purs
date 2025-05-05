@@ -34,8 +34,8 @@ type L = String
 editor :: Editor L
 editor = Editor
   { name: "UlcV0"
-  , initial_expr: "Root" % []
-  , initial_handle: Point_Handle $ Point { path: mempty, j: wrap 0 }
+  , initialExpr: "Root" % []
+  , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu: \state -> case _ of
       "lam" ->
         [ "LamParams" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamParams) state
@@ -114,7 +114,7 @@ editor = Editor
         -- str /\ [ _p0 ] /\ [] -> pure $ fold [ literal str ]
         -- 
         _ -> assembleExpr_default args
-  , toString: const "unimplemented"
+  , printExpr: const "unimplemented"
   }
 
 beforeHolePoint = [ HH.div [ classes [ "Token", "beforeHolePoint" ] ] [ HH.text "" ] ]

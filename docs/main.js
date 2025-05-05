@@ -12854,8 +12854,8 @@
   var editor = /* @__PURE__ */ function() {
     return new Editor({
       name: "UlcV0",
-      initial_expr: mkExpr("Root")([]),
-      initial_handle: new Point_Handle({
+      initialExpr: mkExpr("Root")([]),
+      initialHandle: new Point_Handle({
         path: mempty(monoidList),
         j: wrap()(0)
       }),
@@ -12912,7 +12912,7 @@
           });
         });
       },
-      toString: $$const("unimplemented")
+      printExpr: $$const("unimplemented")
     });
   }();
 
@@ -13036,8 +13036,8 @@
   var editor2 = /* @__PURE__ */ function() {
     return new Editor({
       name: "UlcV1",
-      initial_expr: mkExpr("Root")([]),
-      initial_handle: new Point_Handle({
+      initialExpr: mkExpr("Root")([]),
+      initialHandle: new Point_Handle({
         path: mempty(monoidList),
         j: wrap()(0)
       }),
@@ -13254,7 +13254,7 @@
           return assembleExpr_default3(args);
         });
       },
-      toString: /* @__PURE__ */ function() {
+      printExpr: /* @__PURE__ */ function() {
         var f = function(v) {
           if (v.l === "Root") {
             return joinWith(" ")(map29(f)(v.kids));
@@ -14861,7 +14861,7 @@
     var initial_mb_handle1 = none(unfoldableMaybe);
     return {
       editor: new Editor(v.editor.value0),
-      root: v.editor.value0.initial_expr,
+      root: v.editor.value0.initialExpr,
       initial_mb_handle: initial_mb_handle1,
       ref_mb_handle: unsafePerformEffect($$new(initial_mb_handle1)),
       ref_mb_dragOrigin: unsafePerformEffect($$new(none6)),
@@ -15134,7 +15134,7 @@
                               return discard9(submitEditAt1(copy3))(function() {
                                 return bind20(get5)(function(state$prime) {
                                   if (state$prime.clipboard instanceof Just && state$prime.clipboard.value0 instanceof Span_Fragment) {
-                                    return liftEffect9(navigator_clibpoard_writeText(joinWith("\n")(map113(state$prime.editor.value0.toString)(state$prime.clipboard.value0.value0))));
+                                    return liftEffect9(navigator_clibpoard_writeText(joinWith("\n")(map113(state$prime.editor.value0.printExpr)(state$prime.clipboard.value0.value0))));
                                   }
                                   ;
                                   return pure24(unit);
@@ -15250,7 +15250,7 @@
                           if (mb_handle instanceof Nothing) {
                             return discard9(function() {
                               if (mb_dragOrigin instanceof Nothing) {
-                                return liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(pure112(v1.editor.value0.initial_handle)));
+                                return liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(pure112(v1.editor.value0.initialHandle)));
                               }
                               ;
                               if (mb_dragOrigin instanceof Just) {
@@ -15259,7 +15259,7 @@
                               ;
                               throw new Error("Failed pattern match at Ui.Editor.Editor (line 154, column 11 - line 158, column 24): " + [mb_dragOrigin.constructor.name]);
                             }())(function() {
-                              return setHandle(pure112(v1.editor.value0.initial_handle));
+                              return setHandle(pure112(v1.editor.value0.initialHandle));
                             });
                           }
                           ;
@@ -15303,7 +15303,7 @@
                       return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                         if (mb_handle instanceof Nothing) {
                           return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(none6)))(function() {
-                            return setHandle(pure112(v1.editor.value0.initial_handle));
+                            return setHandle(pure112(v1.editor.value0.initialHandle));
                           });
                         }
                         ;
@@ -15472,7 +15472,7 @@
           return pure113(unit);
         }
         ;
-        throw new Error("Failed pattern match at Ui.App (line 40, column 20 - line 43, column 34): " + [v1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.App (line 39, column 20 - line 42, column 34): " + [v1.constructor.name]);
       }
     });
   }();

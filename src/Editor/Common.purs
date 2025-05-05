@@ -19,13 +19,13 @@ import Ui.Halogen (classes)
 
 data Editor l = Editor
   { name :: String
-  , initial_expr :: Expr l
-  , initial_handle :: Handle
+  , initialExpr :: Expr l
+  , initialHandle :: Handle
   , getEditMenu :: PureEditorState l -> EditMenu l
   , getShortcut :: KeyInfo -> PureEditorState l -> MaybeT M (Edit l)
   , isValidHandle :: Expr l -> Handle -> Boolean
   , assembleExpr :: AssembleExpr l
-  , toString :: Expr l -> String
+  , printExpr :: Expr l -> String
   }
 
 newtype Editor_ExistsLabel = Editor_ExistsLabel (forall r. Editor_ExistsLabelK r -> r)

@@ -29,8 +29,8 @@ module Editor.Example.LispPlus where
 -- editor :: Editor L
 -- editor = Editor
 --   { name: "Lisp"
---   , initial_expr: "Root" % []
---   , initial_handle: Point_Handle (Point { path: mempty, j: wrap 0 })
+--   , initialExpr: "Root" % []
+--   , initialHandle: Point_Handle (Point { path: mempty, j: wrap 0 })
 --   , getEditMenu: \state query -> fold
 --       [ case query of
 --           "" -> []
