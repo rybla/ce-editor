@@ -12012,29 +12012,54 @@
                   });
                 }
                 ;
-                return new SpanH_Handle({
+                if (false) {
+                  return new SpanH_Handle({
+                    path: v.mb_handle.value0.value0.path_O,
+                    j_L: v.mb_handle.value0.value0.j_OL,
+                    j_R: add3(v.mb_handle.value0.value0.j_OL)(offset_Span(at_zh.inside))
+                  }, function() {
+                    if (v.mb_handle.value0.value1 instanceof OuterLeft_ZipperFocus) {
+                      return Left_SpanFocus.value;
+                    }
+                    ;
+                    if (v.mb_handle.value0.value1 instanceof InnerLeft_ZipperFocus) {
+                      return Left_SpanFocus.value;
+                    }
+                    ;
+                    if (v.mb_handle.value0.value1 instanceof InnerRight_ZipperFocus) {
+                      return Right_SpanFocus.value;
+                    }
+                    ;
+                    if (v.mb_handle.value0.value1 instanceof OuterRight_ZipperFocus) {
+                      return Right_SpanFocus.value;
+                    }
+                    ;
+                    throw new Error("Failed pattern match at Data.Expr.Edit (line 286, column 21 - line 290, column 64): " + [v.mb_handle.value0.value1.constructor.name]);
+                  }());
+                }
+                ;
+                return new Point_Handle({
                   path: v.mb_handle.value0.value0.path_O,
-                  j_L: v.mb_handle.value0.value0.j_OL,
-                  j_R: add3(v.mb_handle.value0.value0.j_OL)(offset_Span(at_zh.inside))
-                }, function() {
-                  if (v.mb_handle.value0.value1 instanceof OuterLeft_ZipperFocus) {
-                    return Left_SpanFocus.value;
-                  }
-                  ;
-                  if (v.mb_handle.value0.value1 instanceof InnerLeft_ZipperFocus) {
-                    return Left_SpanFocus.value;
-                  }
-                  ;
-                  if (v.mb_handle.value0.value1 instanceof InnerRight_ZipperFocus) {
-                    return Right_SpanFocus.value;
-                  }
-                  ;
-                  if (v.mb_handle.value0.value1 instanceof OuterRight_ZipperFocus) {
-                    return Right_SpanFocus.value;
-                  }
-                  ;
-                  throw new Error("Failed pattern match at Data.Expr.Edit (line 286, column 21 - line 290, column 64): " + [v.mb_handle.value0.value1.constructor.name]);
-                }());
+                  j: function() {
+                    if (v.mb_handle.value0.value1 instanceof OuterLeft_ZipperFocus) {
+                      return v.mb_handle.value0.value0.j_OL;
+                    }
+                    ;
+                    if (v.mb_handle.value0.value1 instanceof InnerLeft_ZipperFocus) {
+                      return v.mb_handle.value0.value0.j_OL;
+                    }
+                    ;
+                    if (v.mb_handle.value0.value1 instanceof InnerRight_ZipperFocus) {
+                      return add3(v.mb_handle.value0.value0.j_OL)(offset_Span(at_zh.inside));
+                    }
+                    ;
+                    if (v.mb_handle.value0.value1 instanceof OuterRight_ZipperFocus) {
+                      return add3(v.mb_handle.value0.value0.j_OL)(offset_Span(at_zh.inside));
+                    }
+                    ;
+                    throw new Error("Failed pattern match at Data.Expr.Edit (line 296, column 28 - line 300, column 91): " + [v.mb_handle.value0.value1.constructor.name]);
+                  }()
+                });
               }()),
               clipboard: pure16(new Zipper_Fragment(at_zh.here))
             });

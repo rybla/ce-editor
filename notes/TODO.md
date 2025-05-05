@@ -1,7 +1,6 @@
 # TODO
 
 - [ ] use different colors or something to show how something different will happen depending on what kind of insertion you're about to do or what is in your clipboard
-- [ ] when delete paren, should go inside the right of selection rather than select
 - [ ] when move across grouping boundaries, doesnt quite go where expected (when move from inner to outer, should go to the innermost)
 - [ ] clicking on an atom
   - [ ] half and half atom should corrresponds to the point before and after
@@ -14,6 +13,7 @@
 - [ ] refactor to allow for diagnostics reporting some places
   - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
 - [ ] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
+- [x] when delete zipper, should go at the left or right end of boundary span depending on focus of deleted zipper handle
 - [x] zap movement doesn't need to be invertible -- its ok that lateral movement at beginning/end of kids jumps up to parent and can't jump back down via lateral movement
 - [x] close paren should move forward
   - VETO: this isn't just an s-expression editor

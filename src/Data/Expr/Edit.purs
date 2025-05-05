@@ -275,7 +275,7 @@ cut { root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) zf) } =
                       , j: zh.j_OL
                       }
                   )
-              else
+              else if false then
                 SpanH_Handle
                   ( SpanH
                       { path: zh.path_O
@@ -288,6 +288,17 @@ cut { root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) zf) } =
                       InnerLeft_ZipperFocus -> Left_SpanFocus
                       InnerRight_ZipperFocus -> Right_SpanFocus
                       OuterRight_ZipperFocus -> Right_SpanFocus
+                  )
+              else
+                Point_Handle
+                  ( Point
+                      { path: zh.path_O
+                      , j: case zf of
+                          OuterLeft_ZipperFocus -> zh.j_OL
+                          InnerLeft_ZipperFocus -> zh.j_OL
+                          InnerRight_ZipperFocus -> zh.j_OL + (at_zh.inside # offset_Span)
+                          OuterRight_ZipperFocus -> zh.j_OL + (at_zh.inside # offset_Span)
+                      }
                   )
           , clipboard: pure $ Zipper_Fragment at_zh.here
           }
