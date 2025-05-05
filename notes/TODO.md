@@ -14,6 +14,7 @@
   - but, this often breaks well-formedness
 - [ ] IDEA: make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
   - [ ] **first**: use browser tools to profile how long rendering takes
+  - also, i dont know if this even works exactly
 
 - [x] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
 - [x] when delete zipper, should go at the left or right end of boundary span depending on focus of deleted zipper handle
