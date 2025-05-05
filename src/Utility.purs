@@ -20,7 +20,6 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe')
 import Data.Profunctor.Strong (class Strong)
 import Data.String as String
-import Data.String.Regex (Regex)
 import Data.String.Regex as Regex
 import Data.Symbol (class IsSymbol)
 import Data.Traversable (traverse_)
@@ -33,7 +32,6 @@ import Partial.Unsafe (unsafeCrashWith)
 import Prim.Row (class Cons)
 import Prim.TypeError (class Warn, Text)
 import Type.Prelude (Proxy(..))
-import Type.Proxy (Proxy)
 import Type.Row.Homogeneous (class Homogeneous)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -58,6 +56,7 @@ replaceFormatVars sigma = go (Map.toUnfoldable sigma)
 replaceFormatVars' ∷ forall r. Homogeneous r String ⇒ Record r → String → String
 replaceFormatVars' sigma = replaceFormatVars (fromHomogeneousToMap sigma)
 
+format :: forall r. Homogeneous r String => Record r -> String -> String
 format = replaceFormatVars'
 
 fromHomogeneousToMap :: forall r a. Homogeneous r a => Record r -> Map String a
@@ -168,4 +167,3 @@ prop = Lens.Record.prop (Proxy @l)
 guardPure :: forall m a. Alternative m => (a -> Boolean) -> a -> m a
 guardPure f a | f a = pure a
 guardPure _ _ = empty
-
