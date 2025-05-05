@@ -1,6 +1,5 @@
 # TODO
 
-- [ ] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
 - [ ] use different colors or something to show how something different will happen depending on what kind of insertion you're about to do or what is in your clipboard
 - [ ] refactor to allow for diagnostics reporting some places
   - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
@@ -16,6 +15,7 @@
 - [ ] IDEA: make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
   - [ ] **first**: use browser tools to profile how long rendering takes
 
+- [x] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
 - [x] when delete zipper, should go at the left or right end of boundary span depending on focus of deleted zipper handle
 - [x] zap movement doesn't need to be invertible -- its ok that lateral movement at beginning/end of kids jumps up to parent and can't jump back down via lateral movement
 - [x] close paren should move forward
