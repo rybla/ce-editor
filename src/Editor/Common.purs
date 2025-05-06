@@ -17,8 +17,7 @@ import Ui.Halogen (classes)
 
 --------------------------------------------------------------------------------
 
-newtype Label c r = Label (Record (LabelRow c r))
-type LabelRow c r = (con :: c | r) :: Row Type
+newtype Label c r = Label (Record (Base_LabelRow c r))
 
 instance Show c => Show (Label c r) where
   show (Label l) = show l.con
@@ -34,7 +33,15 @@ getCon (Label { con }) = con
 
 --------------------------------------------------------------------------------
 
-type IdRow r = (id :: String | r)
+type Base_LabelRow (c :: Type) r =
+  ( con :: c
+  | r
+  )
+
+type Frontend_LabelRow c r = Base_LabelRow c
+  ( id :: String
+  | r
+  )
 
 --------------------------------------------------------------------------------
 
