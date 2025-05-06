@@ -5,7 +5,7 @@ import Prelude
 import Control.Monad.Maybe.Trans (runMaybeT)
 import Control.Monad.Writer (runWriter)
 import Data.Array as Array
-import Data.Expr (EditAt, Expr, ExprContext(..), Fragment(..), Handle(..), Index(..), NePath, Path, Point(..), PureEditorState, SpanContext(..), SpanFocus(..), SpanH(..), SpanTooth(..), Step(..), Zipper(..), ZipperFocus(..), ZipperH(..), applyEdit, areOrderedSiblings_Point, getEndPoints_SpanH, toNePath, (%))
+import Data.Expr (EditAt, Expr, ExprContext(..), Fragment(..), Handle(..), Index(..), NePath, Path, Point(..), BasicEditorState, SpanContext(..), SpanFocus(..), SpanH(..), SpanTooth(..), Step(..), Zipper(..), ZipperFocus(..), ZipperH(..), applyEdit, areOrderedSiblings_Point, getEndPoints_SpanH, toNePath, (%))
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
@@ -167,9 +167,9 @@ spec = pure unit
 --   where
 --   mkTest_EditAt
 --     :: String
---     -> PureEditorState L
+--     -> BasicEditorState L
 --     -> EditAt L
---     -> PureEditorState L
+--     -> BasicEditorState L
 --     -> Spec Unit
 --   mkTest_EditAt label state editAt state'_expected =
 --     Spec.it label case editAt state # runMaybeT # runWriter of

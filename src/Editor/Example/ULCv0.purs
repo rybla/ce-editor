@@ -6,6 +6,7 @@ import Control.Plus (empty)
 import Data.Array as Array
 import Data.Expr (Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), Step(..), atPoint, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth)
 import Data.Expr.Edit as Expr.Edit
+import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (and, fold)
 import Data.List (List(..), (:))
 import Data.Newtype (wrap)
@@ -79,13 +80,16 @@ editor = Editor
       ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
         where
         p = getEndPoints_ZipperH zh
-  , assembleExpr: assembleExpr_default
-  , assembleAnnotatedExpr: assembleExpr_default
+  , assembleExpr: assembleExpr
+  , assembleStampedExpr: assembleExpr
   , printExpr: const "unimplemented"
-  , annotateLabel: \(Label l) -> do
+  , stampLabel: \(Label l) -> do
       id <- freshId # liftEffect
       pure $ Label $ l `Record.merge` { id }
   }
+
+assembleExpr :: forall r. AssembleExpr (Label C r)
+assembleExpr = assembleExpr_default
 
 beforeHolePoint = [ HH.div [ classes [ "Token", "beforeHolePoint" ] ] [ HH.text "" ] ]
 afterHolePoint = [ HH.div [ classes [ "Token", "afterHolePoint" ] ] [ HH.text "" ] ]

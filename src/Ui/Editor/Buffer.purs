@@ -17,7 +17,7 @@ import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..), Label, AnnotatedLabel)
+import Editor (Editor(..), Label, StampedLabel)
 import Effect.Aff (Aff)
 import Effect.Exception (throw)
 import Halogen (liftEffect)
@@ -213,15 +213,15 @@ renderBaseArgs (Editor editor) =
   renderPoint :: Editor c -> Point -> HTML w i
   renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]
 
-renderAnnotatedArgs :: forall c w i. Show c => Editor c -> RenderArgs (AnnotatedLabel c ()) w i
-renderAnnotatedArgs (Editor editor) =
+renderStampedArgs :: forall c w i. Show c => Editor c -> RenderArgs (StampedLabel c ()) w i
+renderStampedArgs (Editor editor) =
   { renderKid: renderExpr (Editor editor)
   , renderPoint: renderPoint (Editor editor)
-  , assembleExpr: editor.assembleAnnotatedExpr
+  , assembleExpr: editor.assembleStampedExpr
   }
   where
-  renderExpr :: Editor c -> Path -> Expr (AnnotatedLabel c ()) -> RenderM (Array (HTML w i))
-  renderExpr editor' path expr = Expr.Render.renderExpr (renderAnnotatedArgs editor') path expr
+  renderExpr :: Editor c -> Path -> Expr (StampedLabel c ()) -> RenderM (Array (HTML w i))
+  renderExpr editor' path expr = Expr.Render.renderExpr (renderStampedArgs editor') path expr
 
   renderPoint :: Editor c -> Point -> HTML w i
   renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]

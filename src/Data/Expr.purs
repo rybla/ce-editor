@@ -736,11 +736,11 @@ type EditM m l1 l2 = ReaderT (EditCtx m l1 l2) (MaybeT (Diagnostic.MT m))
 
 type EditCtx :: (Type -> Type) -> Type -> Type -> Type
 type EditCtx m l1 l2 =
-  { annotateLabel :: l1 -> m l2
+  { stampLabel :: l1 -> m l2
   }
 
 -- TODO: is this layer necessary? I used to merge with existing clipboard but that's already accounted for when the Edit is constructed, so no need to do it here
-applyEdit :: forall m l1 l2. Monad m => Show l1 => Edit m l1 l2 -> PureEditorState l2 -> EditM m l1 l2 (PureEditorState l2)
+applyEdit :: forall m l1 l2. Monad m => Show l1 => Edit m l1 l2 -> BasicEditorState l2 -> EditM m l1 l2 (BasicEditorState l2)
 applyEdit (Edit edit) _state = do
   state' <- edit.output # Lazy.force
   pure
@@ -751,8 +751,8 @@ applyEdit (Edit edit) _state = do
 
 freshTraversable :: forall m t l1 l2. Monad m => Traversable t => t l1 -> EditM m l1 l2 (t l2)
 freshTraversable t = do
-  { annotateLabel } <- ask
-  t # traverse (annotateLabel >>> lift >>> lift >>> lift)
+  { stampLabel } <- ask
+  t # traverse (stampLabel >>> lift >>> lift >>> lift)
 
 --------------------------------------------------------------------------------
 -- Edit
@@ -760,7 +760,7 @@ freshTraversable t = do
 
 type EditMenu m l1 l2 = String -> Array (String /\ Edit m l1 l2)
 
-type EditAt m l1 l2 = PureEditorState l2 -> Maybe (Edit m l1 l2)
+type EditAt m l1 l2 = BasicEditorState l2 -> Maybe (Edit m l1 l2)
 
 type Edit m l1 l2 =
   Edit_ l1
@@ -799,7 +799,7 @@ instance Show l => Show (EditInfo l) where
 instance Show l => Pretty (EditInfo l) where
   pretty x = show x
 
-type PureEditorState l =
+type BasicEditorState l =
   { root :: Expr l
   , mb_handle :: Maybe Handle
   , clipboard :: Maybe (Fragment l)

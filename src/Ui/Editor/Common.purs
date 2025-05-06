@@ -2,20 +2,23 @@ module Ui.Editor.Common where
 
 import Prelude
 
+import Control.Monad.State (get)
 import Data.Const (Const)
 import Data.Eq.Generic (genericEq)
-import Data.Expr (Edit, EditMenu, Expr, Fragment, Handle, Point, PureEditorState)
+import Data.Expr (Edit, EditMenu, Expr, Fragment, Handle, Point, BasicEditorState)
 import Data.Generic.Rep (class Generic)
 import Data.List (List)
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\))
-import Editor (Editor, Label, AnnotatedLabel)
+import Editor (Editor, Label, StampedLabel)
 import Editor.Common (ExistsEditor)
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Halogen as H
@@ -66,26 +69,37 @@ type EditorOutput = Void
 
 type EditorState c =
   { editor :: Editor c
-  , root :: Expr (AnnotatedLabel c ())
+  , mb_root :: Maybe (Expr (StampedLabel c ()))
   , initial_mb_handle :: Maybe Handle
   , ref_mb_handle :: Ref (Maybe Handle)
   , ref_mb_dragOrigin :: Ref (Maybe Handle)
-  , clipboard :: Maybe (Fragment (AnnotatedLabel c ()))
+  , clipboard :: Maybe (Fragment (StampedLabel c ()))
   , ref_history :: Ref (List (Snapshot c))
   , ref_future :: Ref (List (Snapshot c))
   }
 
-toPureEditorState :: forall c. EditorState c -> Effect (PureEditorState (AnnotatedLabel c ()))
-toPureEditorState state = do
+getBasicEditorState :: forall c. EditorM c (BasicEditorState (StampedLabel c ()))
+getBasicEditorState = get >>= toBasicEditorState >>> liftEffect
+
+getRoot :: forall c. EditorM c (Expr (StampedLabel c ()))
+getRoot = get >>= \state -> case state.mb_root of
+  Nothing -> liftEffect $ throw "root not loaded yet"
+  Just root -> pure root
+
+toBasicEditorState :: forall c. EditorState c -> Effect (BasicEditorState (StampedLabel c ()))
+toBasicEditorState state = do
+  root <- case state.mb_root of
+    Nothing -> throw "root not loaded yet"
+    Just root -> pure root
   mb_handle <- state.ref_mb_handle # Ref.read
   pure
-    { root: state.root
+    { root
     , mb_handle
     , clipboard: state.clipboard
     }
 
 type Snapshot c =
-  { root :: Expr (AnnotatedLabel c ())
+  { root :: Expr (StampedLabel c ())
   , mb_handle :: Maybe Handle
   }
 
@@ -95,7 +109,6 @@ data EditorAction c
   | PointOutput_EditorAction (PointOutput c)
   | MouseUp_EditorAction Event
   | KeyDown_EditorAction Event
-  | Rerender_EditorAction
 
 type EditorSlots c =
   ( "Point" :: H.Slot (PointQuery c) (PointOutput c) Point
@@ -180,18 +193,18 @@ type BufferInput c =
   { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu Aff (Label c ()) (AnnotatedLabel c ())
+  , menu :: EditMenu Aff (Label c ()) (StampedLabel c ())
   }
 
-data BufferOutput c = SubmitBuffer_BufferOutput (Edit Aff (Label c ()) (AnnotatedLabel c ()))
+data BufferOutput c = SubmitBuffer_BufferOutput (Edit Aff (Label c ()) (StampedLabel c ()))
 
 type BufferState c =
   { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu Aff (Label c ()) (AnnotatedLabel c ())
+  , menu :: EditMenu Aff (Label c ()) (StampedLabel c ())
   , option_i :: Maybe Int
-  , menu_queried :: Array (String /\ Edit Aff (Label c ()) (AnnotatedLabel c ()))
+  , menu_queried :: Array (String /\ Edit Aff (Label c ()) (StampedLabel c ()))
   }
 
 data BufferAction c

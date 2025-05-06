@@ -6,6 +6,7 @@ import Control.Monad.Reader (ask, local)
 import Data.Array as Array
 import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth)
 import Data.Expr.Edit as Expr.Edit
+import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (and, fold)
 import Data.List (List(..))
 import Data.Newtype (wrap)
@@ -79,31 +80,8 @@ editor = Editor
       ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
         where
         p = getEndPoints_ZipperH zh
-  , assembleExpr: assembleExpr_default
-  , assembleAnnotatedExpr: \args -> do
-      ctx <- ask
-      case (args.label # getCon) /\ args.points /\ args.kids of
-        C "Root" /\ ps /\ ks -> do
-          ks' <- ks # sequence
-          pure $ fold $ Array.zipWith (\p k -> [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ]
-        -- 
-        C "Symbol" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
-          k0' <- k0
-          pure $ fold [ k0' ]
-        -- 
-        C "Group" /\ ps /\ ks -> do
-          ks' <- increaseIndentLevel do ks # sequence
-          pure $ fold $ fold $ [ [ punctuation "(" ], Array.zipWith (\p k -> do [ p ] <> k) ps ks', [ ps # Array.last # fromMaybe ], [ punctuation ")" ] ]
-        -- 
-        C "LineBreak" /\ [ _p0 ] /\ [] -> do
-          pure $ fold [ linebreak, indentations ctx.indentLevel ]
-        C "LineBreak" /\ _ /\ _ -> do
-          assembleExpr_default args
-        --
-        C str /\ [ _p0 ] /\ [] -> do
-          pure $ fold [ literal str ]
-        -- 
-        _ -> assembleExpr_default args
+  , assembleExpr: assembleExpr
+  , assembleStampedExpr: assembleExpr
   , printExpr:
       let
         f = case _ of
@@ -114,10 +92,36 @@ editor = Editor
           Expr _ -> "unimplemented"
       in
         f
-  , annotateLabel: \(Label l) -> do
+  , stampLabel: \(Label l) -> do
       id <- freshId # liftEffect
       pure $ Label $ l `Record.merge` { id }
   }
+
+assembleExpr :: forall r. AssembleExpr (Label C r)
+assembleExpr args = do
+  ctx <- ask
+  case (args.label # getCon) /\ args.points /\ args.kids of
+    C "Root" /\ ps /\ ks -> do
+      ks' <- ks # sequence
+      pure $ fold $ Array.zipWith (\p k -> [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ]
+    -- 
+    C "Symbol" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
+      k0' <- k0
+      pure $ fold [ k0' ]
+    -- 
+    C "Group" /\ ps /\ ks -> do
+      ks' <- increaseIndentLevel do ks # sequence
+      pure $ fold $ fold $ [ [ punctuation "(" ], Array.zipWith (\p k -> do [ p ] <> k) ps ks', [ ps # Array.last # fromMaybe ], [ punctuation ")" ] ]
+    -- 
+    C "LineBreak" /\ [ _p0 ] /\ [] -> do
+      pure $ fold [ linebreak, indentations ctx.indentLevel ]
+    C "LineBreak" /\ _ /\ _ -> do
+      assembleExpr_default args
+    --
+    C str /\ [ _p0 ] /\ [] -> do
+      pure $ fold [ literal str ]
+    -- 
+    _ -> assembleExpr_default args
 
 expr_LineBreak = C "LineBreak" % []
 

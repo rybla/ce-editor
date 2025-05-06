@@ -3,7 +3,7 @@ module Editor.Common where
 import Prelude
 
 import Data.Array as Array
-import Data.Expr (Edit, EditMenu, Expr, Handle, PureEditorState)
+import Data.Expr (Edit, EditMenu, Expr, Handle, BasicEditorState)
 import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (fold)
 import Data.Maybe (Maybe, fromMaybe)
@@ -16,8 +16,6 @@ import Ui.Halogen (classes)
 
 --------------------------------------------------------------------------------
 
--- TODO make mappable?
-
 newtype Label c r = Label (Record (BaseLabelRow c r))
 
 instance Show c => Show (Label c r) where
@@ -29,6 +27,9 @@ instance Eq c => Eq (Label c r) where
 instance Ord c => Ord (Label c r) where
   compare (Label l1) (Label l2) = compare l1.con l2.con
 
+mapLabel :: forall c r c' r'. (Record (BaseLabelRow c r) -> Record (BaseLabelRow c' r')) -> Label c r -> Label c' r'
+mapLabel f (Label l) = Label $ f l
+
 type BaseLabelRow (c :: Type) r =
   ( con :: c
   | r
@@ -37,14 +38,14 @@ type BaseLabelRow (c :: Type) r =
 getCon :: forall c r. Label c r -> c
 getCon (Label { con }) = con
 
-type AnnotatedLabel c r = Label c (AnnotatedLabelRow r)
+type StampedLabel c r = Label c (StampedLabelRow r)
 
-type AnnotatedLabelRow r =
+type StampedLabelRow r =
   ( id :: String
   | r
   )
 
-getId :: forall c r. AnnotatedLabel c r -> String
+getId :: forall c r. StampedLabel c r -> String
 getId (Label { id }) = id
 
 --------------------------------------------------------------------------------
@@ -58,19 +59,19 @@ data Editor c = Editor
   , getEditMenu ::
       forall m r
        . Monad m
-      => PureEditorState (Label c r)
+      => BasicEditorState (Label c r)
       -> EditMenu m (Label c ()) (Label c r)
   , getShortcut ::
       forall m r
        . Monad m
       => KeyInfo
-      -> PureEditorState (Label c r)
+      -> BasicEditorState (Label c r)
       -> Maybe (Edit m (Label c ()) (Label c r))
   -- validity
   , isValidHandle :: forall r. Expr (Label c r) -> Handle -> Boolean
-  -- rendering
-  , annotateLabel :: Label c () -> Aff (AnnotatedLabel c ())
-  , assembleAnnotatedExpr :: AssembleExpr (AnnotatedLabel c ())
+  -- processing
+  , stampLabel :: Label c () -> Aff (StampedLabel c ())
+  , assembleStampedExpr :: AssembleExpr (StampedLabel c ())
   , assembleExpr :: AssembleExpr (Label c ())
   -- printing
   , printExpr :: forall r. Expr (Label c r) -> String

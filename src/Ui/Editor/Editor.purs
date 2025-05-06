@@ -14,33 +14,36 @@ import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
 import Data.Expr.Render (RenderM, runRenderM)
 import Data.Expr.Render as Expr.Render
-import Data.Foldable (fold)
+import Data.Foldable (fold, foldMap)
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..), isJust)
 import Data.Newtype (unwrap)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as String
+import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..), Label, AnnotatedLabel)
+import Editor (Editor(..), Label, StampedLabel)
+import Editor.Common (mapLabel)
 import Effect.Aff (Aff)
 import Effect.Class.Console as Console
 import Effect.Ref as Ref
 import Effect.Unsafe (unsafePerformEffect)
-import Halogen (liftEffect)
+import Halogen (liftAff, liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Query.Event as HQE
+import Record as Record
 import Type.Prelude (Proxy(..))
 import Ui.Browser (navigator_clibpoard_writeText)
-import Ui.Editor.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, toPureEditorState)
+import Ui.Editor.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, getBasicEditorState, getRoot)
 import Ui.Editor.Config as Config
 import Ui.Editor.Point as Point
 import Ui.Event (alt, cmd, keyEq, keyMember, keyRegex, not_alt, not_cmd, not_shift, shift)
 import Ui.Event (fromEventToKeyInfo, matchKeyInfoPattern') as Event
 import Ui.Halogen (classes)
-import Utility (guardPure, isNonSpace_regex, todo, (:%=), (:=))
+import Utility (guardPure, isNonSpace_regex, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -59,7 +62,7 @@ component = H.mkComponent { initialState, eval, render }
 initialState :: forall c. EditorInput c -> EditorState c
 initialState _input@{ editor: Editor editor } =
   { editor: Editor editor
-  , root: todo "editor.initialExpr"
+  , mb_root: none
   , initial_mb_handle
   , ref_mb_handle: unsafePerformEffect do Ref.new initial_mb_handle
   , ref_mb_dragOrigin: unsafePerformEffect do Ref.new none
@@ -88,15 +91,15 @@ handleAction Initialize_EditorAction = do
   doc <- liftEffect $ HTML.window >>= HTML.Window.document
   H.subscribe' \_subId -> HQE.eventListener MouseEventType.mouseup (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< MouseUp_EditorAction
   H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< KeyDown_EditorAction
-  handleAction Rerender_EditorAction
+
+  state@{ editor: Editor editor } <- get
+  root <- editor.initialExpr # traverse editor.stampLabel # liftAff
+  put $ state { mb_root = pure root }
 
 handleAction (Receive_EditorAction input) = do
-  put $ initialState input
-  handleAction Rerender_EditorAction
-
-handleAction Rerender_EditorAction = do
-  -- TODO: setHandle
-  pure unit
+  let state@{ editor: Editor editor } = initialState input
+  root <- editor.initialExpr # traverse editor.stampLabel # liftAff
+  put $ state { mb_root = pure root }
 
 handleAction (MouseUp_EditorAction _event) = do
   state <- get
@@ -104,7 +107,8 @@ handleAction (MouseUp_EditorAction _event) = do
 
 handleAction (KeyDown_EditorAction event) = do
   state@{ editor: Editor editor } <- get
-  purestate <- state # toPureEditorState # liftEffect
+  root <- getRoot
+  purestate <- getBasicEditorState
   mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
   mb_dragOrigin <- liftEffect $ Ref.read state.ref_mb_dragOrigin
   bufferIsOpen <- case mb_handle of
@@ -136,8 +140,8 @@ handleAction (KeyDown_EditorAction event) = do
           setHandle $ pure editor.initialHandle
         Just handle -> do
           case
-            Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p ->
-              guardPure (editor.isValidHandle state.root) (Point_Handle p)
+            Expr.Move.movePointUntil root dir (handle # getFocusPoint) \p ->
+              guardPure (editor.isValidHandle root) (Point_Handle p)
             of
             Nothing -> do
               liftEffect $ state.ref_mb_dragOrigin := none
@@ -166,8 +170,8 @@ handleAction (KeyDown_EditorAction event) = do
             Just dragOrigin -> do
               pure dragOrigin
           case
-            Expr.Move.movePointUntil state.root dir (handle # getFocusPoint) \p ->
-              state.root # Expr.Drag.drag dragOrigin p >>= guardPure (editor.isValidHandle state.root)
+            Expr.Move.movePointUntil root dir (handle # getFocusPoint) \p ->
+              root # Expr.Drag.drag dragOrigin p >>= guardPure (editor.isValidHandle root)
             of
             Nothing -> pure unit
             Just handle' -> do
@@ -191,7 +195,7 @@ handleAction (KeyDown_EditorAction event) = do
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "a", cmd, not_shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
       liftEffect $ state.ref_mb_dragOrigin := none
-      let j = state.root # getExtremeIndexes
+      let j = root # getExtremeIndexes
       let h = normalizeHandle $ SpanH_Handle (SpanH { path: none, j_L: j._L, j_R: j._R }) Left_SpanFocus
       setHandle $ pure h
     -- copy
@@ -219,7 +223,7 @@ handleAction (KeyDown_EditorAction event) = do
     -- paste
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "v", cmd, not_shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
-      submitEditAt $ Expr.Edit.paste (todo "remove label")
+      submitEditAt $ Expr.Edit.paste (mapLabel (Record.delete (Proxy @"id")))
     -- redo
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "z", cmd, shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
@@ -248,27 +252,29 @@ handleAction (KeyDown_EditorAction event) = do
 
 handleAction (PointOutput_EditorAction (MouseDown_PointOutput _event p)) = do
   state@{ editor: Editor editor } <- get
+  root <- getRoot
   mb_handle <- liftEffect do Ref.read state.ref_mb_handle
   case mb_handle of
     Nothing -> do
       liftEffect do state.ref_mb_dragOrigin := pure (Point_Handle p)
       setHandle $ pure (Point_Handle p)
     Just h -> do
-      when (editor.isValidHandle state.root h) do
+      when (editor.isValidHandle root h) do
         let dragOrigin = Expr.Drag.getDragOrigin h p
         liftEffect do state.ref_mb_dragOrigin := pure dragOrigin
         setHandle $ pure dragOrigin
 handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
+  root <- getRoot
   when (MouseEvent.buttons event == 1) do
     state@{ editor: Editor editor } <- get
     mb_dragOrigin <- liftEffect $ Ref.read state.ref_mb_dragOrigin
     case mb_dragOrigin of
       Nothing -> pure unit
       Just h -> do
-        case state.root # Expr.Drag.drag h p of
+        case root # Expr.Drag.drag h p of
           Nothing -> pure unit
           Just h' -> do
-            when (editor.isValidHandle state.root h) do
+            when (editor.isValidHandle root h) do
               setHandle (pure h')
 handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput edit))) = do
   submitEdit edit
@@ -282,8 +288,9 @@ openBuffer_keys = Set.fromFoldable [ "Tab" ]
 getSnapshot :: forall c. EditorM c (Snapshot c)
 getSnapshot = do
   state <- get
+  root <- getRoot
   mb_handle <- liftEffect $ state.ref_mb_handle # Ref.read
-  pure { root: state.root, mb_handle }
+  pure { root: root, mb_handle }
 
 saveSnapshot :: forall c. Show c => EditorM c Unit
 saveSnapshot = do
@@ -297,8 +304,9 @@ saveSnapshot = do
 undo :: forall c. Show c => EditorM c Unit
 undo = do
   state <- get
+  root <- getRoot
   when Config.log_undo_and_redo do
-    Console.log $ "[undo] " <> show state.root
+    Console.log $ "[undo] " <> show root
   (liftEffect $ state.ref_history # Ref.read) >>= case _ of
     Nil -> pure unit
     s' : history' -> do
@@ -310,8 +318,9 @@ undo = do
 redo :: forall c. Show c => EditorM c Unit
 redo = do
   state <- get
+  root <- getRoot
   when Config.log_undo_and_redo do
-    Console.log $ "[redo] " <> show state.root
+    Console.log $ "[redo] " <> show root
   (liftEffect $ state.ref_future # Ref.read) >>= case _ of
     Nil -> pure unit
     s' : future' -> do
@@ -324,28 +333,28 @@ loadSnapshot :: forall c. Snapshot c -> EditorM c Unit
 loadSnapshot s = do
   setHandle' do
     get >>= \state -> liftEffect $ state.ref_mb_dragOrigin := none
-    state <- modify _ { root = s.root, initial_mb_handle = s.mb_handle }
+    state <- modify _ { mb_root = pure s.root, initial_mb_handle = s.mb_handle }
     pure state.initial_mb_handle
 
 --------------------------------------------------------------------------------
 -- submitEdit
 --------------------------------------------------------------------------------
 
-submitEditAt :: forall c. Show c => EditAt Aff (Label c ()) (AnnotatedLabel c ()) -> EditorM c Unit
+submitEditAt :: forall c. Show c => EditAt Aff (Label c ()) (StampedLabel c ()) -> EditorM c Unit
 submitEditAt editAt = do
-  state <- get >>= (liftEffect <<< toPureEditorState)
+  state <- getBasicEditorState
   case editAt state of
     Nothing -> pure unit
     Just edit -> submitEdit edit
 
-submitEdit :: forall c. Show c => Edit Aff (Label c ()) (AnnotatedLabel c ()) -> EditorM c Unit
+submitEdit :: forall c. Show c => Edit Aff (Label c ()) (StampedLabel c ()) -> EditorM c Unit
 submitEdit edit = do
   { editor: Editor editor } <- get
-  purestate_input <- get >>= (toPureEditorState >>> liftEffect)
+  purestate_input <- getBasicEditorState
 
   mb_output /\ _diagnostics <-
     applyEdit edit purestate_input
-      # flip runReaderT { annotateLabel: editor.annotateLabel }
+      # flip runReaderT { stampLabel: editor.stampLabel }
       # runMaybeT
       # runWriterT
       # lift
@@ -382,7 +391,7 @@ submitEdit edit = do
           , Array.replicate 10 "====" # fold
           ]
       modifyEditorState _
-        { root = purestate_output.root
+        { mb_root = pure purestate_output.root
         , initial_mb_handle = purestate_output.mb_handle
         , clipboard = purestate_output.clipboard
         }
@@ -502,27 +511,29 @@ ss_ZipperH_Handle_OuterRight_Focus = Set.fromFoldable [ ZipperH_Handle_OuterRigh
 
 render :: forall c. Show c => EditorState c -> EditorHTML c
 render state =
-  HH.div [ classes [ "Editor" ] ]
-    [ HH.div [ classes [ "root" ] ]
-        [ HH.div [ classes [ "Expr" ] ]
-            ( state.root
-                # renderAnnotatedExpr state Nil
-                # runRenderM
-            )
+  HH.div [ classes [ "Editor" ] ] $ fold
+    [ state.mb_root # foldMap \root ->
+        [ HH.div [ classes [ "root" ] ]
+            [ HH.div [ classes [ "Expr" ] ]
+                ( root
+                    # renderStampedExpr state.editor Nil
+                    # runRenderM
+                )
+            ]
         ]
     ]
 
-renderAnnotatedExpr :: forall c. Show c => EditorState c -> Path -> Expr (AnnotatedLabel c ()) -> RenderM (Array (EditorHTML c))
-renderAnnotatedExpr state@{ editor: Editor editor } path expr = do
+renderStampedExpr :: forall c. Show c => Editor c -> Path -> Expr (StampedLabel c ()) -> RenderM (Array (EditorHTML c))
+renderStampedExpr (Editor editor) path expr = do
   Expr.Render.renderExpr
-    { renderKid: renderAnnotatedExpr state
-    , renderPoint: renderPoint state
-    , assembleExpr: editor.assembleAnnotatedExpr
+    { renderKid: renderStampedExpr (Editor editor)
+    , renderPoint: renderPoint (Editor editor)
+    , assembleExpr: editor.assembleStampedExpr
     }
     path
     expr
 
-renderPoint :: forall c. Show c => EditorState c -> Point -> EditorHTML c
-renderPoint state point =
-  HH.slot (Proxy @"Point") point Point.component { editor: state.editor, point } PointOutput_EditorAction
+renderPoint :: forall c. Show c => Editor c -> Point -> EditorHTML c
+renderPoint editor point =
+  HH.slot (Proxy @"Point") point Point.component { editor: editor, point } PointOutput_EditorAction
 
