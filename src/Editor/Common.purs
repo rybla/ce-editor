@@ -2,17 +2,14 @@ module Editor.Common where
 
 import Prelude
 
-import Control.Monad.Maybe.Trans (MaybeT)
-import Control.Monad.Reader (Reader, ReaderT, ask, runReader)
+import Control.Monad.Reader (Reader, ask, runReader)
 import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
-import Data.Diagnostic as Diagnostic
 import Data.Expr (Edit, EditMenu, Expr, Handle, PureEditorState, EditM)
 import Data.Foldable (fold)
 import Data.Maybe (Maybe, fromMaybe)
 import Data.Traversable (class Traversable, traverse)
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Effect.Aff (Aff)
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH

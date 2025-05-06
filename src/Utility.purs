@@ -9,6 +9,7 @@ import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEArray
 import Data.Array.ST as STArray
 import Data.Either (fromRight')
+import Data.Foldable (class Foldable, foldMap)
 import Data.FoldableWithIndex (traverseWithIndex_)
 import Data.Function (applyFlipped)
 import Data.HeytingAlgebra (implies)
@@ -167,3 +168,7 @@ prop = Lens.Record.prop (Proxy @l)
 guardPure :: forall m a. Alternative m => (a -> Boolean) -> a -> m a
 guardPure f a | f a = pure a
 guardPure _ _ = empty
+
+collapse :: forall f1 f2 a. Foldable f1 => Foldable f2 => Applicative f1 => Monoid (f1 a) => f1 (f2 a) -> f1 a
+collapse = foldMap (foldMap pure)
+

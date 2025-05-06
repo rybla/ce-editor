@@ -2,26 +2,18 @@ module Data.Expr.Edit where
 
 import Prelude
 
-import Control.Monad.Reader (ask)
-import Control.Monad.Trans.Class (lift)
-import Data.Expr (EditAt, EditInfo(..), Edit_(..), Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), ZipperH(..), EditM, atPoint, atSpan, atZipper, fromNePath, getEndPoints_SpanH, getPath_Zipper, getStepsAroundIndex, getTotalInnerPath_ZipperH, offset_Span, offset_innerLeft_Zipper, offset_outer_Zipper, unSpanContext, unZipper)
+import Data.Expr (EditAt, EditInfo(..), Edit_(..), Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), ZipperH(..), atPoint, atSpan, atZipper, freshTraversable, fromNePath, getEndPoints_SpanH, getPath_Zipper, getStepsAroundIndex, getTotalInnerPath_ZipperH, offset_Span, offset_innerLeft_Zipper, offset_outer_Zipper, unSpanContext, unZipper)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Move as Expr.Move
 import Data.Lazy as Lazy
 import Data.List ((:))
 import Data.Maybe (Maybe(..))
-import Data.Traversable (class Traversable, traverse)
 import Data.Unfoldable (none)
 import Utility (fromMaybeM, guardPure)
 
 --------------------------------------------------------------------------------
 -- insert
 --------------------------------------------------------------------------------
-
-freshTraversable :: forall m t l1 l2. Monad m => Traversable t => t l1 -> EditM m l1 l2 (t l2)
-freshTraversable t = do
-  { liftLabel } <- ask
-  t # traverse (liftLabel >>> lift >>> lift >>> lift)
 
 insert :: forall m l1 l2. Monad m => Show l1 => Show l2 => Fragment l1 -> EditAt m l1 l2
 
