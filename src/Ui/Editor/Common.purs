@@ -180,32 +180,32 @@ type BufferInput c =
   { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu (Label c ())
+  , menu :: EditMenu Aff (Label c ()) (Label c ())
   }
 
-data BufferOutput c =
-  SubmitBuffer_BufferOutput (Edit (Label c ()))
+data BufferOutput c = SubmitBuffer_BufferOutput (Edit Aff (Label c ()) (Label c ()))
 
 type BufferState c =
   { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu (Label c ())
+  , menu :: EditMenu Aff (Label c ()) (Label c ())
   , option_i :: Maybe Int
-  , menu_queried :: Array (String /\ Edit (Label c ()))
+  , menu_queried :: Array (String /\ Edit Aff (Label c ()) (Label c ()))
   }
 
-data BufferAction
+data BufferAction c
   = Initialize_BufferAction
+  | Receive_BufferAction (BufferInput c)
   | KeyDown_BufferAction Event
   | QueryInput_BufferAction Event
 
 type BufferSlots :: Row Type
 type BufferSlots = ()
 
-type BufferM c = H.HalogenM (BufferState c) BufferAction BufferSlots (BufferOutput c) Aff
+type BufferM c = H.HalogenM (BufferState c) (BufferAction c) BufferSlots (BufferOutput c) Aff
 
-type BufferHTML = H.ComponentHTML BufferAction BufferSlots Aff
+type BufferHTML c = H.ComponentHTML (BufferAction c) BufferSlots Aff
 
 --------------------------------------------------------------------------------
 -- Console

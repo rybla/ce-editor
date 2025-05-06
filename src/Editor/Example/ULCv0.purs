@@ -2,6 +2,7 @@ module Editor.Example.UlcV0 where
 
 import Prelude
 
+import Control.Monad.Trans.Class (lift)
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Expr (Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), Step(..), atPoint, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth)
@@ -10,11 +11,12 @@ import Data.Foldable (and, fold)
 import Data.List (List(..), (:))
 import Data.Newtype (wrap)
 import Data.Tuple.Nested ((/\))
-import Editor (Label(..))
+import Editor (Label(..), freshTraversable)
 import Editor.Common (Editor(..), assembleExpr_default)
 import Halogen.HTML as HH
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
+import Utility (todo)
 
 newtype C = C String
 
@@ -43,24 +45,25 @@ editor = Editor
   , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu: \state -> case _ of
-      "lam" ->
-        [ "LamParams" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamParams) state
-        , "LamBody" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamBody) state
-        ]
-      "app" ->
-        [ "AppFunc" /\ Expr.Edit.insert (Zipper_Fragment zipper_AppFunc) state
-        , "AppArgs" /\ Expr.Edit.insert (Zipper_Fragment zipper_AppArgs) state
-        ]
-      "let" ->
-        [ "LetVar" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetVar) state
-        , "LetImpl" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetImpl) state
-        , "LetBody" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetBody) state
-        ]
-      query ->
-        [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var (C query) ])) state
-        ]
+      -- "lam" ->
+      --   [ "LamParams" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamParams) state
+      --   , "LamBody" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamBody) state
+      --   ]
+      -- "app" ->
+      --   [ "AppFunc" /\ Expr.Edit.insert (Zipper_Fragment zipper_AppFunc) state
+      --   , "AppArgs" /\ Expr.Edit.insert (Zipper_Fragment zipper_AppArgs) state
+      --   ]
+      -- "let" ->
+      --   [ "LetVar" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetVar) state
+      --   , "LetImpl" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetImpl) state
+      --   , "LetBody" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetBody) state
+      --   ]
+      -- query ->
+      --   [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var (C query) ])) state
+      --   ]
+      _ -> todo ""
   , getShortcut: \ki state -> case unit of
-      _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] -> do
+      _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] ->
         Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
       _ -> empty
   , isValidHandle: \root handle -> case handle of
@@ -73,6 +76,7 @@ editor = Editor
         p = getEndPoints_ZipperH zh
   , assembleExpr: assembleExpr_default
   , printExpr: const "unimplemented"
+  , liftLabel: todo "liftLabel"
   }
 
 beforeHolePoint = [ HH.div [ classes [ "Token", "beforeHolePoint" ] ] [ HH.text "" ] ]

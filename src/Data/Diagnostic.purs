@@ -2,7 +2,7 @@ module Data.Diagnostic where
 
 import Prelude
 
-import Control.Monad.Writer (Writer)
+import Control.Monad.Writer (Writer, WriterT)
 import Data.Const (Const)
 import Effect.Aff (Aff)
 import Halogen as H
@@ -13,8 +13,8 @@ import Ui.Halogen (classes)
 -- M
 --------------------------------------------------------------------------------
 
--- TODO: refactor this out
 type M = Writer (Array Diagnostic)
+type MT m = WriterT (Array Diagnostic) m
 
 --------------------------------------------------------------------------------
 -- Diagnostic

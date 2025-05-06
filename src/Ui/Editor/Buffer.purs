@@ -2,30 +2,27 @@ module Ui.Editor.Buffer where
 
 import Prelude
 
-import Control.Applicative (pure)
 import Control.Monad.Maybe.Trans (runMaybeT)
 import Control.Monad.Reader (runReader)
-import Control.Monad.State (get, modify_)
-import Control.Monad.Writer (runWriter, runWriterT)
+import Control.Monad.State (get, modify_, put)
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Writer (runWriterT)
 import Data.Array ((!!))
-import Data.Array as Array
 import Data.Const (Const(..))
 import Data.Expr (EditInfo(..), Edit_(..), Expr, Path, Point)
 import Data.Expr.Render (RenderArgs, renderFragment)
 import Data.Expr.Render as Expr.Render
-import Data.Foldable (fold, foldMap, length, null)
+import Data.Foldable (fold, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
-import Data.Tuple (fst)
+import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), RenderM, Label)
-import Editor.Common (runRenderM)
 import Effect.Aff (Aff)
-import Effect.Class.Console as Console
 import Effect.Exception (throw)
 import Halogen (liftEffect)
 import Halogen as H
@@ -35,11 +32,11 @@ import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
-import Ui.Editor.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, BufferOutput(..), BufferQuery, BufferSlots, BufferState)
-import Ui.Event (fromEventToKeyInfo, matchKeyInfo, matchKeyInfoPattern', matchMapKeyInfo) as Event
+import Ui.Editor.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, BufferOutput(..), BufferQuery, BufferState, BufferSlots)
+import Ui.Event (fromEventToKeyInfo, matchKeyInfoPattern', matchMapKeyInfo) as Event
 import Ui.Event (keyMember, not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (fromMaybeM)
+import Utility (fromMaybeM, todo)
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -60,20 +57,20 @@ component = H.mkComponent { initialState, eval, render }
 --------------------------------------------------------------------------------
 
 initialState :: forall l. BufferInput l -> BufferState l
-initialState input = setQuery' input.query
+initialState input = setQuery_pure input.query
   { editor: input.editor
   , point: input.point
   , query: input.query
   , menu: input.menu
   , option_i: none
-  , menu_queried: []
+  , menu_queried: none
   }
 
 --------------------------------------------------------------------------------
 -- eval
 --------------------------------------------------------------------------------
 
-eval :: forall l a. H.HalogenQ BufferQuery BufferAction (BufferInput l) a -> H.HalogenM (BufferState l) BufferAction BufferSlots (BufferOutput l) Aff a
+eval :: forall l a. H.HalogenQ BufferQuery (BufferAction l) (BufferInput l) a -> H.HalogenM (BufferState l) (BufferAction l) BufferSlots (BufferOutput l) Aff a
 eval = H.mkEval H.defaultEval
   { initialize = pure Initialize_BufferAction
   , handleQuery = handleQuery
@@ -91,16 +88,23 @@ handleQuery (Const x) = absurd x
 -- handleAction
 --------------------------------------------------------------------------------
 
-handleAction :: forall l. BufferAction -> BufferM l Unit
+handleAction :: forall c. BufferAction c -> BufferM c Unit
 
 handleAction Initialize_BufferAction = do
   -- Console.log "[Buffer] initialize"
+
+  -- resizing input
   H.getHTMLElementRef refLabel_input >>= \mb_elem_input -> do
     elem_input <- mb_elem_input # fromMaybeM do liftEffect $ throw "[Buffer] input element doesn't exist"
     liftEffect $ elem_input # HTMLElement.focus
   doc <- liftEffect $ HTML.window >>= HTML.Window.document
   H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTMLDocument.toEventTarget) $ pure <<< KeyDown_BufferAction
-  void resizeQueryInput
+
+  updateAccordingToQuery
+
+handleAction (Receive_BufferAction input) = do
+  put $ initialState input
+  updateAccordingToQuery
 
 handleAction (KeyDown_BufferAction event) = do
   let ki = event # Event.fromEventToKeyInfo
@@ -122,8 +126,7 @@ handleAction (KeyDown_BufferAction event) = do
     _ -> pure unit
 
 handleAction (QueryInput_BufferAction _event) = do
-  query <- resizeQueryInput
-  setQuery query
+  updateAccordingToQuery
 
 submitBuffer_keys = Set.fromFoldable [ "Tab", " " ]
 
@@ -136,23 +139,30 @@ resizeQueryInput = do
   pure value
 
 --------------------------------------------------------------------------------
+-- updateAccordingToQuery
+--------------------------------------------------------------------------------
+
+updateAccordingToQuery :: forall c. BufferM c Unit
+updateAccordingToQuery = do
+  query <- resizeQueryInput
+  setQuery query
+
+--------------------------------------------------------------------------------
 -- setQuery
 --------------------------------------------------------------------------------
 
-setQuery :: forall l. String -> BufferM l Unit
-setQuery query = modify_ $ setQuery' query
-
-setQuery' :: forall l. String -> BufferState l -> BufferState l
-setQuery' query state = state
+setQuery_pure :: forall l. String -> BufferState l -> BufferState l
+setQuery_pure query state = state
   { query = query
-  , option_i = if null menu_queried then none else pure 0
+  , option_i = if null menu then none else pure 0
   -- TODO: for now, just ignore the diagnostics
-  , menu_queried = menu_queried # foldMap \(key /\ x) -> case x # runMaybeT # runWriter of
-      Nothing /\ _diagnostics -> none
-      Just edit /\ _diagnostics -> [ key /\ edit ]
+  , menu_queried = menu
   }
   where
-  menu_queried = state.menu query
+  menu = state.menu query
+
+setQuery :: forall l. String -> BufferM l Unit
+setQuery query = modify_ $ setQuery_pure query
 
 --------------------------------------------------------------------------------
 -- cycle menu
@@ -171,7 +181,7 @@ fromKeyToCycleDir _ = none
 
 refLabel_input = H.RefLabel "input"
 
-render :: forall c. Show c => BufferState c -> BufferHTML
+render :: forall c. Show c => BufferState c -> BufferHTML c
 render state =
   HH.div [ classes $ fold [ [ "Buffer" ] ] ]
     [ HH.input
@@ -210,9 +220,9 @@ renderArgs (Editor editor) =
   , assembleExpr: editor.assembleExpr
   }
   where
-  renderExpr :: forall c w i. Show c => Editor c -> Path -> Expr (Label c ()) -> RenderM (Array (HTML w i))
-  renderExpr editor path expr = Expr.Render.renderExpr (renderArgs editor) path expr
+  renderExpr :: Editor c -> Path -> Expr (Label c ()) -> RenderM (Array (HTML w i))
+  renderExpr editor' path expr = Expr.Render.renderExpr (renderArgs editor') path expr
 
-  renderPoint :: forall c w i. Show c => Editor c -> Point -> HTML w i
+  renderPoint :: Editor c -> Point -> HTML w i
   renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]
 

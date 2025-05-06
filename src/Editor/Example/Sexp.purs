@@ -3,24 +3,27 @@ module Editor.Example.Sexp where
 import Prelude
 
 import Control.Monad.Reader (ask, local)
+import Control.Monad.Trans.Class (lift)
 import Control.Plus (empty)
 import Data.Array as Array
-import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth)
+import Data.Expr (EditInfo(..), Edit_(..), Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth)
 import Data.Expr.Edit as Expr.Edit
 import Data.Foldable (and, fold)
+import Data.Lazy as Lazy
 import Data.List (List(..))
 import Data.Newtype (wrap)
 import Data.Set as Set
 import Data.String as String
-import Data.Traversable (sequence)
+import Data.Traversable (sequence, traverse)
 import Data.Tuple.Nested ((/\))
-import Data.Unfoldable (fromMaybe)
+import Data.Unfoldable (fromMaybe, none)
 import Editor (Label(..))
-import Editor.Common (Editor(..), assembleExpr_default, getCon)
+import Editor.Common (Editor(..), assembleExpr_default, freshTraversable, getCon)
 import Editor.Notation (literal, punctuation)
 import Halogen.HTML as HH
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
+import Utility (todo)
 
 newtype C = C String
 
@@ -49,22 +52,24 @@ editor = Editor
   , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu: \state query -> case query of
-      "group" ->
-        [ "Symbol" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state
-        , "Group" /\ Expr.Edit.insert (Zipper_Fragment zipper_Group) state
-        ]
-      "linebreak" ->
-        [ "LineBreak" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
-        ]
-      _ ->
-        [ "Symbol" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state
-        ]
+      -- "group" ->
+      --   [ "Symbol" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state
+      --   , "Group" /\ Expr.Edit.insert (Zipper_Fragment zipper_Group) state
+      --   ]
+      -- "linebreak" ->
+      --   [ "LineBreak" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
+      --   ]
+      -- _ ->
+      --   [ "Symbol" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state
+      --   ]
+      _ -> []
   , getShortcut: \ki state -> case unit of
-      _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] -> do
+      _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] ->
         Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
-      _ | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] -> do
+      _ | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] ->
         Expr.Edit.insert (Zipper_Fragment zipper_Group) state
-      _ -> empty
+      _ ->
+        none
   , isValidHandle: \root handle -> case handle of
       Point_Handle p -> and [ isValidPoint root p ]
       SpanH_Handle sh _ -> and [ isValidPoint root p._L, isValidPoint root p._R ]
@@ -107,6 +112,7 @@ editor = Editor
           Expr _ -> "unimplemented"
       in
         f
+  , liftLabel: todo "liftLabel"
   }
 
 expr_LineBreak = C "LineBreak" % []

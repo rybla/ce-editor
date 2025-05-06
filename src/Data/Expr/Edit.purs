@@ -2,15 +2,15 @@ module Data.Expr.Edit where
 
 import Prelude
 
-import Control.Monad.Writer (tell)
-import Control.Plus (empty)
-import Data.Diagnostic as Diagnostic
-import Data.Expr (EditAt, EditInfo(..), Edit_(..), Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), ZipperH(..), atPoint, atSpan, atZipper, fromNePath, getEndPoints_SpanH, getPath_Zipper, getStepsAroundIndex, getTotalInnerPath_ZipperH, offset_Span, offset_innerLeft_Zipper, offset_outer_Zipper, unSpanContext, unZipper)
+import Control.Monad.Reader (ask)
+import Control.Monad.Trans.Class (lift)
+import Data.Expr (EditAt, EditInfo(..), Edit_(..), Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), ZipperH(..), EditM, atPoint, atSpan, atZipper, fromNePath, getEndPoints_SpanH, getPath_Zipper, getStepsAroundIndex, getTotalInnerPath_ZipperH, offset_Span, offset_innerLeft_Zipper, offset_outer_Zipper, unSpanContext, unZipper)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Move as Expr.Move
 import Data.Lazy as Lazy
 import Data.List ((:))
 import Data.Maybe (Maybe(..))
+import Data.Traversable (class Traversable, traverse)
 import Data.Unfoldable (none)
 import Utility (fromMaybeM, guardPure)
 
@@ -18,19 +18,26 @@ import Utility (fromMaybeM, guardPure)
 -- insert
 --------------------------------------------------------------------------------
 
-insert :: forall l. Show l => Fragment l -> EditAt l
+freshTraversable :: forall m t l1 l2. Monad m => Traversable t => t l1 -> EditM m l1 l2 (t l2)
+freshTraversable t = do
+  { liftLabel } <- ask
+  t # traverse (liftLabel >>> lift >>> lift >>> lift)
 
-insert _ { mb_handle: Nothing } = empty
+insert :: forall m l1 l2. Monad m => Show l1 => Show l2 => Fragment l1 -> EditAt m l1 l2
+
+insert _ { mb_handle: Nothing } = none
 
 -- to insert s:Span at p:Point, splice s at p.
 insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (Point_Handle (Point p)), clipboard } =
   pure $ Edit
     { info: Insert_EditInfo { insertion }
-    , output: Lazy.defer \_ -> pure
-        { root: unSpanContext at_p.outside s
-        , mb_handle: Just $ Point_Handle (Point { path: p.path, j: p.j + offset_Span s })
-        , clipboard
-        }
+    , output: Lazy.defer \_ -> do
+        s' <- s # freshTraversable
+        pure
+          { root: unSpanContext at_p.outside s'
+          , mb_handle: Just $ Point_Handle (Point { path: p.path, j: p.j + offset_Span s })
+          , clipboard
+          }
     }
   where
   at_p = e # atPoint (Point p)
@@ -40,14 +47,16 @@ insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (Point_Handle (Poi
 insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (Point_Handle (Point p)), clipboard } =
   pure $ Edit
     { info: Insert_EditInfo { insertion }
-    , output: Lazy.defer \_ -> pure
-        { root: unSpanContext at_p.outside (unZipper z (Span none))
-        , mb_handle: Just $ Point_Handle $ Point
-            { path: p.path <> (p.j # getStepsAroundIndex)._R : (z # getPath_Zipper)
-            , j: offset_innerLeft_Zipper z
-            }
-        , clipboard
-        }
+    , output: Lazy.defer \_ -> do
+        z' <- z # freshTraversable
+        pure
+          { root: unSpanContext at_p.outside (unZipper z' (Span none))
+          , mb_handle: Just $ Point_Handle $ Point
+              { path: p.path <> (p.j # getStepsAroundIndex)._R : (z # getPath_Zipper)
+              , j: offset_innerLeft_Zipper z
+              }
+          , clipboard
+          }
     }
   where
   at_p = e # atPoint (Point p)
@@ -56,16 +65,18 @@ insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (Point_Handle (P
 insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (SpanH_Handle (SpanH sh) sf), clipboard } =
   pure $ Edit
     { info: Insert_EditInfo { insertion }
-    , output: Lazy.defer \_ -> pure
-        { root: unSpanContext at_sh.outside s
-        , mb_handle: Just $ Point_Handle $ Point
-            { path: sh.path
-            , j: case sf of
-                Left_SpanFocus -> sh.j_L
-                Right_SpanFocus -> sh.j_L + offset_Span s
-            }
-        , clipboard
-        }
+    , output: Lazy.defer \_ -> do
+        s' <- s # freshTraversable
+        pure
+          { root: unSpanContext at_sh.outside s'
+          , mb_handle: Just $ Point_Handle $ Point
+              { path: sh.path
+              , j: case sf of
+                  Left_SpanFocus -> sh.j_L
+                  Right_SpanFocus -> sh.j_L + offset_Span s
+              }
+          , clipboard
+          }
     }
   where
   at_sh = e # atSpan (SpanH sh)
@@ -73,18 +84,20 @@ insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (SpanH_Handle (Spa
 insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (SpanH_Handle (SpanH sh) sf), clipboard } =
   pure $ Edit
     { info: Insert_EditInfo { insertion }
-    , output: Lazy.defer \_ -> pure
-        { root: unSpanContext at_sh.outside (unZipper z at_sh.here)
-        , mb_handle: Just $ SpanH_Handle
-            ( SpanH
-                { path: sh.path <> (sh.j_L # getStepsAroundIndex)._R : (z # getPath_Zipper)
-                , j_L: offset_innerLeft_Zipper z
-                , j_R: offset_innerLeft_Zipper z + offset_Span at_sh.here
-                }
-            )
-            sf
-        , clipboard
-        }
+    , output: Lazy.defer \_ -> do
+        z' <- z # freshTraversable
+        pure
+          { root: unSpanContext at_sh.outside (unZipper z' at_sh.here)
+          , mb_handle: Just $ SpanH_Handle
+              ( SpanH
+                  { path: sh.path <> (sh.j_L # getStepsAroundIndex)._R : (z # getPath_Zipper)
+                  , j_L: offset_innerLeft_Zipper z
+                  , j_R: offset_innerLeft_Zipper z + offset_Span at_sh.here
+                  }
+              )
+              sf
+          , clipboard
+          }
     }
   where
   at_sh = e # atSpan (SpanH sh)
@@ -93,23 +106,25 @@ insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (SpanH_Handle (S
 insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) zf), clipboard } =
   pure $ Edit
     { info: Insert_EditInfo { insertion }
-    , output: Lazy.defer \_ -> pure
-        { root: unSpanContext at_zh.outside s
-        , mb_handle: Just $ SpanH_Handle
-            ( SpanH
-                { path: zh.path_O
-                , j_L: zh.j_OL
-                , j_R: zh.j_OL + offset_Span s
-                }
-            )
-            ( case zf of
-                OuterLeft_ZipperFocus -> Left_SpanFocus
-                InnerLeft_ZipperFocus -> Left_SpanFocus
-                InnerRight_ZipperFocus -> Right_SpanFocus
-                OuterRight_ZipperFocus -> Right_SpanFocus
-            )
-        , clipboard
-        }
+    , output: Lazy.defer \_ -> do
+        s' <- s # freshTraversable
+        pure
+          { root: unSpanContext at_zh.outside s'
+          , mb_handle: Just $ SpanH_Handle
+              ( SpanH
+                  { path: zh.path_O
+                  , j_L: zh.j_OL
+                  , j_R: zh.j_OL + offset_Span s'
+                  }
+              )
+              ( case zf of
+                  OuterLeft_ZipperFocus -> Left_SpanFocus
+                  InnerLeft_ZipperFocus -> Left_SpanFocus
+                  InnerRight_ZipperFocus -> Right_SpanFocus
+                  OuterRight_ZipperFocus -> Right_SpanFocus
+              )
+          , clipboard
+          }
     }
   where
   at_zh = e # atZipper (ZipperH zh)
@@ -118,35 +133,37 @@ insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (ZipperH_Handle (Z
 insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) zf), clipboard } =
   pure $ Edit
     { info: Insert_EditInfo { insertion }
-    , output: Lazy.defer \_ -> pure
-        { root: unSpanContext at_zh.outside (unZipper z at_zh.inside)
-        , mb_handle: Just $ SpanH_Handle
-            ( let
-                outer = Lazy.defer \_ -> SpanH
-                  { path: zh.path_O
-                  , j_L: zh.j_OL
-                  , j_R: zh.j_OL + (offset_outer_Zipper z)._L + Index 1 + (offset_outer_Zipper z)._R
-                  }
-                inner = Lazy.defer \_ -> SpanH
-                  { path: ZipperH zh # getTotalInnerPath_ZipperH # fromNePath
-                  , j_L: offset_innerLeft_Zipper z
-                  , j_R: offset_innerLeft_Zipper z + (zh.j_IR - zh.j_IL)
-                  }
-              in
-                case zf of
-                  OuterLeft_ZipperFocus -> Lazy.force outer
-                  InnerLeft_ZipperFocus -> Lazy.force inner
-                  InnerRight_ZipperFocus -> Lazy.force inner
-                  OuterRight_ZipperFocus -> Lazy.force outer
-            )
-            ( case zf of
-                OuterLeft_ZipperFocus -> Left_SpanFocus
-                InnerLeft_ZipperFocus -> Left_SpanFocus
-                InnerRight_ZipperFocus -> Right_SpanFocus
-                OuterRight_ZipperFocus -> Right_SpanFocus
-            )
-        , clipboard
-        }
+    , output: Lazy.defer \_ -> do
+        z' <- z # freshTraversable
+        pure
+          { root: unSpanContext at_zh.outside (unZipper z' at_zh.inside)
+          , mb_handle: Just $ SpanH_Handle
+              ( let
+                  outer = Lazy.defer \_ -> SpanH
+                    { path: zh.path_O
+                    , j_L: zh.j_OL
+                    , j_R: zh.j_OL + (offset_outer_Zipper z')._L + Index 1 + (offset_outer_Zipper z')._R
+                    }
+                  inner = Lazy.defer \_ -> SpanH
+                    { path: ZipperH zh # getTotalInnerPath_ZipperH # fromNePath
+                    , j_L: offset_innerLeft_Zipper z'
+                    , j_R: offset_innerLeft_Zipper z' + (zh.j_IR - zh.j_IL)
+                    }
+                in
+                  case zf of
+                    OuterLeft_ZipperFocus -> Lazy.force outer
+                    InnerLeft_ZipperFocus -> Lazy.force inner
+                    InnerRight_ZipperFocus -> Lazy.force inner
+                    OuterRight_ZipperFocus -> Lazy.force outer
+              )
+              ( case zf of
+                  OuterLeft_ZipperFocus -> Left_SpanFocus
+                  InnerLeft_ZipperFocus -> Left_SpanFocus
+                  InnerRight_ZipperFocus -> Right_SpanFocus
+                  OuterRight_ZipperFocus -> Right_SpanFocus
+              )
+          , clipboard
+          }
     }
   where
   at_zh = e # atZipper (ZipperH zh)
@@ -155,18 +172,16 @@ insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (ZipperH_Handle 
 -- paste
 --------------------------------------------------------------------------------
 
-paste :: forall l. Show l => EditAt l
-paste state = do
-  frag <- state.clipboard # fromMaybeM do
-    tell [ Diagnostic.text "warning" "can't paste since clipboard is empty" ]
-    empty
-  insert frag state
+paste :: forall m l1 l2. Monad m => Show l1 => Show l2 => (l2 -> l1) -> EditAt m l1 l2
+paste lowerLabel state = do
+  frag <- state.clipboard # fromMaybeM none
+  insert (frag <#> lowerLabel) state
 
 --------------------------------------------------------------------------------
 -- copy
 --------------------------------------------------------------------------------
 
-copy :: forall l. Show l => EditAt l
+copy :: forall m l. Monad m => Show l => EditAt m l l
 
 copy state@{ mb_handle: Just (Point_Handle _) } =
   pure $ Edit
@@ -191,7 +206,7 @@ copy state@{ root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) _zf) } =
         pure state { clipboard = pure $ Zipper_Fragment at_zh.here }
     }
 
-copy { mb_handle: Nothing } = empty
+copy { mb_handle: Nothing } = none
 
 --------------------------------------------------------------------------------
 -- delete
@@ -199,7 +214,7 @@ copy { mb_handle: Nothing } = empty
 -- same as cut except preserves clipboard
 --------------------------------------------------------------------------------
 
-delete :: forall l. Show l => EditAt l
+delete :: forall m l. Monad m => Show l => EditAt m l l
 delete state = do
   Edit edit <- cut state
   pure $ Edit edit { output = edit.output # map (map _ { clipboard = state.clipboard }) }
@@ -211,23 +226,23 @@ delete state = do
 -- before deleting.
 --------------------------------------------------------------------------------
 
-delete' :: forall l. Show l => { isValidHandle :: Expr l -> Handle -> Boolean } -> EditAt l
+delete' :: forall m l. Monad m => Show l => { isValidHandle :: Expr l -> Handle -> Boolean } -> EditAt m l l
 delete' { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } = do
   let
     mb_handle' = Expr.Move.movePointUntil state.root Expr.Move.L p0 \p ->
       e # Expr.Drag.drag (Point_Handle p0) p >>= guardPure (isValidHandle e)
   case mb_handle' of
-    Nothing -> empty
+    Nothing -> none
     Just handle' -> delete state { mb_handle = Just handle' }
 delete' _ state = delete state
 
-delete'_sibling :: forall l. Show l => { isValidHandle :: Expr l -> Handle -> Boolean } -> EditAt l
+delete'_sibling :: forall m l. Monad m => Show l => { isValidHandle :: Expr l -> Handle -> Boolean } -> EditAt m l l
 delete'_sibling { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } = do
   let
     mb_handle' = Expr.Move.movePointUntil state.root Expr.Move.L_sibling p0 \p ->
       e # Expr.Drag.drag (Point_Handle p0) p >>= guardPure (isValidHandle e)
   case mb_handle' of
-    Nothing -> empty
+    Nothing -> none
     Just handle' -> delete state { mb_handle = Just handle' }
 delete'_sibling _ state = delete state
 
@@ -236,7 +251,7 @@ delete'_sibling _ state = delete state
 -- law: cut = copy >>> delete
 --------------------------------------------------------------------------------
 
-cut :: forall l. Show l => EditAt l
+cut :: forall m l. Monad m => Show l => EditAt m l l
 
 cut { root: e, mb_handle: Just (Point_Handle p) } =
   pure $ Edit
@@ -304,5 +319,5 @@ cut { root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) zf) } =
           }
     }
 
-cut { mb_handle: Nothing } = empty
+cut { mb_handle: Nothing } = none
 

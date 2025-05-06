@@ -3,6 +3,7 @@ module Editor.Example.UlcV1 where
 import Prelude
 
 import Control.Monad.Reader (ask, local)
+import Control.Monad.Trans.Class (lift)
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), Step(..), atPoint, atSubExpr, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth)
@@ -15,12 +16,13 @@ import Data.String as String
 import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe)
-import Editor (Label(..), getCon)
+import Editor (Label(..), freshTraversable, getCon)
 import Editor.Common (Editor(..), assembleExpr_default)
 import Editor.Notation (keyword, literal, punctuation)
 import Halogen.HTML as HH
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
+import Utility (todo)
 
 newtype C = C String
 
@@ -49,28 +51,29 @@ editor = Editor
   , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu: \state query -> case query of
-      "lam" ->
-        [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
-        , "LamParams" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamParams) state
-        , "LamBody" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamBody) state
-        ]
-      "app" ->
-        [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
-        , "App" /\ Expr.Edit.insert (Zipper_Fragment zipper_App) state
-        ]
-      "let" ->
-        [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
-        , "LetVar" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetVar) state
-        , "LetImpl" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetImpl) state
-        , "LetBody" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetBody) state
-        ]
-      _ ->
-        [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
-        ]
+      -- "lam" ->
+      --   [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
+      --   , "LamParams" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamParams) state
+      --   , "LamBody" /\ Expr.Edit.insert (Zipper_Fragment zipper_LamBody) state
+      --   ]
+      -- "app" ->
+      --   [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
+      --   , "App" /\ Expr.Edit.insert (Zipper_Fragment zipper_App) state
+      --   ]
+      -- "let" ->
+      --   [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
+      --   , "LetVar" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetVar) state
+      --   , "LetImpl" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetImpl) state
+      --   , "LetBody" /\ Expr.Edit.insert (Zipper_Fragment zipper_LetBody) state
+      --   ]
+      -- _ ->
+      --   [ "Var" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
+      --   ]
+      _ -> todo ""
   , getShortcut: \ki state -> case unit of
-      _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] -> do
+      _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] ->
         Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
-      _ | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] -> do
+      _ | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] ->
         Expr.Edit.insert (Zipper_Fragment zipper_App) state
       _ -> empty
   , isValidHandle: \root handle -> case handle of
@@ -172,6 +175,7 @@ editor = Editor
           Expr _ -> "unimplemented"
       in
         f
+  , liftLabel: todo "liftLabel"
   }
 
 increaseIndentLevel = local \ctx -> ctx { indentLevel = ctx.indentLevel + 1 }

@@ -4,6 +4,7 @@ import Prelude
 
 import Control.Alternative (guard)
 import Control.Monad.Maybe.Trans (MaybeT)
+import Control.Monad.Reader (ReaderT)
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Diagnostic as Diagnostic
@@ -729,17 +730,26 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
 -- Edit
 --------------------------------------------------------------------------------
 
-type EditMenu l = String -> Array (String /\ MaybeT Diagnostic.M (Edit l))
+type EditMenu m l l' = String -> Array (String /\ Edit m l l')
 
-type EditAt l = PureEditorState l -> MaybeT Diagnostic.M (Edit l)
+type EditAt m l l' = PureEditorState l' -> Maybe (Edit m l l')
 
-type Edit l = Edit_ l
-  ( MaybeT Diagnostic.M
-      { root :: Expr l
-      , mb_handle :: Maybe Handle
-      , clipboard :: Maybe (Fragment l)
-      }
-  )
+type EditM :: (Type -> Type) -> Type -> Type -> Type -> Type
+type EditM m l l' = ReaderT (EditCtx m l l') (MaybeT (Diagnostic.MT m))
+
+type EditCtx :: (Type -> Type) -> Type -> Type -> Type
+type EditCtx m l l' =
+  { liftLabel :: l -> m l'
+  }
+
+type Edit m l l' =
+  Edit_ l
+    ( EditM m l l'
+        { root :: Expr l'
+        , mb_handle :: Maybe Handle
+        , clipboard :: Maybe (Fragment l')
+        }
+    )
 
 data Edit_ l a = Edit
   { info :: EditInfo l
@@ -776,7 +786,7 @@ type PureEditorState l =
   }
 
 -- TODO: is this layer necessary? I used to merge with existing clipboard but that's already accounted for when the Edit is constructed, so no need to do it here
-applyEdit :: forall l. Show l => Edit l -> PureEditorState l -> MaybeT Diagnostic.M (PureEditorState l)
+applyEdit :: forall m l l'. Monad m => Show l => Edit m l l' -> PureEditorState l' -> EditM m l l' (PureEditorState l')
 applyEdit (Edit edit) _state = do
   state' <- edit.output # Lazy.force
   pure

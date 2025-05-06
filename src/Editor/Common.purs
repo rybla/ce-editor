@@ -3,14 +3,17 @@ module Editor.Common where
 import Prelude
 
 import Control.Monad.Maybe.Trans (MaybeT)
-import Control.Monad.Reader (Reader, runReader)
+import Control.Monad.Reader (Reader, ReaderT, ask, runReader)
+import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
 import Data.Diagnostic as Diagnostic
-import Data.Expr (Edit, EditMenu, Expr, Handle, PureEditorState)
+import Data.Expr (Edit, EditMenu, Expr, Handle, PureEditorState, EditM)
 import Data.Foldable (fold)
-import Data.Maybe (fromMaybe)
-import Data.Traversable (traverse)
+import Data.Maybe (Maybe, fromMaybe)
+import Data.Traversable (class Traversable, traverse)
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
+import Effect.Aff (Aff)
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Ui.Event (KeyInfo)
@@ -33,15 +36,41 @@ instance Ord c => Ord (Label c r) where
 getCon :: forall c r. Label c r -> c
 getCon (Label { con }) = con
 
+--------------------------------------------------------------------------------
+
+type IdRow r = (id :: String | r)
+
+freshTraversable
+  :: forall m t c r
+   . Monad m
+  => Traversable t
+  => t (Label c ())
+  -> EditM m (Label c ()) (Label c (IdRow r)) (t (Label c (IdRow r)))
+freshTraversable t = do
+  { liftLabel } <- ask
+  lift $ t # traverse (liftLabel >>> lift >>> lift)
+
+--------------------------------------------------------------------------------
+
 data Editor c = Editor
   { name :: String
   , initialExpr :: Expr (Label c ())
   , initialHandle :: Handle
-  , getEditMenu :: PureEditorState (Label c ()) -> EditMenu (Label c ())
-  , getShortcut :: KeyInfo -> PureEditorState (Label c ()) -> MaybeT Diagnostic.M (Edit (Label c ()))
+  , getEditMenu ::
+      forall m
+       . Monad m
+      => PureEditorState (Label c ())
+      -> EditMenu m (Label c ()) (Label c ())
+  , getShortcut ::
+      forall m r
+       . Monad m
+      => KeyInfo
+      -> PureEditorState (Label c r)
+      -> Maybe (Edit m (Label c ()) (Label c r))
   , isValidHandle :: forall r. Expr (Label c r) -> Handle -> Boolean
   , assembleExpr :: AssembleExpr c
   , printExpr :: forall r. Expr (Label c r) -> String
+  , liftLabel :: Label c () -> Aff (Label c ())
   }
 
 newtype ExistsEditor = ExistsEditor (forall r. ExistsEditorK r -> r)

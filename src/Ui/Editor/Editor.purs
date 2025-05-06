@@ -3,8 +3,10 @@ module Ui.Editor.Editor where
 import Prelude
 
 import Control.Monad.Maybe.Trans (runMaybeT)
+import Control.Monad.Reader (runReaderT)
 import Control.Monad.State (get, modify, put)
-import Control.Monad.Writer (runWriter)
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Writer (runWriterT)
 import Data.Array as Array
 import Data.Expr (Edit, EditAt, Expr, Fragment(..), Handle(..), Path, Point, Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
@@ -38,7 +40,7 @@ import Ui.Editor.Point as Point
 import Ui.Event (alt, cmd, keyEq, keyMember, keyRegex, not_alt, not_cmd, not_shift, shift)
 import Ui.Event (fromEventToKeyInfo, matchKeyInfoPattern') as Event
 import Ui.Halogen (classes)
-import Utility (guardPure, isNonSpace_regex, (:%=), (:=))
+import Utility (guardPure, isNonSpace_regex, todo, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -122,9 +124,8 @@ handleAction (KeyDown_EditorAction event) = do
     _ -> pure unit
   else case unit of
     -- shortcut
-    _ | Just edit /\ _diagnostics <- editor.getShortcut ki purestate # runMaybeT # runWriter -> do
+    _ | Just edit <- editor.getShortcut ki purestate -> do
       liftEffect $ event # Event.preventDefault
-      -- TODO: report diagnostics
       submitEdit edit
     -- move
     _ | Just dir <- ki # Expr.Move.fromKeyInfoToMoveDir -> do
@@ -196,7 +197,7 @@ handleAction (KeyDown_EditorAction event) = do
     -- copy
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "c", cmd, not_shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
-      submitEditAt Expr.Edit.copy
+      void $ todo "" -- submitEditAt Expr.Edit.copy
       state' <- get
       case state'.clipboard of
         Just (Span_Fragment (Span es)) -> do
@@ -206,19 +207,19 @@ handleAction (KeyDown_EditorAction event) = do
     -- delete
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
-      submitEditAt $ Expr.Edit.delete' { isValidHandle: editor.isValidHandle }
+      void $ todo "" -- submitEditAt $ Expr.Edit.delete' { isValidHandle: editor.isValidHandle }
     -- delete sibling
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, alt ] -> do
       liftEffect $ event # Event.preventDefault
-      submitEditAt $ Expr.Edit.delete'_sibling { isValidHandle: editor.isValidHandle }
+      void $ todo "" -- submitEditAt $ Expr.Edit.delete'_sibling { isValidHandle: editor.isValidHandle }
     -- cut
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "x", cmd, not_shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
-      submitEditAt Expr.Edit.cut
+      void $ todo "" -- submitEditAt Expr.Edit.cut
     -- paste
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "v", cmd, not_shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
-      submitEditAt Expr.Edit.paste
+      void $ todo "" -- submitEditAt Expr.Edit.paste
     -- redo
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "z", cmd, shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
@@ -234,14 +235,14 @@ handleAction (KeyDown_EditorAction event) = do
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu: editor.getEditMenu purestate, query: "" }
+          todo "" -- H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu: editor.getEditMenu purestate, query: "" }
     _ | ki # Event.matchKeyInfoPattern' [ keyRegex isNonSpace_regex, not_cmd, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
           let point = handle # getFocusPoint
-          H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu: editor.getEditMenu purestate, query: (unwrap ki).key }
+          todo "" -- H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu: editor.getEditMenu purestate, query: (unwrap ki).key }
     -- unrecognized keyboard event
     _ -> pure unit
 
@@ -270,7 +271,7 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
             when (editor.isValidHandle state.root h) do
               setHandle (pure h')
 handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput edit))) = do
-  submitEdit edit
+  todo "" -- submitEdit edit
 
 openBuffer_keys = Set.fromFoldable [ "Tab" ]
 
@@ -330,20 +331,24 @@ loadSnapshot s = do
 -- submitEdit
 --------------------------------------------------------------------------------
 
-submitEditAt :: forall c. Show c => EditAt (Label c ()) -> EditorM c Unit
+submitEditAt :: forall c. Show c => EditAt Aff (Label c ()) (Label c ()) -> EditorM c Unit
 submitEditAt editAt = do
   state <- get >>= (liftEffect <<< toPureEditorState)
-  let mb_edit /\ _diagnostics = state # editAt # runMaybeT # runWriter
-  -- TODO: report diagnostics
-  case mb_edit of
+  case editAt state of
     Nothing -> pure unit
     Just edit -> submitEdit edit
 
-submitEdit :: forall c. Show c => Edit (Label c ()) -> EditorM c Unit
+submitEdit :: forall c. Show c => Edit Aff (Label c ()) (Label c ()) -> EditorM c Unit
 submitEdit edit = do
-  input <- get >>= (liftEffect <<< toPureEditorState)
+  { editor: Editor editor } <- get
+  purestate_input <- get >>= (liftEffect <<< toPureEditorState)
 
-  let mb_output /\ _diagnostics = applyEdit edit input # runMaybeT # runWriter
+  mb_output /\ _diagnostics <-
+    applyEdit edit purestate_input
+      # flip runReaderT { liftLabel: editor.liftLabel }
+      # runMaybeT
+      # runWriterT
+      # lift
   case mb_output of
     Nothing -> do
       when Config.log_edits do
@@ -354,14 +359,14 @@ submitEdit edit = do
           , "edit:"
           , show edit
           , "input state:"
-          , "{ root: " <> show input.root <> "\n, mb_handle: " <> show input.mb_handle <> "\n, clipboard: " <> show input.clipboard <> "\n}"
+          , "{ root: " <> show purestate_input.root <> "\n, mb_handle: " <> show purestate_input.mb_handle <> "\n, clipboard: " <> show purestate_input.clipboard <> "\n}"
           , "output state:"
           , "{{failed}}"
           , Array.replicate 10 "====" # fold
           ]
       -- TODO: report diagnostics
       pure unit
-    Just output -> do
+    Just purestate_output -> do
       when Config.log_edits do
         Console.log $ String.joinWith "\n"
           [ Array.replicate 10 "====" # fold
@@ -370,16 +375,16 @@ submitEdit edit = do
           , "edit:"
           , show edit
           , "input state:"
-          , "{ root: " <> show input.root <> "\n, mb_handle: " <> show input.mb_handle <> "\n, clipboard: " <> show input.clipboard <> "\n}"
+          , "{ root: " <> show purestate_input.root <> "\n, mb_handle: " <> show purestate_input.mb_handle <> "\n, clipboard: " <> show purestate_input.clipboard <> "\n}"
           , "output state:"
-          , "{ root: " <> show output.root <> "\n, mb_handle: " <> show output.mb_handle <> "\n, clipboard: " <> show output.clipboard <> "\n}"
+          , "{ root: " <> show purestate_output.root <> "\n, mb_handle: " <> show purestate_output.mb_handle <> "\n, clipboard: " <> show purestate_output.clipboard <> "\n}"
           , Array.replicate 10 "====" # fold
           , Array.replicate 10 "====" # fold
           ]
       modifyEditorState _
-        { root = output.root
-        , initial_mb_handle = output.mb_handle
-        , clipboard = output.clipboard
+        { root = purestate_output.root
+        , initial_mb_handle = purestate_output.mb_handle
+        , clipboard = purestate_output.clipboard
         }
 
 --------------------------------------------------------------------------------
