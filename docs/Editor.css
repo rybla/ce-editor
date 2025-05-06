@@ -379,7 +379,7 @@
   }
 
   &.indentation {
-    width: 2em;
+    width: calc(var(--Handle--width) + 0.5em);
     justify-content: flex-end;
   }
 
