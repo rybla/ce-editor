@@ -1,11 +1,11 @@
 module Test.Expr (spec) where
 
-import Data.Expr
 import Prelude
 
 import Control.Monad.Maybe.Trans (runMaybeT)
 import Control.Monad.Writer (runWriter)
 import Data.Array as Array
+import Data.Expr (EditAt, Expr, ExprContext(..), Fragment(..), Handle(..), Index(..), NePath, Path, Point(..), PureEditorState, SpanContext(..), SpanFocus(..), SpanH(..), SpanTooth(..), Step(..), Zipper(..), ZipperFocus(..), ZipperH(..), applyEdit, areOrderedSiblings_Point, getEndPoints_SpanH, toNePath, (%))
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move

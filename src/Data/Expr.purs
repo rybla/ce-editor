@@ -2,19 +2,18 @@ module Data.Expr where
 
 import Prelude
 
-import Control.Alternative (guard, (<|>))
+import Control.Alternative (guard)
 import Control.Monad.Maybe.Trans (MaybeT)
-import Control.Monad.Writer (WriterT, Writer)
 import Control.Plus (empty)
 import Data.Array as Array
+import Data.Diagnostic as Diagnostic
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Foldable (class Foldable, foldr, length)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Generic.Rep (class Generic)
-import Data.Identity (Identity)
 import Data.Lazy (Lazy)
-import Data.Lazy (force) as Lazy
+import Data.Lazy as Lazy
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe', isJust, maybe)
@@ -28,7 +27,6 @@ import Data.Traversable (class Traversable, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested (type (/\), (/\))
 import Pretty (class Pretty, parens, pretty)
-import Ui.DiagnosticsPanel.Common (Diagnostic)
 import Utility (extractAt_Array, extractSpan_Array, impossible, spaces)
 
 --------------------------------------------------------------------------------
@@ -272,7 +270,9 @@ instance Ord Point where
 
 newtype Tooth l = Tooth { l :: l, kids_L :: Array (Expr l), kids_R :: Array (Expr l) }
 
-mkTooth l kids_L kids_R = Tooth { l, kids_L, kids_R }
+mkTooth l (kids_L /\ kids_R) = Tooth { l, kids_L, kids_R }
+
+infix 0 mkTooth as %<
 
 derive instance Generic (Tooth l) _
 
@@ -321,6 +321,10 @@ mapIndexes_Tooth f tooth = rangeIndexes j # map f
 --------------------------------------------------------------------------------
 
 newtype SpanTooth l = SpanTooth { l :: l, kids_L :: Array (Expr l), kids_R :: Array (Expr l) }
+
+mkSpanTooth l (kids_L /\ kids_R) = SpanTooth { l, kids_L, kids_R }
+
+infix 0 mkSpanTooth as %<*
 
 derive instance Generic (SpanTooth l) _
 
@@ -722,22 +726,15 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
     if i /= i' then Id_Diff else go path e'
 
 --------------------------------------------------------------------------------
--- M
---------------------------------------------------------------------------------
-
--- TODO: refactor this out
-type M = Writer (Array Diagnostic)
-
---------------------------------------------------------------------------------
 -- Edit
 --------------------------------------------------------------------------------
 
-type EditMenu l = String -> Array (String /\ MaybeT M (Edit l))
+type EditMenu l = String -> Array (String /\ MaybeT Diagnostic.M (Edit l))
 
-type EditAt l = PureEditorState l -> MaybeT M (Edit l)
+type EditAt l = PureEditorState l -> MaybeT Diagnostic.M (Edit l)
 
 type Edit l = Edit_ l
-  ( MaybeT M
+  ( MaybeT Diagnostic.M
       { root :: Expr l
       , mb_handle :: Maybe Handle
       , clipboard :: Maybe (Fragment l)
@@ -779,7 +776,7 @@ type PureEditorState l =
   }
 
 -- TODO: is this layer necessary? I used to merge with existing clipboard but that's already accounted for when the Edit is constructed, so no need to do it here
-applyEdit :: forall l. Show l => Edit l -> PureEditorState l -> MaybeT M (PureEditorState l)
+applyEdit :: forall l. Show l => Edit l -> PureEditorState l -> MaybeT Diagnostic.M (PureEditorState l)
 applyEdit (Edit edit) _state = do
   state' <- edit.output # Lazy.force
   pure

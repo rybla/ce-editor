@@ -1,8 +1,8 @@
 module Data.Expr.Drag where
 
-import Data.Expr
 import Prelude
 
+import Data.Expr (Expr, Handle(..), Point(..), SpanFocus(..), SpanH(..), ZipperFocus(..), ZipperH(..), areOrderedSiblings_Point, atSubExpr, fromNePath, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getIndexesAroundStep, getTotalInnerPath_ZipperH, isAncestorSiblingOf_Point, isPrefix_Path, (.<|), (|<.))
 import Data.Maybe (Maybe(..))
 import Data.NonEmpty ((:|))
 import Data.NonEmpty as Ne

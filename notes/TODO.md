@@ -2,6 +2,9 @@
 
 Priority:
 
+- [ ] hardcode Editor label as string?
+  - not doing this for now since it'll make it more difficult to add more type vars (such as for render-time annotation) later
+
 - [ ] make a simple little way for the user to "run" their program, just for fun
 - [ ] create interface for specific Editors to add annotations to rendered output
   - to keep things simple, these annotations will be re-computed every time you make a change

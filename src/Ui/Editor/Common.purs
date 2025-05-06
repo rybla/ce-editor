@@ -7,13 +7,13 @@ import Data.Eq.Generic (genericEq)
 import Data.Expr (Edit, EditMenu, Expr, Fragment, Handle, Point, PureEditorState)
 import Data.Generic.Rep (class Generic)
 import Data.List (List)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe)
 import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
 import Data.Show.Generic (genericShow)
-import Data.Tuple.Nested (type (/\), (/\))
-import Editor (Editor)
-import Editor.Common (ExistsEditor(..))
+import Data.Tuple.Nested (type (/\))
+import Editor (Editor, Label)
+import Editor.Common (ExistsEditor)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Ref (Ref)
@@ -58,24 +58,24 @@ type AppHTML = H.ComponentHTML AppAction AppSlots Aff
 type EditorQuery :: Type -> Type
 type EditorQuery = Const Void
 
-type EditorInput l =
-  { editor :: Editor l
+type EditorInput c =
+  { editor :: Editor c
   }
 
 type EditorOutput = Void
 
-type EditorState l =
-  { editor :: Editor l
-  , root :: Expr l
+type EditorState c =
+  { editor :: Editor c
+  , root :: Expr (Label c ())
   , initial_mb_handle :: Maybe Handle
   , ref_mb_handle :: Ref (Maybe Handle)
   , ref_mb_dragOrigin :: Ref (Maybe Handle)
-  , clipboard :: Maybe (Fragment l)
-  , ref_history :: Ref (List (Snapshot l))
-  , ref_future :: Ref (List (Snapshot l))
+  , clipboard :: Maybe (Fragment (Label c ()))
+  , ref_history :: Ref (List (Snapshot c))
+  , ref_future :: Ref (List (Snapshot c))
   }
 
-toPureEditorState :: forall l. EditorState l -> Effect (PureEditorState l)
+toPureEditorState :: forall c. EditorState c -> Effect (PureEditorState (Label c ()))
 toPureEditorState state = do
   mb_handle <- state.ref_mb_handle # Ref.read
   pure
@@ -84,51 +84,51 @@ toPureEditorState state = do
     , clipboard: state.clipboard
     }
 
-type Snapshot l =
-  { root :: Expr l
+type Snapshot c =
+  { root :: Expr (Label c ())
   , mb_handle :: Maybe Handle
   }
 
-data EditorAction l
+data EditorAction c
   = Initialize_EditorAction
-  | Receive_EditorAction (EditorInput l)
-  | PointOutput_EditorAction (PointOutput l)
+  | Receive_EditorAction (EditorInput c)
+  | PointOutput_EditorAction (PointOutput c)
   | MouseUp_EditorAction Event
   | KeyDown_EditorAction Event
   | Rerender_EditorAction
 
-type EditorSlots l =
-  ( "Point" :: H.Slot (PointQuery l) (PointOutput l) Point
+type EditorSlots c =
+  ( "Point" :: H.Slot (PointQuery c) (PointOutput c) Point
   )
 
-type EditorM l = H.HalogenM (EditorState l) (EditorAction l) (EditorSlots l) EditorOutput Aff
+type EditorM c = H.HalogenM (EditorState c) (EditorAction c) (EditorSlots c) EditorOutput Aff
 
-type EditorHTML l = H.ComponentHTML (EditorAction l) (EditorSlots l) Aff
+type EditorHTML c = H.ComponentHTML (EditorAction c) (EditorSlots c) Aff
 
 --------------------------------------------------------------------------------
 -- Point
 --------------------------------------------------------------------------------
 
-data PointQuery l a
+data PointQuery c a
   = ModifyStatuses_PointQuery (Set PointStatus -> Set PointStatus) a
-  | SetBufferInput_PointQuery (Maybe (BufferInput l)) a
-  | GetBufferInput_PointQuery (Maybe (BufferInput l) -> a)
+  | SetBufferInput_PointQuery (Maybe (BufferInput c)) a
+  | GetBufferInput_PointQuery (Maybe (BufferInput c) -> a)
 
-type PointInput l =
-  { editor :: Editor l
+type PointInput c =
+  { editor :: Editor c
   , point :: Point
   }
 
-data PointOutput l
+data PointOutput c
   = MouseDown_PointOutput MouseEvent Point
   | MouseEnter_PointOutput MouseEvent Point
-  | BufferOutput_PointOutput (BufferOutput l)
+  | BufferOutput_PointOutput (BufferOutput c)
 
-type PointState l =
-  { editor :: Editor l
+type PointState c =
+  { editor :: Editor c
   , point :: Point
   , statuses :: Set PointStatus
-  , mb_bufferInput :: Maybe (BufferInput l)
+  , mb_bufferInput :: Maybe (BufferInput c)
   }
 
 data PointStatus
@@ -153,18 +153,18 @@ instance Eq PointStatus where
 instance Ord PointStatus where
   compare x = genericCompare x
 
-data PointAction l
+data PointAction c
   = Initialize_PointAction
-  | Receive_PointAction (PointInput l)
+  | Receive_PointAction (PointInput c)
   | MouseDown_PointAction MouseEvent
   | MouseEnter_PointAction MouseEvent
-  | BufferOutput_PointAction (BufferOutput l)
+  | BufferOutput_PointAction (BufferOutput c)
 
-type PointSlots l = ("Buffer" :: H.Slot BufferQuery (BufferOutput l) Unit)
+type PointSlots c = ("Buffer" :: H.Slot BufferQuery (BufferOutput c) Unit)
 
-type PointM l = H.HalogenM (PointState l) (PointAction l) (PointSlots l) (PointOutput l) Aff
+type PointM c = H.HalogenM (PointState c) (PointAction c) (PointSlots c) (PointOutput c) Aff
 
-type PointHTML l = H.ComponentHTML (PointAction l) (PointSlots l) Aff
+type PointHTML c = H.ComponentHTML (PointAction c) (PointSlots c) Aff
 
 --------------------------------------------------------------------------------
 -- Buffer
@@ -176,23 +176,23 @@ type BufferQuery = Const Void
 -- TODO: what stuff does the buffer need to know about? can't it just have a
 -- list of edits that have already been computed and then the buffer is justt
 -- searching through them, right?
-type BufferInput l =
-  { editor :: Editor l
+type BufferInput c =
+  { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu l
+  , menu :: EditMenu (Label c ())
   }
 
-data BufferOutput l =
-  SubmitBuffer_BufferOutput (Edit l)
+data BufferOutput c =
+  SubmitBuffer_BufferOutput (Edit (Label c ()))
 
-type BufferState l =
-  { editor :: Editor l
+type BufferState c =
+  { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu l
+  , menu :: EditMenu (Label c ())
   , option_i :: Maybe Int
-  , menu_queried :: Array (String /\ Edit l)
+  , menu_queried :: Array (String /\ Edit (Label c ()))
   }
 
 data BufferAction
@@ -203,7 +203,7 @@ data BufferAction
 type BufferSlots :: Row Type
 type BufferSlots = ()
 
-type BufferM l = H.HalogenM (BufferState l) BufferAction BufferSlots (BufferOutput l) Aff
+type BufferM c = H.HalogenM (BufferState c) BufferAction BufferSlots (BufferOutput c) Aff
 
 type BufferHTML = H.ComponentHTML BufferAction BufferSlots Aff
 

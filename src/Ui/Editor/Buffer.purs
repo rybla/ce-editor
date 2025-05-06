@@ -22,7 +22,7 @@ import Data.String.CodePoints as String.CodePoints
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..), RenderM)
+import Editor (Editor(..), RenderM, Label)
 import Editor.Common (runRenderM)
 import Effect.Aff (Aff)
 import Effect.Class.Console as Console
@@ -52,7 +52,7 @@ import Web.UIEvent.KeyboardEvent.EventTypes as KeyboardEvent
 -- component
 --------------------------------------------------------------------------------
 
-component :: forall l. Show l => H.Component BufferQuery (BufferInput l) (BufferOutput l) Aff
+component :: forall c. Show c => H.Component BufferQuery (BufferInput c) (BufferOutput c) Aff
 component = H.mkComponent { initialState, eval, render }
 
 --------------------------------------------------------------------------------
@@ -171,7 +171,7 @@ fromKeyToCycleDir _ = none
 
 refLabel_input = H.RefLabel "input"
 
-render :: forall l. Show l => BufferState l -> BufferHTML
+render :: forall c. Show c => BufferState c -> BufferHTML
 render state =
   HH.div [ classes $ fold [ [ "Buffer" ] ] ]
     [ HH.input
@@ -203,16 +203,16 @@ render state =
 
     ]
 
-renderExpr :: forall l w i. Show l => Editor l -> Path -> Expr l -> RenderM (Array (HTML w i))
-renderExpr editor path expr = Expr.Render.renderExpr (renderArgs editor) path expr
-
-renderPoint :: forall l w i. Show l => Editor l -> Point -> HTML w i
-renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]
-
-renderArgs :: forall l w i. Show l => Editor l -> RenderArgs l w i
+renderArgs :: forall c w i. Show c => Editor c -> RenderArgs c w i
 renderArgs (Editor editor) =
-  { render_kid: renderExpr (Editor editor)
-  , render_point: renderPoint (Editor editor)
+  { renderKid: renderExpr (Editor editor)
+  , renderPoint: renderPoint (Editor editor)
   , assembleExpr: editor.assembleExpr
   }
+  where
+  renderExpr :: forall c w i. Show c => Editor c -> Path -> Expr (Label c ()) -> RenderM (Array (HTML w i))
+  renderExpr editor path expr = Expr.Render.renderExpr (renderArgs editor) path expr
+
+  renderPoint :: forall c w i. Show c => Editor c -> Point -> HTML w i
+  renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]
 

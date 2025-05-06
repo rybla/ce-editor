@@ -1,11 +1,11 @@
 module Editor.Example.UlcV1 where
 
-import Data.Expr
 import Prelude
 
 import Control.Monad.Reader (ask, local)
 import Control.Plus (empty)
 import Data.Array as Array
+import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), Step(..), atPoint, atSubExpr, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth)
 import Data.Expr.Edit as Expr.Edit
 import Data.Foldable (and, fold)
 import Data.List (List(..), (:))
@@ -15,27 +15,38 @@ import Data.String as String
 import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe)
+import Editor (Label)
 import Editor.Common (Editor(..), assembleExpr_default)
 import Editor.Notation (keyword, literal, punctuation)
 import Halogen.HTML as HH
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 
-{-
+newtype C = C String
 
-t = x
-  | (λ x+ . t)
-  | (t*)
-  | (let x = t in t)
+instance Show C where
+  show (C s) = s
 
--}
+derive newtype instance Eq C
 
-type L = String
+derive newtype instance Ord C
 
-editor :: Editor L
+mkExprC c es = mkExpr { con: c } es
+
+infix 0 mkExprC as %
+
+mkToothC c es = mkTooth { con: c } es
+
+infix 0 mkToothC as %<
+
+mkSpanToothC c es = mkSpanTooth { con: c } es
+
+infix 0 mkSpanToothC as %<*
+
+editor :: Editor C
 editor = Editor
   { name: "UlcV1"
-  , initialExpr: "Root" % []
+  , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu: \state query -> case query of
       "lam" ->
@@ -72,92 +83,92 @@ editor = Editor
         p = getEndPoints_ZipperH zh
   , assembleExpr: \args -> do
       ctx <- ask
-      case args.label /\ args.points /\ args.kids of
-        "Root" /\ ps /\ ks -> do
+      case args.label.con /\ args.points /\ args.kids of
+        C "Root" /\ ps /\ ks -> do
           ks' <- ks # sequence
           pure $ fold $ Array.zipWith (\p k -> [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ]
 
-        "LineBreak" /\ [ _p0 ] /\ [] -> do
+        C "LineBreak" /\ [ _p0 ] /\ [] -> do
           pure $ fold [ linebreak, indentations ctx.indentLevel ]
-        "LineBreak" /\ _ /\ _ -> do
+        C "LineBreak" /\ _ /\ _ -> do
           assembleExpr_default args
 
-        "Var" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
+        C "Var" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
           k0' <- k0
           pure $ fold [ k0' ]
 
-        "Lam" /\ _ /\ [ k0, k1 ] -> do
+        C "Lam" /\ _ /\ [ k0, k1 ] -> do
           k0' <- increaseIndentLevel do k0
           k1' <- increaseIndentLevel do k1
           pure $ fold [ punctuation "(", keyword "λ", k0', keyword ".", k1', punctuation ")" ]
-        "Lam" /\ _ /\ _ -> do
+        C "Lam" /\ _ /\ _ -> do
           assembleExpr_default args
         -- 
-        "LamParams" /\ [ p ] /\ [] -> do
+        C "LamParams" /\ [ p ] /\ [] -> do
           pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
-        "LamParams" /\ ps /\ ks -> do
+        C "LamParams" /\ ps /\ ks -> do
           ks' <- ks # sequence
           pure $ fold $ Array.zipWith (\p k -> do [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ]
         -- 
-        "LamBody" /\ [ p ] /\ [] -> do
+        C "LamBody" /\ [ p ] /\ [] -> do
           pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
-        "LamBody" /\ [ p0, p1 ] /\ [ k0 ] -> do
+        C "LamBody" /\ [ p0, p1 ] /\ [ k0 ] -> do
           k0' <- k0
           pure $ fold [ [ p0 ], k0', [ p1 ] ]
-        "LamBody" /\ ps /\ ks -> do
+        C "LamBody" /\ ps /\ ks -> do
           ks' <- ks # sequence
           pure $ fold $ [ beforeExtraKid ] <> Array.zipWith (\p k -> do [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ] <> [ afterExtraKid ]
         -- 
-        "App" /\ ps /\ ks -> do
+        C "App" /\ ps /\ ks -> do
           ks' <- increaseIndentLevel do ks # sequence
           pure $ fold $ fold $ [ [ punctuation "(" ], Array.zipWith (\p k -> do [ p ] <> k) ps ks', [ ps # Array.last # fromMaybe ], [ punctuation ")" ] ]
         -- 
-        "Let" /\ _ /\ [ k0, k1, k2 ] -> do
+        C "Let" /\ _ /\ [ k0, k1, k2 ] -> do
           k0' <- increaseIndentLevel do k0
           k1' <- increaseIndentLevel do k1
           k2' <- increaseIndentLevel do k2
           pure $ fold [ punctuation "(", keyword "let", k0', punctuation "=", k1', keyword "in", k2', punctuation ")" ]
-        "Let" /\ _ /\ _ -> do
+        C "Let" /\ _ /\ _ -> do
           assembleExpr_default args
         -- 
-        "LetVar" /\ [ p ] /\ [] -> do
+        C "LetVar" /\ [ p ] /\ [] -> do
           pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
-        "LetVar" /\ [ p0, p1 ] /\ [ k0 ] -> do
+        C "LetVar" /\ [ p0, p1 ] /\ [ k0 ] -> do
           k0' <- k0
           pure $ fold [ [ p0 ], k0', [ p1 ] ]
-        "LetVar" /\ ps /\ ks -> do
+        C "LetVar" /\ ps /\ ks -> do
           ks' <- ks # sequence
           pure $ fold $ [ beforeExtraKid ] <> Array.zipWith (\p k -> do [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ] <> [ afterExtraKid ]
         -- 
-        "LetImpl" /\ [ p ] /\ [] -> do
+        C "LetImpl" /\ [ p ] /\ [] -> do
           pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
-        "LetImpl" /\ [ p0, p1 ] /\ [ k0 ] -> do
+        C "LetImpl" /\ [ p0, p1 ] /\ [ k0 ] -> do
           k0' <- k0
           pure $ fold [ [ p0 ], k0', [ p1 ] ]
-        "LetImpl" /\ ps /\ ks -> do
+        C "LetImpl" /\ ps /\ ks -> do
           ks' <- ks # sequence
           pure $ fold $ [ beforeExtraKid ] <> Array.zipWith (\p k -> do [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ] <> [ afterExtraKid ]
         -- 
-        "LetBody" /\ [ p ] /\ [] -> do
+        C "LetBody" /\ [ p ] /\ [] -> do
           pure $ fold [ beforeHolePoint, [ p ], afterHolePoint ]
-        "LetBody" /\ [ p0, p1 ] /\ [ k0 ] -> do
+        C "LetBody" /\ [ p0, p1 ] /\ [ k0 ] -> do
           k0' <- k0
           pure $ fold [ [ p0 ], k0', [ p1 ] ]
-        "LetBody" /\ ps /\ ks -> do
+        C "LetBody" /\ ps /\ ks -> do
           ks' <- ks # sequence
           pure $ fold $ [ beforeExtraKid ] <> Array.zipWith (\p k -> do [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ] <> [ afterExtraKid ]
         --
-        str /\ [ _p0 ] /\ [] -> do
+        C str /\ [ _p0 ] /\ [] -> do
           pure $ fold [ literal str ]
         -- 
         _ -> assembleExpr_default args
   , printExpr:
       let
         f = case _ of
-          Expr { l: "Root", kids } -> kids # map f # String.joinWith " "
-          Expr { l: "LineBreak", kids: [] } -> "\n"
-          Expr { l: "Var", kids: [ Expr { l: x, kids: [] } ] } -> x
-          Expr { l: "App", kids } -> "(" <> (kids # map f # String.joinWith " ") <> ")"
+          Expr { l: { con: C "Root" }, kids } -> kids # map f # String.joinWith " "
+          Expr { l: { con: C "LineBreak" }, kids: [] } -> "\n"
+          Expr { l: { con: C "Var" }, kids: [ Expr { l: { con: C x }, kids: [] } ] } -> x
+          Expr { l: { con: C "App" }, kids } -> "(" <> (kids # map f # String.joinWith " ") <> ")"
           Expr _ -> "unimplemented"
       in
         f
@@ -173,39 +184,49 @@ linebreak = [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ]
 indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "│" ] ]
 indentations n = fold $ Array.replicate n indentation
 
-isValidPoint :: Expr L -> Point -> Boolean
-isValidPoint expr (Point p) = e'.l `Set.member` ls
+isValidPoint :: Expr (Label C ()) -> Point -> Boolean
+isValidPoint expr (Point p) = e'.l.con `Set.member` ls
   where
   Expr e' = (expr # atSubExpr p.path).here
   ls = Set.fromFoldable $ fold
-    [ [ "Root" ]
-    , [ "LamParams", "LamBody" ]
-    , [ "App" ]
-    , [ "LetVar", "LetImpl", "LetBody" ]
+    [ [ C "Root" ]
+    , [ C "LamParams", C "LamBody" ]
+    , [ C "App" ]
+    , [ C "LetVar", C "LetImpl", C "LetBody" ]
     ]
 
 -- LineBreak
 
-expr_LineBreak = "LineBreak" % []
+expr_LineBreak :: Expr (Label C ())
+expr_LineBreak = C "LineBreak" % []
 
 -- Var
 
-expr_Var x = "Var" % [ x % [] ]
+expr_Var
+  :: String
+  -> Expr (Label C ())
+expr_Var x = C "Var" % [ C x % [] ]
 
 -- Lam
 
-expr_Lam = "Lam" % [ "LamParams" % [], "LamBody" % [] ]
+expr_Lam :: Expr (Label C ())
+expr_Lam = C "Lam" % [ C "LamParams" % [], C "LamBody" % [] ]
+
 zipper_LamParams = (expr_Lam # atPoint (Point { path: Step 0 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
 zipper_LamBody = (expr_Lam # atPoint (Point { path: Step 1 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
 
 -- App
 
-expr_App = "App" % []
+expr_App :: Expr (Label C ())
+expr_App = C "App" % []
+
 zipper_App = (expr_App # atPoint (Point { path: Nil, j: Index 0 })).outside # fromSpanContextToZipper
 
 -- Let
 
-expr_Let = "Let" % [ "LetVar" % [], "LetImpl" % [], "LetBody" % [] ]
+expr_Let :: Expr (Label C ())
+expr_Let = C "Let" % [ C "LetVar" % [], C "LetImpl" % [], C "LetBody" % [] ]
+
 zipper_LetVar = (expr_Let # atPoint (Point { path: Step 0 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
 zipper_LetImpl = (expr_Let # atPoint (Point { path: Step 1 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
 zipper_LetBody = (expr_Let # atPoint (Point { path: Step 2 : Nil, j: Index 0 })).outside # fromSpanContextToZipper

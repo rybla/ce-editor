@@ -5,7 +5,7 @@ import Prelude
 import Control.Monad.Reader (ask, local)
 import Control.Plus (empty)
 import Data.Array as Array
-import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, (%))
+import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth)
 import Data.Expr.Edit as Expr.Edit
 import Data.Foldable (and, fold)
 import Data.List (List(..))
@@ -15,25 +15,38 @@ import Data.String as String
 import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe)
+import Editor (Label)
 import Editor.Common (Editor(..), assembleExpr_default)
 import Editor.Notation (literal, punctuation)
 import Halogen.HTML as HH
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 
-newtype L = L String
+newtype C = C String
 
-instance Show L where
-  show (L s) = s
+instance Show C where
+  show (C s) = s
 
-derive newtype instance Eq L
+derive newtype instance Eq C
 
-derive newtype instance Ord L
+derive newtype instance Ord C
 
-editor :: Editor L
+mkExprC c es = mkExpr { con: c } es
+
+infix 0 mkExprC as %
+
+mkToothC c es = mkTooth { con: c } es
+
+infix 0 mkToothC as %<
+
+mkSpanToothC c es = mkSpanTooth { con: c } es
+
+infix 0 mkSpanToothC as %<*
+
+editor :: Editor C
 editor = Editor
   { name: "Sexp"
-  , initialExpr: L "Root" % []
+  , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu: \state query -> case query of
       "group" ->
@@ -62,45 +75,45 @@ editor = Editor
         p = getEndPoints_ZipperH zh
   , assembleExpr: \args -> do
       ctx <- ask
-      case args.label /\ args.points /\ args.kids of
-        L "Root" /\ ps /\ ks -> do
+      case args.label.con /\ args.points /\ args.kids of
+        C "Root" /\ ps /\ ks -> do
           ks' <- ks # sequence
           pure $ fold $ Array.zipWith (\p k -> [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ]
         -- 
-        L "Symbol" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
+        C "Symbol" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
           k0' <- k0
           pure $ fold [ k0' ]
         -- 
-        L "Group" /\ ps /\ ks -> do
+        C "Group" /\ ps /\ ks -> do
           ks' <- increaseIndentLevel do ks # sequence
           pure $ fold $ fold $ [ [ punctuation "(" ], Array.zipWith (\p k -> do [ p ] <> k) ps ks', [ ps # Array.last # fromMaybe ], [ punctuation ")" ] ]
         -- 
-        L "LineBreak" /\ [ _p0 ] /\ [] -> do
+        C "LineBreak" /\ [ _p0 ] /\ [] -> do
           pure $ fold [ linebreak, indentations ctx.indentLevel ]
-        L "LineBreak" /\ _ /\ _ -> do
+        C "LineBreak" /\ _ /\ _ -> do
           assembleExpr_default args
         --
-        L str /\ [ _p0 ] /\ [] -> do
+        C str /\ [ _p0 ] /\ [] -> do
           pure $ fold [ literal str ]
         -- 
         _ -> assembleExpr_default args
   , printExpr:
       let
         f = case _ of
-          Expr { l: L "Root", kids } -> kids # map f # String.joinWith " "
-          Expr { l: L "Symbol", kids: [ Expr { l: L x, kids: [] } ] } -> x
-          Expr { l: L "Group", kids } -> "(" <> (kids # map f # String.joinWith " ") <> ")"
-          Expr { l: L "LineBreak", kids: [] } -> "\n"
+          Expr { l: { con: C "Root" }, kids } -> kids # map f # String.joinWith " "
+          Expr { l: { con: C "Symbol" }, kids: [ Expr { l: { con: C x }, kids: [] } ] } -> x
+          Expr { l: { con: C "Group" }, kids } -> "(" <> (kids # map f # String.joinWith " ") <> ")"
+          Expr { l: { con: C "LineBreak" }, kids: [] } -> "\n"
           Expr _ -> "unimplemented"
       in
         f
   }
 
-expr_LineBreak = L "LineBreak" % []
+expr_LineBreak = C "LineBreak" % []
 
-expr_Symbol x = L "Symbol" % [ L x % [] ]
+expr_Symbol x = C "Symbol" % [ C x % [] ]
 
-expr_Group = L "Group" % []
+expr_Group = C "Group" % []
 zipper_Group = (expr_Group # atPoint (Point { path: Nil, j: Index 0 })).outside # fromSpanContextToZipper
 
 increaseIndentLevel = local \ctx -> ctx { indentLevel = ctx.indentLevel + 1 }
@@ -109,12 +122,12 @@ linebreak = [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ]
 indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "│" ] ]
 indentations n = fold $ Array.replicate n indentation
 
-isValidPoint :: Expr L -> Point -> Boolean
-isValidPoint e0 (Point p) = e.l `Set.member` ls
+isValidPoint :: Expr (Label C ()) -> Point -> Boolean
+isValidPoint e0 (Point p) = e.l.con `Set.member` ls
   where
   Expr e = (e0 # atSubExpr p.path).here
   ls = Set.fromFoldable $ fold
-    [ [ L "Root" ]
-    , [ L "Group" ]
+    [ [ C "Root" ]
+    , [ C "Group" ]
     ]
 

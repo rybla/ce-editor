@@ -5,7 +5,8 @@ import Prelude
 import Control.Monad.Maybe.Trans (MaybeT)
 import Control.Monad.Reader (Reader, runReader)
 import Data.Array as Array
-import Data.Expr (Edit, EditMenu, Expr, Handle, M, PureEditorState)
+import Data.Diagnostic as Diagnostic
+import Data.Expr (Edit, EditMenu, Expr, Handle, PureEditorState)
 import Data.Foldable (fold)
 import Data.Maybe (fromMaybe)
 import Data.Traversable (traverse)
@@ -17,19 +18,24 @@ import Ui.Halogen (classes)
 
 --------------------------------------------------------------------------------
 
-data Editor l = Editor
+type Label c r = Record (LabelRow c r)
+
+type LabelRow :: Type -> Row Type -> Row Type
+type LabelRow c r = (con :: c | r)
+
+data Editor c = Editor
   { name :: String
-  , initialExpr :: Expr l
+  , initialExpr :: Expr (Label c ())
   , initialHandle :: Handle
-  , getEditMenu :: PureEditorState l -> EditMenu l
-  , getShortcut :: KeyInfo -> PureEditorState l -> MaybeT M (Edit l)
-  , isValidHandle :: Expr l -> Handle -> Boolean
-  , assembleExpr :: AssembleExpr l
-  , printExpr :: Expr l -> String
+  , getEditMenu :: PureEditorState (Label c ()) -> EditMenu (Label c ())
+  , getShortcut :: KeyInfo -> PureEditorState (Label c ()) -> MaybeT Diagnostic.M (Edit (Label c ()))
+  , isValidHandle :: Expr (Label c ()) -> Handle -> Boolean
+  , assembleExpr :: AssembleExpr c
+  , printExpr :: Expr (Label c ()) -> String
   }
 
 newtype ExistsEditor = ExistsEditor (forall r. ExistsEditorK r -> r)
-type ExistsEditorK r = forall l. Show l => Editor l -> r
+type ExistsEditorK r = forall c. Show c => Editor c -> r
 
 mkExistsEditor :: ExistsEditorK ExistsEditor
 mkExistsEditor a = ExistsEditor \k -> k a
@@ -37,9 +43,9 @@ mkExistsEditor a = ExistsEditor \k -> k a
 runExistsEditor :: forall r. ExistsEditorK r -> ExistsEditor -> r
 runExistsEditor k1 (ExistsEditor k2) = k2 k1
 
-type AssembleExpr l =
+type AssembleExpr c =
   forall w i
-   . { label :: l
+   . { label :: Label c ()
      , kids :: Array (RenderM (Array (HTML w i)))
      , points :: Array (HTML w i)
      }
@@ -58,17 +64,18 @@ type RenderCtx =
 
 --------------------------------------------------------------------------------
 
-assembleExpr_default :: forall l. Show l => AssembleExpr l
+assembleExpr_default :: forall c. Show c => AssembleExpr c
 assembleExpr_default { label, kids, points } = do
   kidsAndPoints <- map fold $ Array.zip points kids # traverse \(point /\ m_kid) -> do
     kid <- m_kid
     pure $ [ point ] <> kid
   pure $ fold
     [ [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text "(" ] ]
-    , [ HH.div [ classes [ "Token", "foreign" ] ] [ HH.text $ show label ] ]
+    , [ HH.div [ classes [ "Token", "foreign" ] ] [ HH.text $ show label.con ] ]
     , kidsAndPoints
     , [ points # Array.last # fromMaybe (renderWarning "missing last point") ]
     , [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text ")" ] ]
     ]
 
 renderWarning msg = HH.div [ classes [ "Warning" ] ] [ HH.text msg ]
+

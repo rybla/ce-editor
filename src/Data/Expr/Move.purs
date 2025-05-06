@@ -1,9 +1,9 @@
 module Data.Expr.Move where
 
-import Data.Expr
 import Prelude
 
 import Data.Eq.Generic (genericEq)
+import Data.Expr (Expr, Handle(..), Index(..), Point(..), SpanFocus(..), ZipperFocus(..), atSubExpr, getExtremeIndexes, getFocusPoint, getIndexesAroundStep, getInnerSpanH_ZipperH, getKid_Expr, getOuterSpanH_ZipperH, getStepsAroundIndex)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.List as List
