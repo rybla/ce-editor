@@ -237,8 +237,10 @@
 
         animation: rainbow-glow 20s infinite linear;
 
-        background: #1a1a1a;
-        color: white;
+        /* background: #1a1a1a;
+        color: white; */
+
+        background: var(--Editor--background);
 
         font-size: 1em;
         font-family: inherit;

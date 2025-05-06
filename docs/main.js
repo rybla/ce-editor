@@ -12885,7 +12885,7 @@
       getEditMenu: function(state3) {
         return function(query3) {
           if (query3 === "group") {
-            return [new Tuple("Group", insert8(new Zipper_Fragment(zipper_Group))(state3))];
+            return [new Tuple("Symbol", insert8(new Span_Fragment([expr_Symbol(query3)]))(state3)), new Tuple("Group", insert8(new Zipper_Fragment(zipper_Group))(state3))];
           }
           ;
           if (query3 === "linebreak") {
@@ -12924,7 +12924,7 @@
             return and3([isValidPoint(root)(p2["_OL"]), isValidPoint(root)(p2["_IL"]), isValidPoint(root)(p2["_IR"]), isValidPoint(root)(p2["_OR"])]);
           }
           ;
-          throw new Error("Failed pattern match at Editor.Example.Sexp (line 48, column 36 - line 55, column 36): " + [handle.constructor.name]);
+          throw new Error("Failed pattern match at Editor.Example.Sexp (line 55, column 36 - line 62, column 36): " + [handle.constructor.name]);
         };
       },
       assembleExpr: function(args) {

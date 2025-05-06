@@ -36,9 +36,16 @@ editor = Editor
   , initialExpr: L "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu: \state query -> case query of
-      "group" -> [ "Group" /\ Expr.Edit.insert (Zipper_Fragment zipper_Group) state ]
-      "linebreak" -> [ "LineBreak" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state ]
-      _ -> [ "Symbol" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state ]
+      "group" ->
+        [ "Symbol" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state
+        , "Group" /\ Expr.Edit.insert (Zipper_Fragment zipper_Group) state
+        ]
+      "linebreak" ->
+        [ "LineBreak" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
+        ]
+      _ ->
+        [ "Symbol" /\ Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state
+        ]
   , getShortcut: \ki state -> case unit of
       _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] -> do
         Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
