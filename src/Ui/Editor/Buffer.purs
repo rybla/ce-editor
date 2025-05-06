@@ -15,7 +15,7 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
-import Data.Tuple.Nested ((/\))
+import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), Label, StampedLabel)
 import Effect.Aff (Aff)
@@ -184,7 +184,7 @@ render state =
               [ classes $ fold [ [ "Edit" ], if Just i /= state.option_i then [] else [ "selected" ] ] ]
               case edit_ of
                 Edit { info: Insert_EditInfo info } ->
-                  [ HH.div [ classes [ "Expr" ] ] $
+                  [ HHK.div [ classes [ "Expr" ] ] $
                       info.insertion
                         # renderFragment (renderBaseArgs state.editor) (state.point # unwrap).path
                         # flip runReader
@@ -207,11 +207,11 @@ renderBaseArgs (Editor editor) =
   , assembleExpr: editor.assembleExpr
   }
   where
-  renderExpr :: Editor c -> Path -> Expr (Label c ()) -> RenderM (Array (HTML w i))
+  renderExpr :: Editor c -> Path -> Expr (Label c ()) -> RenderM (Array (String /\ HTML w i))
   renderExpr editor' path expr = Expr.Render.renderExpr (renderBaseArgs editor') path expr
 
-  renderPoint :: Editor c -> Point -> HTML w i
-  renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]
+  renderPoint :: Editor c -> Point -> String /\ HTML w i
+  renderPoint _ _ = "TODO:point" /\ HH.div [ classes [ "Point" ] ] [ HH.text " " ]
 
 renderStampedArgs :: forall c w i. Show c => Editor c -> RenderArgs (StampedLabel c ()) w i
 renderStampedArgs (Editor editor) =
@@ -220,9 +220,9 @@ renderStampedArgs (Editor editor) =
   , assembleExpr: editor.assembleStampedExpr
   }
   where
-  renderExpr :: Editor c -> Path -> Expr (StampedLabel c ()) -> RenderM (Array (HTML w i))
+  renderExpr :: Editor c -> Path -> Expr (StampedLabel c ()) -> RenderM (Array (String /\ HTML w i))
   renderExpr editor' path expr = Expr.Render.renderExpr (renderStampedArgs editor') path expr
 
-  renderPoint :: Editor c -> Point -> HTML w i
-  renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]
+  renderPoint :: Editor c -> Point -> String /\ HTML w i
+  renderPoint _ _ = "TODO:point" /\ HH.div [ classes [ "Point" ] ] [ HH.text " " ]
 

@@ -7,6 +7,7 @@ import Data.Expr (Expr(..), ExprContext(..), Fragment(..), Path, Point(..), Span
 import Data.Foldable (fold, length)
 import Data.List (List(..), (:))
 import Data.List as List
+import Data.Tuple.Nested (type (/\), (/\))
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Ui.Halogen (classes)
@@ -25,18 +26,18 @@ type RenderCtx =
 type AssembleExpr l =
   forall w i
    . { label :: l
-     , kids :: Array (RenderM (Array (HTML w i)))
-     , points :: Array (HTML w i)
+     , kids :: Array (RenderM (Array (String /\ HTML w i)))
+     , points :: Array (String /\ HTML w i)
      }
-  -> RenderM (Array (HTML w i))
+  -> RenderM (Array (String /\ HTML w i))
 
 type RenderArgs l w i =
-  { renderKid :: Path -> Expr l -> RenderM (Array (HTML w i))
-  , renderPoint :: Point -> HTML w i
+  { renderKid :: Path -> Expr l -> RenderM (Array (String /\ HTML w i))
+  , renderPoint :: Point -> String /\ HTML w i
   , assembleExpr :: AssembleExpr l
   }
 
-renderExpr :: forall l w i. Show l => RenderArgs l w i -> Path -> Expr l -> RenderM (Array (HTML w i))
+renderExpr :: forall l w i. Show l => RenderArgs l w i -> Path -> Expr l -> RenderM (Array (String /\ HTML w i))
 renderExpr { renderKid, renderPoint, assembleExpr } path (Expr e) =
   assembleExpr
     { label: e.l
@@ -49,17 +50,17 @@ renderExpr { renderKid, renderPoint, assembleExpr } path (Expr e) =
 -- -- anything other than renderExpr is called is at hte Buffer which doesn't
 -- -- render interactive elements into the stuff anyway
 
-renderSpan :: forall l w i. Show l => RenderArgs l w i -> Path -> Span l -> RenderM (Array (HTML w i))
+renderSpan :: forall l w i. Show l => RenderArgs l w i -> Path -> Span l -> RenderM (Array (String /\ HTML w i))
 renderSpan args path (Span exprs) = exprs # map (renderExpr args path) # fold
 
-renderZipper :: forall l w i. Show l => RenderArgs l w i -> Path -> Zipper l -> Array (RenderM (Array (HTML w i))) -> RenderM (Array (HTML w i))
+renderZipper :: forall l w i. Show l => RenderArgs l w i -> Path -> Zipper l -> Array (RenderM (Array (String /\ HTML w i))) -> RenderM (Array (String /\ HTML w i))
 renderZipper args path (Zipper z) inside = fold $
   [ fold $ renderExpr args path <$> z.kids_L
   , fold $ [ renderSpanContext args path z.inside inside ]
   , fold $ renderExpr args path <$> z.kids_R
   ]
 
-renderTooth :: forall l w i. Show l => RenderArgs l w i -> Path -> Tooth l -> RenderM (Array (HTML w i)) -> RenderM (Array (HTML w i))
+renderTooth :: forall l w i. Show l => RenderArgs l w i -> Path -> Tooth l -> RenderM (Array (String /\ HTML w i)) -> RenderM (Array (String /\ HTML w i))
 renderTooth args path (Tooth t) inside =
   args.assembleExpr
     { label: t.l
@@ -67,7 +68,7 @@ renderTooth args path (Tooth t) inside =
     , points: Tooth t # mapIndexes_Tooth (\j -> args.renderPoint (Point { path: path, j }))
     }
 
-renderSpanTooth :: forall l w i. Show l => RenderArgs l w i -> Path -> SpanTooth l -> Array (RenderM (Array (HTML w i))) -> RenderM (Array (HTML w i))
+renderSpanTooth :: forall l w i. Show l => RenderArgs l w i -> Path -> SpanTooth l -> Array (RenderM (Array (String /\ HTML w i))) -> RenderM (Array (String /\ HTML w i))
 renderSpanTooth args path (SpanTooth st) inside =
   args.assembleExpr
     { label: st.l
@@ -75,16 +76,16 @@ renderSpanTooth args path (SpanTooth st) inside =
     , points: SpanTooth st # mapIndexes_SpanTooth (inside # length) (\j -> args.renderPoint (Point { path: path, j }))
     }
 
-renderExprContext :: forall l w i. Show l => RenderArgs l w i -> Path -> ExprContext l -> RenderM (Array (HTML w i)) -> RenderM (Array (HTML w i))
+renderExprContext :: forall l w i. Show l => RenderArgs l w i -> Path -> ExprContext l -> RenderM (Array (String /\ HTML w i)) -> RenderM (Array (String /\ HTML w i))
 renderExprContext _args _path (ExprContext Nil) inside = inside
 renderExprContext args path (ExprContext (t : ts)) inside = renderTooth args path t $ renderExprContext args path (ExprContext ts) inside
 
-renderSpanContext :: forall l w i. Show l => RenderArgs l w i -> Path -> SpanContext l -> Array (RenderM (Array (HTML w i))) -> RenderM (Array (HTML w i))
+renderSpanContext :: forall l w i. Show l => RenderArgs l w i -> Path -> SpanContext l -> Array (RenderM (Array (String /\ HTML w i))) -> RenderM (Array (String /\ HTML w i))
 renderSpanContext args path (SpanContext sc) inside = renderExprContext args path sc._O $ renderSpanTooth args path sc._I inside
 
-renderFragment :: forall l w i. Show l => RenderArgs l w i -> Path -> Fragment l -> RenderM (Array (HTML w i))
+renderFragment :: forall l w i. Show l => RenderArgs l w i -> Path -> Fragment l -> RenderM (Array (String /\ HTML w i))
 renderFragment args path (Span_Fragment s) = renderSpan args path s
-renderFragment args path (Zipper_Fragment z) = renderZipper args path z [ pure [ hole ] ]
+renderFragment args path (Zipper_Fragment z) = renderZipper args path z [ pure [ "TODO:hole" /\ hole ] ]
 
 hole :: forall w i. HTML w i
 hole = HH.div [ classes [ "Hole" ] ] [ HH.text " " ]

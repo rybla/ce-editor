@@ -22,7 +22,7 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.String as String
 import Data.Traversable (traverse)
-import Data.Tuple.Nested ((/\))
+import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), Label, StampedLabel)
 import Editor.Common (mapLabel)
@@ -33,6 +33,7 @@ import Effect.Unsafe (unsafePerformEffect)
 import Halogen (liftAff, liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.Query.Event as HQE
 import Record as Record
 import Type.Prelude (Proxy(..))
@@ -514,7 +515,7 @@ render state =
   HH.div [ classes [ "Editor" ] ] $ fold
     [ state.mb_root # foldMap \root ->
         [ HH.div [ classes [ "root" ] ]
-            [ HH.div [ classes [ "Expr" ] ]
+            [ HHK.div [ classes [ "Expr" ] ]
                 ( root
                     # renderStampedExpr state.editor Nil
                     # runRenderM
@@ -523,7 +524,7 @@ render state =
         ]
     ]
 
-renderStampedExpr :: forall c. Show c => Editor c -> Path -> Expr (StampedLabel c ()) -> RenderM (Array (EditorHTML c))
+renderStampedExpr :: forall c. Show c => Editor c -> Path -> Expr (StampedLabel c ()) -> RenderM (Array (String /\ EditorHTML c))
 renderStampedExpr (Editor editor) path expr = do
   Expr.Render.renderExpr
     { renderKid: renderStampedExpr (Editor editor)
@@ -533,7 +534,7 @@ renderStampedExpr (Editor editor) path expr = do
     path
     expr
 
-renderPoint :: forall c. Show c => Editor c -> Point -> EditorHTML c
+renderPoint :: forall c. Show c => Editor c -> Point -> String /\ EditorHTML c
 renderPoint editor point =
-  HH.slot (Proxy @"Point") point Point.component { editor: editor, point } PointOutput_EditorAction
+  "TODO:point" /\ HH.slot (Proxy @"Point") point Point.component { editor: editor, point } PointOutput_EditorAction
 

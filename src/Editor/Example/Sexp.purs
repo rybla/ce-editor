@@ -8,6 +8,7 @@ import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (and, fold)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..))
 import Data.Newtype (wrap)
 import Data.Set as Set
@@ -16,8 +17,8 @@ import Data.Traversable (sequence)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
-import Editor (Label(..), assembleExpr_default)
-import Editor.Common (Editor(..), assembleExpr_default, getCon)
+import Editor (Label(..), assembleExpr_default, getId)
+import Editor.Common (Editor(..), StampedLabel, assembleExpr_default, assembleStampedExpr_default, getCon)
 import Editor.Notation (literal, punctuation)
 import Effect.Class (liftEffect)
 import Halogen.HTML as HH
@@ -98,8 +99,12 @@ editor = Editor
   }
 
 assembleExpr :: forall r. AssembleExpr (Label C r)
-assembleExpr args = do
+assembleExpr = assembleExpr_default
+
+assembleStampedExpr :: forall r. AssembleExpr (StampedLabel C r)
+assembleStampedExpr args = do
   ctx <- ask
+  let id = args.label # getId
   case (args.label # getCon) /\ args.points /\ args.kids of
     C "Root" /\ ps /\ ks -> do
       ks' <- ks # sequence
@@ -111,17 +116,31 @@ assembleExpr args = do
     -- 
     C "Group" /\ ps /\ ks -> do
       ks' <- increaseIndentLevel do ks # sequence
-      pure $ fold $ fold $ [ [ punctuation "(" ], Array.zipWith (\p k -> do [ p ] <> k) ps ks', [ ps # Array.last # fromMaybe ], [ punctuation ")" ] ]
+      pure $ fold $ fold $
+        [ [ [ (id <> "_begin") /\ HH.div [ classes [ "Token punctuation" ] ] [ HH.text "(" ] ] ]
+        , Array.zipWith (\p k -> do [ p ] <> k) ps ks'
+        , [ ps # Array.last # fromMaybe ]
+        , [ [ (id <> "_end") /\ HH.div [ classes [ "Token punctuation" ] ] [ HH.text ")" ] ] ]
+        ]
     -- 
     C "LineBreak" /\ [ _p0 ] /\ [] -> do
-      pure $ fold [ linebreak, indentations ctx.indentLevel ]
+      pure $ fold
+        [ [ (id <> "_marker") /\ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ]
+          , (id <> "_break") /\ HH.div [ classes [ "Token break" ] ] []
+          ]
+        , HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "│" ]
+            # Array.replicate ctx.indentLevel
+            # mapWithIndex \i e -> (id <> "_indent_" <> show i) /\ e
+        ]
     C "LineBreak" /\ _ /\ _ -> do
       assembleExpr_default args
     --
     C str /\ [ _p0 ] /\ [] -> do
-      pure $ fold [ literal str ]
-    -- 
-    _ -> assembleExpr_default args
+      pure
+        [ (id <> "_literal") /\ HH.div [ classes [ "Token literal" ] ] [ HH.text str ]
+        ]
+    --
+    _ -> assembleStampedExpr_default args
 
 expr_LineBreak = C "LineBreak" % []
 

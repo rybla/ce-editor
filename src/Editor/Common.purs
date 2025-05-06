@@ -88,17 +88,31 @@ runExistsEditor k1 (ExistsEditor k2) = k2 k1
 
 --------------------------------------------------------------------------------
 
+assembleStampedExpr_default :: forall c r. Show c => AssembleExpr (StampedLabel c r)
+assembleStampedExpr_default { label: label@(Label l), kids, points } = do
+  kidsAndPoints <- map fold $ Array.zip points kids # traverse \(point /\ m_kid) -> do
+    kid <- m_kid
+    pure $ [ point ] <> kid
+  pure $ fold
+    [ [ (l.id <> "_begin") /\ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text "(" ] ]
+    , [ (l.id <> "_label") /\ HH.div [ classes [ "Token", "foreign" ] ] [ HH.text $ show label ] ]
+    , kidsAndPoints
+    , [ points # Array.last # fromMaybe ((l.id <> "_missingLastPoint") /\ renderWarning "missing last point") ]
+    , [ (l.id <> "_end") /\ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text ")" ] ]
+    ]
+
 assembleExpr_default :: forall c r. Show c => AssembleExpr (Label c r)
 assembleExpr_default { label, kids, points } = do
   kidsAndPoints <- map fold $ Array.zip points kids # traverse \(point /\ m_kid) -> do
     kid <- m_kid
     pure $ [ point ] <> kid
   pure $ fold
-    [ [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text "(" ] ]
-    , [ HH.div [ classes [ "Token", "foreign" ] ] [ HH.text $ show label ] ]
+    [ [ "TODO" /\ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text "(" ] ]
+    , [ "TODO" /\ HH.div [ classes [ "Token", "foreign" ] ] [ HH.text $ show label ] ]
     , kidsAndPoints
-    , [ points # Array.last # fromMaybe (renderWarning "missing last point") ]
-    , [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text ")" ] ]
+    -- , [ points # Array.last # fromMaybe (renderWarning "missing last point") ]
+    , [ points # Array.last # fromMaybe ("TODO" /\ renderWarning "missing last point") ]
+    , [ "TODO" /\ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text ")" ] ]
     ]
 
 renderWarning msg = HH.div [ classes [ "Warning" ] ] [ HH.text msg ]
