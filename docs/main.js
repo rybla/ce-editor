@@ -9210,6 +9210,14 @@
     };
     return Editor2;
   }();
+  var showLabel = function(dictShow) {
+    var show6 = show(dictShow);
+    return {
+      show: function(v) {
+        return show6(v.con);
+      }
+    };
+  };
   var runRenderM = /* @__PURE__ */ flip(runReader)({
     indentLevel: 0
   });
@@ -9230,15 +9238,18 @@
       };
     };
   };
+  var getCon = function(v) {
+    return v.con;
+  };
   var assembleExpr_default = function(dictShow) {
-    var show6 = show(dictShow);
+    var show6 = show(showLabel(dictShow));
     return function(v) {
       return bind5(map24(fold3)(traverse2(function(v1) {
         return bind5(v1.value1)(function(kid) {
           return pure9(append5([v1.value0])(kid));
         });
       })(zip(v.points)(v.kids))))(function(kidsAndPoints) {
-        return pure9(fold3([[div2([classes2(["Token", "punctuation"])])([text5("(")])], [div2([classes2(["Token", "foreign"])])([text5(show6(v.label.con))])], kidsAndPoints, [fromMaybe(renderWarning("missing last point"))(last(v.points))], [div2([classes2(["Token", "punctuation"])])([text5(")")])]]));
+        return pure9(fold3([[div2([classes2(["Token", "punctuation"])])([text5("(")])], [div2([classes2(["Token", "foreign"])])([text5(show6(v.label))])], kidsAndPoints, [fromMaybe(renderWarning("missing last point"))(last(v.points))], [div2([classes2(["Token", "punctuation"])])([text5(")")])]]));
       });
     };
   };
@@ -12830,13 +12841,9 @@
       return v;
     }
   };
-  var showRecord3 = /* @__PURE__ */ showRecord()()(/* @__PURE__ */ showRecordFieldsConsNil({
-    reflectSymbol: function() {
-      return "con";
-    }
-  })(showC));
-  var atSubExpr2 = /* @__PURE__ */ atSubExpr(showRecord3);
-  var insert8 = /* @__PURE__ */ insert6(showRecord3);
+  var showLabel2 = /* @__PURE__ */ showLabel(showC);
+  var atSubExpr2 = /* @__PURE__ */ atSubExpr(showLabel2);
+  var insert8 = /* @__PURE__ */ insert6(showLabel2);
   var assembleExpr_default2 = /* @__PURE__ */ assembleExpr_default(showC);
   var ordC = ordString;
   var fromFoldable5 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordC);
@@ -12853,7 +12860,7 @@
     return function(v) {
       var v1 = atSubExpr2(v.path)(e0).here;
       var ls = fromFoldable5(fold4([["Root"], ["Group"]]));
-      return member4(v1.l.con)(ls);
+      return member4(getCon(v1.l))(ls);
     };
   };
   var indentation = [/* @__PURE__ */ div2([/* @__PURE__ */ classes2(["Token punctuation indentation ghost"])])([/* @__PURE__ */ text5("\u2502")])];
@@ -12862,16 +12869,16 @@
   };
   var increaseIndentLevel = function(dictMonadReader) {
     return local(dictMonadReader)(function(ctx) {
-      var $53 = {};
-      for (var $54 in ctx) {
-        if ({}.hasOwnProperty.call(ctx, $54)) {
-          $53[$54] = ctx[$54];
+      var $48 = {};
+      for (var $49 in ctx) {
+        if ({}.hasOwnProperty.call(ctx, $49)) {
+          $48[$49] = ctx[$49];
         }
         ;
       }
       ;
-      $53.indentLevel = ctx.indentLevel + 1 | 0;
-      return $53;
+      $48.indentLevel = ctx.indentLevel + 1 | 0;
+      return $48;
     });
   };
   var increaseIndentLevel1 = /* @__PURE__ */ increaseIndentLevel(/* @__PURE__ */ monadReaderReaderT(monadIdentity));
@@ -12881,7 +12888,7 @@
   var expr_LineBreak = /* @__PURE__ */ mkExprC("LineBreak")([]);
   var expr_Group = /* @__PURE__ */ mkExprC("Group")([]);
   var zipper_Group = /* @__PURE__ */ function() {
-    return fromSpanContextToZipper(atPoint(showRecord3)({
+    return fromSpanContextToZipper(atPoint(showLabel2)({
       path: Nil.value,
       j: 0
     })(expr_Group).outside);
@@ -12936,12 +12943,12 @@
             return and3([isValidPoint(root)(p2["_OL"]), isValidPoint(root)(p2["_IL"]), isValidPoint(root)(p2["_IR"]), isValidPoint(root)(p2["_OR"])]);
           }
           ;
-          throw new Error("Failed pattern match at Editor.Example.Sexp (line 68, column 36 - line 75, column 36): " + [handle.constructor.name]);
+          throw new Error("Failed pattern match at Editor.Example.Sexp (line 69, column 36 - line 76, column 36): " + [handle.constructor.name]);
         };
       },
       assembleExpr: function(args) {
         return bind10(ask2)(function(ctx) {
-          var v = new Tuple(args.label.con, new Tuple(args.points, args.kids));
+          var v = new Tuple(getCon(args.label), new Tuple(args.points, args.kids));
           if (v.value0 === "Root") {
             return bind10(sequence2(v.value1.value1))(function(ks$prime) {
               return pure19(fold4(append10(zipWith(function(p2) {
@@ -13016,13 +13023,9 @@
       return v;
     }
   };
-  var showRecord4 = /* @__PURE__ */ showRecord()()(/* @__PURE__ */ showRecordFieldsConsNil({
-    reflectSymbol: function() {
-      return "con";
-    }
-  })(showC2));
-  var atPoint2 = /* @__PURE__ */ atPoint(showRecord4);
-  var insert9 = /* @__PURE__ */ insert6(showRecord4);
+  var showLabel3 = /* @__PURE__ */ showLabel(showC2);
+  var atPoint2 = /* @__PURE__ */ atPoint(showLabel3);
+  var insert9 = /* @__PURE__ */ insert6(showLabel3);
   var mkExprC2 = function(c) {
     return function(es) {
       return mkExpr({
@@ -13159,14 +13162,10 @@
       return v;
     }
   };
-  var showRecord5 = /* @__PURE__ */ showRecord()()(/* @__PURE__ */ showRecordFieldsConsNil({
-    reflectSymbol: function() {
-      return "con";
-    }
-  })(showC3));
-  var atSubExpr3 = /* @__PURE__ */ atSubExpr(showRecord5);
-  var atPoint3 = /* @__PURE__ */ atPoint(showRecord5);
-  var insert10 = /* @__PURE__ */ insert6(showRecord5);
+  var showLabel4 = /* @__PURE__ */ showLabel(showC3);
+  var atSubExpr3 = /* @__PURE__ */ atSubExpr(showLabel4);
+  var atPoint3 = /* @__PURE__ */ atPoint(showLabel4);
+  var insert10 = /* @__PURE__ */ insert6(showLabel4);
   var assembleExpr_default3 = /* @__PURE__ */ assembleExpr_default(showC3);
   var ordC2 = ordString;
   var fromFoldable6 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordC2);
@@ -13183,7 +13182,7 @@
     return function(v) {
       var v1 = atSubExpr3(v.path)(expr).here;
       var ls = fromFoldable6(fold5([["Root"], ["LamParams", "LamBody"], ["App"], ["LetVar", "LetImpl", "LetBody"]]));
-      return member5(v1.l.con)(ls);
+      return member5(getCon(v1.l))(ls);
     };
   };
   var indentation2 = [/* @__PURE__ */ div2([/* @__PURE__ */ classes2(["Token punctuation indentation ghost"])])([/* @__PURE__ */ text5("\u2502")])];
@@ -13192,16 +13191,16 @@
   };
   var increaseIndentLevel2 = function(dictMonadReader) {
     return local(dictMonadReader)(function(ctx) {
-      var $53 = {};
-      for (var $54 in ctx) {
-        if ({}.hasOwnProperty.call(ctx, $54)) {
-          $53[$54] = ctx[$54];
+      var $48 = {};
+      for (var $49 in ctx) {
+        if ({}.hasOwnProperty.call(ctx, $49)) {
+          $48[$49] = ctx[$49];
         }
         ;
       }
       ;
-      $53.indentLevel = ctx.indentLevel + 1 | 0;
-      return $53;
+      $48.indentLevel = ctx.indentLevel + 1 | 0;
+      return $48;
     });
   };
   var increaseIndentLevel12 = /* @__PURE__ */ increaseIndentLevel2(/* @__PURE__ */ monadReaderReaderT(monadIdentity));
@@ -13311,7 +13310,7 @@
       },
       assembleExpr: function(args) {
         return bind11(ask3)(function(ctx) {
-          var v = new Tuple(args.label.con, new Tuple(args.points, args.kids));
+          var v = new Tuple(getCon(args.label), new Tuple(args.points, args.kids));
           if (v.value0 === "Root") {
             return bind11(sequence3(v.value1.value1))(function(ks$prime) {
               return pure20(fold5(append11(zipWith(function(p2) {
@@ -14851,18 +14850,13 @@
   var modify5 = /* @__PURE__ */ modify2(monadStateHalogenM);
   var none12 = /* @__PURE__ */ none(unfoldableList);
   var when5 = /* @__PURE__ */ when(applicativeHalogenM);
-  var showRecord6 = /* @__PURE__ */ showRecord()();
-  var showRecordFieldsConsNil5 = /* @__PURE__ */ showRecordFieldsConsNil({
-    reflectSymbol: function() {
-      return "con";
-    }
-  });
+  var showRecord3 = /* @__PURE__ */ showRecord()();
   var showRecordFieldsCons5 = /* @__PURE__ */ showRecordFieldsCons({
     reflectSymbol: function() {
       return "mb_handle";
     }
   });
-  var showRecordFieldsConsNil12 = /* @__PURE__ */ showRecordFieldsConsNil({
+  var showRecordFieldsConsNil5 = /* @__PURE__ */ showRecordFieldsConsNil({
     reflectSymbol: function() {
       return "root";
     }
@@ -15064,17 +15058,17 @@
       return liftEffect9(writeFlipped(state3.ref_mb_dragOrigin)(none6));
     }))(function() {
       return bind20(modify5(function(v) {
-        var $161 = {};
-        for (var $162 in v) {
-          if ({}.hasOwnProperty.call(v, $162)) {
-            $161[$162] = v[$162];
+        var $154 = {};
+        for (var $155 in v) {
+          if ({}.hasOwnProperty.call(v, $155)) {
+            $154[$155] = v[$155];
           }
           ;
         }
         ;
-        $161.root = s.root;
-        $161.initial_mb_handle = s.mb_handle;
-        return $161;
+        $154.root = s.root;
+        $154.initial_mb_handle = s.mb_handle;
+        return $154;
       }))(function(state3) {
         return pure25(state3.initial_mb_handle);
       });
@@ -15102,7 +15096,7 @@
     });
   });
   var redo = function(dictShow) {
-    var show22 = show(showExpr(showRecord6(showRecordFieldsConsNil5(dictShow))));
+    var show22 = show(showExpr(showLabel(dictShow)));
     return bind20(get5)(function(state3) {
       return discard9(when5(log_undo_and_redo)(log4("[redo] " + show22(state3.root))))(function() {
         return bind20(liftEffect9(read(state3.ref_future)))(function(v) {
@@ -15128,7 +15122,7 @@
     });
   };
   var saveSnapshot = function(dictShow) {
-    var show22 = show(showRecord6(showRecordFieldsCons5(showRecordFieldsConsNil12(showExpr(showRecord6(showRecordFieldsConsNil5(dictShow)))))(showMaybe2)));
+    var show22 = show(showRecord3(showRecordFieldsCons5(showRecordFieldsConsNil5(showExpr(showLabel(dictShow))))(showMaybe2)));
     return bind20(get5)(function(state3) {
       return bind20(getSnapshot)(function(s) {
         return discard9(when5(log_undo_and_redo)(log4("[saveSnapshot] " + show22(s))))(function() {
@@ -15156,15 +15150,15 @@
     };
   };
   var submitEdit = function(dictShow) {
-    var showRecord1 = showRecord6(showRecordFieldsConsNil5(dictShow));
-    var applyEdit2 = applyEdit(showRecord1);
-    var show22 = show(showEdit_(showRecord1));
-    var show32 = show(showExpr(showRecord1));
-    var show42 = show(showMaybe(showFragment(showRecord1)));
+    var showLabel5 = showLabel(dictShow);
+    var applyEdit2 = applyEdit(showLabel5);
+    var show22 = show(showEdit_(showLabel5));
+    var show32 = show(showExpr(showLabel5));
+    var show42 = show(showMaybe(showFragment(showLabel5)));
     var modifyEditorState1 = modifyEditorState(dictShow);
     return function(edit) {
-      return bind20(bind20(get5)(function($257) {
-        return liftEffect9(toPureEditorState($257));
+      return bind20(bind20(get5)(function($250) {
+        return liftEffect9(toPureEditorState($250));
       }))(function(input3) {
         var v = runWriter(runMaybeT(applyEdit2(edit)(input3)));
         if (v.value0 instanceof Nothing) {
@@ -15197,8 +15191,8 @@
   var submitEditAt = function(dictShow) {
     var submitEdit1 = submitEdit(dictShow);
     return function(editAt) {
-      return bind20(bind20(get5)(function($258) {
-        return liftEffect9(toPureEditorState($258));
+      return bind20(bind20(get5)(function($251) {
+        return liftEffect9(toPureEditorState($251));
       }))(function(state3) {
         var v = runWriter(runMaybeT(editAt(state3)));
         if (v.value0 instanceof Nothing) {
@@ -15214,7 +15208,7 @@
     };
   };
   var undo = function(dictShow) {
-    var show22 = show(showExpr(showRecord6(showRecordFieldsConsNil5(dictShow))));
+    var show22 = show(showExpr(showLabel(dictShow)));
     return bind20(get5)(function(state3) {
       return discard9(when5(log_undo_and_redo)(log4("[undo] " + show22(state3.root))))(function() {
         return bind20(liftEffect9(read(state3.ref_history)))(function(v) {
@@ -15241,28 +15235,28 @@
   };
   var handleAction3 = function(dictShow) {
     var submitEditAt1 = submitEditAt(dictShow);
-    var showRecord1 = showRecord6(showRecordFieldsConsNil5(dictShow));
-    var copy3 = copy(showRecord1);
-    var delete$prime2 = delete$prime(showRecord1);
-    var delete$prime_sibling2 = delete$prime_sibling(showRecord1);
-    var cut3 = cut(showRecord1);
-    var paste3 = paste(showRecord1);
+    var showLabel5 = showLabel(dictShow);
+    var copy3 = copy(showLabel5);
+    var delete$prime2 = delete$prime(showLabel5);
+    var delete$prime_sibling2 = delete$prime_sibling(showLabel5);
+    var cut3 = cut(showLabel5);
+    var paste3 = paste(showLabel5);
     var redo1 = redo(dictShow);
     var undo1 = undo(dictShow);
-    var movePointUntil2 = movePointUntil(showRecord1);
-    var drag3 = drag(showRecord1);
+    var movePointUntil2 = movePointUntil(showLabel5);
+    var drag3 = drag(showLabel5);
     var submitEdit1 = submitEdit(dictShow);
     return function(v) {
       if (v instanceof Initialize_EditorAction) {
         return bind20(liftEffect9(bind110(windowImpl)(document2)))(function(doc) {
           return discard9(subscribe$prime(function(_subId) {
-            return eventListener2(mouseup)(toEventTarget(doc))(function($259) {
-              return pure112(MouseUp_EditorAction.create($259));
+            return eventListener2(mouseup)(toEventTarget(doc))(function($252) {
+              return pure112(MouseUp_EditorAction.create($252));
             });
           }))(function() {
             return discard9(subscribe$prime(function(_subId) {
-              return eventListener2(keydown)(toEventTarget(doc))(function($260) {
-                return pure112(KeyDown_EditorAction.create($260));
+              return eventListener2(keydown)(toEventTarget(doc))(function($253) {
+                return pure112(KeyDown_EditorAction.create($253));
               });
             }))(function() {
               return handleAction3(dictShow)(Rerender_EditorAction.value);
@@ -15298,8 +15292,8 @@
                   }
                   ;
                   if (mb_handle instanceof Just) {
-                    return map36(function($261) {
-                      return isJust(join3($261));
+                    return map36(function($254) {
+                      return isJust(join3($254));
                     })(request2($$Proxy.value)(getFocusPoint(mb_handle.value0))(GetBufferInput_PointQuery.create));
                   }
                   ;
@@ -15450,8 +15444,8 @@
                           ;
                           return pure25(unit);
                         };
-                        var $206 = fromKeyInfoToCycle(ki);
-                        if ($206 instanceof Just) {
+                        var $199 = fromKeyInfoToCycle(ki);
+                        if ($199 instanceof Just) {
                           return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                             if (mb_handle instanceof Nothing) {
                               return pure25(unit);
@@ -15459,7 +15453,7 @@
                             ;
                             if (mb_handle instanceof Just) {
                               return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(none6)))(function() {
-                                return setHandle(pure112(cycleHandleFocus($206.value0)(mb_handle.value0)));
+                                return setHandle(pure112(cycleHandleFocus($199.value0)(mb_handle.value0)));
                               });
                             }
                             ;
@@ -15469,8 +15463,8 @@
                         ;
                         return v8(true);
                       };
-                      var $211 = fromKeyInfoToDragMoveDir(ki);
-                      if ($211 instanceof Just) {
+                      var $204 = fromKeyInfoToDragMoveDir(ki);
+                      if ($204 instanceof Just) {
                         return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                           if (mb_handle instanceof Nothing) {
                             return discard9(function() {
@@ -15502,7 +15496,7 @@
                               ;
                               throw new Error("Failed pattern match at Ui.Editor.Editor (line 161, column 25 - line 166, column 30): " + [mb_dragOrigin.constructor.name]);
                             }())(function(dragOrigin) {
-                              var v7 = movePointUntil2(v1.root)($211.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
+                              var v7 = movePointUntil2(v1.root)($204.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
                                 return bind22(drag3(dragOrigin)(p2)(v1.root))(guardPure3(v1.editor.value0.isValidHandle(v1.root)));
                               });
                               if (v7 instanceof Nothing) {
@@ -15523,8 +15517,8 @@
                       ;
                       return v6(true);
                     };
-                    var $222 = fromKeyInfoToMoveDir(ki);
-                    if ($222 instanceof Just) {
+                    var $215 = fromKeyInfoToMoveDir(ki);
+                    if ($215 instanceof Just) {
                       return discard9(liftEffect9(preventDefault(v.value0)))(function() {
                         if (mb_handle instanceof Nothing) {
                           return discard9(liftEffect9(writeFlipped(v1.ref_mb_dragOrigin)(none6)))(function() {
@@ -15533,7 +15527,7 @@
                         }
                         ;
                         if (mb_handle instanceof Just) {
-                          var v5 = movePointUntil2(v1.root)($222.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
+                          var v5 = movePointUntil2(v1.root)($215.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
                             return guardPure3(v1.editor.value0.isValidHandle(v1.root))(new Point_Handle(p2));
                           });
                           if (v5 instanceof Nothing) {
@@ -15557,10 +15551,10 @@
                     ;
                     return v4(true);
                   };
-                  var $229 = runWriter(runMaybeT(v1.editor.value0.getShortcut(ki)(purestate)));
-                  if ($229.value0 instanceof Just) {
+                  var $222 = runWriter(runMaybeT(v1.editor.value0.getShortcut(ki)(purestate)));
+                  if ($222.value0 instanceof Just) {
                     return discard9(liftEffect9(preventDefault(v.value0)))(function() {
-                      return submitEdit1($229.value0.value0);
+                      return submitEdit1($222.value0.value0);
                     });
                   }
                   ;
@@ -15632,8 +15626,8 @@
       handleQuery: defaultEval.handleQuery,
       finalize: defaultEval.finalize,
       initialize: pure112(Initialize_EditorAction.value),
-      receive: function($262) {
-        return pure112(Receive_EditorAction.create($262));
+      receive: function($255) {
+        return pure112(Receive_EditorAction.create($255));
       },
       handleAction: handleAction3(dictShow)
     });

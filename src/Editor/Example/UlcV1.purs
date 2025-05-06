@@ -15,7 +15,7 @@ import Data.String as String
 import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe)
-import Editor (Label)
+import Editor (Label(..), getCon)
 import Editor.Common (Editor(..), assembleExpr_default)
 import Editor.Notation (keyword, literal, punctuation)
 import Halogen.HTML as HH
@@ -31,15 +31,15 @@ derive newtype instance Eq C
 
 derive newtype instance Ord C
 
-mkExprC c es = mkExpr { con: c } es
+mkExprC c es = mkExpr (Label { con: c }) es
 
 infix 0 mkExprC as %
 
-mkToothC c es = mkTooth { con: c } es
+mkToothC c es = mkTooth (Label { con: c }) es
 
 infix 0 mkToothC as %<
 
-mkSpanToothC c es = mkSpanTooth { con: c } es
+mkSpanToothC c es = mkSpanTooth (Label { con: c }) es
 
 infix 0 mkSpanToothC as %<*
 
@@ -83,7 +83,7 @@ editor = Editor
         p = getEndPoints_ZipperH zh
   , assembleExpr: \args -> do
       ctx <- ask
-      case args.label.con /\ args.points /\ args.kids of
+      case (args.label # getCon) /\ args.points /\ args.kids of
         C "Root" /\ ps /\ ks -> do
           ks' <- ks # sequence
           pure $ fold $ Array.zipWith (\p k -> [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ]
@@ -165,10 +165,10 @@ editor = Editor
   , printExpr:
       let
         f = case _ of
-          Expr { l: { con: C "Root" }, kids } -> kids # map f # String.joinWith " "
-          Expr { l: { con: C "LineBreak" }, kids: [] } -> "\n"
-          Expr { l: { con: C "Var" }, kids: [ Expr { l: { con: C x }, kids: [] } ] } -> x
-          Expr { l: { con: C "App" }, kids } -> "(" <> (kids # map f # String.joinWith " ") <> ")"
+          Expr { l: Label { con: C "Root" }, kids } -> kids # map f # String.joinWith " "
+          Expr { l: Label { con: C "LineBreak" }, kids: [] } -> "\n"
+          Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x }, kids: [] } ] } -> x
+          Expr { l: Label { con: C "App" }, kids } -> "(" <> (kids # map f # String.joinWith " ") <> ")"
           Expr _ -> "unimplemented"
       in
         f
@@ -185,7 +185,7 @@ indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ H
 indentations n = fold $ Array.replicate n indentation
 
 isValidPoint :: Expr (Label C ()) -> Point -> Boolean
-isValidPoint expr (Point p) = e'.l.con `Set.member` ls
+isValidPoint expr (Point p) = (e'.l # getCon) `Set.member` ls
   where
   Expr e' = (expr # atSubExpr p.path).here
   ls = Set.fromFoldable $ fold

@@ -10,7 +10,7 @@ import Data.Foldable (and, fold)
 import Data.List (List(..), (:))
 import Data.Newtype (wrap)
 import Data.Tuple.Nested ((/\))
-import Editor (Label)
+import Editor (Label(..))
 import Editor.Common (Editor(..), assembleExpr_default)
 import Halogen.HTML as HH
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
@@ -25,15 +25,15 @@ derive newtype instance Eq C
 
 derive newtype instance Ord C
 
-mkExprC c es = mkExpr { con: c } es
+mkExprC c es = mkExpr (Label { con: c }) es
 
 infix 0 mkExprC as %
 
-mkToothC c es = mkTooth { con: c } es
+mkToothC c es = mkTooth (Label { con: c }) es
 
 infix 0 mkToothC as %<
 
-mkSpanToothC c es = mkSpanTooth { con: c } es
+mkSpanToothC c es = mkSpanTooth (Label { con: c }) es
 
 infix 0 mkSpanToothC as %<*
 

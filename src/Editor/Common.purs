@@ -18,7 +18,20 @@ import Ui.Halogen (classes)
 
 --------------------------------------------------------------------------------
 
-type Label c r = Record (con :: c | r)
+newtype Label c r = Label (Record (LabelRow c r))
+type LabelRow c r = (con :: c | r) :: Row Type
+
+instance Show c => Show (Label c r) where
+  show (Label l) = show l.con
+
+instance Eq c => Eq (Label c r) where
+  eq (Label l1) (Label l2) = l1.con == l2.con
+
+instance Ord c => Ord (Label c r) where
+  compare (Label l1) (Label l2) = compare l1.con l2.con
+
+getCon :: forall c r. Label c r -> c
+getCon (Label { con }) = con
 
 data Editor c = Editor
   { name :: String
@@ -68,7 +81,7 @@ assembleExpr_default { label, kids, points } = do
     pure $ [ point ] <> kid
   pure $ fold
     [ [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text "(" ] ]
-    , [ HH.div [ classes [ "Token", "foreign" ] ] [ HH.text $ show label.con ] ]
+    , [ HH.div [ classes [ "Token", "foreign" ] ] [ HH.text $ show label ] ]
     , kidsAndPoints
     , [ points # Array.last # fromMaybe (renderWarning "missing last point") ]
     , [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text ")" ] ]
