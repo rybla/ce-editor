@@ -2,11 +2,8 @@ module Ui.Editor.Buffer where
 
 import Prelude
 
-import Control.Monad.Maybe.Trans (runMaybeT)
 import Control.Monad.Reader (runReader)
 import Control.Monad.State (get, modify_, put)
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Writer (runWriterT)
 import Data.Array ((!!))
 import Data.Const (Const(..))
 import Data.Expr (EditInfo(..), Edit_(..), Expr, Path, Point)
@@ -18,7 +15,6 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
-import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), RenderM, Label)
@@ -36,7 +32,7 @@ import Ui.Editor.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, Buf
 import Ui.Event (fromEventToKeyInfo, matchKeyInfoPattern', matchMapKeyInfo) as Event
 import Ui.Event (keyMember, not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (fromMaybeM, todo)
+import Utility (fromMaybeM)
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -100,11 +96,11 @@ handleAction Initialize_BufferAction = do
   doc <- liftEffect $ HTML.window >>= HTML.Window.document
   H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTMLDocument.toEventTarget) $ pure <<< KeyDown_BufferAction
 
-  updateAccordingToQuery
+  void resizeQueryInput
 
 handleAction (Receive_BufferAction input) = do
   put $ initialState input
-  updateAccordingToQuery
+  setQuery =<< resizeQueryInput
 
 handleAction (KeyDown_BufferAction event) = do
   let ki = event # Event.fromEventToKeyInfo
@@ -126,9 +122,9 @@ handleAction (KeyDown_BufferAction event) = do
     _ -> pure unit
 
 handleAction (QueryInput_BufferAction _event) = do
-  updateAccordingToQuery
+  setQuery =<< resizeQueryInput
 
-submitBuffer_keys = Set.fromFoldable [ "Tab", " " ]
+submitBuffer_keys = Set.fromFoldable [ "Tab", "Enter", " " ]
 
 resizeQueryInput = do
   elem <- H.getHTMLElementRef refLabel_input >>= fromMaybeM do liftEffect $ throw "TODO"
@@ -137,15 +133,6 @@ resizeQueryInput = do
   value <- liftEffect $ inputElem # HTMLInputElement.value
   liftEffect $ inputElem # HTMLInputElement.setSize (max minSize (value # String.CodePoints.length))
   pure value
-
---------------------------------------------------------------------------------
--- updateAccordingToQuery
---------------------------------------------------------------------------------
-
-updateAccordingToQuery :: forall c. BufferM c Unit
-updateAccordingToQuery = do
-  query <- resizeQueryInput
-  setQuery query
 
 --------------------------------------------------------------------------------
 -- setQuery
