@@ -53,13 +53,24 @@ eval = H.mkEval H.defaultEval
 
 render :: AppState -> AppHTML
 render state =
-  HH.div [ classes [ "App" ] ] $ fold
-    [ [ HH.select
-          [ HP.value $ defaultEditor # runEditor_ExistsLabel \(Editor editor) -> editor.name
-          , HE.onValueChange case _ of
-              name -> SetEditor_AppAction $ editorsMenu # Map.lookup name # fromMaybe' (impossible $ "unknown editor name: " <> name)
-          ] $ editorsMenu # Map.toUnfoldable # map \(name /\ _) ->
-          HH.option [ HP.value name ] [ HH.text name ]
+  HH.div
+    [ classes [ "App" ] ] $ fold
+    [ [ HH.div
+          [ classes [ "header" ] ]
+          [ HH.div
+              [ classes [ "option" ] ]
+              [ HH.div
+                  [ classes [ "label" ] ]
+                  [ HH.text "language" ]
+              , HH.select
+                  [ classes [ "value" ]
+                  , HP.value $ defaultEditor # runEditor_ExistsLabel \(Editor editor) -> editor.name
+                  , HE.onValueChange case _ of
+                      name -> SetEditor_AppAction $ editorsMenu # Map.lookup name # fromMaybe' (impossible $ "unknown editor name: " <> name)
+                  ] $ editorsMenu # Map.toUnfoldable # map \(name /\ _) ->
+                  HH.option [ HP.value name ] [ HH.text name ]
+              ]
+          ]
       ]
     , state.mb_editor # foldMap \editor_el -> editor_el # runEditor_ExistsLabel \editor ->
         [ HH.slot_ (Proxy @"Editor") unit Editor.component

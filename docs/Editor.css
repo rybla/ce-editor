@@ -23,7 +23,7 @@
 .Editor {
   flex: 1 1 auto;
 
-  overflow-y: scroll;
+  overflow-y: auto;
   /* width: calc(100% - 4em); */
   padding: 2em;
 

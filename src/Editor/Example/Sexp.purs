@@ -21,15 +21,6 @@ import Halogen.HTML as HH
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 
-{-
-
-t = x
-  | (λ x+ . t)
-  | (t*)
-  | (let x = t in t)
-
--}
-
 newtype L = L String
 
 instance Show L where
