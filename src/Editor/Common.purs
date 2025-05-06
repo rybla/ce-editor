@@ -41,8 +41,8 @@ runExistsEditor :: forall r. ExistsEditorK r -> ExistsEditor -> r
 runExistsEditor k1 (ExistsEditor k2) = k2 k1
 
 type AssembleExpr c =
-  forall w i
-   . { label :: Label c ()
+  forall w i r
+   . { label :: Label c r
      , kids :: Array (RenderM (Array (HTML w i)))
      , points :: Array (HTML w i)
      }
