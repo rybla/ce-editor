@@ -1,4 +1,4 @@
-module Editor.Example.ULCv0 where
+module Editor.Example.UlcV0 where
 
 import Data.Expr
 import Prelude

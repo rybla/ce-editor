@@ -1,6 +1,7 @@
 # TODO
 
 - [ ] use different colors or something to show how something different will happen depending on what kind of insertion you're about to do or what is in your clipboard
+  - not sure how to do this, because you don't want what's in your clipboard to always be messing with what you see in the editor
 - [ ] refactor to allow for diagnostics reporting some places
   - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
 

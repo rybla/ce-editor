@@ -65,7 +65,7 @@ assembleExpr_default { label, kids, points } = do
     pure $ [ point ] <> kid
   pure $ fold
     [ [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text "(" ] ]
-    , [ HH.div [ classes [ "Token", "keyword" ] ] [ HH.text $ show label ] ]
+    , [ HH.div [ classes [ "Token", "foreign" ] ] [ HH.text $ show label ] ]
     , kidsAndPoints
     , [ points # Array.last # fromMaybe (renderWarning "missing last point") ]
     , [ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text ")" ] ]

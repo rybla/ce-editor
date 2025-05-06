@@ -358,6 +358,11 @@
   white-space: pre;
   font-size: 1em;
 
+  &.foreign {
+    color: brown;
+    font-weight: bold;
+  }
+
   &.punctuation {
     color: gray;
   }

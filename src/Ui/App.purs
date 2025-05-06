@@ -8,8 +8,9 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (fromMaybe')
 import Data.Tuple.Nested ((/\))
-import Editor (Editor_ExistsLabel, mkEditor_ExistsLabel, runEditor_ExistsLabel)
-import Editor.Example.ULCv0 as Editor.Example.UlcV0
+import Editor (Editor(..), Editor_ExistsLabel, mkEditor_ExistsLabel, runEditor_ExistsLabel)
+import Editor.Example.Sexp as Editor.Example.Sexp
+import Editor.Example.UlcV0 as Editor.Example.UlcV0
 import Editor.Example.UlcV1 as Editor.Example.UlcV1
 import Effect.Aff (Aff)
 import Halogen as H
@@ -25,14 +26,22 @@ import Utility (impossible)
 component :: H.Component AppQuery AppInput AppOutput Aff
 component = H.mkComponent { initialState, eval, render }
 
-editors :: Map String Editor_ExistsLabel
-editors = Map.fromFoldable
-  [ "UlcV0" /\ mkEditor_ExistsLabel Editor.Example.UlcV0.editor
-  , "UlcV1" /\ mkEditor_ExistsLabel Editor.Example.UlcV1.editor
-  ]
+editorsMenu :: Map String Editor_ExistsLabel
+editorsMenu =
+  editors
+    # map (\editor_el -> editor_el # runEditor_ExistsLabel \(Editor editor) -> editor.name /\ editor_el)
+    # Map.fromFoldable
+  where
+  editors =
+    [ mkEditor_ExistsLabel Editor.Example.Sexp.editor
+    , mkEditor_ExistsLabel Editor.Example.UlcV0.editor
+    , mkEditor_ExistsLabel Editor.Example.UlcV1.editor
+    ]
+
+defaultEditor = mkEditor_ExistsLabel Editor.Example.Sexp.editor
 
 initialState :: AppInput -> AppState
-initialState _input = { mb_editor: pure $ mkEditor_ExistsLabel Editor.Example.UlcV1.editor }
+initialState _input = { mb_editor: pure defaultEditor }
 
 eval :: forall a. H.HalogenQ AppQuery AppAction AppInput a -> H.HalogenM AppState AppAction AppSlots AppOutput Aff a
 eval = H.mkEval H.defaultEval
@@ -46,10 +55,10 @@ render :: AppState -> AppHTML
 render state =
   HH.div [ classes [ "App" ] ] $ fold
     [ [ HH.select
-          [ HP.value "UlcV1"
+          [ HP.value $ defaultEditor # runEditor_ExistsLabel \(Editor editor) -> editor.name
           , HE.onValueChange case _ of
-              name -> SetEditor_AppAction $ editors # Map.lookup name # fromMaybe' (impossible $ "unknown editor name: " <> name)
-          ] $ editors # Map.toUnfoldable # map \(name /\ _) ->
+              name -> SetEditor_AppAction $ editorsMenu # Map.lookup name # fromMaybe' (impossible $ "unknown editor name: " <> name)
+          ] $ editorsMenu # Map.toUnfoldable # map \(name /\ _) ->
           HH.option [ HP.value name ] [ HH.text name ]
       ]
     , state.mb_editor # foldMap \editor_el -> editor_el # runEditor_ExistsLabel \editor ->
