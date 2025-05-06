@@ -15,10 +15,14 @@ import Data.Traversable (sequence)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
-import Editor (Label(..))
+import Editor (Label(..), assembleExpr_default)
 import Editor.Common (Editor(..), assembleExpr_default, getCon)
 import Editor.Notation (literal, punctuation)
+import Effect.Class (liftEffect)
 import Halogen.HTML as HH
+import Record as Record
+import Type.Proxy (Proxy(..))
+import Ui.Editor.Id (freshId)
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 import Utility (collapse)
@@ -75,7 +79,8 @@ editor = Editor
       ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
         where
         p = getEndPoints_ZipperH zh
-  , assembleExpr: \args -> do
+  , assembleExpr: assembleExpr_default
+  , assembleAnnotatedExpr: \args -> do
       ctx <- ask
       case (args.label # getCon) /\ args.points /\ args.kids of
         C "Root" /\ ps /\ ks -> do
@@ -109,7 +114,9 @@ editor = Editor
           Expr _ -> "unimplemented"
       in
         f
-  , liftLabel: pure
+  , annotateLabel: \(Label l) -> do
+      id <- freshId # liftEffect
+      pure $ Label $ l `Record.merge` { id }
   }
 
 expr_LineBreak = C "LineBreak" % []

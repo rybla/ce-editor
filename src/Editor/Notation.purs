@@ -7,13 +7,14 @@ import Control.Monad.State (State, evalState, get)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Either.Nested (type (\/))
+import Data.Expr.Render (RenderM)
 import Data.Foldable (fold, foldMap, length)
 import Data.Lens ((%=))
 import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String as String
 import Data.Traversable (sequence, traverse)
-import Editor.Common (RenderM, renderWarning)
+import Editor.Common (renderWarning)
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Type.Proxy (Proxy(..))

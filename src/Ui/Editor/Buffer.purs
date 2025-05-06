@@ -7,7 +7,7 @@ import Control.Monad.State (get, modify_, put)
 import Data.Array ((!!))
 import Data.Const (Const(..))
 import Data.Expr (EditInfo(..), Edit_(..), Expr, Path, Point)
-import Data.Expr.Render (RenderArgs, renderFragment)
+import Data.Expr.Render (RenderArgs, RenderM, renderFragment)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (fold, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -17,7 +17,7 @@ import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..), RenderM, Label)
+import Editor (Editor(..), Label, AnnotatedLabel)
 import Effect.Aff (Aff)
 import Effect.Exception (throw)
 import Halogen (liftEffect)
@@ -186,7 +186,7 @@ render state =
                 Edit { info: Insert_EditInfo info } ->
                   [ HH.div [ classes [ "Expr" ] ] $
                       info.insertion
-                        # renderFragment (renderArgs state.editor) (state.point # unwrap).path
+                        # renderFragment (renderBaseArgs state.editor) (state.point # unwrap).path
                         # flip runReader
                             { indentLevel: 0
                             }
@@ -200,15 +200,28 @@ render state =
 
     ]
 
-renderArgs :: forall c w i. Show c => Editor c -> RenderArgs c w i
-renderArgs (Editor editor) =
+renderBaseArgs :: forall c w i. Show c => Editor c -> RenderArgs (Label c ()) w i
+renderBaseArgs (Editor editor) =
   { renderKid: renderExpr (Editor editor)
   , renderPoint: renderPoint (Editor editor)
   , assembleExpr: editor.assembleExpr
   }
   where
   renderExpr :: Editor c -> Path -> Expr (Label c ()) -> RenderM (Array (HTML w i))
-  renderExpr editor' path expr = Expr.Render.renderExpr (renderArgs editor') path expr
+  renderExpr editor' path expr = Expr.Render.renderExpr (renderBaseArgs editor') path expr
+
+  renderPoint :: Editor c -> Point -> HTML w i
+  renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]
+
+renderAnnotatedArgs :: forall c w i. Show c => Editor c -> RenderArgs (AnnotatedLabel c ()) w i
+renderAnnotatedArgs (Editor editor) =
+  { renderKid: renderExpr (Editor editor)
+  , renderPoint: renderPoint (Editor editor)
+  , assembleExpr: editor.assembleAnnotatedExpr
+  }
+  where
+  renderExpr :: Editor c -> Path -> Expr (AnnotatedLabel c ()) -> RenderM (Array (HTML w i))
+  renderExpr editor' path expr = Expr.Render.renderExpr (renderAnnotatedArgs editor') path expr
 
   renderPoint :: Editor c -> Point -> HTML w i
   renderPoint _ _ = HH.div [ classes [ "Point" ] ] [ HH.text " " ]

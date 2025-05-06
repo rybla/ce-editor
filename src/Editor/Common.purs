@@ -2,22 +2,23 @@ module Editor.Common where
 
 import Prelude
 
-import Control.Monad.Reader (Reader, runReader)
 import Data.Array as Array
 import Data.Expr (Edit, EditMenu, Expr, Handle, PureEditorState)
+import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (fold)
 import Data.Maybe (Maybe, fromMaybe)
 import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Ui.Event (KeyInfo)
 import Ui.Halogen (classes)
 
 --------------------------------------------------------------------------------
 
-newtype Label c r = Label (Record (Base_LabelRow c r))
+-- TODO make mappable?
+
+newtype Label c r = Label (Record (BaseLabelRow c r))
 
 instance Show c => Show (Label c r) where
   show (Label l) = show l.con
@@ -28,27 +29,32 @@ instance Eq c => Eq (Label c r) where
 instance Ord c => Ord (Label c r) where
   compare (Label l1) (Label l2) = compare l1.con l2.con
 
-getCon :: forall c r. Label c r -> c
-getCon (Label { con }) = con
-
---------------------------------------------------------------------------------
-
-type Base_LabelRow (c :: Type) r =
+type BaseLabelRow (c :: Type) r =
   ( con :: c
   | r
   )
 
-type Frontend_LabelRow c r = Base_LabelRow c
+getCon :: forall c r. Label c r -> c
+getCon (Label { con }) = con
+
+type AnnotatedLabel c r = Label c (AnnotatedLabelRow r)
+
+type AnnotatedLabelRow r =
   ( id :: String
   | r
   )
+
+getId :: forall c r. AnnotatedLabel c r -> String
+getId (Label { id }) = id
 
 --------------------------------------------------------------------------------
 
 data Editor c = Editor
   { name :: String
+  -- initializing
   , initialExpr :: Expr (Label c ())
   , initialHandle :: Handle
+  -- editing
   , getEditMenu ::
       forall m r
        . Monad m
@@ -60,10 +66,14 @@ data Editor c = Editor
       => KeyInfo
       -> PureEditorState (Label c r)
       -> Maybe (Edit m (Label c ()) (Label c r))
+  -- validity
   , isValidHandle :: forall r. Expr (Label c r) -> Handle -> Boolean
-  , assembleExpr :: AssembleExpr c
+  -- rendering
+  , annotateLabel :: Label c () -> Aff (AnnotatedLabel c ())
+  , assembleAnnotatedExpr :: AssembleExpr (AnnotatedLabel c ())
+  , assembleExpr :: AssembleExpr (Label c ())
+  -- printing
   , printExpr :: forall r. Expr (Label c r) -> String
-  , liftLabel :: Label c () -> Aff (Label c ())
   }
 
 newtype ExistsEditor = ExistsEditor (forall r. ExistsEditorK r -> r)
@@ -75,28 +85,9 @@ mkExistsEditor a = ExistsEditor \k -> k a
 runExistsEditor :: forall r. ExistsEditorK r -> ExistsEditor -> r
 runExistsEditor k1 (ExistsEditor k2) = k2 k1
 
-type AssembleExpr c =
-  forall w i r
-   . { label :: Label c r
-     , kids :: Array (RenderM (Array (HTML w i)))
-     , points :: Array (HTML w i)
-     }
-  -> RenderM (Array (HTML w i))
-
-type RenderM = Reader RenderCtx
-
-runRenderM :: forall a. RenderM a -> a
-runRenderM = flip runReader
-  { indentLevel: 0 -- TODO: change this to 0 when allow feature of specifying which rendering constructs add to indentation level
-  }
-
-type RenderCtx =
-  { indentLevel :: Int
-  }
-
 --------------------------------------------------------------------------------
 
-assembleExpr_default :: forall c. Show c => AssembleExpr c
+assembleExpr_default :: forall c r. Show c => AssembleExpr (Label c r)
 assembleExpr_default { label, kids, points } = do
   kidsAndPoints <- map fold $ Array.zip points kids # traverse \(point /\ m_kid) -> do
     kid <- m_kid

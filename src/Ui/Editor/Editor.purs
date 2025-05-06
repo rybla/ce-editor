@@ -12,6 +12,7 @@ import Data.Expr (Edit, EditAt, Expr, Fragment(..), Handle(..), Path, Point, Spa
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
+import Data.Expr.Render (RenderM, runRenderM)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (fold)
 import Data.List (List(..), (:))
@@ -22,8 +23,7 @@ import Data.Set as Set
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..), Label, runRenderM)
-import Editor.Common (RenderM)
+import Editor (Editor(..), Label, AnnotatedLabel)
 import Effect.Aff (Aff)
 import Effect.Class.Console as Console
 import Effect.Ref as Ref
@@ -40,7 +40,7 @@ import Ui.Editor.Point as Point
 import Ui.Event (alt, cmd, keyEq, keyMember, keyRegex, not_alt, not_cmd, not_shift, shift)
 import Ui.Event (fromEventToKeyInfo, matchKeyInfoPattern') as Event
 import Ui.Halogen (classes)
-import Utility (guardPure, isNonSpace_regex, (:%=), (:=))
+import Utility (guardPure, isNonSpace_regex, todo, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
@@ -59,7 +59,7 @@ component = H.mkComponent { initialState, eval, render }
 initialState :: forall c. EditorInput c -> EditorState c
 initialState _input@{ editor: Editor editor } =
   { editor: Editor editor
-  , root: editor.initialExpr
+  , root: todo "editor.initialExpr"
   , initial_mb_handle
   , ref_mb_handle: unsafePerformEffect do Ref.new initial_mb_handle
   , ref_mb_dragOrigin: unsafePerformEffect do Ref.new none
@@ -219,7 +219,7 @@ handleAction (KeyDown_EditorAction event) = do
     -- paste
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "v", cmd, not_shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
-      submitEditAt $ Expr.Edit.paste identity
+      submitEditAt $ Expr.Edit.paste (todo "remove label")
     -- redo
     _ | ki # Event.matchKeyInfoPattern' [ keyEq "z", cmd, shift, not_alt ] -> do
       liftEffect $ event # Event.preventDefault
@@ -331,21 +331,21 @@ loadSnapshot s = do
 -- submitEdit
 --------------------------------------------------------------------------------
 
-submitEditAt :: forall c. Show c => EditAt Aff (Label c ()) (Label c ()) -> EditorM c Unit
+submitEditAt :: forall c. Show c => EditAt Aff (Label c ()) (AnnotatedLabel c ()) -> EditorM c Unit
 submitEditAt editAt = do
   state <- get >>= (liftEffect <<< toPureEditorState)
   case editAt state of
     Nothing -> pure unit
     Just edit -> submitEdit edit
 
-submitEdit :: forall c. Show c => Edit Aff (Label c ()) (Label c ()) -> EditorM c Unit
+submitEdit :: forall c. Show c => Edit Aff (Label c ()) (AnnotatedLabel c ()) -> EditorM c Unit
 submitEdit edit = do
   { editor: Editor editor } <- get
-  purestate_input <- get >>= (liftEffect <<< toPureEditorState)
+  purestate_input <- get >>= (toPureEditorState >>> liftEffect)
 
   mb_output /\ _diagnostics <-
     applyEdit edit purestate_input
-      # flip runReaderT { liftLabel: editor.liftLabel }
+      # flip runReaderT { annotateLabel: editor.annotateLabel }
       # runMaybeT
       # runWriterT
       # lift
@@ -506,18 +506,18 @@ render state =
     [ HH.div [ classes [ "root" ] ]
         [ HH.div [ classes [ "Expr" ] ]
             ( state.root
-                # renderExpr state Nil
+                # renderAnnotatedExpr state Nil
                 # runRenderM
             )
         ]
     ]
 
-renderExpr :: forall c. Show c => EditorState c -> Path -> Expr (Label c ()) -> RenderM (Array (EditorHTML c))
-renderExpr state@{ editor: Editor editor } path expr = do
+renderAnnotatedExpr :: forall c. Show c => EditorState c -> Path -> Expr (AnnotatedLabel c ()) -> RenderM (Array (EditorHTML c))
+renderAnnotatedExpr state@{ editor: Editor editor } path expr = do
   Expr.Render.renderExpr
-    { renderKid: renderExpr state
+    { renderKid: renderAnnotatedExpr state
     , renderPoint: renderPoint state
-    , assembleExpr: editor.assembleExpr
+    , assembleExpr: editor.assembleAnnotatedExpr
     }
     path
     expr

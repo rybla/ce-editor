@@ -173,7 +173,7 @@ paste lowerLabel state = do
 -- copy
 --------------------------------------------------------------------------------
 
-copy :: forall m l. Monad m => Show l => EditAt m l l
+copy :: forall m l1 l2. Monad m => Show l1 => Show l2 => EditAt m l1 l2
 
 copy state@{ mb_handle: Just (Point_Handle _) } =
   pure $ Edit
@@ -206,7 +206,7 @@ copy { mb_handle: Nothing } = none
 -- same as cut except preserves clipboard
 --------------------------------------------------------------------------------
 
-delete :: forall m l. Monad m => Show l => EditAt m l l
+delete :: forall m l1 l2. Monad m => Show l1 => Show l2 => EditAt m l1 l2
 delete state = do
   Edit edit <- cut state
   pure $ Edit edit { output = edit.output # map (map _ { clipboard = state.clipboard }) }
@@ -218,7 +218,7 @@ delete state = do
 -- before deleting.
 --------------------------------------------------------------------------------
 
-delete' :: forall m l. Monad m => Show l => { isValidHandle :: Expr l -> Handle -> Boolean } -> EditAt m l l
+delete' :: forall m l1 l2. Monad m => Show l1 => Show l2 => { isValidHandle :: Expr l2 -> Handle -> Boolean } -> EditAt m l1 l2
 delete' { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } = do
   let
     mb_handle' = Expr.Move.movePointUntil state.root Expr.Move.L p0 \p ->
@@ -228,7 +228,7 @@ delete' { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } =
     Just handle' -> delete state { mb_handle = Just handle' }
 delete' _ state = delete state
 
-delete'_sibling :: forall m l. Monad m => Show l => { isValidHandle :: Expr l -> Handle -> Boolean } -> EditAt m l l
+delete'_sibling :: forall m l1 l2. Monad m => Show l1 => Show l2 => { isValidHandle :: Expr l2 -> Handle -> Boolean } -> EditAt m l1 l2
 delete'_sibling { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } = do
   let
     mb_handle' = Expr.Move.movePointUntil state.root Expr.Move.L_sibling p0 \p ->
@@ -243,7 +243,7 @@ delete'_sibling _ state = delete state
 -- law: cut = copy >>> delete
 --------------------------------------------------------------------------------
 
-cut :: forall m l. Monad m => Show l => EditAt m l l
+cut :: forall m l1 l2. Monad m => Show l1 => Show l2 => EditAt m l1 l2
 
 cut { root: e, mb_handle: Just (Point_Handle p) } =
   pure $ Edit

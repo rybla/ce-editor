@@ -12,7 +12,10 @@ import Data.Newtype (wrap)
 import Data.Tuple (Tuple(..))
 import Editor (Label(..))
 import Editor.Common (Editor(..), assembleExpr_default)
+import Effect.Class (liftEffect)
 import Halogen.HTML as HH
+import Record as Record
+import Ui.Editor.Id (freshId)
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 import Utility (collapse)
@@ -77,8 +80,11 @@ editor = Editor
         where
         p = getEndPoints_ZipperH zh
   , assembleExpr: assembleExpr_default
+  , assembleAnnotatedExpr: assembleExpr_default
   , printExpr: const "unimplemented"
-  , liftLabel: pure
+  , annotateLabel: \(Label l) -> do
+      id <- freshId # liftEffect
+      pure $ Label $ l `Record.merge` { id }
   }
 
 beforeHolePoint = [ HH.div [ classes [ "Token", "beforeHolePoint" ] ] [ HH.text "" ] ]

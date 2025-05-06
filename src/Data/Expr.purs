@@ -736,7 +736,7 @@ type EditM m l1 l2 = ReaderT (EditCtx m l1 l2) (MaybeT (Diagnostic.MT m))
 
 type EditCtx :: (Type -> Type) -> Type -> Type -> Type
 type EditCtx m l1 l2 =
-  { liftLabel :: l1 -> m l2
+  { annotateLabel :: l1 -> m l2
   }
 
 -- TODO: is this layer necessary? I used to merge with existing clipboard but that's already accounted for when the Edit is constructed, so no need to do it here
@@ -751,8 +751,8 @@ applyEdit (Edit edit) _state = do
 
 freshTraversable :: forall m t l1 l2. Monad m => Traversable t => t l1 -> EditM m l1 l2 (t l2)
 freshTraversable t = do
-  { liftLabel } <- ask
-  t # traverse (liftLabel >>> lift >>> lift >>> lift)
+  { annotateLabel } <- ask
+  t # traverse (annotateLabel >>> lift >>> lift >>> lift)
 
 --------------------------------------------------------------------------------
 -- Edit

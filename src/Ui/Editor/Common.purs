@@ -12,7 +12,7 @@ import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\))
-import Editor (Editor, Label)
+import Editor (Editor, Label, AnnotatedLabel)
 import Editor.Common (ExistsEditor)
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -66,16 +66,16 @@ type EditorOutput = Void
 
 type EditorState c =
   { editor :: Editor c
-  , root :: Expr (Label c ())
+  , root :: Expr (AnnotatedLabel c ())
   , initial_mb_handle :: Maybe Handle
   , ref_mb_handle :: Ref (Maybe Handle)
   , ref_mb_dragOrigin :: Ref (Maybe Handle)
-  , clipboard :: Maybe (Fragment (Label c ()))
+  , clipboard :: Maybe (Fragment (AnnotatedLabel c ()))
   , ref_history :: Ref (List (Snapshot c))
   , ref_future :: Ref (List (Snapshot c))
   }
 
-toPureEditorState :: forall c. EditorState c -> Effect (PureEditorState (Label c ()))
+toPureEditorState :: forall c. EditorState c -> Effect (PureEditorState (AnnotatedLabel c ()))
 toPureEditorState state = do
   mb_handle <- state.ref_mb_handle # Ref.read
   pure
@@ -85,7 +85,7 @@ toPureEditorState state = do
     }
 
 type Snapshot c =
-  { root :: Expr (Label c ())
+  { root :: Expr (AnnotatedLabel c ())
   , mb_handle :: Maybe Handle
   }
 
@@ -180,18 +180,18 @@ type BufferInput c =
   { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu Aff (Label c ()) (Label c ())
+  , menu :: EditMenu Aff (Label c ()) (AnnotatedLabel c ())
   }
 
-data BufferOutput c = SubmitBuffer_BufferOutput (Edit Aff (Label c ()) (Label c ()))
+data BufferOutput c = SubmitBuffer_BufferOutput (Edit Aff (Label c ()) (AnnotatedLabel c ()))
 
 type BufferState c =
   { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu Aff (Label c ()) (Label c ())
+  , menu :: EditMenu Aff (Label c ()) (AnnotatedLabel c ())
   , option_i :: Maybe Int
-  , menu_queried :: Array (String /\ Edit Aff (Label c ()) (Label c ()))
+  , menu_queried :: Array (String /\ Edit Aff (Label c ()) (AnnotatedLabel c ()))
   }
 
 data BufferAction c
