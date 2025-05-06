@@ -83,7 +83,7 @@ linebreak = [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ]
 indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "│" ] ]
 indentations n = fold $ Array.replicate n indentation
 
-isValidPoint :: Expr (Label C ()) -> Point -> Boolean
+isValidPoint :: forall r. Expr (Label C r) -> Point -> Boolean
 isValidPoint _ _ = true
 
 -- LineBreak

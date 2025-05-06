@@ -16,10 +16,9 @@ import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe)
 import Editor (Label(..))
-import Editor.Common (Editor(..), LabelRow, assembleExpr_default, getCon)
+import Editor.Common (Editor(..), assembleExpr_default, getCon)
 import Editor.Notation (literal, punctuation)
 import Halogen.HTML as HH
-import Prim.Row (class Nub)
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 
@@ -123,7 +122,7 @@ linebreak = [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ]
 indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "│" ] ]
 indentations n = fold $ Array.replicate n indentation
 
-isValidPoint :: Expr (Label C ()) -> Point -> Boolean
+isValidPoint :: forall r. Expr (Label C r) -> Point -> Boolean
 isValidPoint e0 (Point p) = (e.l # getCon) `Set.member` ls
   where
   Expr e = (e0 # atSubExpr p.path).here

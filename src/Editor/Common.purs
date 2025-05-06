@@ -39,7 +39,7 @@ data Editor c = Editor
   , initialHandle :: Handle
   , getEditMenu :: PureEditorState (Label c ()) -> EditMenu (Label c ())
   , getShortcut :: KeyInfo -> PureEditorState (Label c ()) -> MaybeT Diagnostic.M (Edit (Label c ()))
-  , isValidHandle :: Expr (Label c ()) -> Handle -> Boolean
+  , isValidHandle :: forall r. Expr (Label c r) -> Handle -> Boolean
   , assembleExpr :: AssembleExpr c
   , printExpr :: forall r. Expr (Label c r) -> String
   }
