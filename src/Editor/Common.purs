@@ -2,13 +2,12 @@ module Editor.Common where
 
 import Prelude
 
-import Control.Monad.Reader (Reader, ask, runReader)
-import Control.Monad.Trans.Class (lift)
+import Control.Monad.Reader (Reader, runReader)
 import Data.Array as Array
-import Data.Expr (Edit, EditMenu, Expr, Handle, PureEditorState, EditM)
+import Data.Expr (Edit, EditMenu, Expr, Handle, PureEditorState)
 import Data.Foldable (fold)
 import Data.Maybe (Maybe, fromMaybe)
-import Data.Traversable (class Traversable, traverse)
+import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Halogen.HTML (HTML)
@@ -37,16 +36,6 @@ getCon (Label { con }) = con
 
 type IdRow r = (id :: String | r)
 
-freshTraversable
-  :: forall m t c r
-   . Monad m
-  => Traversable t
-  => t (Label c ())
-  -> EditM m (Label c ()) (Label c (IdRow r)) (t (Label c (IdRow r)))
-freshTraversable t = do
-  { liftLabel } <- ask
-  lift $ t # traverse (liftLabel >>> lift >>> lift)
-
 --------------------------------------------------------------------------------
 
 data Editor c = Editor
@@ -54,10 +43,10 @@ data Editor c = Editor
   , initialExpr :: Expr (Label c ())
   , initialHandle :: Handle
   , getEditMenu ::
-      forall m
+      forall m r
        . Monad m
-      => PureEditorState (Label c ())
-      -> EditMenu m (Label c ()) (Label c ())
+      => PureEditorState (Label c r)
+      -> EditMenu m (Label c ()) (Label c r)
   , getShortcut ::
       forall m r
        . Monad m
