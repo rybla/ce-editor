@@ -28,7 +28,7 @@ data Editor c = Editor
   , getShortcut :: KeyInfo -> PureEditorState (Label c ()) -> MaybeT Diagnostic.M (Edit (Label c ()))
   , isValidHandle :: Expr (Label c ()) -> Handle -> Boolean
   , assembleExpr :: AssembleExpr c
-  , printExpr :: Expr (Label c ()) -> String
+  , printExpr :: forall r. Expr (Label c r) -> String
   }
 
 newtype ExistsEditor = ExistsEditor (forall r. ExistsEditorK r -> r)
