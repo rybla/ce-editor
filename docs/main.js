@@ -15665,7 +15665,7 @@
     };
   };
   var render4 = function(state3) {
-    return div2([classes2(["App"])])(fold10([[div2([classes2(["header"])])([div2([classes2(["option"])])([div2([classes2(["label"])])([text5("language")]), select3([classes2(["value"]), value14(runExistsEditor(function(dictShow) {
+    return div2([classes2(["App"])])(fold10([[div2([classes2(["header"])])([div2([classes2(["title"])])([text5("ce-editor")]), div2([classes2(["option"])])([div2([classes2(["label"])])([text5("language")]), select3([classes2(["value"]), value14(runExistsEditor(function(dictShow) {
       return function(v) {
         return v.value0.name;
       };

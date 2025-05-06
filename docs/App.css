@@ -14,8 +14,15 @@
     flex-direction: column;
     justify-content: stretch;
     align-items: stretch;
+    gap: 0.5em;
 
-    box-shadow: 0 0.1em 1em 0 black;
+    box-shadow: 0 0 1em 0 rgba(0, 0, 0, 0.8);
+
+    &>.title {
+      font-weight: bold;
+      font-size: 1.5em;
+      font-family: monospace;
+    }
 
     &>.option {
       display: flex;
@@ -29,7 +36,11 @@
       }
 
       &>.value {
-        font-family: monospace
+        font-family: monospace;
+        padding: 0 0.2em;
+        border-radius: 0.5em;
+        border: 0.1em solid rgba(0, 0, 0, 0.2);
+        font-family: monospace;
       }
     }
   }

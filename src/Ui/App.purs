@@ -57,7 +57,9 @@ render state =
     [ classes [ "App" ] ] $ fold
     [ [ HH.div
           [ classes [ "header" ] ]
-          [ HH.div
+          [ HH.div [ classes [ "title" ] ]
+              [ HH.text "ce-editor" ]
+          , HH.div
               [ classes [ "option" ] ]
               [ HH.div
                   [ classes [ "label" ] ]
