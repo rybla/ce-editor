@@ -18,10 +18,7 @@ import Ui.Halogen (classes)
 
 --------------------------------------------------------------------------------
 
-type Label c r = Record (LabelRow c r)
-
-type LabelRow :: Type -> Row Type -> Row Type
-type LabelRow c r = (con :: c | r)
+type Label c r = Record (con :: c | r)
 
 data Editor c = Editor
   { name :: String
