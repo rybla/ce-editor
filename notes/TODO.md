@@ -2,6 +2,8 @@
 
 Priority:
 
+- [ ] IDEA: make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
+
 - [ ] create interface for specific Editors to add annotations to rendered output
   - to keep things simple, these annotations will be re-computed every time you make a change
 
@@ -20,7 +22,7 @@ Priority:
 
 - [ ] IDEA: when delete right before a kid, the kid's kids could be spliced in place of it
   - but, this often breaks well-formedness
-- [ ] IDEA: make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
+
   - [ ] **first**: use browser tools to profile how long rendering takes
   - also, i dont know if this even works exactly
 
