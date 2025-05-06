@@ -1,21 +1,31 @@
 # TODO
 
-- [ ] use different colors or something to show how something different will happen depending on what kind of insertion you're about to do or what is in your clipboard
-  - not sure how to do this, because you don't want what's in your clipboard to always be messing with what you see in the editor
-- [ ] refactor to allow for diagnostics reporting some places
-  - [ ] need to reorg modules to make more sense now that diagnostics are allowed in Expr stuff
+Priority:
 
+- [ ] make a simple little way for the user to "run" their program, just for fun
+- [ ] create interface for specific Editors to add annotations to rendered output
+  - to keep things simple, these annotations will be re-computed every time you make a change
+- [ ] refactor to allow for diagnostics reporting some places
+  -  reorg modules to make more sense now that diagnostics are allowed in Expr stuff
 - [ ] up/down movement
 - [ ] clicking on an atom
   - [ ] half and half atom should corrresponds to the point before and after
   - [ ] when drag, should get the whole atom even if you are only over part of it 
 - [ ] when move across grouping boundaries, doesnt quite go where expected (when move from inner to outer, should go to the innermost)
+  - example of this?
 
 - [ ] IDEA: when delete right before a kid, the kid's kids could be spliced in place of it
   - but, this often breaks well-formedness
 - [ ] IDEA: make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
   - [ ] **first**: use browser tools to profile how long rendering takes
   - also, i dont know if this even works exactly
+
+Debatable:
+
+- [ ] use different colors or something to show how something different will happen depending on what kind of insertion you're about to do or what is in your clipboard
+  - not sure how to do this, because you don't want what's in your clipboard to always be messing with what you see in the editor
+
+Done:
 
 - [x] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
 - [x] when delete zipper, should go at the left or right end of boundary span depending on focus of deleted zipper handle

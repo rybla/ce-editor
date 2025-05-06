@@ -13,7 +13,7 @@ import Data.Set (Set)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\), (/\))
 import Editor (Editor)
-import Editor.Common (Editor_ExistsLabel(..))
+import Editor.Common (ExistsEditor(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Ref (Ref)
@@ -34,12 +34,12 @@ type AppInput = {}
 type AppOutput = Void
 
 type AppState =
-  { mb_editor :: Maybe Editor_ExistsLabel
+  { mb_editor :: Maybe ExistsEditor
   }
 
 data AppAction
   = Initialize_AppAction
-  | SetEditor_AppAction Editor_ExistsLabel
+  | SetEditor_AppAction ExistsEditor
   | Pass_AppAction
 
 type AppSlots =

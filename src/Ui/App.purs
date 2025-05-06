@@ -8,7 +8,7 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (fromMaybe')
 import Data.Tuple.Nested ((/\))
-import Editor (Editor(..), Editor_ExistsLabel, mkEditor_ExistsLabel, runEditor_ExistsLabel)
+import Editor (Editor(..), ExistsEditor, mkExistsEditor, runExistsEditor)
 import Editor.Example.Sexp as Editor.Example.Sexp
 import Editor.Example.UlcV0 as Editor.Example.UlcV0
 import Editor.Example.UlcV1 as Editor.Example.UlcV1
@@ -26,19 +26,19 @@ import Utility (impossible)
 component :: H.Component AppQuery AppInput AppOutput Aff
 component = H.mkComponent { initialState, eval, render }
 
-editorsMenu :: Map String Editor_ExistsLabel
+editorsMenu :: Map String ExistsEditor
 editorsMenu =
   editors
-    # map (\editor_el -> editor_el # runEditor_ExistsLabel \(Editor editor) -> editor.name /\ editor_el)
+    # map (\editor_el -> editor_el # runExistsEditor \(Editor editor) -> editor.name /\ editor_el)
     # Map.fromFoldable
   where
   editors =
-    [ mkEditor_ExistsLabel Editor.Example.Sexp.editor
-    , mkEditor_ExistsLabel Editor.Example.UlcV0.editor
-    , mkEditor_ExistsLabel Editor.Example.UlcV1.editor
+    [ mkExistsEditor Editor.Example.Sexp.editor
+    , mkExistsEditor Editor.Example.UlcV0.editor
+    , mkExistsEditor Editor.Example.UlcV1.editor
     ]
 
-defaultEditor = mkEditor_ExistsLabel Editor.Example.Sexp.editor
+defaultEditor = mkExistsEditor Editor.Example.Sexp.editor
 
 initialState :: AppInput -> AppState
 initialState _input = { mb_editor: pure defaultEditor }
@@ -64,7 +64,7 @@ render state =
                   [ HH.text "language" ]
               , HH.select
                   [ classes [ "value" ]
-                  , HP.value $ defaultEditor # runEditor_ExistsLabel \(Editor editor) -> editor.name
+                  , HP.value $ defaultEditor # runExistsEditor \(Editor editor) -> editor.name
                   , HE.onValueChange case _ of
                       name -> SetEditor_AppAction $ editorsMenu # Map.lookup name # fromMaybe' (impossible $ "unknown editor name: " <> name)
                   ] $ editorsMenu # Map.toUnfoldable # map \(name /\ _) ->
@@ -72,7 +72,7 @@ render state =
               ]
           ]
       ]
-    , state.mb_editor # foldMap \editor_el -> editor_el # runEditor_ExistsLabel \editor ->
+    , state.mb_editor # foldMap \editor_el -> editor_el # runExistsEditor \editor ->
         [ HH.slot_ (Proxy @"Editor") unit Editor.component
             { editor
             }

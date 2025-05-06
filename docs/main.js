@@ -9213,7 +9213,7 @@
   var runRenderM = /* @__PURE__ */ flip(runReader)({
     indentLevel: 0
   });
-  var runEditor_ExistsLabel = function(k1) {
+  var runExistsEditor = function(k1) {
     return function(v) {
       return v(function(dictShow) {
         return k1(dictShow);
@@ -9223,7 +9223,7 @@
   var renderWarning = function(msg) {
     return div2([classes2(["Warning"])])([text5(msg)]);
   };
-  var mkEditor_ExistsLabel = function(dictShow) {
+  var mkExistsEditor = function(dictShow) {
     return function(a2) {
       return function(k) {
         return k(dictShow)(a2);
@@ -15602,7 +15602,7 @@
   var pure26 = /* @__PURE__ */ pure(applicativeHalogenM);
   var modify_5 = /* @__PURE__ */ modify_2(monadStateHalogenM);
   var pure113 = /* @__PURE__ */ pure(applicativeMaybe);
-  var mkEditor_ExistsLabel2 = /* @__PURE__ */ mkEditor_ExistsLabel(showL);
+  var mkExistsEditor2 = /* @__PURE__ */ mkExistsEditor(showL);
   var map37 = /* @__PURE__ */ map(functorArray);
   var fold10 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
   var value14 = /* @__PURE__ */ value12(isPropString);
@@ -15649,23 +15649,23 @@
     });
   }();
   var editorsMenu = /* @__PURE__ */ function() {
-    var editors = [mkEditor_ExistsLabel2(editor), mkEditor_ExistsLabel(showL2)(editor2), mkEditor_ExistsLabel(showString)(editor3)];
+    var editors = [mkExistsEditor2(editor), mkExistsEditor(showL2)(editor2), mkExistsEditor(showString)(editor3)];
     return fromFoldable2(ordString)(foldableArray)(map37(function(editor_el) {
-      return runEditor_ExistsLabel(function(dictShow) {
+      return runExistsEditor(function(dictShow) {
         return function(v) {
           return new Tuple(v.value0.name, editor_el);
         };
       })(editor_el);
     })(editors));
   }();
-  var defaultEditor = /* @__PURE__ */ mkEditor_ExistsLabel2(editor);
+  var defaultEditor = /* @__PURE__ */ mkExistsEditor2(editor);
   var initialState4 = function(_input) {
     return {
       mb_editor: pure113(defaultEditor)
     };
   };
   var render4 = function(state3) {
-    return div2([classes2(["App"])])(fold10([[div2([classes2(["header"])])([div2([classes2(["option"])])([div2([classes2(["label"])])([text5("language")]), select3([classes2(["value"]), value14(runEditor_ExistsLabel(function(dictShow) {
+    return div2([classes2(["App"])])(fold10([[div2([classes2(["header"])])([div2([classes2(["option"])])([div2([classes2(["label"])])([text5("language")]), select3([classes2(["value"]), value14(runExistsEditor(function(dictShow) {
       return function(v) {
         return v.value0.name;
       };
@@ -15674,7 +15674,7 @@
     })])(map37(function(v) {
       return option([value14(v.value0)])([text5(v.value0)]);
     })(toUnfoldable7(editorsMenu)))])])], foldMap4(function(editor_el) {
-      return runEditor_ExistsLabel(function(dictShow) {
+      return runExistsEditor(function(dictShow) {
         var component1 = component3(dictShow);
         return function(editor4) {
           return [slot_2($$Proxy.value)(unit)(component1)({
