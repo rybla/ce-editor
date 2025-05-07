@@ -8,7 +8,7 @@ import Control.Monad.State (get, modify, put)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (runWriterT)
 import Data.Array as Array
-import Data.Expr (Edit, EditAt, Expr, Fragment(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
+import Data.Expr (Edit, EditAt, Expr, Fragment(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), EditCtx, applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
@@ -24,9 +24,10 @@ import Data.String as String
 import Data.Traversable (traverse)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..), StampedLabel, getId)
+import Editor (Editor(..), Label, StampedLabel, getId, toEditCtx)
 import Editor.Common (unstampLabel)
 import Effect.Aff (Aff)
+import Effect.Aff.Class (class MonadAff)
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
 import Effect.Ref as Ref
@@ -129,7 +130,8 @@ handleAction (KeyDown_EditorAction event) = do
     _ -> pure unit
   else do
     mb_edit_shortcut /\ _diagnostics <- editor.getShortcut ki purestate
-      # flip runReaderT { stampLabel: editor.stampLabel }
+      # flip runReaderT (state.editor # toEditCtx)
+      # runMaybeT
       # runWriterT
       # lift
     case unit of
@@ -245,24 +247,28 @@ handleAction (KeyDown_EditorAction event) = do
           Nothing -> pure unit
           Just handle -> do
             let point = handle # getFocusPoint
-            menu /\ _diagnostics' <- editor.getEditMenu purestate
-              # flip runReaderT { stampLabel: editor.stampLabel }
+            mb_menu /\ _diagnostics' <- editor.getEditMenu purestate
+              # flip runReaderT (state.editor # toEditCtx)
+              # runMaybeT
               # runWriterT
               # lift
-            H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu, query: "" }
-            pure unit
+            case mb_menu of
+              Nothing -> pure unit
+              Just menu -> H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu, query: "" }
       _ | ki # Event.matchKeyInfoPattern' [ keyRegex isNonSpace_regex, not_cmd, not_alt ] -> do
         liftEffect $ event # Event.preventDefault
         case mb_handle of
           Nothing -> pure unit
           Just handle -> do
             let point = handle # getFocusPoint
-            menu /\ _diagnostics' <- editor.getEditMenu purestate
-              # flip runReaderT { stampLabel: editor.stampLabel }
+            mb_menu /\ _diagnostics' <- editor.getEditMenu purestate
+              # flip runReaderT (state.editor # toEditCtx)
+              # runMaybeT
               # runWriterT
               # lift
-            H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu, query: (unwrap ki).key }
-            pure unit
+            case mb_menu of
+              Nothing -> pure unit
+              Just menu -> H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu, query: (unwrap ki).key }
       -- unrecognized keyboard event
       _ -> pure unit
 
@@ -356,22 +362,32 @@ loadSnapshot s = do
 -- submitEdit
 --------------------------------------------------------------------------------
 
-submitEditAt :: forall c. Show c => EditAt Aff (StampedLabel c ()) -> EditorM c Unit
+getEditCtx :: forall m c. MonadAff m => EditorM c (EditCtx m (Label c ()) (StampedLabel c ()))
+getEditCtx = do
+  state <- get
+  pure $ state.editor # toEditCtx
+
+submitEditAt :: forall c. Show c => EditAt Aff (Label c ()) (StampedLabel c ()) -> EditorM c Unit
 submitEditAt editAt = do
   state <- getBasicEditorState
+  editCtx <- getEditCtx
   mb_edit /\ _diagnostics <- editAt state
+    # flip runReaderT editCtx
+    # runMaybeT
     # runWriterT
     # lift
   case mb_edit of
     Nothing -> pure unit
     Just edit -> submitEdit edit
 
-submitEdit :: forall c. Show c => Edit Aff (StampedLabel c ()) -> EditorM c Unit
+submitEdit :: forall c. Show c => Edit Aff (Label c ()) (StampedLabel c ()) -> EditorM c Unit
 submitEdit edit = do
   purestate_input <- getBasicEditorState
 
+  editCtx <- getEditCtx
   mb_output /\ _diagnostics <-
     applyEdit edit purestate_input
+      # flip runReaderT editCtx
       # runMaybeT
       # runWriterT
       # lift

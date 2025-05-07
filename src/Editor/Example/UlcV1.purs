@@ -79,7 +79,7 @@ editor = Editor
       --   Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
       -- _ | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] ->
       --   Expr.Edit.insert (Zipper_Fragment zipper_App) state
-      _ -> pure none
+      _ -> empty
   , isValidHandle: \root handle -> case handle of
       Point_Handle p -> and [ isValidPoint root p ]
       SpanH_Handle sh _ -> and [ isValidPoint root p._L, isValidPoint root p._R ]

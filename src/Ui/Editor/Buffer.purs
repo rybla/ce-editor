@@ -2,7 +2,8 @@ module Ui.Editor.Buffer where
 
 import Prelude
 
-import Control.Monad.Reader (runReader)
+import Control.Monad.Maybe.Trans (runMaybeT)
+import Control.Monad.Reader (runReader, runReaderT)
 import Control.Monad.State (get, modify_, put)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (runWriterT)
@@ -19,7 +20,7 @@ import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..), StampedLabel, getId)
+import Editor (Editor(..), StampedLabel, getId, toEditCtx)
 import Effect.Aff (Aff)
 import Effect.Class.Console (log) as Console
 import Effect.Exception (throw)
@@ -143,14 +144,19 @@ resizeQueryInput = do
 setQuery :: forall l. String -> BufferM l Unit
 setQuery query = do
   state <- get
-  menu_queried /\ _diagnostics <- state.menu query
+  mb_menu_queried /\ _diagnostics <- state.menu query
+    # flip runReaderT (state.editor # toEditCtx)
+    # runMaybeT
     # runWriterT
     # lift
-  modify_ _
-    { query = query
-    , menu_queried = menu_queried
-    , option_i = if null menu_queried then none else pure 0
-    }
+  case mb_menu_queried of
+    Nothing -> pure unit
+    Just menu_queried -> do
+      modify_ _
+        { query = query
+        , menu_queried = menu_queried
+        , option_i = if null menu_queried then none else pure 0
+        }
 
 --------------------------------------------------------------------------------
 -- cycle menu

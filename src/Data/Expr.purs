@@ -4,6 +4,8 @@ import Prelude
 
 import Control.Alternative (guard)
 import Control.Monad.Maybe.Trans (MaybeT)
+import Control.Monad.Reader (ReaderT, ask)
+import Control.Monad.Trans.Class (lift)
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Diagnostic as Diagnostic
@@ -27,7 +29,7 @@ import Data.Traversable (class Traversable, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested (type (/\), (/\))
 import Pretty (class Pretty, parens, pretty)
-import Utility (extractAt_Array, extractSpan_Array, impossible, spaces)
+import Utility (extractAt_Array, extractSpan_Array, impossible, spaces, todo)
 
 --------------------------------------------------------------------------------
 
@@ -729,10 +731,23 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
 -- Edit
 --------------------------------------------------------------------------------
 
-type EditM m = MaybeT (Diagnostic.MT m)
+type EditM m l1 l2 = ReaderT (EditCtx m l1 l2) (MaybeT (Diagnostic.MT m))
+
+type EditCtx m l1 l2 =
+  { stampLabel :: l1 -> m l2
+  , unstampLabel :: l2 -> l1
+  }
+
+stampTraversable :: forall m l1 l2 t. Monad m => Traversable t => t l1 -> EditM m l1 l2 (t l2)
+stampTraversable = todo ""
+
+-- refreshTraversable :: forall m l t. Monad m => Traversable t => t l -> EditM m l (t l)
+-- refreshTraversable t = do
+--   { refreshLabel } <- ask
+--   t # traverse (refreshLabel >>> lift >>> lift >>> lift)
 
 -- TODO: is this layer necessary? I used to merge with existing clipboard but that's already accounted for when the Edit is constructed, so no need to do it here
-applyEdit :: forall m l. Monad m => Show l => Edit m l -> BasicEditorState l -> EditM m (BasicEditorState l)
+applyEdit :: forall m l1 l2. Monad m => Show l1 => Show l2 => Edit m l1 l2 -> BasicEditorState l1 l2 -> EditM m l1 l2 (BasicEditorState l1 l2)
 applyEdit (Edit edit) _state = do
   state' <- edit.output # Lazy.force
   pure
@@ -745,16 +760,16 @@ applyEdit (Edit edit) _state = do
 -- Edit
 --------------------------------------------------------------------------------
 
-type EditMenu m l = String -> Diagnostic.MT m (Array (String /\ Edit m l))
+type EditMenu m l1 l2 = String -> EditM m l1 l2 (Array (String /\ Edit m l1 l2))
 
-type EditAt m l = BasicEditorState l -> Diagnostic.MT m (Maybe (Edit m l))
+type EditAt m l1 l2 = BasicEditorState l1 l2 -> EditM m l1 l2 (Edit m l1 l2)
 
-type Edit m l =
-  Edit_ l
-    ( EditM m
-        { root :: Expr l
+type Edit m l1 l2 =
+  Edit_ l2
+    ( EditM m l1 l2
+        { root :: Expr l2
         , mb_handle :: Maybe Handle
-        , clipboard :: Maybe (Fragment l)
+        , clipboard :: Maybe (Fragment l1)
         }
     )
 
@@ -787,10 +802,10 @@ instance Show l => Pretty (EditInfo l) where
   pretty x = show x
 
 -- | The essence of the editor state that is exposed to `Expr`-level computations.
-type BasicEditorState l =
-  { root :: Expr l
+type BasicEditorState l1 l2 =
+  { root :: Expr l2
   , mb_handle :: Maybe Handle
-  , clipboard :: Maybe (Fragment l)
+  , clipboard :: Maybe (Fragment l1)
   }
 
 --------------------------------------------------------------------------------

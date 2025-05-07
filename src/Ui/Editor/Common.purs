@@ -13,8 +13,7 @@ import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\))
-import Editor (Editor, StampedLabel)
-import Editor.Common (ExistsEditor)
+import Editor (Editor, ExistsEditor(..), Label(..), StampedLabel)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
@@ -73,12 +72,12 @@ type EditorState c =
   , initial_mb_handle :: Maybe Handle
   , ref_mb_handle :: Ref (Maybe Handle)
   , ref_mb_dragOrigin :: Ref (Maybe Handle)
-  , clipboard :: Maybe (Fragment (StampedLabel c ()))
+  , clipboard :: Maybe (Fragment (Label c ()))
   , ref_history :: Ref (List (Snapshot c))
   , ref_future :: Ref (List (Snapshot c))
   }
 
-getBasicEditorState :: forall c. EditorM c (BasicEditorState (StampedLabel c ()))
+getBasicEditorState :: forall c. EditorM c (BasicEditorState (Label c ()) (StampedLabel c ()))
 getBasicEditorState = get >>= toBasicEditorState >>> liftEffect
 
 getRoot :: forall c. EditorM c (Expr (StampedLabel c ()))
@@ -86,7 +85,7 @@ getRoot = get >>= \state -> case state.mb_root of
   Nothing -> liftEffect $ throw "root not loaded yet"
   Just root -> pure root
 
-toBasicEditorState :: forall c. EditorState c -> Effect (BasicEditorState (StampedLabel c ()))
+toBasicEditorState :: forall c. EditorState c -> Effect (BasicEditorState (Label c ()) (StampedLabel c ()))
 toBasicEditorState state = do
   root <- case state.mb_root of
     Nothing -> throw "root not loaded yet"
@@ -193,18 +192,18 @@ type BufferInput c =
   { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu Aff (StampedLabel c ())
+  , menu :: EditMenu Aff (Label c ()) (StampedLabel c ())
   }
 
-data BufferOutput c = SubmitBuffer_BufferOutput (Edit Aff (StampedLabel c ()))
+data BufferOutput c = SubmitBuffer_BufferOutput (Edit Aff (Label c ()) (StampedLabel c ()))
 
 type BufferState c =
   { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu Aff (StampedLabel c ())
+  , menu :: EditMenu Aff (Label c ()) (StampedLabel c ())
   , option_i :: Maybe Int
-  , menu_queried :: Array (String /\ Edit Aff (StampedLabel c ()))
+  , menu_queried :: Array (String /\ Edit Aff (Label c ()) (StampedLabel c ()))
   }
 
 data BufferAction c

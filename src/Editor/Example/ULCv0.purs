@@ -73,7 +73,7 @@ editor = Editor
   , getShortcut: \ki state -> case unit of
       -- _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] ->
       --   Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
-      _ -> pure none
+      _ -> empty
   , isValidHandle: \root handle -> case handle of
       Point_Handle p -> and [ isValidPoint root p ]
       SpanH_Handle sh _ -> and [ isValidPoint root p._L, isValidPoint root p._R ]

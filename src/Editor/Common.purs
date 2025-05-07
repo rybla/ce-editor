@@ -6,13 +6,14 @@ import Control.Monad.Reader (ReaderT, ask)
 import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
 import Data.Diagnostic as Diagnostic
-import Data.Expr (Edit, EditMenu, Expr, Handle, BasicEditorState)
+import Data.Expr (BasicEditorState, Edit, EditM, EditMenu, Expr, Handle, EditCtx)
 import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (fold)
 import Data.Maybe (Maybe, fromMaybe)
 import Data.Traversable (class Traversable, traverse)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
+import Effect.Aff.Class (class MonadAff, liftAff)
 import Halogen.HTML as HH
 import Record as Record
 import Type.Prelude (Proxy(..))
@@ -54,9 +55,6 @@ type StampedLabelRow r =
 getId :: forall c r. StampedLabel c r -> String
 getId (Label { id }) = id
 
-unstampLabel :: forall c. StampedLabel c () -> Label c ()
-unstampLabel (Label l) = Label (l # Record.delete (Proxy @"id"))
-
 --------------------------------------------------------------------------------
 
 data Editor c = Editor
@@ -66,16 +64,16 @@ data Editor c = Editor
   , initialHandle :: Handle
   -- editing
   , getEditMenu ::
-      forall m r
+      forall m r1 r2
        . Monad m
-      => BasicEditorState (Label c r)
-      -> GetEditM m c r (EditMenu m (Label c r))
+      => BasicEditorState (Label c r1) (Label c r2)
+      -> EditM m (Label c r1) (Label c r2) (EditMenu m (Label c r1) (Label c r2))
   , getShortcut ::
-      forall m r
+      forall m r1 r2
        . Monad m
       => KeyInfo
-      -> BasicEditorState (Label c r)
-      -> GetEditM m c r (Maybe (Edit m (Label c r)))
+      -> BasicEditorState (Label c r1) (Label c r2)
+      -> EditM m (Label c r1) (Label c r2) (Edit m (Label c r1) (Label c r2))
   -- validity
   , isValidHandle :: forall r. Expr (Label c r) -> Handle -> Boolean
   -- processing
@@ -96,17 +94,14 @@ runExistsEditor k1 (ExistsEditor k2) = k2 k1
 
 --------------------------------------------------------------------------------
 
-type GetEditM m c r = ReaderT { stampLabel :: Label c () -> m (Label c r) } (Diagnostic.MT m)
+toEditCtx :: forall m c. MonadAff m => Editor c -> EditCtx m (Label c ()) (StampedLabel c ())
+toEditCtx (Editor editor) =
+  { stampLabel: editor.stampLabel >>> liftAff
+  , unstampLabel
+  }
 
-stampTraversable
-  :: forall m c r t
-   . Monad m
-  => Traversable t
-  => t (Label c ())
-  -> GetEditM m c r (t (Label c r))
-stampTraversable t = do
-  { stampLabel } <- ask
-  t # traverse (stampLabel >>> lift >>> lift)
+unstampLabel :: forall c. StampedLabel c () -> Label c ()
+unstampLabel (Label l) = Label (l # Record.delete (Proxy @"id"))
 
 --------------------------------------------------------------------------------
 

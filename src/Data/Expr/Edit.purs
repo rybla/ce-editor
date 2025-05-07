@@ -2,26 +2,27 @@ module Data.Expr.Edit where
 
 import Prelude
 
-import Data.Expr (EditAt, EditInfo(..), Edit_(..), Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), ZipperH(..), atPoint, atSpan, atZipper, fromNePath, getEndPoints_SpanH, getPath_Zipper, getStepsAroundIndex, getTotalInnerPath_ZipperH, offset_Span, offset_innerLeft_Zipper, offset_outer_Zipper, unSpanContext, unZipper)
+import Control.Alternative (empty)
+import Data.Expr (EditAt, EditInfo(..), Edit_(..), Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), ZipperH(..), atPoint, atSpan, atZipper, fromNePath, getEndPoints_SpanH, getPath_Zipper, getStepsAroundIndex, getTotalInnerPath_ZipperH, offset_Span, offset_innerLeft_Zipper, offset_outer_Zipper, stampTraversable, unSpanContext, unZipper)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Move as Expr.Move
 import Data.Lazy as Lazy
 import Data.List ((:))
 import Data.Maybe (Maybe(..))
 import Data.Unfoldable (none)
-import Utility (guardPure)
+import Utility (guardPure, todo)
 
 --------------------------------------------------------------------------------
 -- insert
 --------------------------------------------------------------------------------
 
-insert :: forall m l. Monad m => Show l => Show l => Fragment l -> EditAt m l
+insert :: forall m l1 l2. Monad m => Show l1 => Show l2 => Fragment l2 -> EditAt m l1 l2
 
-insert _ { mb_handle: Nothing } = pure none
+insert _ { mb_handle: Nothing } = empty
 
 -- to insert s:Span at p:Point, splice s at p.
 insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (Point_Handle (Point p)), clipboard } =
-  pure $ Just $ Edit
+  pure $ Edit
     { info: Insert_EditInfo { insertion }
     , output: Lazy.defer \_ -> do
         pure
@@ -34,9 +35,9 @@ insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (Point_Handle (Poi
   at_p = e # atPoint (Point p)
 
 -- to insert z:Zipper at p:Point, splice z at p and fill the inside of z with
--- the (pure none) Span.
+-- the empty Span.
 insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (Point_Handle (Point p)), clipboard } =
-  pure $ Just $ Edit
+  pure $ Edit
     { info: Insert_EditInfo { insertion }
     , output: Lazy.defer \_ -> do
         pure
@@ -53,7 +54,7 @@ insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (Point_Handle (P
 
 -- to insert s:Span at sh:SpanH, replace the span at sh with s.
 insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (SpanH_Handle (SpanH sh) sf), clipboard } =
-  pure $ Just $ Edit
+  pure $ Edit
     { info: Insert_EditInfo { insertion }
     , output: Lazy.defer \_ -> do
         pure
@@ -71,7 +72,7 @@ insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (SpanH_Handle (Spa
   at_sh = e # atSpan (SpanH sh)
 
 insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (SpanH_Handle (SpanH sh) sf), clipboard } =
-  pure $ Just $ Edit
+  pure $ Edit
     { info: Insert_EditInfo { insertion }
     , output: Lazy.defer \_ -> do
         pure
@@ -92,7 +93,7 @@ insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (SpanH_Handle (S
 
 -- to insert s:Span at zh:ZipperH, replace outer span of zh with s
 insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) zf), clipboard } =
-  pure $ Just $ Edit
+  pure $ Edit
     { info: Insert_EditInfo { insertion }
     , output: Lazy.defer \_ -> do
         pure
@@ -118,7 +119,7 @@ insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (ZipperH_Handle (Z
 
 -- to insert z:Zipper at zh:ZipperH, replace the zipper at zh with z.
 insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) zf), clipboard } =
-  pure $ Just $ Edit
+  pure $ Edit
     { info: Insert_EditInfo { insertion }
     , output: Lazy.defer \_ -> do
         pure
@@ -158,41 +159,46 @@ insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (ZipperH_Handle 
 -- paste
 --------------------------------------------------------------------------------
 
-paste :: forall m l. Monad m => Show l => Show l => EditAt m l
+paste :: forall m l1 l2. Monad m => Show l1 => Show l2 => EditAt m l1 l2
 paste state = case state.clipboard of
-  Nothing -> pure none
-  Just frag -> insert frag state
+  Nothing -> empty
+  Just frag -> do
+    frag' <- frag # stampTraversable
+    insert frag' state
 
 --------------------------------------------------------------------------------
 -- copy
 --------------------------------------------------------------------------------
 
-copy :: forall m l. Monad m => Show l => Show l => EditAt m l
+copy :: forall m l1 l2. Monad m => Show l1 => Show l2 => EditAt m l1 l2
 
 copy state@{ mb_handle: Just (Point_Handle _) } =
-  pure $ Just $ Edit
+  pure $ Edit
     { info: Copy_EditInfo {}
     , output: Lazy.defer \_ -> do
-        pure state { clipboard = pure $ Span_Fragment $ Span none }
+        frag <- Span_Fragment (Span none) # stampTraversable
+        pure state { clipboard = pure (todo "frag") }
     }
 
 copy state@{ root: e, mb_handle: Just (SpanH_Handle (SpanH sh) _sf) } =
-  pure $ Just $ Edit
+  pure $ Edit
     { info: Copy_EditInfo {}
     , output: Lazy.defer \_ -> do
         let at_sh = e # atSpan (SpanH sh)
-        pure state { clipboard = pure $ Span_Fragment at_sh.here }
+        -- frag <- Span_Fragment at_sh.here # stampTraversable
+        pure state { clipboard = pure (todo "frag") }
     }
 
 copy state@{ root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) _zf) } =
-  pure $ Just $ Edit
+  pure $ Edit
     { info: Copy_EditInfo {}
     , output: Lazy.defer \_ -> do
         let at_zh = e # atZipper (ZipperH zh)
-        pure state { clipboard = pure $ Zipper_Fragment at_zh.here }
+        -- frag <- Zipper_Fragment at_zh.here # stampTraversable
+        pure state { clipboard = pure (todo "frag") }
     }
 
-copy { mb_handle: Nothing } = (pure none)
+copy { mb_handle: Nothing } = empty
 
 --------------------------------------------------------------------------------
 -- delete
@@ -200,11 +206,10 @@ copy { mb_handle: Nothing } = (pure none)
 -- same as cut except preserves clipboard
 --------------------------------------------------------------------------------
 
-delete :: forall m l. Monad m => Show l => Show l => EditAt m l
-delete state =
-  cut state >>= case _ of
-    Nothing -> pure Nothing
-    Just (Edit edit) -> pure $ Just $ Edit edit { output = edit.output # map (map _ { clipboard = state.clipboard }) }
+delete :: forall m l1 l2. Monad m => Show l1 => Show l2 => EditAt m l1 l2
+delete state = do
+  Edit edit <- cut state
+  pure $ Edit edit { output = edit.output # map (map _ { clipboard = state.clipboard }) }
 
 --------------------------------------------------------------------------------
 -- delete'
@@ -213,23 +218,23 @@ delete state =
 -- before deleting.
 --------------------------------------------------------------------------------
 
-delete' :: forall m l. Monad m => Show l => Show l => { isValidHandle :: Expr l -> Handle -> Boolean } -> EditAt m l
+delete' :: forall m l1 l2. Monad m => Show l1 => Show l2 => { isValidHandle :: Expr l2 -> Handle -> Boolean } -> EditAt m l1 l2
 delete' { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } = do
   let
     mb_handle' = Expr.Move.movePointUntil state.root Expr.Move.L p0 \p ->
       e # Expr.Drag.drag (Point_Handle p0) p >>= guardPure (isValidHandle e)
   case mb_handle' of
-    Nothing -> (pure none)
+    Nothing -> empty
     Just handle' -> delete state { mb_handle = Just handle' }
 delete' _ state = delete state
 
-delete'_sibling :: forall m l. Monad m => Show l => Show l => { isValidHandle :: Expr l -> Handle -> Boolean } -> EditAt m l
+delete'_sibling :: forall m l1 l2. Monad m => Show l1 => Show l2 => { isValidHandle :: Expr l2 -> Handle -> Boolean } -> EditAt m l1 l2
 delete'_sibling { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } = do
   let
     mb_handle' = Expr.Move.movePointUntil state.root Expr.Move.L_sibling p0 \p ->
       e # Expr.Drag.drag (Point_Handle p0) p >>= guardPure (isValidHandle e)
   case mb_handle' of
-    Nothing -> (pure none)
+    Nothing -> empty
     Just handle' -> delete state { mb_handle = Just handle' }
 delete'_sibling _ state = delete state
 
@@ -238,10 +243,10 @@ delete'_sibling _ state = delete state
 -- law: cut = copy >>> delete
 --------------------------------------------------------------------------------
 
-cut :: forall m l. Monad m => Show l => Show l => EditAt m l
+cut :: forall m l1 l2. Monad m => Show l1 => Show l2 => EditAt m l1 l2
 
 cut { root: e, mb_handle: Just (Point_Handle p) } =
-  pure $ Just $ Edit
+  pure $ Edit
     { info: Remove_EditInfo {}
     , output: Lazy.defer \_ -> pure
         { root: e
@@ -251,19 +256,19 @@ cut { root: e, mb_handle: Just (Point_Handle p) } =
     }
 
 cut { root: e, mb_handle: Just (SpanH_Handle (SpanH sh) _sf) } =
-  pure $ Just $ Edit
+  pure $ Edit
     { info: Remove_EditInfo {}
     , output: Lazy.defer \_ -> do
         let at_sh = e # atSpan (SpanH sh)
         pure
           { root: unSpanContext at_sh.outside (Span none)
           , mb_handle: Just $ Point_Handle (SpanH sh # getEndPoints_SpanH)._L
-          , clipboard: pure $ Span_Fragment at_sh.here
+          , clipboard: pure $ Span_Fragment (todo "at_sh.here")
           }
     }
 
 cut { root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) zf) } =
-  pure $ Just $ Edit
+  pure $ Edit
     { info: Remove_EditInfo {}
     , output: Lazy.defer \_ -> do
         let at_zh = e # atZipper (ZipperH zh)
@@ -302,9 +307,9 @@ cut { root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) zf) } =
                           OuterRight_ZipperFocus -> zh.j_OL + (at_zh.inside # offset_Span)
                       }
                   )
-          , clipboard: pure $ Zipper_Fragment at_zh.here
+          , clipboard: pure $ Zipper_Fragment (todo "at_zh.here")
           }
     }
 
-cut { mb_handle: Nothing } = (pure none)
+cut { mb_handle: Nothing } = empty
 
