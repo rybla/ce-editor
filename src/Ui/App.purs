@@ -59,19 +59,19 @@ render state =
           [ classes [ "header" ] ]
           [ HH.div [ classes [ "title" ] ]
               [ HH.text "ce-editor" ]
-          , HH.div
-              [ classes [ "option" ] ]
-              [ HH.div
-                  [ classes [ "label" ] ]
-                  [ HH.text "language" ]
-              , HH.select
-                  [ classes [ "value" ]
-                  , HP.value $ defaultEditor # runExistsEditor \(Editor editor) -> editor.name
-                  , HE.onValueChange case _ of
-                      name -> SetEditor_AppAction $ editorsMenu # Map.lookup name # fromMaybe' (impossible $ "unknown editor name: " <> name)
-                  ] $ editorsMenu # Map.toUnfoldable # map \(name /\ _) ->
-                  HH.option [ HP.value name ] [ HH.text name ]
-              ]
+          -- , HH.div
+          --     [ classes [ "option" ] ]
+          --     [ HH.div
+          --         [ classes [ "label" ] ]
+          --         [ HH.text "language" ]
+          --     , HH.select
+          --         [ classes [ "value" ]
+          --         , HP.value $ defaultEditor # runExistsEditor \(Editor editor) -> editor.name
+          --         , HE.onValueChange case _ of
+          --             name -> SetEditor_AppAction $ editorsMenu # Map.lookup name # fromMaybe' (impossible $ "unknown editor name: " <> name)
+          --         ] $ editorsMenu # Map.toUnfoldable # map \(name /\ _) ->
+          --         HH.option [ HP.value name ] [ HH.text name ]
+          --     ]
           ]
       ]
     , state.mb_editor # foldMap \editor_el -> editor_el # runExistsEditor \editor ->
