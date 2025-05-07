@@ -60,13 +60,13 @@ data Editor c = Editor
       forall m r
        . Monad m
       => BasicEditorState (Label c r)
-      -> EditMenu m (Label c ()) (Label c r)
+      -> m (EditMenu m (Label c r) (Label c r))
   , getShortcut ::
       forall m r
        . Monad m
       => KeyInfo
       -> BasicEditorState (Label c r)
-      -> Maybe (Edit m (Label c ()) (Label c r))
+      -> m (Maybe (Edit m (Label c r) (Label c r)))
   -- validity
   , isValidHandle :: forall r. Expr (Label c r) -> Handle -> Boolean
   -- processing

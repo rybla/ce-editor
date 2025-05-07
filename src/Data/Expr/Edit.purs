@@ -2,7 +2,7 @@ module Data.Expr.Edit where
 
 import Prelude
 
-import Data.Expr (EditAt, EditInfo(..), Edit_(..), Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), ZipperH(..), atPoint, atSpan, atZipper, freshTraversable, fromNePath, getEndPoints_SpanH, getPath_Zipper, getStepsAroundIndex, getTotalInnerPath_ZipperH, offset_Span, offset_innerLeft_Zipper, offset_outer_Zipper, unSpanContext, unZipper)
+import Data.Expr (EditAt, EditInfo(..), Edit_(..), Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), ZipperH(..), atPoint, atSpan, atZipper, fromNePath, getEndPoints_SpanH, getPath_Zipper, getStepsAroundIndex, getTotalInnerPath_ZipperH, offset_Span, offset_innerLeft_Zipper, offset_outer_Zipper, unSpanContext, unZipper)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Move as Expr.Move
 import Data.Lazy as Lazy
@@ -15,7 +15,7 @@ import Utility (fromMaybeM, guardPure)
 -- insert
 --------------------------------------------------------------------------------
 
-insert :: forall m l1 l2. Monad m => Show l1 => Show l2 => Fragment l1 -> EditAt m l1 l2
+insert :: forall m l. Monad m => Show l => Show l => Fragment l -> EditAt m l l
 
 insert _ { mb_handle: Nothing } = none
 
@@ -24,9 +24,8 @@ insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (Point_Handle (Poi
   pure $ Edit
     { info: Insert_EditInfo { insertion }
     , output: Lazy.defer \_ -> do
-        s' <- s # freshTraversable
         pure
-          { root: unSpanContext at_p.outside s'
+          { root: unSpanContext at_p.outside s
           , mb_handle: Just $ Point_Handle (Point { path: p.path, j: p.j + offset_Span s })
           , clipboard
           }
@@ -40,9 +39,8 @@ insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (Point_Handle (P
   pure $ Edit
     { info: Insert_EditInfo { insertion }
     , output: Lazy.defer \_ -> do
-        z' <- z # freshTraversable
         pure
-          { root: unSpanContext at_p.outside (unZipper z' (Span none))
+          { root: unSpanContext at_p.outside (unZipper z (Span none))
           , mb_handle: Just $ Point_Handle $ Point
               { path: p.path <> (p.j # getStepsAroundIndex)._R : (z # getPath_Zipper)
               , j: offset_innerLeft_Zipper z
@@ -58,9 +56,8 @@ insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (SpanH_Handle (Spa
   pure $ Edit
     { info: Insert_EditInfo { insertion }
     , output: Lazy.defer \_ -> do
-        s' <- s # freshTraversable
         pure
-          { root: unSpanContext at_sh.outside s'
+          { root: unSpanContext at_sh.outside s
           , mb_handle: Just $ Point_Handle $ Point
               { path: sh.path
               , j: case sf of
@@ -77,9 +74,8 @@ insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (SpanH_Handle (S
   pure $ Edit
     { info: Insert_EditInfo { insertion }
     , output: Lazy.defer \_ -> do
-        z' <- z # freshTraversable
         pure
-          { root: unSpanContext at_sh.outside (unZipper z' at_sh.here)
+          { root: unSpanContext at_sh.outside (unZipper z at_sh.here)
           , mb_handle: Just $ SpanH_Handle
               ( SpanH
                   { path: sh.path <> (sh.j_L # getStepsAroundIndex)._R : (z # getPath_Zipper)
@@ -99,14 +95,13 @@ insert insertion@(Span_Fragment s) { root: e, mb_handle: Just (ZipperH_Handle (Z
   pure $ Edit
     { info: Insert_EditInfo { insertion }
     , output: Lazy.defer \_ -> do
-        s' <- s # freshTraversable
         pure
-          { root: unSpanContext at_zh.outside s'
+          { root: unSpanContext at_zh.outside s
           , mb_handle: Just $ SpanH_Handle
               ( SpanH
                   { path: zh.path_O
                   , j_L: zh.j_OL
-                  , j_R: zh.j_OL + offset_Span s'
+                  , j_R: zh.j_OL + offset_Span s
                   }
               )
               ( case zf of
@@ -126,20 +121,19 @@ insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (ZipperH_Handle 
   pure $ Edit
     { info: Insert_EditInfo { insertion }
     , output: Lazy.defer \_ -> do
-        z' <- z # freshTraversable
         pure
-          { root: unSpanContext at_zh.outside (unZipper z' at_zh.inside)
+          { root: unSpanContext at_zh.outside (unZipper z at_zh.inside)
           , mb_handle: Just $ SpanH_Handle
               ( let
                   outer = Lazy.defer \_ -> SpanH
                     { path: zh.path_O
                     , j_L: zh.j_OL
-                    , j_R: zh.j_OL + (offset_outer_Zipper z')._L + Index 1 + (offset_outer_Zipper z')._R
+                    , j_R: zh.j_OL + (offset_outer_Zipper z)._L + Index 1 + (offset_outer_Zipper z)._R
                     }
                   inner = Lazy.defer \_ -> SpanH
                     { path: ZipperH zh # getTotalInnerPath_ZipperH # fromNePath
-                    , j_L: offset_innerLeft_Zipper z'
-                    , j_R: offset_innerLeft_Zipper z' + (zh.j_IR - zh.j_IL)
+                    , j_L: offset_innerLeft_Zipper z
+                    , j_R: offset_innerLeft_Zipper z + (zh.j_IR - zh.j_IL)
                     }
                 in
                   case zf of
@@ -164,16 +158,16 @@ insert insertion@(Zipper_Fragment z) { root: e, mb_handle: Just (ZipperH_Handle 
 -- paste
 --------------------------------------------------------------------------------
 
-paste :: forall m l1 l2. Monad m => Show l1 => Show l2 => (l2 -> l1) -> EditAt m l1 l2
-paste lowerLabel state = do
+paste :: forall m l. Monad m => Show l => Show l => EditAt m l l
+paste state = do
   frag <- state.clipboard # fromMaybeM none
-  insert (frag <#> lowerLabel) state
+  insert frag state
 
 --------------------------------------------------------------------------------
 -- copy
 --------------------------------------------------------------------------------
 
-copy :: forall m l1 l2. Monad m => Show l1 => Show l2 => EditAt m l1 l2
+copy :: forall m l. Monad m => Show l => Show l => EditAt m l l
 
 copy state@{ mb_handle: Just (Point_Handle _) } =
   pure $ Edit
@@ -206,7 +200,7 @@ copy { mb_handle: Nothing } = none
 -- same as cut except preserves clipboard
 --------------------------------------------------------------------------------
 
-delete :: forall m l1 l2. Monad m => Show l1 => Show l2 => EditAt m l1 l2
+delete :: forall m l. Monad m => Show l => Show l => EditAt m l l
 delete state = do
   Edit edit <- cut state
   pure $ Edit edit { output = edit.output # map (map _ { clipboard = state.clipboard }) }
@@ -218,7 +212,7 @@ delete state = do
 -- before deleting.
 --------------------------------------------------------------------------------
 
-delete' :: forall m l1 l2. Monad m => Show l1 => Show l2 => { isValidHandle :: Expr l2 -> Handle -> Boolean } -> EditAt m l1 l2
+delete' :: forall m l. Monad m => Show l => Show l => { isValidHandle :: Expr l -> Handle -> Boolean } -> EditAt m l l
 delete' { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } = do
   let
     mb_handle' = Expr.Move.movePointUntil state.root Expr.Move.L p0 \p ->
@@ -228,7 +222,7 @@ delete' { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } =
     Just handle' -> delete state { mb_handle = Just handle' }
 delete' _ state = delete state
 
-delete'_sibling :: forall m l1 l2. Monad m => Show l1 => Show l2 => { isValidHandle :: Expr l2 -> Handle -> Boolean } -> EditAt m l1 l2
+delete'_sibling :: forall m l. Monad m => Show l => Show l => { isValidHandle :: Expr l -> Handle -> Boolean } -> EditAt m l l
 delete'_sibling { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } = do
   let
     mb_handle' = Expr.Move.movePointUntil state.root Expr.Move.L_sibling p0 \p ->
@@ -243,7 +237,7 @@ delete'_sibling _ state = delete state
 -- law: cut = copy >>> delete
 --------------------------------------------------------------------------------
 
-cut :: forall m l1 l2. Monad m => Show l1 => Show l2 => EditAt m l1 l2
+cut :: forall m l. Monad m => Show l => Show l => EditAt m l l
 
 cut { root: e, mb_handle: Just (Point_Handle p) } =
   pure $ Edit

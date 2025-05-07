@@ -193,18 +193,18 @@ type BufferInput c =
   { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu Aff (Label c ()) (StampedLabel c ())
+  , menu :: EditMenu Aff (StampedLabel c ()) (StampedLabel c ())
   }
 
-data BufferOutput c = SubmitBuffer_BufferOutput (Edit Aff (Label c ()) (StampedLabel c ()))
+data BufferOutput c = SubmitBuffer_BufferOutput (Edit Aff (StampedLabel c ()) (StampedLabel c ()))
 
 type BufferState c =
   { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu Aff (Label c ()) (StampedLabel c ())
+  , menu :: EditMenu Aff (StampedLabel c ()) (StampedLabel c ())
   , option_i :: Maybe Int
-  , menu_queried :: Array (String /\ Edit Aff (Label c ()) (StampedLabel c ()))
+  , menu_queried :: Array (String /\ Edit Aff (StampedLabel c ()) (StampedLabel c ()))
   }
 
 data BufferAction c

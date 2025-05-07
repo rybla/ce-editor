@@ -27,7 +27,7 @@ import Type.Proxy (Proxy(..))
 import Ui.Editor.Id (freshId)
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse)
+import Utility (collapse, todo)
 
 newtype C = C String
 
@@ -55,24 +55,25 @@ editor = Editor
   { name: "Sexp"
   , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
-  , getEditMenu: \state query -> collapse case query of
-      "group" ->
-        [ Tuple "Symbol" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state
-        , Tuple "Group" <$> Expr.Edit.insert (Zipper_Fragment zipper_Group) state
-        ]
-      "linebreak" ->
-        [ Tuple "LineBreak" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
-        ]
-      _ ->
-        [ Tuple "Symbol" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state
-        ]
+  -- , getEditMenu: \state query -> collapse case query of
+  --     "group" ->
+  --       [ Tuple "Symbol" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state
+  --       , Tuple "Group" <$> Expr.Edit.insert (Zipper_Fragment zipper_Group) state
+  --       ]
+  --     "linebreak" ->
+  --       [ Tuple "LineBreak" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
+  --       ]
+  --     _ ->
+  --       [ Tuple "Symbol" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state
+  --       ]
+  , getEditMenu: todo ""
   , getShortcut: \ki state -> case unit of
-      _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] ->
-        Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
-      _ | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] ->
-        Expr.Edit.insert (Zipper_Fragment zipper_Group) state
+      -- _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] ->
+      --   Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
+      -- _ | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] ->
+      --   Expr.Edit.insert (Zipper_Fragment zipper_Group) state
       _ ->
-        none
+        pure none
   , isValidHandle: \root handle -> case handle of
       Point_Handle p -> and [ isValidPoint root p ]
       SpanH_Handle sh _ -> and [ isValidPoint root p._L, isValidPoint root p._R ]

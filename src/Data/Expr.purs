@@ -732,12 +732,7 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
 --------------------------------------------------------------------------------
 
 type EditM :: (Type -> Type) -> Type -> Type -> Type -> Type
-type EditM m l1 l2 = ReaderT (EditCtx m l1 l2) (MaybeT (Diagnostic.MT m))
-
-type EditCtx :: (Type -> Type) -> Type -> Type -> Type
-type EditCtx m l1 l2 =
-  { stampLabel :: l1 -> m l2
-  }
+type EditM m l1 l2 = MaybeT (Diagnostic.MT m)
 
 -- TODO: is this layer necessary? I used to merge with existing clipboard but that's already accounted for when the Edit is constructed, so no need to do it here
 applyEdit :: forall m l1 l2. Monad m => Show l1 => Edit m l1 l2 -> BasicEditorState l2 -> EditM m l1 l2 (BasicEditorState l2)
@@ -749,10 +744,10 @@ applyEdit (Edit edit) _state = do
     , clipboard: state'.clipboard
     }
 
-freshTraversable :: forall m t l1 l2. Monad m => Traversable t => t l1 -> EditM m l1 l2 (t l2)
-freshTraversable t = do
-  { stampLabel } <- ask
-  t # traverse (stampLabel >>> lift >>> lift >>> lift)
+-- freshTraversable :: forall m t l1 l2. Monad m => Traversable t => t l1 -> EditM m l1 l2 (t l2)
+-- freshTraversable t = do
+--   { stampLabel } <- ask
+--   t # traverse (stampLabel >>> lift >>> lift >>> lift)
 
 --------------------------------------------------------------------------------
 -- Edit
@@ -799,6 +794,7 @@ instance Show l => Show (EditInfo l) where
 instance Show l => Pretty (EditInfo l) where
   pretty x = show x
 
+-- | The essence of the editor state that is exposed to `Expr`-level computations.
 type BasicEditorState l =
   { root :: Expr l
   , mb_handle :: Maybe Handle

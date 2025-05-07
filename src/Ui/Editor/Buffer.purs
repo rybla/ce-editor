@@ -186,7 +186,7 @@ render state =
                 Edit { info: Insert_EditInfo info } ->
                   [ HHK.div [ classes [ "Expr" ] ] $
                       info.insertion
-                        # renderFragment (renderBaseArgs state.editor) (state.point # unwrap).path
+                        # renderFragment (renderArgs state.editor) (state.point # unwrap).path
                         # flip runReader
                             { indentLevel: 0
                             }
@@ -200,28 +200,15 @@ render state =
 
     ]
 
-renderBaseArgs :: forall c w i. Show c => Editor c -> RenderArgs (Label c ()) w i
-renderBaseArgs (Editor editor) =
-  { renderKid: renderExpr (Editor editor)
-  , renderPoint: renderPoint (Editor editor)
-  , assembleExpr: editor.assembleExpr
-  }
-  where
-  renderExpr :: Editor c -> Path -> Expr (Label c ()) -> RenderM (Array (String /\ HTML w i))
-  renderExpr editor' path expr = Expr.Render.renderExpr (renderBaseArgs editor') path expr
-
-  renderPoint :: Editor c -> Point -> String /\ HTML w i
-  renderPoint _ _ = "TODO:point" /\ HH.div [ classes [ "Point" ] ] [ HH.text " " ]
-
-renderStampedArgs :: forall c w i. Show c => Editor c -> RenderArgs (StampedLabel c ()) w i
-renderStampedArgs (Editor editor) =
+renderArgs :: forall c w i. Show c => Editor c -> RenderArgs (StampedLabel c ()) w i
+renderArgs (Editor editor) =
   { renderKid: renderExpr (Editor editor)
   , renderPoint: renderPoint (Editor editor)
   , assembleExpr: editor.assembleStampedExpr
   }
   where
   renderExpr :: Editor c -> Path -> Expr (StampedLabel c ()) -> RenderM (Array (String /\ HTML w i))
-  renderExpr editor' path expr = Expr.Render.renderExpr (renderStampedArgs editor') path expr
+  renderExpr editor' path expr = Expr.Render.renderExpr (renderArgs editor') path expr
 
   renderPoint :: Editor c -> Point -> String /\ HTML w i
   renderPoint _ _ = "TODO:point" /\ HH.div [ classes [ "Point" ] ] [ HH.text " " ]
