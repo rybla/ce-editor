@@ -353,6 +353,24 @@
 }
 
 .Token {
+  animation: Token-appear 1s forwards linear;
+}
+
+@keyframes Token-appear {
+  0% {
+    transform: scaleY(1);
+  }
+
+  50% {
+    transform: scaleY(1.5);
+  }
+
+  0% {
+    transform: scaleY(1);
+  }
+}
+
+.Token {
 
   display: flex;
   flex-direction: row;

@@ -2,8 +2,8 @@ module Editor.Common where
 
 import Prelude
 
-import Control.Monad.Trans.Class (lift)
 import Control.Monad.Reader (ReaderT, ask)
+import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
 import Data.Diagnostic as Diagnostic
 import Data.Expr (Edit, EditMenu, Expr, Handle, BasicEditorState)
@@ -14,6 +14,8 @@ import Data.Traversable (class Traversable, traverse)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Halogen.HTML as HH
+import Record as Record
+import Type.Prelude (Proxy(..))
 import Ui.Event (KeyInfo)
 import Ui.Halogen (classes)
 import Utility (todo)
@@ -51,6 +53,9 @@ type StampedLabelRow r =
 
 getId :: forall c r. StampedLabel c r -> String
 getId (Label { id }) = id
+
+unstampLabel :: forall c. StampedLabel c () -> Label c ()
+unstampLabel (Label l) = Label (l # Record.delete (Proxy @"id"))
 
 --------------------------------------------------------------------------------
 

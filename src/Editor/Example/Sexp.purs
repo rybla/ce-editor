@@ -11,6 +11,7 @@ import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (and, fold)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..))
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap)
 import Data.Set as Set
 import Data.String as String
@@ -21,6 +22,7 @@ import Data.Unfoldable (fromMaybe, none)
 import Editor.Common (Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, getId, stampTraversable)
 import Effect.Class (liftEffect)
 import Halogen.HTML as HH
+import Halogen.HTML.Properties (id) as HP
 import Record as Record
 import Ui.Editor.Id (freshId)
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
@@ -116,38 +118,28 @@ assembleExpr args = do
     C "Root" /\ ps /\ ks -> do
       ks' <- ks # sequence
       pure $ fold $ Array.zipWith (\p k -> [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ]
-    -- 
     C "Symbol" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
       k0' <- k0
       pure $ fold [ k0' ]
-    -- 
     C "Group" /\ ps /\ ks -> do
       ks' <- increaseIndentLevel do ks # sequence
       pure $ fold $ fold $
-        [ [ [ (id <> "_begin") /\ HH.div [ classes [ "Token punctuation" ] ] [ HH.text "(" ] ] ]
+        [ [ tokens_punctuation (id <> "_begin") "(" ]
         , Array.zipWith (\p k -> do [ p ] <> k) ps ks'
         , [ ps # Array.last # fromMaybe ]
-        , [ [ (id <> "_end") /\ HH.div [ classes [ "Token punctuation" ] ] [ HH.text ")" ] ] ]
+        , [ tokens_punctuation (id <> "_end") ")" ]
         ]
-    -- 
     C "LineBreak" /\ [ _p0 ] /\ [] -> do
       pure $ fold
-        [ [ (id <> "_marker") /\ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ]
-          , (id <> "_break") /\ HH.div [ classes [ "Token break" ] ] []
-          ]
-        , HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "│" ]
-            # Array.replicate ctx.indentLevel
-            # mapWithIndex \i e -> (id <> "_indent_" <> show i) /\ e
+        [ tokens_ghost (id <> "_marker") "⏎"
+        , tokens_break (id <> "_break")
+        , tokens_indentation ctx.indentLevel (id <> "_indentation")
         ]
-    C "LineBreak" /\ _ /\ _ -> do
-      assembleExpr_default args
-    --
-    C str /\ [ _p0 ] /\ [] -> do
-      pure
-        [ (id <> "_literal") /\ HH.div [ classes [ "Token literal" ] ] [ HH.text str ]
+    C literal /\ [ _p0 ] /\ [] -> do
+      pure $ fold
+        [ tokens_literal id literal
         ]
-    --
-    _ -> assembleExpr_default args
+    C _ /\ _ /\ _ -> assembleExpr_default args
 
 expr_LineBreak = C "LineBreak" % []
 
@@ -170,4 +162,20 @@ isValidPoint e0 (Point p) = (e.l # getCon) `Set.member` ls
     [ [ C "Root" ]
     , [ C "Group" ]
     ]
+
+tokens_punctuation key str = [ mk_token key [ "punctuation" ] (pure str) ]
+
+tokens_ghost key str = [ mk_token key [ "ghost" ] (pure str) ]
+
+tokens_break key = [ mk_token key [ "break", "ghost" ] (pure "⏎") ]
+
+tokens_indentation n key =
+  mk_token key [ "indentation", "ghost" ] (pure "│")
+    # Array.replicate n
+    # mapWithIndex \i (key' /\ e) -> (key' <> "_" <> show i) /\ e
+
+tokens_literal key str = [ mk_token key [ "literal" ] (pure str) ]
+
+mk_token key cs Nothing = key /\ HH.div [ HP.id key, classes ([ "Token" ] <> cs) ] []
+mk_token key cs (Just str) = key /\ HH.div [ HP.id key, classes ([ "Token" ] <> cs) ] [ HH.text str ]
 

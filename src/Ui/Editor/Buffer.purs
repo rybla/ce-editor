@@ -8,8 +8,8 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (runWriterT)
 import Data.Array ((!!))
 import Data.Const (Const(..))
-import Data.Expr (EditInfo(..), Edit_(..), Expr, Path, Point)
-import Data.Expr.Render (RenderArgs, RenderM, renderFragment)
+import Data.Expr (EditInfo(..), Edit_(..), Point(..))
+import Data.Expr.Render (RenderArgs, renderFragment)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (fold, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -17,15 +17,14 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
-import Data.Tuple.Nested (type (/\), (/\))
+import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..), Label, StampedLabel)
+import Editor (Editor(..), StampedLabel, getId)
 import Effect.Aff (Aff)
 import Effect.Class.Console (log) as Console
 import Effect.Exception (throw)
 import Halogen (liftEffect)
 import Halogen as H
-import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Events as HE
@@ -35,7 +34,7 @@ import Ui.Editor.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, Buf
 import Ui.Event (fromEventToKeyInfo, matchKeyInfoPattern', matchMapKeyInfo) as Event
 import Ui.Event (keyMember, not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (fromMaybeM, todo)
+import Utility (fromMaybeM)
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -209,9 +208,9 @@ renderArgs (Editor editor) =
   , assembleExpr: editor.assembleExpr
   }
   where
-  renderExpr :: Editor c -> Path -> Expr (StampedLabel c ()) -> RenderM (Array (String /\ HTML w i))
   renderExpr editor' path expr = Expr.Render.renderExpr (renderArgs editor') path expr
 
-  renderPoint :: Editor c -> Point -> String /\ HTML w i
-  renderPoint _ _ = "TODO:point" /\ HH.div [ classes [ "Point" ] ] [ HH.text " " ]
+  renderPoint _ label (Point { j }) =
+    ((label # getId) <> "_point_" <> show j) /\
+      HH.div [ classes [ "Point" ] ] [ HH.text " " ]
 
