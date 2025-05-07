@@ -25,7 +25,6 @@ import Data.Traversable (traverse)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), Label, StampedLabel, getId, toEditCtx)
-import Editor.Common (unstampLabel)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff)
 import Effect.Class (liftEffect)
@@ -215,7 +214,7 @@ handleAction (KeyDown_EditorAction event) = do
         case state'.clipboard of
           Just (Span_Fragment (Span es)) -> do
             let Editor editor = state'.editor
-            liftEffect $ navigator_clibpoard_writeText $ String.joinWith "\n" $ map editor.printExpr es
+            liftEffect $ navigator_clibpoard_writeText $ String.joinWith "" $ map editor.printExpr es
           _ -> pure unit
       -- delete
       _ | ki # Event.matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, not_alt ] -> do

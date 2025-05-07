@@ -4,7 +4,6 @@ import Prelude
 
 import Control.Alternative (empty)
 import Control.Monad.Reader (ask, local)
-import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
 import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
@@ -16,10 +15,10 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap)
 import Data.Set as Set
 import Data.String as String
-import Data.Traversable (sequence, traverse)
+import Data.Traversable (sequence)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Data.Unfoldable (fromMaybe, none)
+import Data.Unfoldable (fromMaybe)
 import Editor.Common (Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, getId)
 import Effect.Class (liftEffect)
 import Halogen.HTML as HH
@@ -28,7 +27,6 @@ import Record as Record
 import Ui.Editor.Id (freshId)
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, (<$$>))
 
 newtype C = C String
 
@@ -97,7 +95,7 @@ editor = Editor
   , printExpr:
       let
         f = case _ of
-          Expr { l: Label { con: C "Root" }, kids } -> kids # map f # String.joinWith " "
+          Expr { l: Label { con: C "Root" }, kids } -> kids # map f # String.joinWith "!!"
           Expr { l: Label { con: C "Symbol" }, kids: [ Expr { l: Label { con: C x }, kids: [] } ] } -> x
           Expr { l: Label { con: C "Group" }, kids } -> "(" <> (kids # map f # String.joinWith " ") <> ")"
           Expr { l: Label { con: C "LineBreak" }, kids: [] } -> "\n"
