@@ -2,14 +2,12 @@
 
 Priority:
 
-- [ ] IDEA: make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
-  - [ ] give renderPoint the appropriate inputs so that it can key properly
-  - [ ] dont actually need to render non-stamped stuff, right? but i have to decide how to handle that in the case of rendering the preview in an edit. i probabvly need to go back to it stamping stuff on initialization
+- [ ] fix bug in pasting since i think i messed something up in how stamping the clipboard works such that it doesn't re-stamp before inserting into program
 
 - [ ] create interface for specific Editors to add annotations to rendered output
   - to keep things simple, these annotations will be re-computed every time you make a change
 
-- [ ] hardcode Editor label as string?
+- [ ] IDEA: hardcode Editor label as string?
   - not doing this for now since it'll make it more difficult to add more type vars (such as for render-time annotation) later
 
 - [ ] make a simple little way for the user to "run" their program, just for fun
@@ -35,6 +33,9 @@ Debatable:
 
 Done:
 
+- [x] IDEA: make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
+  - [x] give renderPoint the appropriate inputs so that it can key properly
+  - [x] dont actually need to render non-stamped stuff, right? but i have to decide how to handle that in the case of rendering the preview in an edit. i probabvly need to go back to it stamping stuff on initialization
 - [x] reorganize modules so that not all UI is in one place since that doesn't make sense, and get rid of App0,App1,etc.
 - [x] when delete zipper, should go at the left or right end of boundary span depending on focus of deleted zipper handle
 - [x] zap movement doesn't need to be invertible -- its ok that lateral movement at beginning/end of kids jumps up to parent and can't jump back down via lateral movement
