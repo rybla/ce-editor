@@ -353,7 +353,7 @@
 }
 
 .Token {
-  animation: Token-appear 1s forwards linear;
+  /* animation: Token-appear 1s forwards linear; */
 }
 
 @keyframes Token-appear {

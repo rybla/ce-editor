@@ -11,6 +11,7 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.Unfoldable (none)
 import Effect.Aff (Aff)
+import Effect.Class.Console as Console
 import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
@@ -19,6 +20,7 @@ import Halogen.HTML.Properties as HP
 import Type.Proxy (Proxy(..))
 import Ui.Editor.Buffer as Buffer
 import Ui.Editor.Common (PointAction(..), PointHTML, PointInput, PointM, PointOutput(..), PointQuery(..), PointSlots, PointState, PointStatus(..))
+import Ui.Editor.Config as Config
 import Ui.Element as Element
 import Ui.Halogen (classes)
 import Utility (prop)
@@ -69,7 +71,8 @@ ss_Right = Set.fromFoldable [ RightFocus_PointStatus ] :: Set PointStatus
 
 handleAction :: forall l. PointAction l -> PointM l Unit
 handleAction Initialize_PointAction = do
-  -- Console.log "[Point] initialize"
+  when Config.log_initializations do
+    Console.log "[Point] initialize"
   pure unit
 handleAction (Receive_PointAction input) = do
   put $ initialState input

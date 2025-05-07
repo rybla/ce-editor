@@ -88,7 +88,8 @@ eval = H.mkEval H.defaultEval
 handleAction :: forall c. Show c => EditorAction c -> EditorM c Unit
 
 handleAction Initialize_EditorAction = do
-  -- Console.log "[Editor] initialize"
+  when Config.log_initializations do
+    Console.log "[Editor] initialize"
   doc <- liftEffect $ HTML.window >>= HTML.Window.document
   H.subscribe' \_subId -> HQE.eventListener MouseEventType.mouseup (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< MouseUp_EditorAction
   H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< KeyDown_EditorAction
