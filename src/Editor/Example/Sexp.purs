@@ -18,7 +18,7 @@ import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
 import Editor (Label(..), assembleExpr_default, getId)
-import Editor.Common (Editor(..), StampedLabel, assembleExpr_default, assembleStampedExpr_default, getCon)
+import Editor.Common (Editor(..), StampedLabel, assembleExpr_default, assembleExpr_default, getCon)
 import Editor.Notation (literal, punctuation)
 import Effect.Class (liftEffect)
 import Halogen.HTML as HH
@@ -82,8 +82,7 @@ editor = Editor
       ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
         where
         p = getEndPoints_ZipperH zh
-  , assembleExpr: assembleExpr
-  , assembleStampedExpr: assembleExpr
+  , assembleExpr
   , printExpr:
       let
         f = case _ of
@@ -99,11 +98,8 @@ editor = Editor
       pure $ Label $ l `Record.merge` { id }
   }
 
-assembleExpr :: forall r. AssembleExpr (Label C r)
-assembleExpr = assembleExpr_default
-
-assembleStampedExpr :: forall r. AssembleExpr (StampedLabel C r)
-assembleStampedExpr args = do
+assembleExpr :: forall r. AssembleExpr (StampedLabel C r)
+assembleExpr args = do
   ctx <- ask
   let id = args.label # getId
   case (args.label # getCon) /\ args.points /\ args.kids of
@@ -141,7 +137,7 @@ assembleStampedExpr args = do
         [ (id <> "_literal") /\ HH.div [ classes [ "Token literal" ] ] [ HH.text str ]
         ]
     --
-    _ -> assembleStampedExpr_default args
+    _ -> assembleExpr_default args
 
 expr_LineBreak = C "LineBreak" % []
 

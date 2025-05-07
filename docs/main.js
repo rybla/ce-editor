@@ -206,11 +206,11 @@
     };
   };
   var composeKleisli = function(dictBind) {
-    var bind111 = bind(dictBind);
+    var bind112 = bind(dictBind);
     return function(f) {
       return function(g) {
         return function(a2) {
-          return bind111(f(a2))(g);
+          return bind112(f(a2))(g);
         };
       };
     };
@@ -221,9 +221,9 @@
     }
   };
   var join = function(dictBind) {
-    var bind111 = bind(dictBind);
+    var bind112 = bind(dictBind);
     return function(m) {
-      return bind111(m)(identity3);
+      return bind112(m)(identity3);
     };
   };
 
@@ -1128,12 +1128,12 @@
   };
   var ap = function(dictMonad) {
     var bind23 = bind(dictMonad.Bind1());
-    var pure27 = pure(dictMonad.Applicative0());
+    var pure28 = pure(dictMonad.Applicative0());
     return function(f) {
       return function(a2) {
         return bind23(f)(function(f$prime) {
           return bind23(a2)(function(a$prime) {
-            return pure27(f$prime(a$prime));
+            return pure28(f$prime(a$prime));
           });
         });
       };
@@ -1767,11 +1767,11 @@
     return Just2;
   }();
   var showMaybe = function(dictShow) {
-    var show6 = show(dictShow);
+    var show7 = show(dictShow);
     return {
       show: function(v) {
         if (v instanceof Just) {
-          return "(Just " + (show6(v.value0) + ")");
+          return "(Just " + (show7(v.value0) + ")");
         }
         ;
         if (v instanceof Nothing) {
@@ -2138,10 +2138,10 @@
     var catchError1 = catchError(dictMonadError);
     var Monad0 = dictMonadError.MonadThrow0().Monad0();
     var map38 = map(Monad0.Bind1().Apply0().Functor0());
-    var pure27 = pure(Monad0.Applicative0());
+    var pure28 = pure(Monad0.Applicative0());
     return function(a2) {
       return catchError1(map38(Right.create)(a2))(function($52) {
-        return pure27(Left.create($52));
+        return pure28(Left.create($52));
       });
     };
   };
@@ -2311,6 +2311,9 @@
   };
 
   // output/Control.Monad.Reader.Class/index.js
+  var local = function(dict) {
+    return dict.local;
+  };
   var ask = function(dict) {
     return dict.ask;
   };
@@ -2564,12 +2567,12 @@
   };
   var bindExceptT = function(dictMonad) {
     var bind23 = bind(dictMonad.Bind1());
-    var pure27 = pure(dictMonad.Applicative0());
+    var pure28 = pure(dictMonad.Applicative0());
     return {
       bind: function(v) {
         return function(k) {
           return bind23(v)(either(function($193) {
-            return pure27(Left.create($193));
+            return pure28(Left.create($193));
           })(function(a2) {
             var v1 = k(a2);
             return v1;
@@ -2648,13 +2651,13 @@
   };
   var bindMaybeT = function(dictMonad) {
     var bind23 = bind(dictMonad.Bind1());
-    var pure27 = pure(dictMonad.Applicative0());
+    var pure28 = pure(dictMonad.Applicative0());
     return {
       bind: function(v) {
         return function(f) {
           return bind23(v)(function(v1) {
             if (v1 instanceof Nothing) {
-              return pure27(Nothing.value);
+              return pure28(Nothing.value);
             }
             ;
             if (v1 instanceof Just) {
@@ -2727,6 +2730,13 @@
   // output/Control.Monad.Reader.Trans/index.js
   var ReaderT = function(x) {
     return x;
+  };
+  var withReaderT = function(f) {
+    return function(v) {
+      return function($152) {
+        return v(f($152));
+      };
+    };
   };
   var mapReaderT = function(f) {
     return function(v) {
@@ -2823,13 +2833,22 @@
       }
     };
   };
+  var monadReaderReaderT = function(dictMonad) {
+    var monadAskReaderT1 = monadAskReaderT(dictMonad);
+    return {
+      local: withReaderT,
+      MonadAsk0: function() {
+        return monadAskReaderT1;
+      }
+    };
+  };
   var monoidReaderT = function(dictApplicative) {
-    var pure27 = pure(applicativeReaderT(dictApplicative));
+    var pure28 = pure(applicativeReaderT(dictApplicative));
     var semigroupReaderT1 = semigroupReaderT(dictApplicative.Apply0());
     return function(dictMonoid) {
       var semigroupReaderT2 = semigroupReaderT1(dictMonoid.Semigroup0());
       return {
-        mempty: pure27(mempty(dictMonoid)),
+        mempty: pure28(mempty(dictMonoid)),
         Semigroup0: function() {
           return semigroupReaderT2;
         }
@@ -2857,7 +2876,7 @@
     };
   };
   var applyWriterT = function(dictSemigroup) {
-    var append10 = append(dictSemigroup);
+    var append11 = append(dictSemigroup);
     return function(dictApply) {
       var apply2 = apply(dictApply);
       var Functor0 = dictApply.Functor0();
@@ -2868,7 +2887,7 @@
           return function(v1) {
             var k = function(v3) {
               return function(v4) {
-                return new Tuple(v3.value0(v4.value0), append10(v3.value1)(v4.value1));
+                return new Tuple(v3.value0(v4.value0), append11(v3.value1)(v4.value1));
               };
             };
             return apply2(map38(k)(v))(v1);
@@ -2881,7 +2900,7 @@
     };
   };
   var bindWriterT = function(dictSemigroup) {
-    var append10 = append(dictSemigroup);
+    var append11 = append(dictSemigroup);
     var applyWriterT1 = applyWriterT(dictSemigroup);
     return function(dictBind) {
       var bind23 = bind(dictBind);
@@ -2894,7 +2913,7 @@
             return bind23(v)(function(v1) {
               var v2 = k(v1.value0);
               return map38(function(v3) {
-                return new Tuple(v3.value0, append10(v1.value1)(v3.value1));
+                return new Tuple(v3.value0, append11(v1.value1)(v3.value1));
               })(v2);
             });
           };
@@ -2909,11 +2928,11 @@
     var mempty3 = mempty(dictMonoid);
     var applyWriterT1 = applyWriterT(dictMonoid.Semigroup0());
     return function(dictApplicative) {
-      var pure27 = pure(dictApplicative);
+      var pure28 = pure(dictApplicative);
       var applyWriterT2 = applyWriterT1(dictApplicative.Apply0());
       return {
         pure: function(a2) {
-          return pure27(new Tuple(a2, mempty3));
+          return pure28(new Tuple(a2, mempty3));
         },
         Apply0: function() {
           return applyWriterT2;
@@ -3032,13 +3051,13 @@
   };
   var traverse_ = function(dictApplicative) {
     var applySecond2 = applySecond(dictApplicative.Apply0());
-    var pure27 = pure(dictApplicative);
+    var pure28 = pure(dictApplicative);
     return function(dictFoldable) {
       var foldr22 = foldr(dictFoldable);
       return function(f) {
         return foldr22(function($454) {
           return applySecond2(f($454));
-        })(pure27(unit));
+        })(pure28(unit));
       };
     };
   };
@@ -3054,7 +3073,7 @@
   var intercalate = function(dictFoldable) {
     var foldl22 = foldl(dictFoldable);
     return function(dictMonoid) {
-      var append10 = append(dictMonoid.Semigroup0());
+      var append11 = append(dictMonoid.Semigroup0());
       var mempty3 = mempty(dictMonoid);
       return function(sep) {
         return function(xs) {
@@ -3069,7 +3088,7 @@
               ;
               return {
                 init: false,
-                acc: append10(v.acc)(append10(sep)(v1))
+                acc: append11(v.acc)(append11(sep)(v1))
               };
             };
           };
@@ -3144,12 +3163,12 @@
   var foldMapDefaultR = function(dictFoldable) {
     var foldr22 = foldr(dictFoldable);
     return function(dictMonoid) {
-      var append10 = append(dictMonoid.Semigroup0());
+      var append11 = append(dictMonoid.Semigroup0());
       var mempty3 = mempty(dictMonoid);
       return function(f) {
         return foldr22(function(x) {
           return function(acc) {
-            return append10(f(x))(acc);
+            return append11(f(x))(acc);
           };
         })(mempty3);
       };
@@ -3208,13 +3227,13 @@
     }
     return function(apply2) {
       return function(map38) {
-        return function(pure27) {
+        return function(pure28) {
           return function(f) {
             return function(array) {
               function go2(bot, top2) {
                 switch (top2 - bot) {
                   case 0:
-                    return pure27([]);
+                    return pure28([]);
                   case 1:
                     return map38(array1)(f(array[bot]));
                   case 2:
@@ -3259,6 +3278,9 @@
     Foldable1: function() {
       return foldableArray;
     }
+  };
+  var sequence = function(dict) {
+    return dict.sequence;
   };
 
   // output/Control.Parallel/index.js
@@ -3777,11 +3799,11 @@
 
   // output/Control.Alternative/index.js
   var guard = function(dictAlternative) {
-    var pure27 = pure(dictAlternative.Applicative0());
+    var pure28 = pure(dictAlternative.Applicative0());
     var empty9 = empty(dictAlternative.Plus1());
     return function(v) {
       if (v) {
-        return pure27(unit);
+        return pure28(unit);
       }
       ;
       if (!v) {
@@ -3875,6 +3897,11 @@
   };
   var none = function(dictUnfoldable) {
     return unfoldr(dictUnfoldable)($$const(Nothing.value))(unit);
+  };
+  var fromMaybe2 = function(dictUnfoldable) {
+    return unfoldr(dictUnfoldable)(function(b2) {
+      return map9(flip(Tuple.create)(Nothing.value))(b2);
+    });
   };
 
   // output/Data.Enum/index.js
@@ -4052,24 +4079,24 @@
     };
   };
   var showNonEmpty = function(dictShow) {
-    var show6 = show(dictShow);
+    var show7 = show(dictShow);
     return function(dictShow1) {
       var show12 = show(dictShow1);
       return {
         show: function(v) {
-          return "(NonEmpty " + (show6(v.value0) + (" " + (show12(v.value1) + ")")));
+          return "(NonEmpty " + (show7(v.value0) + (" " + (show12(v.value1) + ")")));
         }
       };
     };
   };
   var semigroupNonEmpty = function(dictApplicative) {
-    var pure27 = pure(dictApplicative);
+    var pure28 = pure(dictApplicative);
     return function(dictSemigroup) {
       var append13 = append(dictSemigroup);
       return {
         append: function(v) {
           return function(v1) {
-            return new NonEmpty(v.value0, append13(v.value1)(append13(pure27(v1.value0))(v1.value1)));
+            return new NonEmpty(v.value0, append13(v.value1)(append13(pure28(v1.value0))(v1.value1)));
           };
         }
       };
@@ -4299,14 +4326,14 @@
     };
   }();
   var showList = function(dictShow) {
-    var show6 = show(dictShow);
+    var show7 = show(dictShow);
     return {
       show: function(v) {
         if (v instanceof Nil) {
           return "Nil";
         }
         ;
-        return "(" + (intercalate2(" : ")(map11(show6)(v)) + " : Nil)");
+        return "(" + (intercalate2(" : ")(map11(show7)(v)) + " : Nil)");
       }
     };
   };
@@ -5494,10 +5521,10 @@
 
   // output/Data.Lazy/index.js
   var showLazy = function(dictShow) {
-    var show6 = show(dictShow);
+    var show7 = show(dictShow);
     return {
       show: function(x) {
-        return "(defer \\_ -> " + (show6(force(x)) + ")");
+        return "(defer \\_ -> " + (show7(force(x)) + ")");
       }
     };
   };
@@ -6996,7 +7023,7 @@
     return Lift.create;
   }();
   var goLeft = function(dictApplicative) {
-    var pure27 = pure(dictApplicative);
+    var pure28 = pure(dictApplicative);
     return function(fStack) {
       return function(valStack) {
         return function(nat) {
@@ -7004,7 +7031,7 @@
             return function(count) {
               if (func instanceof Pure) {
                 return new Tuple(new Cons({
-                  func: pure27(func.value0),
+                  func: pure28(func.value0),
                   count
                 }, fStack), valStack);
               }
@@ -7075,7 +7102,7 @@
   };
   var foldFreeAp = function(dictApplicative) {
     var goApply1 = goApply(dictApplicative);
-    var pure27 = pure(dictApplicative);
+    var pure28 = pure(dictApplicative);
     var goLeft1 = goLeft(dictApplicative);
     return function(nat) {
       return function(z) {
@@ -7084,7 +7111,7 @@
           var $tco_result;
           function $tco_loop(v) {
             if (v.value1.value0 instanceof Pure) {
-              var v1 = goApply1(v.value0)(v.value1.value1)(pure27(v.value1.value0.value0));
+              var v1 = goApply1(v.value0)(v.value1.value1)(pure28(v.value1.value0.value0));
               if (v1 instanceof Left) {
                 $tco_done = true;
                 return v1.value0;
@@ -9107,10 +9134,10 @@
     return Editor2;
   }();
   var showLabel = function(dictShow) {
-    var show6 = show(dictShow);
+    var show7 = show(dictShow);
     return {
       show: function(v) {
-        return show6(v.con);
+        return show7(v.con);
       }
     };
   };
@@ -9131,18 +9158,21 @@
       };
     };
   };
+  var getId = function(v) {
+    return v.id;
+  };
   var getCon = function(v) {
     return v.con;
   };
   var assembleExpr_default = function(dictShow) {
-    var show6 = show(showLabel(dictShow));
+    var show7 = show(showLabel(dictShow));
     return function(v) {
       return bind5(map24(fold3)(traverse2(function(v1) {
         return bind5(v1.value1)(function(kid) {
           return pure9(append5([v1.value0])(kid));
         });
       })(zip(v.points)(v.kids))))(function(kidsAndPoints) {
-        return pure9(fold3([[new Tuple("TODO", div2([classes2(["Token", "punctuation"])])([text5("(")]))], [new Tuple("TODO", div2([classes2(["Token", "foreign"])])([text5(show6(v.label))]))], kidsAndPoints, [fromMaybe(new Tuple("TODO", renderWarning("missing last point")))(last(v.points))], [new Tuple("TODO", div2([classes2(["Token", "punctuation"])])([text5(")")]))]]));
+        return pure9(fold3([[new Tuple("TODO", div2([classes2(["Token", "punctuation"])])([text5("(")]))], [new Tuple("TODO", div2([classes2(["Token", "foreign"])])([text5(show7(v.label))]))], kidsAndPoints, [fromMaybe(new Tuple("TODO", renderWarning("missing last point")))(last(v.points))], [new Tuple("TODO", div2([classes2(["Token", "punctuation"])])([text5(")")]))]]));
       });
     };
   };
@@ -9298,10 +9328,10 @@
     }
   };
   var genericShowArgsArgument = function(dictShow) {
-    var show6 = show(dictShow);
+    var show7 = show(dictShow);
     return {
       genericShowArgs: function(v) {
-        return [show6(v)];
+        return [show7(v)];
       }
     };
   };
@@ -9633,12 +9663,12 @@
     };
   };
   var guardPure = function(dictAlternative) {
-    var pure27 = pure(dictAlternative.Applicative0());
+    var pure28 = pure(dictAlternative.Applicative0());
     var empty9 = empty(dictAlternative.Plus1());
     return function(v) {
       return function(v1) {
         if (v(v1)) {
-          return pure27(v1);
+          return pure28(v1);
         }
         ;
         return empty9;
@@ -9646,7 +9676,7 @@
     };
   };
   var fromMaybeM = function(dictApplicative) {
-    var pure27 = pure(dictApplicative);
+    var pure28 = pure(dictApplicative);
     return function(v) {
       return function(v1) {
         if (v1 instanceof Nothing) {
@@ -9654,7 +9684,7 @@
         }
         ;
         if (v1 instanceof Just) {
-          return pure27(v1.value0);
+          return pure28(v1.value0);
         }
         ;
         throw new Error("Failed pattern match at Utility (line 117, column 1 - line 117, column 56): " + [v.constructor.name, v1.constructor.name]);
@@ -11233,6 +11263,15 @@
 
   // output/Editor.Example.Sexp/index.js
   var fold4 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
+  var bind6 = /* @__PURE__ */ bind(/* @__PURE__ */ bindReaderT(bindIdentity));
+  var ask2 = /* @__PURE__ */ ask(/* @__PURE__ */ monadAskReaderT(monadIdentity));
+  var applicativeReaderT3 = /* @__PURE__ */ applicativeReaderT(applicativeIdentity);
+  var sequence2 = /* @__PURE__ */ sequence(traversableArray)(applicativeReaderT3);
+  var pure11 = /* @__PURE__ */ pure(applicativeReaderT3);
+  var append7 = /* @__PURE__ */ append(semigroupArray);
+  var fromMaybe3 = /* @__PURE__ */ fromMaybe2(unfoldableArray);
+  var mapWithIndex4 = /* @__PURE__ */ mapWithIndex(functorWithIndexArray);
+  var show4 = /* @__PURE__ */ show(showInt);
   var todo2 = /* @__PURE__ */ todo();
   var none2 = /* @__PURE__ */ none(unfoldableMaybe);
   var and2 = /* @__PURE__ */ and(foldableArray)(heytingAlgebraBoolean);
@@ -11266,7 +11305,70 @@
       return member3(getCon(v1.l))(ls);
     };
   };
-  var assembleExpr = assembleExpr_default2;
+  var increaseIndentLevel = function(dictMonadReader) {
+    return local(dictMonadReader)(function(ctx) {
+      var $57 = {};
+      for (var $58 in ctx) {
+        if ({}.hasOwnProperty.call(ctx, $58)) {
+          $57[$58] = ctx[$58];
+        }
+        ;
+      }
+      ;
+      $57.indentLevel = ctx.indentLevel + 1 | 0;
+      return $57;
+    });
+  };
+  var increaseIndentLevel1 = /* @__PURE__ */ increaseIndentLevel(/* @__PURE__ */ monadReaderReaderT(monadIdentity));
+  var assembleExpr = function(args) {
+    return bind6(ask2)(function(ctx) {
+      var id2 = getId(args.label);
+      var v = new Tuple(getCon(args.label), new Tuple(args.points, args.kids));
+      if (v.value0 === "Root") {
+        return bind6(sequence2(v.value1.value1))(function(ks$prime) {
+          return pure11(fold4(append7(zipWith(function(p2) {
+            return function(k) {
+              return append7([p2])(k);
+            };
+          })(v.value1.value0)(ks$prime))([fromMaybe3(last(v.value1.value0))])));
+        });
+      }
+      ;
+      if (v.value0 === "Symbol" && (v.value1.value0.length === 2 && v.value1.value1.length === 1)) {
+        return bind6(v["value1"]["value1"][0])(function(k0$prime) {
+          return pure11(fold4([k0$prime]));
+        });
+      }
+      ;
+      if (v.value0 === "Group") {
+        return bind6(increaseIndentLevel1(sequence2(v.value1.value1)))(function(ks$prime) {
+          return pure11(fold4(fold4([[[new Tuple(id2 + "_begin", div2([classes2(["Token punctuation"])])([text5("(")]))]], zipWith(function(p2) {
+            return function(k) {
+              return append7([p2])(k);
+            };
+          })(v.value1.value0)(ks$prime), [fromMaybe3(last(v.value1.value0))], [[new Tuple(id2 + "_end", div2([classes2(["Token punctuation"])])([text5(")")]))]]])));
+        });
+      }
+      ;
+      if (v.value0 === "LineBreak" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
+        return pure11(fold4([[new Tuple(id2 + "_marker", div2([classes2(["Token punctuation ghost"])])([text5("\u23CE")])), new Tuple(id2 + "_break", div2([classes2(["Token break"])])([]))], mapWithIndex4(function(i2) {
+          return function(e) {
+            return new Tuple(id2 + ("_indent_" + show4(i2)), e);
+          };
+        })(replicate(ctx.indentLevel)(div2([classes2(["Token punctuation indentation ghost"])])([text5("\u2502")])))]));
+      }
+      ;
+      if (v.value0 === "LineBreak") {
+        return assembleExpr_default2(args);
+      }
+      ;
+      if (v.value1.value0.length === 1 && v.value1.value1.length === 0) {
+        return pure11([new Tuple(id2 + "_literal", div2([classes2(["Token literal"])])([text5(v.value0)]))]);
+      }
+      ;
+      return assembleExpr_default2(args);
+    });
+  };
   var editor = /* @__PURE__ */ function() {
     return new Editor({
       name: "Sexp",
@@ -11279,10 +11381,10 @@
         return todo2("");
       },
       getShortcut: function(dictMonad) {
-        var pure27 = pure(dictMonad.Applicative0());
+        var pure28 = pure(dictMonad.Applicative0());
         return function(ki) {
           return function(state3) {
-            return pure27(none2);
+            return pure28(none2);
           };
         };
       },
@@ -11306,7 +11408,6 @@
         };
       },
       assembleExpr,
-      assembleStampedExpr: assembleExpr,
       printExpr: /* @__PURE__ */ function() {
         var f = function(v) {
           if (v.l.con === "Root") {
@@ -11343,9 +11444,9 @@
   var todo3 = /* @__PURE__ */ todo();
   var none3 = /* @__PURE__ */ none(unfoldableMaybe);
   var and3 = /* @__PURE__ */ and(foldableArray)(heytingAlgebraBoolean);
-  var bind6 = /* @__PURE__ */ bind(bindAff);
+  var bind7 = /* @__PURE__ */ bind(bindAff);
   var liftEffect8 = /* @__PURE__ */ liftEffect(monadEffectAff);
-  var pure11 = /* @__PURE__ */ pure(applicativeAff);
+  var pure15 = /* @__PURE__ */ pure(applicativeAff);
   var merge3 = /* @__PURE__ */ merge()();
   var showC2 = {
     show: function(v) {
@@ -11404,11 +11505,10 @@
         };
       },
       assembleExpr: assembleExpr2,
-      assembleStampedExpr: assembleExpr2,
       printExpr: $$const("unimplemented"),
       stampLabel: function(v) {
-        return bind6(liftEffect8(freshId))(function(id2) {
-          return pure11(merge3(v)({
+        return bind7(liftEffect8(freshId))(function(id2) {
+          return pure15(merge3(v)({
             id: id2
           }));
         });
@@ -11418,15 +11518,15 @@
 
   // output/Editor.Example.UlcV1/index.js
   var fold5 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
-  var bind7 = /* @__PURE__ */ bind(/* @__PURE__ */ bindReaderT(bindIdentity));
-  var ask2 = /* @__PURE__ */ ask(/* @__PURE__ */ monadAskReaderT(monadIdentity));
+  var bind8 = /* @__PURE__ */ bind(/* @__PURE__ */ bindReaderT(bindIdentity));
+  var ask3 = /* @__PURE__ */ ask(/* @__PURE__ */ monadAskReaderT(monadIdentity));
   var todo4 = /* @__PURE__ */ todo();
   var none4 = /* @__PURE__ */ none(unfoldableMaybe);
   var and4 = /* @__PURE__ */ and(foldableArray)(heytingAlgebraBoolean);
   var map28 = /* @__PURE__ */ map(functorArray);
   var bind17 = /* @__PURE__ */ bind(bindAff);
   var liftEffect9 = /* @__PURE__ */ liftEffect(monadEffectAff);
-  var pure15 = /* @__PURE__ */ pure(applicativeAff);
+  var pure16 = /* @__PURE__ */ pure(applicativeAff);
   var merge4 = /* @__PURE__ */ merge()();
   var showC3 = {
     show: function(v) {
@@ -11454,7 +11554,7 @@
     };
   };
   var assembleExpr3 = function(args) {
-    return bind7(ask2)(function(ctx) {
+    return bind8(ask3)(function(ctx) {
       var v = new Tuple(getCon(args.label), new Tuple(args.points, args.kids));
       return assembleExpr_default3(args);
     });
@@ -11498,7 +11598,6 @@
         };
       },
       assembleExpr: assembleExpr3,
-      assembleStampedExpr: assembleExpr3,
       printExpr: /* @__PURE__ */ function() {
         var f = function(v) {
           if (v.l.con === "Root") {
@@ -11523,7 +11622,7 @@
       }(),
       stampLabel: function(v) {
         return bind17(liftEffect9(freshId))(function(id2) {
-          return pure15(merge4(v)({
+          return pure16(merge4(v)({
             id: id2
           }));
         });
@@ -11545,10 +11644,10 @@
   // output/Foreign.Index/index.js
   var unsafeReadProp = function(dictMonad) {
     var fail2 = fail(dictMonad);
-    var pure27 = pure(applicativeExceptT(dictMonad));
+    var pure28 = pure(applicativeExceptT(dictMonad));
     return function(k) {
       return function(value15) {
-        return unsafeReadPropImpl(fail2(new TypeMismatch("object", typeOf(value15))), pure27, k, value15);
+        return unsafeReadPropImpl(fail2(new TypeMismatch("object", typeOf(value15))), pure28, k, value15);
       };
     };
   };
@@ -11640,7 +11739,7 @@
   var bind18 = /* @__PURE__ */ bind(bindHalogenM);
   var get3 = /* @__PURE__ */ get(monadStateHalogenM);
   var liftEffect10 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff));
-  var pure16 = /* @__PURE__ */ pure(applicativeHalogenM);
+  var pure17 = /* @__PURE__ */ pure(applicativeHalogenM);
   var Point_Handle_PointStatus = /* @__PURE__ */ function() {
     function Point_Handle_PointStatus2() {
     }
@@ -12105,7 +12204,7 @@
     }
     ;
     if (state3.mb_root instanceof Just) {
-      return pure16(state3.mb_root.value0);
+      return pure17(state3.mb_root.value0);
     }
     ;
     throw new Error("Failed pattern match at Ui.Editor.Common (line 85, column 29 - line 87, column 25): " + [state3.mb_root.constructor.name]);
@@ -12116,9 +12215,9 @@
 
   // output/Data.Expr.Drag/index.js
   var eq4 = /* @__PURE__ */ eq(eqPoint);
-  var pure17 = /* @__PURE__ */ pure(applicativeMaybe);
-  var append7 = /* @__PURE__ */ append(semigroupList);
-  var bind8 = /* @__PURE__ */ bind(bindMaybe);
+  var pure18 = /* @__PURE__ */ pure(applicativeMaybe);
+  var append8 = /* @__PURE__ */ append(semigroupList);
+  var bind9 = /* @__PURE__ */ bind(bindMaybe);
   var getDragOrigin = function(v) {
     return function(v1) {
       var v2 = function(v3) {
@@ -12209,11 +12308,11 @@
         return function(v2) {
           if (v instanceof Point_Handle) {
             if (eq4(v.value0)(v1)) {
-              return pure17(new Point_Handle(v1));
+              return pure18(new Point_Handle(v1));
             }
             ;
             if (areOrderedSiblings_Point(v.value0)(v1)) {
-              return pure17(new SpanH_Handle({
+              return pure18(new SpanH_Handle({
                 path: v.value0.path,
                 j_L: v.value0.j,
                 j_R: v1.j
@@ -12221,7 +12320,7 @@
             }
             ;
             if (areOrderedSiblings_Point(v1)(v.value0)) {
-              return pure17(new SpanH_Handle({
+              return pure18(new SpanH_Handle({
                 path: v.value0.path,
                 j_L: v1.j,
                 j_R: v.value0.j
@@ -12243,7 +12342,7 @@
                     var $98 = orderedStepAndIndex($97.value0.value0)(v.value0.j);
                     if ($98) {
                       var path_I4 = new NonEmpty($97.value0.value0, $97.value0.value1);
-                      return pure17(new ZipperH_Handle({
+                      return pure18(new ZipperH_Handle({
                         path_O: v.value0.path,
                         j_OL: function(v10) {
                           return v10["_L"];
@@ -12254,7 +12353,7 @@
                           return v10["_L"];
                         }(getExtremeIndexes(function(v10) {
                           return v10.here;
-                        }(atSubExpr4(append7(v.value0.path)(fromNePath(path_I4)))(v2)))),
+                        }(atSubExpr4(append8(v.value0.path)(fromNePath(path_I4)))(v2)))),
                         j_IR: v1.j
                       }, InnerRight_ZipperFocus.value));
                     }
@@ -12269,7 +12368,7 @@
                   var $106 = orderedIndexAndStep(v.value0.j)($105.value0.value0);
                   if ($106) {
                     var path_I3 = new NonEmpty($105.value0.value0, $105.value0.value1);
-                    return pure17(new ZipperH_Handle({
+                    return pure18(new ZipperH_Handle({
                       path_O: v.value0.path,
                       j_OL: v.value0.j,
                       j_OR: function(v8) {
@@ -12281,7 +12380,7 @@
                         return v8["_R"];
                       }(getExtremeIndexes(function(v8) {
                         return v8.here;
-                      }(atSubExpr4(append7(v.value0.path)(fromNePath(path_I3)))(v2))))
+                      }(atSubExpr4(append8(v.value0.path)(fromNePath(path_I3)))(v2))))
                     }, InnerLeft_ZipperFocus.value));
                   }
                   ;
@@ -12295,7 +12394,7 @@
                 var $114 = orderedStepAndIndex($113.value0.value0)(v1.j);
                 if ($114) {
                   var path_I2 = new NonEmpty($113.value0.value0, $113.value0.value1);
-                  return pure17(new ZipperH_Handle({
+                  return pure18(new ZipperH_Handle({
                     path_O: v1.path,
                     j_OL: function(v6) {
                       return v6["_L"];
@@ -12306,7 +12405,7 @@
                       return v6["_L"];
                     }(getExtremeIndexes(function(v6) {
                       return v6.here;
-                    }(atSubExpr4(append7(v1.path)(fromNePath(path_I2)))(v2)))),
+                    }(atSubExpr4(append8(v1.path)(fromNePath(path_I2)))(v2)))),
                     j_IR: v.value0.j
                   }, OuterRight_ZipperFocus.value));
                 }
@@ -12321,7 +12420,7 @@
               var $122 = orderedIndexAndStep(v1.j)($121.value0.value0);
               if ($122) {
                 var path_I = new NonEmpty($121.value0.value0, $121.value0.value1);
-                return pure17(new ZipperH_Handle({
+                return pure18(new ZipperH_Handle({
                   path_O: v1.path,
                   j_OL: v1.j,
                   j_OR: function(v4) {
@@ -12333,7 +12432,7 @@
                     return v4["_R"];
                   }(getExtremeIndexes(function(v4) {
                     return v4.here;
-                  }(atSubExpr4(append7(v1.path)(fromNePath(path_I)))(v2))))
+                  }(atSubExpr4(append8(v1.path)(fromNePath(path_I)))(v2))))
                 }, OuterLeft_ZipperFocus.value));
               }
               ;
@@ -12360,9 +12459,9 @@
             var hp = getEndPoints_ZipperH(v.value0);
             var h_path_I = fromNePath(getTotalInnerPath_ZipperH(v.value0));
             if (v.value1 instanceof OuterLeft_ZipperFocus && isPrefix_Path(v1.path)(h_path_I)) {
-              return bind8(drag2(dictShow)(new Point_Handle(hp["_IL"]))(v1)(v2))(function(v32) {
+              return bind9(drag2(dictShow)(new Point_Handle(hp["_IL"]))(v1)(v2))(function(v32) {
                 if (v32 instanceof ZipperH_Handle) {
-                  return pure17(new ZipperH_Handle({
+                  return pure18(new ZipperH_Handle({
                     path_O: v32.value0.path_O,
                     j_OL: v32.value0.j_OL,
                     path_I: v32.value0.path_I,
@@ -12387,9 +12486,9 @@
             }
             ;
             if (v.value1 instanceof OuterRight_ZipperFocus && isPrefix_Path(v1.path)(h_path_I)) {
-              return bind8(drag2(dictShow)(new Point_Handle(hp["_IR"]))(v1)(v2))(function(v32) {
+              return bind9(drag2(dictShow)(new Point_Handle(hp["_IR"]))(v1)(v2))(function(v32) {
                 if (v32 instanceof ZipperH_Handle) {
-                  return pure17(new ZipperH_Handle({
+                  return pure18(new ZipperH_Handle({
                     path_O: v32.value0.path_O,
                     j_OR: v32.value0.j_OR,
                     path_I: v32.value0.path_I,
@@ -12414,9 +12513,9 @@
             }
             ;
             if (v.value1 instanceof InnerLeft_ZipperFocus && isPrefix_Path(v.value0.path_O)(v1.path)) {
-              return bind8(drag2(dictShow)(new Point_Handle(hp["_OL"]))(v1)(v2))(function(v32) {
+              return bind9(drag2(dictShow)(new Point_Handle(hp["_OL"]))(v1)(v2))(function(v32) {
                 if (v32 instanceof ZipperH_Handle) {
-                  return pure17(new ZipperH_Handle({
+                  return pure18(new ZipperH_Handle({
                     path_O: v32.value0.path_O,
                     path_I: v32.value0.path_I,
                     j_IL: v32.value0.j_IL,
@@ -12438,9 +12537,9 @@
             }
             ;
             if (v.value1 instanceof InnerRight_ZipperFocus && isPrefix_Path(v.value0.path_O)(v1.path)) {
-              return bind8(drag2(dictShow)(new Point_Handle(hp["_OR"]))(v1)(v2))(function(v32) {
+              return bind9(drag2(dictShow)(new Point_Handle(hp["_OR"]))(v1)(v2))(function(v32) {
                 if (v32 instanceof ZipperH_Handle) {
-                  return pure17(new ZipperH_Handle({
+                  return pure18(new ZipperH_Handle({
                     path_O: v32.value0.path_O,
                     path_I: v32.value0.path_I,
                     j_IR: v32.value0.j_IR,
@@ -12473,10 +12572,10 @@
   // output/Data.Expr.Move/index.js
   var lessThan2 = /* @__PURE__ */ lessThan(ordIndex);
   var add2 = /* @__PURE__ */ add(semiringIndex);
-  var append8 = /* @__PURE__ */ append(semigroupList);
+  var append9 = /* @__PURE__ */ append(semigroupList);
   var eq5 = /* @__PURE__ */ eq(eqIndex);
   var sub3 = /* @__PURE__ */ sub(ringIndex);
-  var pure18 = /* @__PURE__ */ pure(applicativeMaybe);
+  var pure19 = /* @__PURE__ */ pure(applicativeMaybe);
   var none5 = /* @__PURE__ */ none(unfoldableMaybe);
   var L = /* @__PURE__ */ function() {
     function L2() {
@@ -12562,7 +12661,7 @@
                               var $112 = getKid_Expr2($111)(at_e.here);
                               if ($112 instanceof Just) {
                                 return new Just({
-                                  path: append8(v.path)(new Cons($111, Nil.value)),
+                                  path: append9(v.path)(new Cons($111, Nil.value)),
                                   j: getExtremeIndexes($112.value0)["_L"]
                                 });
                               }
@@ -12675,7 +12774,7 @@
                   var $140 = getKid_Expr2($139)(at_e.here);
                   if ($140 instanceof Just) {
                     return new Just({
-                      path: append8(v.path)(new Cons($139, Nil.value)),
+                      path: append9(v.path)(new Cons($139, Nil.value)),
                       j: getExtremeIndexes($140.value0)["_R"]
                     });
                   }
@@ -12757,7 +12856,7 @@
                 ;
                 if (v2 instanceof Just) {
                   $tco_done = true;
-                  return pure18(v2.value0);
+                  return pure19(v2.value0);
                 }
                 ;
                 throw new Error("Failed pattern match at Data.Expr.Move (line 61, column 10 - line 65, column 21): " + [v2.constructor.name]);
@@ -12879,23 +12978,23 @@
     }
     ;
     if (v instanceof SpanH_Handle) {
-      return pure18(new Point_Handle(getFocusPoint(v)));
+      return pure19(new Point_Handle(getFocusPoint(v)));
     }
     ;
     if (v instanceof ZipperH_Handle && v.value1 instanceof OuterLeft_ZipperFocus) {
-      return pure18(new SpanH_Handle(getOuterSpanH_ZipperH(v.value0), Right_SpanFocus.value));
+      return pure19(new SpanH_Handle(getOuterSpanH_ZipperH(v.value0), Right_SpanFocus.value));
     }
     ;
     if (v instanceof ZipperH_Handle && v.value1 instanceof InnerLeft_ZipperFocus) {
-      return pure18(new SpanH_Handle(getInnerSpanH_ZipperH(v.value0), Right_SpanFocus.value));
+      return pure19(new SpanH_Handle(getInnerSpanH_ZipperH(v.value0), Right_SpanFocus.value));
     }
     ;
     if (v instanceof ZipperH_Handle && v.value1 instanceof InnerRight_ZipperFocus) {
-      return pure18(new SpanH_Handle(getInnerSpanH_ZipperH(v.value0), Left_SpanFocus.value));
+      return pure19(new SpanH_Handle(getInnerSpanH_ZipperH(v.value0), Left_SpanFocus.value));
     }
     ;
     if (v instanceof ZipperH_Handle && v.value1 instanceof OuterRight_ZipperFocus) {
-      return pure18(new SpanH_Handle(getOuterSpanH_ZipperH(v.value0), Left_SpanFocus.value));
+      return pure19(new SpanH_Handle(getOuterSpanH_ZipperH(v.value0), Left_SpanFocus.value));
     }
     ;
     throw new Error("Failed pattern match at Data.Expr.Move (line 121, column 1 - line 121, column 33): " + [v.constructor.name]);
@@ -12970,13 +13069,13 @@
 
   // output/Data.Expr.Edit/index.js
   var none6 = /* @__PURE__ */ none(unfoldableMaybe);
-  var pure19 = /* @__PURE__ */ pure(applicativeMaybe);
+  var pure20 = /* @__PURE__ */ pure(applicativeMaybe);
   var monadWriterT3 = /* @__PURE__ */ monadWriterT(monoidArray);
   var add3 = /* @__PURE__ */ add(semiringIndex);
   var none1 = /* @__PURE__ */ none(unfoldableArray);
-  var append9 = /* @__PURE__ */ append(semigroupList);
+  var append10 = /* @__PURE__ */ append(semigroupList);
   var sub4 = /* @__PURE__ */ sub(ringIndex);
-  var bind9 = /* @__PURE__ */ bind(bindMaybe);
+  var bind10 = /* @__PURE__ */ bind(bindMaybe);
   var fromMaybeM2 = /* @__PURE__ */ fromMaybeM(applicativeMaybe);
   var eq6 = /* @__PURE__ */ eq(eqIndex);
   var map30 = /* @__PURE__ */ map(functorLazy);
@@ -12998,7 +13097,7 @@
             ;
             if (v instanceof Span_Fragment && (v1.mb_handle instanceof Just && v1.mb_handle.value0 instanceof Point_Handle)) {
               var at_p = atPoint2(v1.mb_handle.value0.value0)(v1.root);
-              return pure19(new Edit({
+              return pure20(new Edit({
                 info: new Insert_EditInfo({
                   insertion: v
                 }),
@@ -13017,7 +13116,7 @@
             ;
             if (v instanceof Zipper_Fragment && (v1.mb_handle instanceof Just && v1.mb_handle.value0 instanceof Point_Handle)) {
               var at_p = atPoint2(v1.mb_handle.value0.value0)(v1.root);
-              return pure19(new Edit({
+              return pure20(new Edit({
                 info: new Insert_EditInfo({
                   insertion: v
                 }),
@@ -13025,7 +13124,7 @@
                   return pure114({
                     root: unSpanContext2(at_p.outside)(unZipper2(v.value0)(none1)),
                     mb_handle: new Just(new Point_Handle({
-                      path: append9(v1.mb_handle.value0.value0.path)(new Cons(getStepsAroundIndex(v1.mb_handle.value0.value0.j)["_R"], getPath_Zipper(v.value0))),
+                      path: append10(v1.mb_handle.value0.value0.path)(new Cons(getStepsAroundIndex(v1.mb_handle.value0.value0.j)["_R"], getPath_Zipper(v.value0))),
                       j: offset_innerLeft_Zipper(v.value0)
                     })),
                     clipboard: v1.clipboard
@@ -13036,7 +13135,7 @@
             ;
             if (v instanceof Span_Fragment && (v1.mb_handle instanceof Just && v1.mb_handle.value0 instanceof SpanH_Handle)) {
               var at_sh = atSpan2(v1.mb_handle.value0.value0)(v1.root);
-              return pure19(new Edit({
+              return pure20(new Edit({
                 info: new Insert_EditInfo({
                   insertion: v
                 }),
@@ -13065,7 +13164,7 @@
             ;
             if (v instanceof Zipper_Fragment && (v1.mb_handle instanceof Just && v1.mb_handle.value0 instanceof SpanH_Handle)) {
               var at_sh = atSpan2(v1.mb_handle.value0.value0)(v1.root);
-              return pure19(new Edit({
+              return pure20(new Edit({
                 info: new Insert_EditInfo({
                   insertion: v
                 }),
@@ -13073,7 +13172,7 @@
                   return pure114({
                     root: unSpanContext2(at_sh.outside)(unZipper2(v.value0)(at_sh.here)),
                     mb_handle: new Just(new SpanH_Handle({
-                      path: append9(v1.mb_handle.value0.value0.path)(new Cons(getStepsAroundIndex(v1.mb_handle.value0.value0.j_L)["_R"], getPath_Zipper(v.value0))),
+                      path: append10(v1.mb_handle.value0.value0.path)(new Cons(getStepsAroundIndex(v1.mb_handle.value0.value0.j_L)["_R"], getPath_Zipper(v.value0))),
                       j_L: offset_innerLeft_Zipper(v.value0),
                       j_R: add3(offset_innerLeft_Zipper(v.value0))(offset_Span(at_sh.here))
                     }, v1.mb_handle.value0.value1)),
@@ -13085,7 +13184,7 @@
             ;
             if (v instanceof Span_Fragment && (v1.mb_handle instanceof Just && v1.mb_handle.value0 instanceof ZipperH_Handle)) {
               var at_zh = atZipper2(v1.mb_handle.value0.value0)(v1.root);
-              return pure19(new Edit({
+              return pure20(new Edit({
                 info: new Insert_EditInfo({
                   insertion: v
                 }),
@@ -13123,7 +13222,7 @@
             ;
             if (v instanceof Zipper_Fragment && (v1.mb_handle instanceof Just && v1.mb_handle.value0 instanceof ZipperH_Handle)) {
               var at_zh = atZipper2(v1.mb_handle.value0.value0)(v1.root);
-              return pure19(new Edit({
+              return pure20(new Edit({
                 info: new Insert_EditInfo({
                   insertion: v
                 }),
@@ -13199,7 +13298,7 @@
       var insert22 = insert13(dictShow)(dictShow);
       return function(dictShow1) {
         return function(state3) {
-          return bind9(fromMaybeM2(none6)(state3.clipboard))(function(frag) {
+          return bind10(fromMaybeM2(none6)(state3.clipboard))(function(frag) {
             return insert22(frag)(state3);
           });
         };
@@ -13215,34 +13314,34 @@
       return function(dictShow1) {
         return function(v) {
           if (v.mb_handle instanceof Just && v.mb_handle.value0 instanceof Point_Handle) {
-            return pure19(new Edit({
+            return pure20(new Edit({
               info: new Remove_EditInfo({}),
               output: defer3(function(v1) {
                 return pure114({
                   root: v.root,
                   mb_handle: new Just(new Point_Handle(v.mb_handle.value0.value0)),
-                  clipboard: pure19(new Span_Fragment(none1))
+                  clipboard: pure20(new Span_Fragment(none1))
                 });
               })
             }));
           }
           ;
           if (v.mb_handle instanceof Just && v.mb_handle.value0 instanceof SpanH_Handle) {
-            return pure19(new Edit({
+            return pure20(new Edit({
               info: new Remove_EditInfo({}),
               output: defer3(function(v1) {
                 var at_sh = atSpan2(v.mb_handle.value0.value0)(v.root);
                 return pure114({
                   root: unSpanContext2(at_sh.outside)(none1),
                   mb_handle: new Just(new Point_Handle(getEndPoints_SpanH(v.mb_handle.value0.value0)["_L"])),
-                  clipboard: pure19(new Span_Fragment(at_sh.here))
+                  clipboard: pure20(new Span_Fragment(at_sh.here))
                 });
               })
             }));
           }
           ;
           if (v.mb_handle instanceof Just && v.mb_handle.value0 instanceof ZipperH_Handle) {
-            return pure19(new Edit({
+            return pure20(new Edit({
               info: new Remove_EditInfo({}),
               output: defer3(function(v1) {
                 var at_zh = atZipper2(v.mb_handle.value0.value0)(v.root);
@@ -13306,7 +13405,7 @@
                       }()
                     });
                   }()),
-                  clipboard: pure19(new Zipper_Fragment(at_zh.here))
+                  clipboard: pure20(new Zipper_Fragment(at_zh.here))
                 });
               })
             }));
@@ -13328,8 +13427,8 @@
       var cut22 = cut1(dictShow)(dictShow);
       return function(dictShow1) {
         return function(state3) {
-          return bind9(cut22(state3))(function(v) {
-            return pure19(new Edit({
+          return bind10(cut22(state3))(function(v) {
+            return pure20(new Edit({
               info: v.value0.info,
               output: map30(map113(function(v2) {
                 return {
@@ -13355,7 +13454,7 @@
           return function(v1) {
             if (v1.mb_handle instanceof Just && v1.mb_handle.value0 instanceof Point_Handle) {
               var mb_handle$prime = movePointUntil2(v1.root)(L.value)(v1.mb_handle.value0.value0)(function(p2) {
-                return bind9(drag3(new Point_Handle(v1.mb_handle.value0.value0))(p2)(v1.root))(guardPure2(v.isValidHandle(v1.root)));
+                return bind10(drag3(new Point_Handle(v1.mb_handle.value0.value0))(p2)(v1.root))(guardPure2(v.isValidHandle(v1.root)));
               });
               if (mb_handle$prime instanceof Nothing) {
                 return none6;
@@ -13389,7 +13488,7 @@
           return function(v1) {
             if (v1.mb_handle instanceof Just && v1.mb_handle.value0 instanceof Point_Handle) {
               var mb_handle$prime = movePointUntil2(v1.root)(L_sibling.value)(v1.mb_handle.value0.value0)(function(p2) {
-                return bind9(drag3(new Point_Handle(v1.mb_handle.value0.value0))(p2)(v1.root))(guardPure2(v.isValidHandle(v1.root)));
+                return bind10(drag3(new Point_Handle(v1.mb_handle.value0.value0))(p2)(v1.root))(guardPure2(v.isValidHandle(v1.root)));
               });
               if (mb_handle$prime instanceof Nothing) {
                 return none6;
@@ -13420,41 +13519,41 @@
       return function(dictShow1) {
         return function(v) {
           if (v.mb_handle instanceof Just && v.mb_handle.value0 instanceof Point_Handle) {
-            return pure19(new Edit({
+            return pure20(new Edit({
               info: new Copy_EditInfo({}),
               output: defer3(function(v1) {
                 return pure114({
                   mb_handle: v.mb_handle,
                   root: v.root,
-                  clipboard: pure19(new Span_Fragment(none1))
+                  clipboard: pure20(new Span_Fragment(none1))
                 });
               })
             }));
           }
           ;
           if (v.mb_handle instanceof Just && v.mb_handle.value0 instanceof SpanH_Handle) {
-            return pure19(new Edit({
+            return pure20(new Edit({
               info: new Copy_EditInfo({}),
               output: defer3(function(v1) {
                 var at_sh = atSpan2(v.mb_handle.value0.value0)(v.root);
                 return pure114({
                   mb_handle: v.mb_handle,
                   root: v.root,
-                  clipboard: pure19(new Span_Fragment(at_sh.here))
+                  clipboard: pure20(new Span_Fragment(at_sh.here))
                 });
               })
             }));
           }
           ;
           if (v.mb_handle instanceof Just && v.mb_handle.value0 instanceof ZipperH_Handle) {
-            return pure19(new Edit({
+            return pure20(new Edit({
               info: new Copy_EditInfo({}),
               output: defer3(function(v1) {
                 var at_zh = atZipper2(v.mb_handle.value0.value0)(v.root);
                 return pure114({
                   mb_handle: v.mb_handle,
                   root: v.root,
-                  clipboard: pure19(new Zipper_Fragment(at_zh.here))
+                  clipboard: pure20(new Zipper_Fragment(at_zh.here))
                 });
               })
             }));
@@ -13482,7 +13581,7 @@
   var length9 = /* @__PURE__ */ length(foldableArray)(semiringInt);
   var fold6 = /* @__PURE__ */ fold(foldableArray)(/* @__PURE__ */ monoidReaderT(applicativeIdentity)(monoidArray));
   var map31 = /* @__PURE__ */ map(functorArray);
-  var pure20 = /* @__PURE__ */ pure(/* @__PURE__ */ applicativeReaderT(applicativeIdentity));
+  var pure21 = /* @__PURE__ */ pure(/* @__PURE__ */ applicativeReaderT(applicativeIdentity));
   var runRenderM = /* @__PURE__ */ flip(runReader)({
     indentLevel: 0
   });
@@ -13624,7 +13723,7 @@
           }
           ;
           if (v2 instanceof Zipper_Fragment) {
-            return renderZipper1(v)(v1)(v2.value0)([pure20([new Tuple("TODO:hole", hole)])]);
+            return renderZipper1(v)(v1)(v2.value0)([pure21([new Tuple("TODO:hole", hole)])]);
           }
           ;
           throw new Error("Failed pattern match at Data.Expr.Render (line 86, column 1 - line 86, column 121): " + [v.constructor.name, v1.constructor.name, v2.constructor.name]);
@@ -13784,12 +13883,12 @@
   };
   var merge5 = /* @__PURE__ */ merge()();
   var $$delete6 = /* @__PURE__ */ $$delete4(keyIsSymbol)()();
-  var bind10 = /* @__PURE__ */ bind(bindMaybe);
+  var bind11 = /* @__PURE__ */ bind(bindMaybe);
   var discard5 = /* @__PURE__ */ discard(discardUnit);
   var discard12 = /* @__PURE__ */ discard5(bindMaybe);
   var guard2 = /* @__PURE__ */ guard(alternativeMaybe);
   var and5 = /* @__PURE__ */ and(foldableArray)(heytingAlgebraBoolean);
-  var pure21 = /* @__PURE__ */ pure(applicativeMaybe);
+  var pure23 = /* @__PURE__ */ pure(applicativeMaybe);
   var map34 = /* @__PURE__ */ map(functorArray);
   var member5 = /* @__PURE__ */ member2(ordString);
   var KeyEq = /* @__PURE__ */ function() {
@@ -13877,7 +13976,7 @@
               shift: Nothing.value,
               alt: Nothing.value
             });
-            return bind10(f(v))(function(a2) {
+            return bind11(f(v))(function(a2) {
               return discard12(guard2(and5([maybe(true)(function(v1) {
                 return r$prime.cmd === v1;
               })(r.cmd), maybe(true)(function(v1) {
@@ -13885,7 +13984,7 @@
               })(r.shift), maybe(true)(function(v1) {
                 return r$prime.alt === v1;
               })(r.alt)])))(function() {
-                return pure21(a2);
+                return pure23(a2);
               });
             });
           };
@@ -13957,21 +14056,21 @@
   // output/Ui.Editor.Buffer/index.js
   var $$null5 = /* @__PURE__ */ $$null(foldableArray);
   var none7 = /* @__PURE__ */ none(unfoldableMaybe);
-  var pure23 = /* @__PURE__ */ pure(applicativeMaybe);
+  var pure24 = /* @__PURE__ */ pure(applicativeMaybe);
   var modify_3 = /* @__PURE__ */ modify_2(monadStateHalogenM);
   var fold7 = /* @__PURE__ */ fold(foldableArray)(monoidArray);
   var value13 = /* @__PURE__ */ value12(isPropString);
-  var mapWithIndex4 = /* @__PURE__ */ mapWithIndex(functorWithIndexArray);
+  var mapWithIndex5 = /* @__PURE__ */ mapWithIndex(functorWithIndexArray);
   var notEq3 = /* @__PURE__ */ notEq(/* @__PURE__ */ eqMaybe(eqInt));
   var unwrap7 = /* @__PURE__ */ unwrap();
-  var bind11 = /* @__PURE__ */ bind(bindHalogenM);
+  var bind19 = /* @__PURE__ */ bind(bindHalogenM);
   var fromMaybeM3 = /* @__PURE__ */ fromMaybeM(applicativeHalogenM);
   var discard6 = /* @__PURE__ */ discard(discardUnit)(bindHalogenM);
   var max6 = /* @__PURE__ */ max(ordInt);
   var pure110 = /* @__PURE__ */ pure(applicativeHalogenM);
   var none12 = /* @__PURE__ */ none(unfoldableArray);
   var liftEffect11 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff));
-  var bind19 = /* @__PURE__ */ bind(bindEffect);
+  var bind110 = /* @__PURE__ */ bind(bindEffect);
   var $$void8 = /* @__PURE__ */ $$void(functorHalogenM);
   var put2 = /* @__PURE__ */ put(monadStateHalogenM);
   var bindFlipped9 = /* @__PURE__ */ bindFlipped(bindHalogenM);
@@ -14008,7 +14107,7 @@
             return none7;
           }
           ;
-          return pure23(0);
+          return pure24(0);
         }(),
         menu_queried: menu2
       };
@@ -14035,7 +14134,7 @@
       return {
         renderKid: renderExpr1(new Editor(v.value0)),
         renderPoint: renderPoint2(new Editor(v.value0)),
-        assembleExpr: v.value0.assembleStampedExpr
+        assembleExpr: v.value0.assembleExpr
       };
     };
   };
@@ -14044,7 +14143,7 @@
     var renderFragment2 = renderFragment(showLabel(dictShow));
     var renderArgs1 = renderArgs(dictShow);
     return function(state3) {
-      return div2([classes2(fold7([["Buffer"]]))])([input2([classes2(["query"]), ref2(refLabel_input), value13(state3.query), onInput(QueryInput_BufferAction.create), spellcheck2(false)]), div3([classes2(["menu"])])(mapWithIndex4(function(i2) {
+      return div2([classes2(fold7([["Buffer"]]))])([input2([classes2(["query"]), ref2(refLabel_input), value13(state3.query), onInput(QueryInput_BufferAction.create), spellcheck2(false)]), div3([classes2(["menu"])])(mapWithIndex5(function(i2) {
         return function(v) {
           return new Tuple(v.value0, div2([classes2(fold7([["Edit"], function() {
             var $69 = notEq3(new Just(i2))(state3.option_i);
@@ -14076,9 +14175,9 @@
   };
   var resizeQueryInput = function(dictMonadEffect) {
     var liftEffect14 = liftEffect(monadEffectHalogenM(dictMonadEffect));
-    return bind11(bind11(getHTMLElementRef(refLabel_input))(fromMaybeM3(liftEffect14($$throw("TODO")))))(function(elem3) {
-      return bind11(fromMaybeM3(liftEffect14($$throw("TODO")))(fromHTMLElement(elem3)))(function(inputElem) {
-        return bind11(liftEffect14(value3(inputElem)))(function(value1) {
+    return bind19(bind19(getHTMLElementRef(refLabel_input))(fromMaybeM3(liftEffect14($$throw("TODO")))))(function(elem3) {
+      return bind19(fromMaybeM3(liftEffect14($$throw("TODO")))(fromHTMLElement(elem3)))(function(inputElem) {
+        return bind19(liftEffect14(value3(inputElem)))(function(value1) {
           return discard6(liftEffect14(setSize(max6(1)(length10(value1)))(inputElem)))(function() {
             return pure110(value1);
           });
@@ -14102,26 +14201,26 @@
   };
   var fromKeyToCycleDir = function(v) {
     if (v === "ArrowUp") {
-      return pure23(Prev.value);
+      return pure24(Prev.value);
     }
     ;
     if (v === "ArrowDown") {
-      return pure23(Next.value);
+      return pure24(Next.value);
     }
     ;
     return none7;
   };
   var handleAction = function(v) {
     if (v instanceof Initialize_BufferAction) {
-      return discard6(bind11(getHTMLElementRef(refLabel_input))(function(mb_elem_input) {
-        return bind11(fromMaybeM3(liftEffect11($$throw("[Buffer] input element doesn't exist")))(mb_elem_input))(function(elem_input) {
+      return discard6(bind19(getHTMLElementRef(refLabel_input))(function(mb_elem_input) {
+        return bind19(fromMaybeM3(liftEffect11($$throw("[Buffer] input element doesn't exist")))(mb_elem_input))(function(elem_input) {
           return liftEffect11(focus(elem_input));
         });
       }))(function() {
-        return bind11(liftEffect11(bind19(windowImpl)(document2)))(function(doc) {
+        return bind19(liftEffect11(bind110(windowImpl)(document2)))(function(doc) {
           return discard6(subscribe$prime(function(_subId) {
             return eventListener2(keydown)(toEventTarget(doc))(function($110) {
-              return pure23(KeyDown_BufferAction.create($110));
+              return pure24(KeyDown_BufferAction.create($110));
             });
           }))(function() {
             return $$void8(resizeQueryInput1);
@@ -14138,7 +14237,7 @@
     ;
     if (v instanceof KeyDown_BufferAction) {
       var ki = fromEventToKeyInfo(v.value0);
-      return bind11(get4)(function(state3) {
+      return bind19(get4)(function(state3) {
         if (matchKeyInfoPattern$prime([keyMember(submitBuffer_keys), not_cmd, not_alt])(ki)) {
           return discard6(liftEffect11(preventDefault(v.value0)))(function() {
             if (state3.option_i instanceof Nothing) {
@@ -14146,7 +14245,7 @@
             }
             ;
             if (state3.option_i instanceof Just) {
-              return bind11(fromMaybeM3(liftEffect11($$throw("impossible for option_i to be out of bounds of menu_queried")))(index2(state3.menu_queried)(state3.option_i.value0)))(function(v12) {
+              return bind19(fromMaybeM3(liftEffect11($$throw("impossible for option_i to be out of bounds of menu_queried")))(index2(state3.menu_queried)(state3.option_i.value0)))(function(v12) {
                 return raise(new SubmitBuffer_BufferOutput(v12.value1));
               });
             }
@@ -14163,9 +14262,9 @@
             return v2.key;
           }(unwrap7($111)));
         })({
-          cmd: pure23(false),
-          shift: pure23(false),
-          alt: pure23(false)
+          cmd: pure24(false),
+          shift: pure24(false),
+          alt: pure24(false)
         })(ki);
         if ($93 instanceof Just) {
           return discard6(liftEffect11(preventDefault(v.value0)))(function() {
@@ -14180,7 +14279,7 @@
                   ;
                 }
                 ;
-                $95.option_i = pure23(mod2(v2.value0.value0 - 1 | 0)(length11(state3.menu_queried)));
+                $95.option_i = pure24(mod2(v2.value0.value0 - 1 | 0)(length11(state3.menu_queried)));
                 return $95;
               });
             }
@@ -14195,7 +14294,7 @@
                   ;
                 }
                 ;
-                $101.option_i = pure23(mod2(v2.value0.value0 + 1 | 0)(length11(state3.menu_queried)));
+                $101.option_i = pure24(mod2(v2.value0.value0 + 1 | 0)(length11(state3.menu_queried)));
                 return $101;
               });
             }
@@ -14218,7 +14317,7 @@
     return mkEval({
       receive: defaultEval.receive,
       finalize: defaultEval.finalize,
-      initialize: pure23(Initialize_BufferAction.value),
+      initialize: pure24(Initialize_BufferAction.value),
       handleQuery,
       handleAction
     });
@@ -14257,7 +14356,7 @@
   var fromFoldable7 = /* @__PURE__ */ fromFoldable4(foldableArray)(ordPointStatus);
   var fold8 = /* @__PURE__ */ fold2(monoidArray);
   var map35 = /* @__PURE__ */ map(functorArray);
-  var show4 = /* @__PURE__ */ show(showPointStatus);
+  var show5 = /* @__PURE__ */ show(showPointStatus);
   var toUnfoldable6 = /* @__PURE__ */ toUnfoldable5(unfoldableArray);
   var foldMap3 = /* @__PURE__ */ foldMap(foldableMaybe)(monoidArray);
   var slot2 = /* @__PURE__ */ slot()({
@@ -14278,7 +14377,7 @@
   var gets2 = /* @__PURE__ */ gets(monadStateHalogenM);
   var when4 = /* @__PURE__ */ when(applicativeHalogenM);
   var intersection3 = /* @__PURE__ */ intersection2(ordPointStatus);
-  var pure24 = /* @__PURE__ */ pure(applicativeHalogenM);
+  var pure25 = /* @__PURE__ */ pure(applicativeHalogenM);
   var liftEffect12 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff));
   var pure111 = /* @__PURE__ */ pure(applicativeMaybe);
   var modify_4 = /* @__PURE__ */ modify_2(monadStateHalogenM);
@@ -14300,7 +14399,7 @@
   var render2 = function(dictShow) {
     var component1 = component(dictShow);
     return function(state3) {
-      return div2([ref2(refLabel_point), classes2(fold8([["Point"], map35(show4)(toUnfoldable6(state3.statuses)), foldMap3($$const(["bufferIsOpen"]))(state3.mb_bufferInput)])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(function() {
+      return div2([ref2(refLabel_point), classes2(fold8([["Point"], map35(show5)(toUnfoldable6(state3.statuses)), foldMap3($$const(["bufferIsOpen"]))(state3.mb_bufferInput)])), onMouseDown(MouseDown_PointAction.create), onMouseEnter(MouseEnter_PointAction.create)])(function() {
         if (state3.mb_bufferInput instanceof Nothing) {
           return [div2([classes2(["Left"])])([]), div2([classes2(["Middle"])])([]), div2([classes2(["Right"])])([])];
         }
@@ -14342,7 +14441,7 @@
         }))(function(statuses) {
           return when4(!isEmpty2(intersection3(ss_Focus)(statuses)))(bind20(getHTMLElementRef(refLabel_point))(function(mb_elem_this) {
             if (mb_elem_this instanceof Nothing) {
-              return pure24(unit);
+              return pure25(unit);
             }
             ;
             if (mb_elem_this instanceof Just) {
@@ -14352,7 +14451,7 @@
             throw new Error("Failed pattern match at Ui.Editor.Point (line 54, column 7 - line 56, column 98): " + [mb_elem_this.constructor.name]);
           }));
         }))(function() {
-          return pure24(pure111(v.value1));
+          return pure25(pure111(v.value1));
         });
       });
     }
@@ -14370,13 +14469,13 @@
         $52.mb_bufferInput = v.value0;
         return $52;
       }))(function() {
-        return pure24(pure111(v.value1));
+        return pure25(pure111(v.value1));
       });
     }
     ;
     if (v instanceof GetBufferInput_PointQuery) {
       return bind20(get5)(function(state3) {
-        return pure24(pure111(v.value0(state3.mb_bufferInput)));
+        return pure25(pure111(v.value0(state3.mb_bufferInput)));
       });
     }
     ;
@@ -14384,7 +14483,7 @@
   };
   var handleAction2 = function(v) {
     if (v instanceof Initialize_PointAction) {
-      return pure24(unit);
+      return pure25(unit);
     }
     ;
     if (v instanceof Receive_PointAction) {
@@ -14452,9 +14551,9 @@
   var unless2 = /* @__PURE__ */ unless(applicativeHalogenM);
   var monadEffectHalogenM2 = /* @__PURE__ */ monadEffectHalogenM(monadEffectAff);
   var log4 = /* @__PURE__ */ log3(monadEffectHalogenM2);
-  var show5 = /* @__PURE__ */ show(showPoint);
+  var show6 = /* @__PURE__ */ show(showPoint);
   var difference4 = /* @__PURE__ */ difference3(ordPointStatus);
-  var pure25 = /* @__PURE__ */ pure(applicativeHalogenM);
+  var pure26 = /* @__PURE__ */ pure(applicativeHalogenM);
   var discard8 = /* @__PURE__ */ discard(discardUnit)(bindHalogenM);
   var get6 = /* @__PURE__ */ get(monadStateHalogenM);
   var liftEffect13 = /* @__PURE__ */ liftEffect(monadEffectHalogenM2);
@@ -14479,7 +14578,7 @@
   var applyEdit2 = /* @__PURE__ */ applyEdit(monadAff);
   var fold22 = /* @__PURE__ */ fold9(monoidString);
   var show1 = /* @__PURE__ */ show(showMaybe2);
-  var bind110 = /* @__PURE__ */ bind(bindEffect);
+  var bind111 = /* @__PURE__ */ bind(bindEffect);
   var liftAff2 = /* @__PURE__ */ liftAff(/* @__PURE__ */ monadAffHalogenM(monadAffAff));
   var traverse4 = /* @__PURE__ */ traverse(traversableExpr)(applicativeAff);
   var put4 = /* @__PURE__ */ put(monadStateHalogenM);
@@ -14552,7 +14651,7 @@
           return renderExpr2({
             renderKid: renderStampedExpr(dictShow)(new Editor(v.value0)),
             renderPoint: renderPoint1(new Editor(v.value0)),
-            assembleExpr: v.value0.assembleStampedExpr
+            assembleExpr: v.value0.assembleExpr
           })(path)(expr);
         };
       };
@@ -14575,19 +14674,19 @@
             return bind21(map36(isJust)(request2($$Proxy.value)(p3)($$const(new ModifyStatuses_PointQuery(function(v) {
               return union4(v)(ss$prime);
             }, unit)))))(function(success) {
-              return unless2(success)(log4("[Editor.modifyHandle] failed to request Point " + show5(p3)));
+              return unless2(success)(log4("[Editor.modifyHandle] failed to request Point " + show6(p3)));
             });
           }
           ;
           return bind21(map36(isJust)(request2($$Proxy.value)(p3)($$const(new ModifyStatuses_PointQuery(function(v) {
             return difference4(v)(ss$prime);
           }, unit)))))(function(success) {
-            return unless2(success)(log4("[Editor.modifyHandle] failed to request Point " + show5(p3)));
+            return unless2(success)(log4("[Editor.modifyHandle] failed to request Point " + show6(p3)));
           });
         };
       };
       if (mb_handle instanceof Nothing) {
-        return pure25(unit);
+        return pure26(unit);
       }
       ;
       if (mb_handle instanceof Just && mb_handle.value0 instanceof Point_Handle) {
@@ -14673,7 +14772,7 @@
     });
   };
   var setHandle = function(mb_handle) {
-    return setHandle$prime(pure25(mb_handle));
+    return setHandle$prime(pure26(mb_handle));
   };
   var loadSnapshot = function(s) {
     return setHandle$prime(discard8(bind21(get6)(function(state3) {
@@ -14692,7 +14791,7 @@
         $179.initial_mb_handle = s.mb_handle;
         return $179;
       }))(function(state3) {
-        return pure25(state3.initial_mb_handle);
+        return pure26(state3.initial_mb_handle);
       });
     }));
   };
@@ -14712,7 +14811,7 @@
   var getSnapshot = /* @__PURE__ */ bind21(get6)(function(state3) {
     return bind21(getRoot)(function(root) {
       return bind21(liftEffect13(read(state3.ref_mb_handle)))(function(mb_handle) {
-        return pure25({
+        return pure26({
           root,
           mb_handle
         });
@@ -14726,7 +14825,7 @@
         return discard8(when5(log_undo_and_redo)(log4("[redo] " + show22(root))))(function() {
           return bind21(liftEffect13(read(state3.ref_future)))(function(v) {
             if (v instanceof Nil) {
-              return pure25(unit);
+              return pure26(unit);
             }
             ;
             if (v instanceof Cons) {
@@ -14769,7 +14868,7 @@
           return liftEffect13(writeFlipped(state3.ref_mb_dragOrigin)(none9));
         }))(function() {
           return bind21(modify5(f))(function(state3) {
-            return pure25(state3.initial_mb_handle);
+            return pure26(state3.initial_mb_handle);
           });
         }));
       });
@@ -14788,7 +14887,7 @@
           return bind21(lift3(runWriterT(runMaybeT(applyEdit1(edit)(purestate_input)))))(function(v1) {
             if (v1.value0 instanceof Nothing) {
               return discard8(when5(log_edits)(log4(joinWith("\n")([fold22(replicate(10)("====")), "[log_edits]", "", "edit:", show22(edit), "input state:", "{ root: " + (show32(purestate_input.root) + ("\n, mb_handle: " + (show1(purestate_input.mb_handle) + ("\n, clipboard: " + (show42(purestate_input.clipboard) + "\n}"))))), "output state:", "{{failed}}", fold22(replicate(10)("===="))]))))(function() {
-                return pure25(unit);
+                return pure26(unit);
               });
             }
             ;
@@ -14821,7 +14920,7 @@
       return bind21(getBasicEditorState)(function(state3) {
         var v = editAt(state3);
         if (v instanceof Nothing) {
-          return pure25(unit);
+          return pure26(unit);
         }
         ;
         if (v instanceof Just) {
@@ -14839,7 +14938,7 @@
         return discard8(when5(log_undo_and_redo)(log4("[undo] " + show22(root))))(function() {
           return bind21(liftEffect13(read(state3.ref_history)))(function(v) {
             if (v instanceof Nil) {
-              return pure25(unit);
+              return pure26(unit);
             }
             ;
             if (v instanceof Cons) {
@@ -14875,7 +14974,7 @@
     var submitEdit1 = submitEdit(dictShow);
     return function(v) {
       if (v instanceof Initialize_EditorAction) {
-        return bind21(liftEffect13(bind110(windowImpl)(document2)))(function(doc) {
+        return bind21(liftEffect13(bind111(windowImpl)(document2)))(function(doc) {
           return discard8(subscribe$prime(function(_subId) {
             return eventListener2(mouseup)(toEventTarget(doc))(function($282) {
               return pure112(MouseUp_EditorAction.create($282));
@@ -14938,7 +15037,7 @@
                 return bind21(liftEffect13(read(v12.ref_mb_dragOrigin)))(function(mb_dragOrigin) {
                   return bind21(function() {
                     if (mb_handle instanceof Nothing) {
-                      return pure25(false);
+                      return pure26(false);
                     }
                     ;
                     if (mb_handle instanceof Just) {
@@ -14954,7 +15053,7 @@
                       if (matchKeyInfoPattern$prime([keyEq("Escape"), not_cmd, not_shift, not_alt])(ki)) {
                         return discard8(liftEffect13(preventDefault(v.value0)))(function() {
                           if (mb_handle instanceof Nothing) {
-                            return pure25(unit);
+                            return pure26(unit);
                           }
                           ;
                           if (mb_handle instanceof Just) {
@@ -14965,7 +15064,7 @@
                         });
                       }
                       ;
-                      return pure25(unit);
+                      return pure26(unit);
                     }
                     ;
                     return bind21(liftAff2(getShortcut(ki)(purestate)))(function(mb_edit_shortcut) {
@@ -14980,7 +15079,7 @@
                                       return setHandle($$escape(mb_handle.value0));
                                     }
                                     ;
-                                    return pure25(unit);
+                                    return pure26(unit);
                                   });
                                 });
                               }
@@ -15007,7 +15106,7 @@
                                         return liftEffect13(navigator_clibpoard_writeText(joinWith("\n")(map111(state$prime.editor.value0.printExpr)(state$prime.clipboard.value0.value0))));
                                       }
                                       ;
-                                      return pure25(unit);
+                                      return pure26(unit);
                                     });
                                   });
                                 });
@@ -15056,12 +15155,12 @@
                               if (matchKeyInfoPattern$prime([keyMember(openBuffer_keys), not_cmd, not_shift, not_alt])(ki)) {
                                 return discard8(liftEffect13(preventDefault(v.value0)))(function() {
                                   if (mb_handle instanceof Nothing) {
-                                    return pure25(unit);
+                                    return pure26(unit);
                                   }
                                   ;
                                   if (mb_handle instanceof Just) {
                                     var point = getFocusPoint(mb_handle.value0);
-                                    return pure25(unit);
+                                    return pure26(unit);
                                   }
                                   ;
                                   throw new Error("Failed pattern match at Ui.Editor.Editor (line 241, column 9 - line 246, column 22): " + [mb_handle.constructor.name]);
@@ -15071,25 +15170,25 @@
                               if (matchKeyInfoPattern$prime([keyRegex(isNonSpace_regex), not_cmd, not_alt])(ki)) {
                                 return discard8(liftEffect13(preventDefault(v.value0)))(function() {
                                   if (mb_handle instanceof Nothing) {
-                                    return pure25(unit);
+                                    return pure26(unit);
                                   }
                                   ;
                                   if (mb_handle instanceof Just) {
                                     var point = getFocusPoint(mb_handle.value0);
-                                    return pure25(unit);
+                                    return pure26(unit);
                                   }
                                   ;
                                   throw new Error("Failed pattern match at Ui.Editor.Editor (line 249, column 9 - line 254, column 22): " + [mb_handle.constructor.name]);
                                 });
                               }
                               ;
-                              return pure25(unit);
+                              return pure26(unit);
                             };
                             var $233 = fromKeyInfoToCycle(ki);
                             if ($233 instanceof Just) {
                               return discard8(liftEffect13(preventDefault(v.value0)))(function() {
                                 if (mb_handle instanceof Nothing) {
-                                  return pure25(unit);
+                                  return pure26(unit);
                                 }
                                 ;
                                 if (mb_handle instanceof Just) {
@@ -15114,7 +15213,7 @@
                                   }
                                   ;
                                   if (mb_dragOrigin instanceof Just) {
-                                    return pure25(unit);
+                                    return pure26(unit);
                                   }
                                   ;
                                   throw new Error("Failed pattern match at Ui.Editor.Editor (line 161, column 13 - line 165, column 26): " + [mb_dragOrigin.constructor.name]);
@@ -15127,12 +15226,12 @@
                                 return bind21(function() {
                                   if (mb_dragOrigin instanceof Nothing) {
                                     return discard8(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(pure112(mb_handle.value0))))(function() {
-                                      return pure25(mb_handle.value0);
+                                      return pure26(mb_handle.value0);
                                     });
                                   }
                                   ;
                                   if (mb_dragOrigin instanceof Just) {
-                                    return pure25(mb_dragOrigin.value0);
+                                    return pure26(mb_dragOrigin.value0);
                                   }
                                   ;
                                   throw new Error("Failed pattern match at Ui.Editor.Editor (line 169, column 27 - line 174, column 32): " + [mb_dragOrigin.constructor.name]);
@@ -15141,7 +15240,7 @@
                                     return bind22(drag3(dragOrigin)(p2)(root))(guardPure3(v12.editor.value0.isValidHandle(root)));
                                   });
                                   if (v7 instanceof Nothing) {
-                                    return pure25(unit);
+                                    return pure26(unit);
                                   }
                                   ;
                                   if (v7 instanceof Just) {
@@ -15238,13 +15337,13 @@
           return when5(buttons(v.value0.value0) === 1)(bind21(get6)(function(v12) {
             return bind21(liftEffect13(read(v12.ref_mb_dragOrigin)))(function(mb_dragOrigin) {
               if (mb_dragOrigin instanceof Nothing) {
-                return pure25(unit);
+                return pure26(unit);
               }
               ;
               if (mb_dragOrigin instanceof Just) {
                 var v2 = drag3(mb_dragOrigin.value0)(v.value0.value1)(root);
                 if (v2 instanceof Nothing) {
-                  return pure25(unit);
+                  return pure26(unit);
                 }
                 ;
                 if (v2 instanceof Just) {
@@ -15287,7 +15386,7 @@
   };
 
   // output/Ui.App/index.js
-  var pure26 = /* @__PURE__ */ pure(applicativeHalogenM);
+  var pure27 = /* @__PURE__ */ pure(applicativeHalogenM);
   var modify_5 = /* @__PURE__ */ modify_2(monadStateHalogenM);
   var pure113 = /* @__PURE__ */ pure(applicativeMaybe);
   var mkExistsEditor2 = /* @__PURE__ */ mkExistsEditor(showC);
@@ -15310,7 +15409,7 @@
       finalize: defaultEval.finalize,
       handleAction: function(v1) {
         if (v1 instanceof Initialize_AppAction) {
-          return pure26(unit);
+          return pure27(unit);
         }
         ;
         if (v1 instanceof SetEditor_AppAction) {
@@ -15329,7 +15428,7 @@
         }
         ;
         if (v1 instanceof Pass_AppAction) {
-          return pure26(unit);
+          return pure27(unit);
         }
         ;
         throw new Error("Failed pattern match at Ui.App (line 48, column 20 - line 51, column 34): " + [v1.constructor.name]);

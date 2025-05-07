@@ -82,8 +82,7 @@ editor = Editor
       ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
         where
         p = getEndPoints_ZipperH zh
-  , assembleExpr: assembleExpr
-  , assembleStampedExpr: assembleExpr
+  , assembleExpr
   , printExpr: const "unimplemented"
   , stampLabel: \(Label l) -> do
       id <- freshId # liftEffect

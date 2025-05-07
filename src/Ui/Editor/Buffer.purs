@@ -204,7 +204,7 @@ renderArgs :: forall c w i. Show c => Editor c -> RenderArgs (StampedLabel c ())
 renderArgs (Editor editor) =
   { renderKid: renderExpr (Editor editor)
   , renderPoint: renderPoint (Editor editor)
-  , assembleExpr: editor.assembleStampedExpr
+  , assembleExpr: editor.assembleExpr
   }
   where
   renderExpr :: Editor c -> Path -> Expr (StampedLabel c ()) -> RenderM (Array (String /\ HTML w i))

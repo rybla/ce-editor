@@ -71,8 +71,7 @@ data Editor c = Editor
   , isValidHandle :: forall r. Expr (Label c r) -> Handle -> Boolean
   -- processing
   , stampLabel :: Label c () -> Aff (StampedLabel c ())
-  , assembleStampedExpr :: AssembleExpr (StampedLabel c ())
-  , assembleExpr :: AssembleExpr (Label c ())
+  , assembleExpr :: AssembleExpr (StampedLabel c ())
   -- printing
   , printExpr :: forall r. Expr (Label c r) -> String
   }
