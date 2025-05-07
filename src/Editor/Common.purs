@@ -64,16 +64,16 @@ data Editor c = Editor
   , initialHandle :: Handle
   -- editing
   , getEditMenu ::
-      forall m r1 r2
+      forall m
        . Monad m
-      => BasicEditorState (Label c r1) (Label c r2)
-      -> EditM m (Label c r1) (Label c r2) (EditMenu m (Label c r1) (Label c r2))
+      => BasicEditorState (Label c ()) (StampedLabel c ())
+      -> EditM m (Label c ()) (StampedLabel c ()) (EditMenu m (Label c ()) (StampedLabel c ()))
   , getShortcut ::
-      forall m r1 r2
+      forall m
        . Monad m
       => KeyInfo
-      -> BasicEditorState (Label c r1) (Label c r2)
-      -> EditM m (Label c r1) (Label c r2) (Edit m (Label c r1) (Label c r2))
+      -> BasicEditorState (Label c ()) (StampedLabel c ())
+      -> EditM m (Label c ()) (StampedLabel c ()) (Edit m (Label c ()) (StampedLabel c ()))
   -- validity
   , isValidHandle :: forall r. Expr (Label c r) -> Handle -> Boolean
   -- processing
