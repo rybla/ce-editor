@@ -136,7 +136,7 @@ handleAction (KeyDown_EditorAction event) = do
       -- shortcut
       _ | Just edit <- mb_edit_shortcut -> do
         liftEffect $ event # Event.preventDefault
-        submitEdit { restampCliboard: true } edit
+        submitEdit edit
       -- move
       _ | Just dir <- ki # Expr.Move.fromKeyInfoToMoveDir -> do
         liftEffect $ event # Event.preventDefault
@@ -207,7 +207,7 @@ handleAction (KeyDown_EditorAction event) = do
       -- copy
       _ | ki # Event.matchKeyInfoPattern' [ keyEq "c", cmd, not_shift, not_alt ] -> do
         liftEffect $ event # Event.preventDefault
-        submitEditAt bottom Expr.Edit.copy
+        submitEditAt Expr.Edit.copy
         state' <- get
         case state'.clipboard of
           Just (Span_Fragment (Span es)) -> do
@@ -217,19 +217,19 @@ handleAction (KeyDown_EditorAction event) = do
       -- delete
       _ | ki # Event.matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, not_alt ] -> do
         liftEffect $ event # Event.preventDefault
-        submitEditAt bottom $ Expr.Edit.delete' { isValidHandle: editor.isValidHandle }
+        submitEditAt $ Expr.Edit.delete' { isValidHandle: editor.isValidHandle }
       -- delete sibling
       _ | ki # Event.matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, alt ] -> do
         liftEffect $ event # Event.preventDefault
-        submitEditAt bottom $ Expr.Edit.delete'_sibling { isValidHandle: editor.isValidHandle }
+        submitEditAt $ Expr.Edit.delete'_sibling { isValidHandle: editor.isValidHandle }
       -- cut
       _ | ki # Event.matchKeyInfoPattern' [ keyEq "x", cmd, not_shift, not_alt ] -> do
         liftEffect $ event # Event.preventDefault
-        submitEditAt bottom Expr.Edit.cut
+        submitEditAt Expr.Edit.cut
       -- paste
       _ | ki # Event.matchKeyInfoPattern' [ keyEq "v", cmd, not_shift, not_alt ] -> do
         liftEffect $ event # Event.preventDefault
-        submitEditAt bottom $ Expr.Edit.paste
+        submitEditAt $ Expr.Edit.paste
       -- redo
       _ | ki # Event.matchKeyInfoPattern' [ keyEq "z", cmd, shift, not_alt ] -> do
         liftEffect $ event # Event.preventDefault
@@ -293,7 +293,7 @@ handleAction (PointOutput_EditorAction (MouseEnter_PointOutput event p)) = do
             when (editor.isValidHandle root h) do
               setHandle (pure h')
 handleAction (PointOutput_EditorAction (BufferOutput_PointOutput (SubmitBuffer_BufferOutput edit))) = do
-  submitEdit bottom edit
+  submitEdit edit
 
 openBuffer_keys = Set.fromFoldable [ "Tab" ]
 
@@ -356,26 +356,19 @@ loadSnapshot s = do
 -- submitEdit
 --------------------------------------------------------------------------------
 
-submitEditAt :: forall c. Show c => { restampCliboard :: Boolean } -> EditAt Aff (StampedLabel c ()) -> EditorM c Unit
-submitEditAt opts editAt = do
+submitEditAt :: forall c. Show c => EditAt Aff (StampedLabel c ()) -> EditorM c Unit
+submitEditAt editAt = do
   state <- getBasicEditorState
   mb_edit /\ _diagnostics <- editAt state
     # runWriterT
     # lift
   case mb_edit of
     Nothing -> pure unit
-    Just edit -> submitEdit opts edit
+    Just edit -> submitEdit edit
 
-submitEdit :: forall c. Show c => { restampCliboard :: Boolean } -> Edit Aff (StampedLabel c ()) -> EditorM c Unit
-submitEdit opts edit = do
-  purestate_input <- do
-    state <- getBasicEditorState
-    if opts.restampCliboard then do
-      { editor: Editor editor } <- get
-      clipboard <- state.clipboard # traverse (traverse (unstampLabel >>> editor.stampLabel >>> lift))
-      pure state { clipboard = clipboard }
-    else
-      pure state
+submitEdit :: forall c. Show c => Edit Aff (StampedLabel c ()) -> EditorM c Unit
+submitEdit edit = do
+  purestate_input <- getBasicEditorState
 
   mb_output /\ _diagnostics <-
     applyEdit edit purestate_input
