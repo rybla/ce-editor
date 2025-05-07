@@ -3,7 +3,7 @@ module Data.Expr.Edit where
 import Prelude
 
 import Control.Alternative (empty)
-import Data.Expr (EditAt, EditInfo(..), Edit_(..), Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), ZipperH(..), atPoint, atSpan, atZipper, fromNePath, getEndPoints_SpanH, getPath_Zipper, getStepsAroundIndex, getTotalInnerPath_ZipperH, offset_Span, offset_innerLeft_Zipper, offset_outer_Zipper, stampTraversable, unSpanContext, unZipper)
+import Data.Expr (EditAt, EditInfo(..), Edit_(..), Expr, Fragment(..), Handle(..), Index(..), Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), ZipperH(..), atPoint, atSpan, atZipper, fromNePath, getEndPoints_SpanH, getPath_Zipper, getStepsAroundIndex, getTotalInnerPath_ZipperH, offset_Span, offset_innerLeft_Zipper, offset_outer_Zipper, stampTraversable, unSpanContext, unZipper, unstampTraversable)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Move as Expr.Move
 import Data.Lazy as Lazy
@@ -176,8 +176,7 @@ copy state@{ mb_handle: Just (Point_Handle _) } =
   pure $ Edit
     { info: Copy_EditInfo {}
     , output: Lazy.defer \_ -> do
-        frag <- Span_Fragment (Span none) # stampTraversable
-        pure state { clipboard = pure (todo "frag") }
+        pure state { clipboard = pure $ Span_Fragment (Span none) }
     }
 
 copy state@{ root: e, mb_handle: Just (SpanH_Handle (SpanH sh) _sf) } =
@@ -185,8 +184,8 @@ copy state@{ root: e, mb_handle: Just (SpanH_Handle (SpanH sh) _sf) } =
     { info: Copy_EditInfo {}
     , output: Lazy.defer \_ -> do
         let at_sh = e # atSpan (SpanH sh)
-        -- frag <- Span_Fragment at_sh.here # stampTraversable
-        pure state { clipboard = pure (todo "frag") }
+        frag <- Span_Fragment at_sh.here # unstampTraversable
+        pure state { clipboard = pure frag }
     }
 
 copy state@{ root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) _zf) } =
@@ -194,8 +193,8 @@ copy state@{ root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) _zf) } =
     { info: Copy_EditInfo {}
     , output: Lazy.defer \_ -> do
         let at_zh = e # atZipper (ZipperH zh)
-        -- frag <- Zipper_Fragment at_zh.here # stampTraversable
-        pure state { clipboard = pure (todo "frag") }
+        frag <- Zipper_Fragment at_zh.here # unstampTraversable
+        pure state { clipboard = pure frag }
     }
 
 copy { mb_handle: Nothing } = empty
@@ -260,10 +259,11 @@ cut { root: e, mb_handle: Just (SpanH_Handle (SpanH sh) _sf) } =
     { info: Remove_EditInfo {}
     , output: Lazy.defer \_ -> do
         let at_sh = e # atSpan (SpanH sh)
+        s <- at_sh.here # unstampTraversable
         pure
           { root: unSpanContext at_sh.outside (Span none)
           , mb_handle: Just $ Point_Handle (SpanH sh # getEndPoints_SpanH)._L
-          , clipboard: pure $ Span_Fragment (todo "at_sh.here")
+          , clipboard: pure $ Span_Fragment s
           }
     }
 
@@ -272,6 +272,7 @@ cut { root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) zf) } =
     { info: Remove_EditInfo {}
     , output: Lazy.defer \_ -> do
         let at_zh = e # atZipper (ZipperH zh)
+        z <- at_zh.here # unstampTraversable
         pure
           { root: unSpanContext at_zh.outside at_zh.inside
           , mb_handle: Just
@@ -307,7 +308,7 @@ cut { root: e, mb_handle: Just (ZipperH_Handle (ZipperH zh) zf) } =
                           OuterRight_ZipperFocus -> zh.j_OL + (at_zh.inside # offset_Span)
                       }
                   )
-          , clipboard: pure $ Zipper_Fragment (todo "at_zh.here")
+          , clipboard: pure $ Zipper_Fragment z
           }
     }
 

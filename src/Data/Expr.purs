@@ -739,12 +739,14 @@ type EditCtx m l1 l2 =
   }
 
 stampTraversable :: forall m l1 l2 t. Monad m => Traversable t => t l1 -> EditM m l1 l2 (t l2)
-stampTraversable = todo ""
+stampTraversable t = do
+  { stampLabel } <- ask
+  t # traverse (stampLabel >>> lift >>> lift >>> lift)
 
--- refreshTraversable :: forall m l t. Monad m => Traversable t => t l -> EditM m l (t l)
--- refreshTraversable t = do
---   { refreshLabel } <- ask
---   t # traverse (refreshLabel >>> lift >>> lift >>> lift)
+unstampTraversable :: forall m l1 l2 t. Monad m => Traversable t => t l2 -> EditM m l1 l2 (t l1)
+unstampTraversable t = do
+  { unstampLabel } <- ask
+  t # traverse (unstampLabel >>> pure)
 
 -- TODO: is this layer necessary? I used to merge with existing clipboard but that's already accounted for when the Edit is constructed, so no need to do it here
 applyEdit :: forall m l1 l2. Monad m => Show l1 => Show l2 => Edit m l1 l2 -> BasicEditorState l1 l2 -> EditM m l1 l2 (BasicEditorState l1 l2)
