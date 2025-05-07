@@ -3,6 +3,7 @@ module Editor.Example.Sexp where
 import Prelude
 
 import Control.Monad.Reader (ask, local)
+import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
 import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth)
 import Data.Expr.Edit as Expr.Edit
@@ -10,26 +11,25 @@ import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (and, fold)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..))
-import Data.Newtype (wrap)
+import Data.Newtype (class Newtype, wrap)
 import Data.Set as Set
 import Data.String as String
-import Data.Traversable (sequence)
+import Data.Traversable (sequence, traverse)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
-import Editor (Label(..), assembleExpr_default, getId)
-import Editor.Common (Editor(..), StampedLabel, assembleExpr_default, assembleExpr_default, getCon)
-import Editor.Notation (literal, punctuation)
+import Editor.Common (Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, getId, stampTraversable)
 import Effect.Class (liftEffect)
 import Halogen.HTML as HH
 import Record as Record
-import Type.Proxy (Proxy(..))
 import Ui.Editor.Id (freshId)
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, todo)
+import Utility (collapse, (<$$>))
 
 newtype C = C String
+
+derive instance Newtype C _
 
 instance Show C where
   show (C s) = s
@@ -55,23 +55,33 @@ editor = Editor
   { name: "Sexp"
   , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
-  -- , getEditMenu: \state query -> collapse case query of
-  --     "group" ->
-  --       [ Tuple "Symbol" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state
-  --       , Tuple "Group" <$> Expr.Edit.insert (Zipper_Fragment zipper_Group) state
-  --       ]
-  --     "linebreak" ->
-  --       [ Tuple "LineBreak" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
-  --       ]
-  --     _ ->
-  --       [ Tuple "Symbol" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol query ])) state
-  --       ]
-  , getEditMenu: todo ""
+  , getEditMenu: \state -> do
+      -- Group
+      zipper_Group' <- zipper_Group # stampTraversable
+      edit_Group <- lift $ Tuple "Group" <$$> Expr.Edit.insert (Zipper_Fragment zipper_Group') state
+      -- LineBreak
+      expr_LineBreak' <- expr_LineBreak # stampTraversable
+      edit_LineBreak <- lift $ Tuple "LineBreak" <$$> Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak' ])) state
+      -- 
+      { stampLabel } <- ask
+      -- 
+      pure \query -> do
+        expr_Symbol' <- expr_Symbol query # traverse (stampLabel >>> lift)
+        case query of
+          "group" -> do
+            pure $ collapse [ edit_Group ]
+          "linebreak" -> do
+            pure $ collapse [ edit_LineBreak ]
+          _ -> do
+            edit_Symbol <- Tuple "Symbol" <$$> Expr.Edit.insert (Span_Fragment (Span [ expr_Symbol' ])) state
+            pure $ collapse [ edit_Symbol ]
   , getShortcut: \ki state -> case unit of
-      -- _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] ->
-      --   Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
-      -- _ | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] ->
-      --   Expr.Edit.insert (Zipper_Fragment zipper_Group) state
+      _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] -> do
+        expr_LineBreak' <- expr_LineBreak # stampTraversable
+        lift $ Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak' ])) state
+      _ | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] -> do
+        zipper_Group' <- zipper_Group # stampTraversable
+        lift $ Expr.Edit.insert (Zipper_Fragment zipper_Group') state
       _ ->
         pure none
   , isValidHandle: \root handle -> case handle of

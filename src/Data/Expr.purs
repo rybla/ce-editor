@@ -2,10 +2,8 @@ module Data.Expr where
 
 import Prelude
 
-import Control.Monad.Trans.Class (lift)
 import Control.Alternative (guard)
 import Control.Monad.Maybe.Trans (MaybeT)
-import Control.Monad.Reader (ReaderT, ask)
 import Control.Plus (empty)
 import Data.Array as Array
 import Data.Diagnostic as Diagnostic
@@ -715,15 +713,15 @@ instance Show l => Pretty (Diff l) where
   pretty (ReplaceSpan_Diff j0 j1 span) = "//(_ % ... [" <> pretty j0 <> "] " <> (span # unwrap # map pretty # String.joinWith " ") <> " [" <> pretty j1 <> " ... )"
   pretty (Replace_Diff e) = "//" <> pretty e
 
-atInjectDiff :: forall l1 l2. Show l1 => NePath -> (Expr l1 -> Diff l2) -> Expr l1 -> Diff l2
+atInjectDiff :: forall l. Show l => NePath -> (Expr l -> Diff l) -> Expr l -> Diff l
 atInjectDiff (i0 :| path0) f = goStep i0 path0
   where
-  go :: Path -> Expr l1 -> Diff l2
+  go :: Path -> Expr l -> Diff l
   go path e = case path of
     i : path' -> goStep i path' e
     Nil -> f e
 
-  goStep :: Step -> Path -> Expr l1 -> Diff l2
+  goStep :: Step -> Path -> Expr l -> Diff l
   goStep i path e = Inject_Diff $ e # mapStepsAndKids \i' e' ->
     if i /= i' then Id_Diff else go path e'
 
@@ -731,11 +729,10 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
 -- Edit
 --------------------------------------------------------------------------------
 
-type EditM :: (Type -> Type) -> Type -> Type -> Type -> Type
-type EditM m l1 l2 = MaybeT (Diagnostic.MT m)
+type EditM m = MaybeT (Diagnostic.MT m)
 
 -- TODO: is this layer necessary? I used to merge with existing clipboard but that's already accounted for when the Edit is constructed, so no need to do it here
-applyEdit :: forall m l1 l2. Monad m => Show l1 => Edit m l1 l2 -> BasicEditorState l2 -> EditM m l1 l2 (BasicEditorState l2)
+applyEdit :: forall m l. Monad m => Show l => Edit m l -> BasicEditorState l -> EditM m (BasicEditorState l)
 applyEdit (Edit edit) _state = do
   state' <- edit.output # Lazy.force
   pure
@@ -744,25 +741,20 @@ applyEdit (Edit edit) _state = do
     , clipboard: state'.clipboard
     }
 
--- freshTraversable :: forall m t l1 l2. Monad m => Traversable t => t l1 -> EditM m l1 l2 (t l2)
--- freshTraversable t = do
---   { stampLabel } <- ask
---   t # traverse (stampLabel >>> lift >>> lift >>> lift)
-
 --------------------------------------------------------------------------------
 -- Edit
 --------------------------------------------------------------------------------
 
-type EditMenu m l1 l2 = String -> Array (String /\ Edit m l1 l2)
+type EditMenu m l = String -> Diagnostic.MT m (Array (String /\ Edit m l))
 
-type EditAt m l1 l2 = BasicEditorState l2 -> Maybe (Edit m l1 l2)
+type EditAt m l = BasicEditorState l -> Diagnostic.MT m (Maybe (Edit m l))
 
-type Edit m l1 l2 =
-  Edit_ l1
-    ( EditM m l1 l2
-        { root :: Expr l2
+type Edit m l =
+  Edit_ l
+    ( EditM m
+        { root :: Expr l
         , mb_handle :: Maybe Handle
-        , clipboard :: Maybe (Fragment l2)
+        , clipboard :: Maybe (Fragment l)
         }
     )
 

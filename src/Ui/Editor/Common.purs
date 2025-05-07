@@ -13,7 +13,7 @@ import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\))
-import Editor (Editor, Label, StampedLabel)
+import Editor (Editor, StampedLabel)
 import Editor.Common (ExistsEditor)
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -193,18 +193,18 @@ type BufferInput c =
   { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu Aff (StampedLabel c ()) (StampedLabel c ())
+  , menu :: EditMenu Aff (StampedLabel c ())
   }
 
-data BufferOutput c = SubmitBuffer_BufferOutput (Edit Aff (StampedLabel c ()) (StampedLabel c ()))
+data BufferOutput c = SubmitBuffer_BufferOutput (Edit Aff (StampedLabel c ()))
 
 type BufferState c =
   { editor :: Editor c
   , point :: Point
   , query :: String
-  , menu :: EditMenu Aff (StampedLabel c ()) (StampedLabel c ())
+  , menu :: EditMenu Aff (StampedLabel c ())
   , option_i :: Maybe Int
-  , menu_queried :: Array (String /\ Edit Aff (StampedLabel c ()) (StampedLabel c ()))
+  , menu_queried :: Array (String /\ Edit Aff (StampedLabel c ()))
   }
 
 data BufferAction c

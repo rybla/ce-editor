@@ -2,17 +2,21 @@ module Editor.Common where
 
 import Prelude
 
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Reader (ReaderT, ask)
 import Data.Array as Array
+import Data.Diagnostic as Diagnostic
 import Data.Expr (Edit, EditMenu, Expr, Handle, BasicEditorState)
 import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (fold)
 import Data.Maybe (Maybe, fromMaybe)
-import Data.Traversable (traverse)
+import Data.Traversable (class Traversable, traverse)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Halogen.HTML as HH
 import Ui.Event (KeyInfo)
 import Ui.Halogen (classes)
+import Utility (todo)
 
 --------------------------------------------------------------------------------
 
@@ -60,13 +64,13 @@ data Editor c = Editor
       forall m r
        . Monad m
       => BasicEditorState (Label c r)
-      -> m (EditMenu m (Label c r) (Label c r))
+      -> GetEditM m c r (EditMenu m (Label c r))
   , getShortcut ::
       forall m r
        . Monad m
       => KeyInfo
       -> BasicEditorState (Label c r)
-      -> m (Maybe (Edit m (Label c r) (Label c r)))
+      -> GetEditM m c r (Maybe (Edit m (Label c r)))
   -- validity
   , isValidHandle :: forall r. Expr (Label c r) -> Handle -> Boolean
   -- processing
@@ -84,6 +88,20 @@ mkExistsEditor a = ExistsEditor \k -> k a
 
 runExistsEditor :: forall r. ExistsEditorK r -> ExistsEditor -> r
 runExistsEditor k1 (ExistsEditor k2) = k2 k1
+
+--------------------------------------------------------------------------------
+
+type GetEditM m c r = ReaderT { stampLabel :: Label c () -> m (Label c r) } (Diagnostic.MT m)
+
+stampTraversable
+  :: forall m c r t
+   . Monad m
+  => Traversable t
+  => t (Label c ())
+  -> GetEditM m c r (t (Label c r))
+stampTraversable t = do
+  { stampLabel } <- ask
+  t # traverse (stampLabel >>> lift >>> lift)
 
 --------------------------------------------------------------------------------
 

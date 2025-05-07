@@ -6,3 +6,4 @@ log_edits = false
 
 log_undo_and_redo = false
 
+log_keyInfo = false

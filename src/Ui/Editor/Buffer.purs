@@ -4,6 +4,8 @@ import Prelude
 
 import Control.Monad.Reader (runReader)
 import Control.Monad.State (get, modify_, put)
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Writer (runWriterT)
 import Data.Array ((!!))
 import Data.Const (Const(..))
 import Data.Expr (EditInfo(..), Edit_(..), Expr, Path, Point)
@@ -19,6 +21,7 @@ import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), Label, StampedLabel)
 import Effect.Aff (Aff)
+import Effect.Class.Console (log) as Console
 import Effect.Exception (throw)
 import Halogen (liftEffect)
 import Halogen as H
@@ -32,7 +35,7 @@ import Ui.Editor.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, Buf
 import Ui.Event (fromEventToKeyInfo, matchKeyInfoPattern', matchMapKeyInfo) as Event
 import Ui.Event (keyMember, not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (fromMaybeM)
+import Utility (fromMaybeM, todo)
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -53,7 +56,7 @@ component = H.mkComponent { initialState, eval, render }
 --------------------------------------------------------------------------------
 
 initialState :: forall l. BufferInput l -> BufferState l
-initialState input = setQuery_pure input.query
+initialState input =
   { editor: input.editor
   , point: input.point
   , query: input.query
@@ -87,7 +90,7 @@ handleQuery (Const x) = absurd x
 handleAction :: forall c. BufferAction c -> BufferM c Unit
 
 handleAction Initialize_BufferAction = do
-  -- Console.log "[Buffer] initialize"
+  Console.log "[Buffer] initialize"
 
   -- resizing input
   H.getHTMLElementRef refLabel_input >>= \mb_elem_input -> do
@@ -96,7 +99,7 @@ handleAction Initialize_BufferAction = do
   doc <- liftEffect $ HTML.window >>= HTML.Window.document
   H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTMLDocument.toEventTarget) $ pure <<< KeyDown_BufferAction
 
-  void resizeQueryInput
+  setQuery =<< resizeQueryInput
 
 handleAction (Receive_BufferAction input) = do
   put $ initialState input
@@ -138,18 +141,17 @@ resizeQueryInput = do
 -- setQuery
 --------------------------------------------------------------------------------
 
-setQuery_pure :: forall l. String -> BufferState l -> BufferState l
-setQuery_pure query state = state
-  { query = query
-  , option_i = if null menu then none else pure 0
-  -- TODO: for now, just ignore the diagnostics
-  , menu_queried = menu
-  }
-  where
-  menu = state.menu query
-
 setQuery :: forall l. String -> BufferM l Unit
-setQuery query = modify_ $ setQuery_pure query
+setQuery query = do
+  state <- get
+  menu_queried /\ _diagnostics <- state.menu query
+    # runWriterT
+    # lift
+  modify_ _
+    { query = query
+    , menu_queried = menu_queried
+    , option_i = if null menu_queried then none else pure 0
+    }
 
 --------------------------------------------------------------------------------
 -- cycle menu

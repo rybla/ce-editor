@@ -24,18 +24,16 @@ import Data.String as String
 import Data.Traversable (traverse)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..), Label, StampedLabel)
-import Editor.Common (mapLabel)
+import Editor (Editor(..), StampedLabel)
 import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
 import Effect.Ref as Ref
 import Effect.Unsafe (unsafePerformEffect)
-import Halogen (liftAff, liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.Query.Event as HQE
-import Record as Record
 import Type.Prelude (Proxy(..))
 import Ui.Browser (navigator_clibpoard_writeText)
 import Ui.Editor.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, getBasicEditorState, getRoot)
@@ -94,12 +92,12 @@ handleAction Initialize_EditorAction = do
   H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< KeyDown_EditorAction
 
   state@{ editor: Editor editor } <- get
-  root <- editor.initialExpr # traverse editor.stampLabel # liftAff
+  root <- editor.initialExpr # traverse editor.stampLabel # lift
   put $ state { mb_root = pure root }
 
 handleAction (Receive_EditorAction input) = do
   let state@{ editor: Editor editor } = initialState input
-  root <- editor.initialExpr # traverse editor.stampLabel # liftAff
+  root <- editor.initialExpr # traverse editor.stampLabel # lift
   put $ state { mb_root = pure root }
 
 handleAction (MouseUp_EditorAction _event) = do
@@ -116,7 +114,8 @@ handleAction (KeyDown_EditorAction event) = do
     Nothing -> pure false
     Just handle -> isJust <<< join <$> H.request (Proxy @"Point") (handle # getFocusPoint) GetBufferInput_PointQuery
   let ki = Event.fromEventToKeyInfo event
-  -- Console.logShow { ki }
+  when Config.log_keyInfo do
+    Console.logShow { bufferIsOpen, keyInfo: ki }
 
   if bufferIsOpen then case unit of
     -- close buffer
@@ -128,7 +127,10 @@ handleAction (KeyDown_EditorAction event) = do
           H.tell (Proxy @"Point") (handle # getFocusPoint) $ SetBufferInput_PointQuery none
     _ -> pure unit
   else do
-    mb_edit_shortcut <- editor.getShortcut ki purestate # liftAff
+    mb_edit_shortcut /\ _diagnostics <- editor.getShortcut ki purestate
+      # flip runReaderT { stampLabel: editor.stampLabel }
+      # runWriterT
+      # lift
     case unit of
       -- shortcut
       _ | Just edit <- mb_edit_shortcut -> do
@@ -242,7 +244,11 @@ handleAction (KeyDown_EditorAction event) = do
           Nothing -> pure unit
           Just handle -> do
             let point = handle # getFocusPoint
-            -- H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu: editor.getEditMenu purestate, query: "" }
+            menu /\ _diagnostics' <- editor.getEditMenu purestate
+              # flip runReaderT { stampLabel: editor.stampLabel }
+              # runWriterT
+              # lift
+            H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu, query: "" }
             pure unit
       _ | ki # Event.matchKeyInfoPattern' [ keyRegex isNonSpace_regex, not_cmd, not_alt ] -> do
         liftEffect $ event # Event.preventDefault
@@ -250,7 +256,11 @@ handleAction (KeyDown_EditorAction event) = do
           Nothing -> pure unit
           Just handle -> do
             let point = handle # getFocusPoint
-            -- H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu: editor.getEditMenu purestate, query: (unwrap ki).key }
+            menu /\ _diagnostics' <- editor.getEditMenu purestate
+              # flip runReaderT { stampLabel: editor.stampLabel }
+              # runWriterT
+              # lift
+            H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu, query: (unwrap ki).key }
             pure unit
       -- unrecognized keyboard event
       _ -> pure unit
@@ -345,16 +355,16 @@ loadSnapshot s = do
 -- submitEdit
 --------------------------------------------------------------------------------
 
-submitEditAt :: forall c. Show c => EditAt Aff (StampedLabel c ()) (StampedLabel c ()) -> EditorM c Unit
+submitEditAt :: forall c. Show c => EditAt Aff (StampedLabel c ()) -> EditorM c Unit
 submitEditAt editAt = do
   state <- getBasicEditorState
-  case editAt state of
+  mb_edit /\ _diagnostics <- editAt state # runWriterT # lift
+  case mb_edit of
     Nothing -> pure unit
     Just edit -> submitEdit edit
 
-submitEdit :: forall c. Show c => Edit Aff (StampedLabel c ()) (StampedLabel c ()) -> EditorM c Unit
+submitEdit :: forall c. Show c => Edit Aff (StampedLabel c ()) -> EditorM c Unit
 submitEdit edit = do
-  { editor: Editor editor } <- get
   purestate_input <- getBasicEditorState
 
   mb_output /\ _diagnostics <-
@@ -377,7 +387,6 @@ submitEdit edit = do
           , "{{failed}}"
           , Array.replicate 10 "====" # fold
           ]
-      -- TODO: report diagnostics
       pure unit
     Just purestate_output -> do
       when Config.log_edits do

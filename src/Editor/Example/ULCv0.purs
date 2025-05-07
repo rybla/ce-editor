@@ -69,7 +69,7 @@ editor = Editor
   --       [ Tuple "Var" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Var (C query) ])) state
   --       , Tuple "Var" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Var (C query) ])) state
   --       ]
-  , getEditMenu: todo ""
+  , getEditMenu: const $ pure mempty
   , getShortcut: \ki state -> case unit of
       -- _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] ->
       --   Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak ])) state
