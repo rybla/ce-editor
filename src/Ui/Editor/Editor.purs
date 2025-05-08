@@ -6,7 +6,6 @@ import Control.Monad.Maybe.Trans (runMaybeT)
 import Control.Monad.Reader (runReaderT)
 import Control.Monad.State (get, modify, put)
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Writer (runWriterT)
 import Data.Array as Array
 import Data.Expr (Edit, EditAt, Expr, Fragment(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), EditCtx, applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
@@ -28,7 +27,6 @@ import Editor (Editor(..), Label, StampedLabel, getId, toEditCtx)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff)
 import Effect.Class (liftEffect)
-import Effect.Class.Console as Console
 import Effect.Ref as Ref
 import Effect.Unsafe (unsafePerformEffect)
 import Halogen as H
@@ -37,6 +35,7 @@ import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
 import Ui.Browser (navigator_clibpoard_writeText)
+import Ui.DiagnosticsPanel as DiagnosticsPanel
 import Ui.Editor.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, getBasicEditorState, getRoot)
 import Ui.Editor.Config as Config
 import Ui.Editor.Console.Messages as Console.Messages
@@ -130,10 +129,9 @@ handleAction (KeyDown_EditorAction event) = do
           H.tell (Proxy @"Point") (handle # getFocusPoint) $ SetBufferInput_PointQuery none
     _ -> pure unit
   else do
-    mb_edit_shortcut /\ _diagnostics <- editor.getShortcut ki purestate
+    mb_edit_shortcut <- editor.getShortcut ki purestate
       # flip runReaderT (state.editor # toEditCtx)
       # runMaybeT
-      # runWriterT
       # lift
     case unit of
       -- shortcut
@@ -248,10 +246,9 @@ handleAction (KeyDown_EditorAction event) = do
           Nothing -> pure unit
           Just handle -> do
             let point = handle # getFocusPoint
-            mb_menu /\ _diagnostics' <- editor.getEditMenu purestate
+            mb_menu <- editor.getEditMenu purestate
               # flip runReaderT (state.editor # toEditCtx)
               # runMaybeT
-              # runWriterT
               # lift
             case mb_menu of
               Nothing -> pure unit
@@ -262,10 +259,9 @@ handleAction (KeyDown_EditorAction event) = do
           Nothing -> pure unit
           Just handle -> do
             let point = handle # getFocusPoint
-            mb_menu /\ _diagnostics' <- editor.getEditMenu purestate
+            mb_menu <- editor.getEditMenu purestate
               # flip runReaderT (state.editor # toEditCtx)
               # runMaybeT
-              # runWriterT
               # lift
             case mb_menu of
               Nothing -> pure unit
@@ -372,10 +368,9 @@ submitEditAt :: forall c. Show c => EditAt Aff (Label c ()) (StampedLabel c ()) 
 submitEditAt editAt = do
   state <- getBasicEditorState
   editCtx <- getEditCtx
-  mb_edit /\ _diagnostics <- editAt state
+  mb_edit <- editAt state
     # flip runReaderT editCtx
     # runMaybeT
-    # runWriterT
     # lift
   case mb_edit of
     Nothing -> pure unit
@@ -386,11 +381,10 @@ submitEdit edit = do
   purestate_input <- getBasicEditorState
 
   editCtx <- getEditCtx
-  mb_output /\ _diagnostics <-
+  mb_output <-
     applyEdit edit purestate_input
       # flip runReaderT editCtx
       # runMaybeT
-      # runWriterT
       # lift
   case mb_output of
     Nothing -> do
@@ -551,6 +545,8 @@ render state =
                     # runRenderM
                 )
             ]
+        , HH.div [ classes [ "diagnostics" ] ]
+            [ HH.slot (Proxy @"DiagnosticsPanel") unit DiagnosticsPanel.component {} absurd ]
         ]
     ]
 

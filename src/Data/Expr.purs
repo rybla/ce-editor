@@ -731,7 +731,7 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
 -- Edit
 --------------------------------------------------------------------------------
 
-type EditM m l1 l2 = ReaderT (EditCtx m l1 l2) (MaybeT (Diagnostic.MT m))
+type EditM m l1 l2 = ReaderT (EditCtx m l1 l2) (MaybeT m)
 
 type EditCtx m l1 l2 =
   { stampLabel :: l1 -> m l2
@@ -741,7 +741,7 @@ type EditCtx m l1 l2 =
 stampTraversable :: forall m l1 l2 t. Monad m => Traversable t => t l1 -> EditM m l1 l2 (t l2)
 stampTraversable t = do
   { stampLabel } <- ask
-  t # traverse (stampLabel >>> lift >>> lift >>> lift)
+  t # traverse (stampLabel >>> lift >>> lift)
 
 unstampTraversable :: forall m l1 l2 t. Monad m => Traversable t => t l2 -> EditM m l1 l2 (t l1)
 unstampTraversable t = do

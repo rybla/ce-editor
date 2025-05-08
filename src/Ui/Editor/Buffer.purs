@@ -6,7 +6,6 @@ import Control.Monad.Maybe.Trans (runMaybeT)
 import Control.Monad.Reader (runReader, runReaderT)
 import Control.Monad.State (get, modify_, put)
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Writer (runWriterT)
 import Data.Array ((!!))
 import Data.Const (Const(..))
 import Data.Expr (EditInfo(..), Edit_(..), Point(..))
@@ -22,7 +21,6 @@ import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), StampedLabel, getId, toEditCtx)
 import Effect.Aff (Aff)
-import Effect.Class.Console (log) as Console
 import Effect.Exception (throw)
 import Halogen (liftEffect)
 import Halogen as H
@@ -147,10 +145,9 @@ resizeQueryInput = do
 setQuery :: forall l. String -> BufferM l Unit
 setQuery query = do
   state <- get
-  mb_menu_queried /\ _diagnostics <- state.menu query
+  mb_menu_queried <- state.menu query
     # flip runReaderT (state.editor # toEditCtx)
     # runMaybeT
-    # runWriterT
     # lift
   case mb_menu_queried of
     Nothing -> pure unit

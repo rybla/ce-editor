@@ -112,6 +112,7 @@ data EditorAction c
 
 type EditorSlots c =
   ( "Point" :: H.Slot (PointQuery c) (PointOutput c) Point
+  , "DiagnosticsPanel" :: H.Slot DiagnosticsPanelQuery DiagnosticsPanelOutput Unit
   )
 
 type EditorM c = H.HalogenM (EditorState c) (EditorAction c) (EditorSlots c) EditorOutput Aff
@@ -219,6 +220,30 @@ type BufferSlots = ()
 type BufferM c = H.HalogenM (BufferState c) (BufferAction c) BufferSlots (BufferOutput c) Aff
 
 type BufferHTML c = H.ComponentHTML (BufferAction c) BufferSlots Aff
+
+--------------------------------------------------------------------------------
+-- Console
+--------------------------------------------------------------------------------
+
+type DiagnosticsPanelQuery :: Type -> Type
+type DiagnosticsPanelQuery = Const Void
+
+type DiagnosticsPanelInput = {}
+
+type DiagnosticsPanelOutput = Void
+
+type DiagnosticsPanelState = {}
+
+data DiagnosticsPanelAction = Initialize_DiagnosticsPanelAction
+
+type DiagnosticsPanelSlots :: Row Type
+type DiagnosticsPanelSlots = ()
+
+type DiagnosticsPanelM = H.HalogenM DiagnosticsPanelState DiagnosticsPanelAction DiagnosticsPanelSlots DiagnosticsPanelOutput Aff
+
+type DiagnosticsPanelHTML = H.ComponentHTML DiagnosticsPanelAction DiagnosticsPanelSlots Aff
+
+-- data Diagnostic = Diagnostic DiagnosticHTML
 
 --------------------------------------------------------------------------------
 -- Console

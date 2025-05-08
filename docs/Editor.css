@@ -23,257 +23,269 @@
 .Editor {
   flex: 1 1 auto;
 
-  overflow-y: auto;
-  /* width: calc(100% - 4em); */
-  padding: 2em;
+  display: flex;
+  flex-direction: row;
 
   font-family: monospace;
 
-  &>.root {}
+  &>.root {
+    padding: 1em;
 
-  .Expr {
+    flex: 1 1 auto;
+    overflow-y: auto;
+  }
+
+  &>.diagnostics {
+    padding: 1em;
+    border-left: 0.1em solid black;
+
+    flex: 0 0 33%;
+    overflow-y: auto;
+  }
+}
+
+.Expr {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+
+  user-select: none;
+
+  &>* {
+    height: 1.5em;
+  }
+
+  &>.label,
+  &>.Punctuation {
     display: flex;
-    flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
-    flex-wrap: wrap;
 
-    user-select: none;
+    white-space: nowrap;
+    font-size: 1em;
+  }
+}
 
-    &>* {
-      height: 1.5em;
-    }
+.Hole {
+  padding: 0 0.5em;
+  background-color: black;
+  color: white;
+  border-radius: var(--Handle--width);
+  width: 0.5em;
+  overflow: hidden;
+  /* white-space: pre; */
+  animation: rainbow-glow 20s infinite linear;
+}
 
-    &>.label,
-    &>.Punctuation {
-      display: flex;
-      align-items: center;
+.Point {
+  min-width: var(--Handle--width);
 
-      white-space: nowrap;
-      font-size: 1em;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: visible;
+
+  &>.Left,
+  &>.Middle,
+  &>.Right {
+    height: 100%;
+    min-width: calc(var(--Handle--width) / 3);
+  }
+
+  &.Point_Handle_PointStatus {
+    &>.Middle {
+      border-radius: var(--Handle--width);
+      background: var(--Handle--background-color);
+      height: var(--Handle_Focus--height);
+      background: var(--Handle_Focus--background)
     }
   }
 
-  .Hole {
-    padding: 0 0.5em;
-    background-color: black;
-    color: white;
-    border-radius: var(--Handle--width);
-    width: 0.5em;
-    overflow: hidden;
-    /* white-space: pre; */
-    animation: rainbow-glow 20s infinite linear;
+  &.SpanH_Handle_Left_PointStatus {
+    >.Left {
+      background: var(--Handle--background-color);
+      border-radius: var(--Handle_Left--border-radius);
+    }
+
+    &.LeftFocus_PointStatus>.Left {
+      height: var(--Handle_Focus--height);
+      background: var(--Handle_Focus--background)
+    }
+
+    &>.Middle,
+    &>.Right,
+    &~* {
+      background: var(--Handle_inside--background);
+    }
   }
 
-  .Point {
-    min-width: var(--Handle--width);
-
-    display: inline-flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    overflow: visible;
+  &.SpanH_Handle_Right_PointStatus {
 
     &>.Left,
-    &>.Middle,
+    &>.Middle {
+      background: var(--Handle_inside--background);
+    }
+
     &>.Right {
-      height: 100%;
-      min-width: calc(var(--Handle--width) / 3);
+      background: var(--Handle--background-color);
+      border-radius: var(--Handle_Right--border-radius);
     }
 
-    &.Point_Handle_PointStatus {
-      &>.Middle {
-        border-radius: var(--Handle--width);
-        background: var(--Handle--background-color);
-        height: var(--Handle_Focus--height);
-        background: var(--Handle_Focus--background)
-      }
+    &.RightFocus_PointStatus>.Right {
+      height: var(--Handle_Focus--height);
+      background: var(--Handle_Focus--background);
     }
 
-    &.SpanH_Handle_Left_PointStatus {
-      >.Left {
-        background: var(--Handle--background-color);
-        border-radius: var(--Handle_Left--border-radius);
-      }
+    background: var(--Editor--background);
 
-      &.LeftFocus_PointStatus>.Left {
-        height: var(--Handle_Focus--height);
-        background: var(--Handle_Focus--background)
-      }
+    &~* {
+      background: var(--Editor--background);
+    }
+  }
 
-      &>.Middle,
-      &>.Right,
-      &~* {
-        background: var(--Handle_inside--background);
-      }
+  &.ZipperH_Handle_OuterLeft_PointStatus {
+    >.Left {
+      background: var(--Handle--background-color);
+      border-radius: var(--Handle_Left--border-radius);
     }
 
-    &.SpanH_Handle_Right_PointStatus {
+    &.LeftFocus_PointStatus>.Left {
+      height: var(--Handle_Focus--height);
+      background: var(--Handle_Focus--background)
+    }
 
-      &>.Left,
-      &>.Middle {
-        background: var(--Handle_inside--background);
-      }
+    &>.Middle,
+    &>.Right,
+    &~* {
+      background: var(--Handle_inside--background);
+    }
+  }
 
-      &>.Right {
-        background: var(--Handle--background-color);
-        border-radius: var(--Handle_Right--border-radius);
-      }
+  &.ZipperH_Handle_InnerLeft_PointStatus {
+    &>.Left {
+      background: var(--Handle--background-color);
+    }
 
-      &.RightFocus_PointStatus>.Right {
-        height: var(--Handle_Focus--height);
-        background: var(--Handle_Focus--background);
-      }
+    &.LeftFocus_PointStatus>.Left {
+      height: var(--Handle_Focus--height);
+      background: var(--Handle_Focus--background)
+    }
+
+    &~* {
+      background: var(--Editor--background);
+    }
+
+    background: var(--Editor--background)
+  }
+
+  &.ZipperH_Handle_InnerRight_PointStatus {
+    >.Right {
+      background: var(--Handle--background-color);
+    }
+
+    &.RightFocus_PointStatus>.Right {
+      height: var(--Handle_Focus--height);
+      background: var(--Handle_Focus--background)
+    }
+
+    &~* {
+      background: var(--Handle_inside--background);
+    }
+  }
+
+  &.ZipperH_Handle_OuterRight_PointStatus {
+
+    &>.Left,
+    &>.Middle {
+      background: var(--Handle_inside--background);
+    }
+
+    &>.Right {
+      background: var(--Handle--background-color);
+      border-radius: var(--Handle_Right--border-radius);
+    }
+
+    &.RightFocus_PointStatus>.Right {
+      height: var(--Handle_Focus--height);
+      background: var(--Handle_Focus--background)
+    }
+
+    background: transparent;
+
+    &~* {
+      background: var(--Editor--background);
+    }
+  }
+
+  .Buffer {
+    margin: 0.5em;
+    margin-top: -0.75em;
+
+    padding: 0.5em;
+    width: fit-content;
+
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+
+    border-radius: var(--Handle--width);
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 0 1em 0.1em rgba(0, 0, 0, 0.5);
+    transition: box-shadow 0.3s ease;
+    animation: Buffer-appear 0.2s forwards linear;
+
+    &>.query {
+      outline: none;
+      border: none;
+      border-radius: var(--Handle--width) var(--Handle--width) var(--Handle--width) 0;
+      padding: 0.5em;
+
+      width: fit-content;
+      min-width: 1ch;
+      transition: width 0.3s ease-in-out;
+
+      animation: rainbow-glow 20s infinite linear;
+
+      /* background: #1a1a1a;
+      color: white; */
 
       background: var(--Editor--background);
 
-      &~* {
-        background: var(--Editor--background);
+      font-size: 1em;
+      font-family: inherit;
+
+      &:focus {
+        box-shadow: 0 0 15px hsla(210deg 100% 60% / 0.5), 0 4px 10px rgba(0, 0, 0, 0.2);
       }
     }
 
-    &.ZipperH_Handle_OuterLeft_PointStatus {
-      >.Left {
-        background: var(--Handle--background-color);
-        border-radius: var(--Handle_Left--border-radius);
-      }
-
-      &.LeftFocus_PointStatus>.Left {
-        height: var(--Handle_Focus--height);
-        background: var(--Handle_Focus--background)
-      }
-
-      &>.Middle,
-      &>.Right,
-      &~* {
-        background: var(--Handle_inside--background);
-      }
-    }
-
-    &.ZipperH_Handle_InnerLeft_PointStatus {
-      &>.Left {
-        background: var(--Handle--background-color);
-      }
-
-      &.LeftFocus_PointStatus>.Left {
-        height: var(--Handle_Focus--height);
-        background: var(--Handle_Focus--background)
-      }
-
-      &~* {
-        background: var(--Editor--background);
-      }
-
-      background: var(--Editor--background)
-    }
-
-    &.ZipperH_Handle_InnerRight_PointStatus {
-      >.Right {
-        background: var(--Handle--background-color);
-      }
-
-      &.RightFocus_PointStatus>.Right {
-        height: var(--Handle_Focus--height);
-        background: var(--Handle_Focus--background)
-      }
-
-      &~* {
-        background: var(--Handle_inside--background);
-      }
-    }
-
-    &.ZipperH_Handle_OuterRight_PointStatus {
-
-      &>.Left,
-      &>.Middle {
-        background: var(--Handle_inside--background);
-      }
-
-      &>.Right {
-        background: var(--Handle--background-color);
-        border-radius: var(--Handle_Right--border-radius);
-      }
-
-      &.RightFocus_PointStatus>.Right {
-        height: var(--Handle_Focus--height);
-        background: var(--Handle_Focus--background)
-      }
-
-      background: transparent;
-
-      &~* {
-        background: var(--Editor--background);
-      }
-    }
-
-    .Buffer {
-      margin: 0.5em;
-      margin-top: -0.75em;
-
-      padding: 0.5em;
-      width: fit-content;
+    &>.menu {
+      overflow: visible;
 
       display: flex;
       flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
       gap: 0.5em;
 
-      border-radius: var(--Handle--width);
-      background: rgba(0, 0, 0, 0.1);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 0 1em 0.1em rgba(0, 0, 0, 0.5);
-      transition: box-shadow 0.3s ease;
-      animation: Buffer-appear 0.2s forwards linear;
-
-      &>.query {
-        outline: none;
-        border: none;
-        border-radius: var(--Handle--width) var(--Handle--width) var(--Handle--width) 0;
+      &>.Edit {
         padding: 0.5em;
-
-        width: fit-content;
-        min-width: 1ch;
-        transition: width 0.3s ease-in-out;
-
-        animation: rainbow-glow 20s infinite linear;
-
-        /* background: #1a1a1a;
-        color: white; */
+        border-radius: 0 var(--Handle--width) var(--Handle--width) var(--Handle--width);
 
         background: var(--Editor--background);
+        box-shadow: 0 0 0 0 black inset;
 
-        font-size: 1em;
-        font-family: inherit;
+        white-space: nowrap;
 
-        &:focus {
-          box-shadow: 0 0 15px hsla(210deg 100% 60% / 0.5), 0 4px 10px rgba(0, 0, 0, 0.2);
+        &.selected {
+          box-shadow: 0 0 0 0.1em black inset;
         }
-      }
 
-      &>.menu {
-        overflow: visible;
-
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: flex-start;
-        gap: 0.5em;
-
-        &>.Edit {
-          padding: 0.5em;
-          border-radius: 0 var(--Handle--width) var(--Handle--width) var(--Handle--width);
-
-          background: var(--Editor--background);
-          box-shadow: 0 0 0 0 black inset;
-
-          white-space: nowrap;
-
-          &.selected {
-            box-shadow: 0 0 0 0.1em black inset;
-          }
-
-          /* animation: Edit-appear 0.2s linear forwards; */
-        }
+        /* animation: Edit-appear 0.2s linear forwards; */
       }
     }
   }
@@ -349,82 +361,5 @@
   100% {
     opacity: 1;
     transform: scaleY(1);
-  }
-}
-
-.Token {
-  /* animation: Token-appear 1s forwards linear; */
-}
-
-@keyframes Token-appear {
-  0% {
-    transform: scaleY(1);
-  }
-
-  50% {
-    transform: scaleY(1.5);
-  }
-
-  0% {
-    transform: scaleY(1);
-  }
-}
-
-.Token {
-
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  white-space: pre;
-  font-size: 1em;
-
-  &.foreign {
-    color: brown;
-    font-weight: bold;
-  }
-
-  &.punctuation {
-    color: gray;
-  }
-
-  &.keyword {
-    font-weight: bold;
-  }
-
-  &.break {
-    flex-basis: 100%;
-    height: 0;
-  }
-
-  &.indentation {
-    width: calc(var(--Handle--width) + 0.5em);
-    justify-content: flex-end;
-  }
-
-  &.ghost {
-    color: color-mix(in hsl, black, transparent 80%);
-  }
-
-  &.before-extra-Arg-kid,
-  &.after-extra-Arg-kid {
-    color: red;
-  }
-
-  &.before-empty-Arg-kids+.Point {
-    box-shadow: 0 0 0 0.1em red inset;
-  }
-
-  &.beforeHolePoint,
-  &.afterHolePoint {
-    width: var(--Handle--width);
-  }
-
-  &.beforeHolePoint+.Point {
-    box-shadow: 0 0 0 0.1em red inset;
-  }
-
-  &.beforeExtraKid,
-  &.afterExtraKid {
-    color: red;
   }
 }

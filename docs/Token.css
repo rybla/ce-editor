@@ -1,0 +1,73 @@
+.Token {
+  /* animation: Token-appear 1s forwards linear; */
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  white-space: pre;
+  font-size: 1em;
+
+  &.foreign {
+    color: brown;
+    font-weight: bold;
+  }
+
+  &.punctuation {
+    color: gray;
+  }
+
+  &.keyword {
+    font-weight: bold;
+  }
+
+  &.break {
+    flex-basis: 100%;
+    height: 0;
+  }
+
+  &.indentation {
+    width: calc(var(--Handle--width) + 0.5em);
+    justify-content: flex-end;
+  }
+
+  &.ghost {
+    color: color-mix(in hsl, black, transparent 80%);
+  }
+
+  &.before-extra-Arg-kid,
+  &.after-extra-Arg-kid {
+    color: red;
+  }
+
+  &.before-empty-Arg-kids+.Point {
+    box-shadow: 0 0 0 0.1em red inset;
+  }
+
+  &.beforeHolePoint,
+  &.afterHolePoint {
+    width: var(--Handle--width);
+  }
+
+  &.beforeHolePoint+.Point {
+    box-shadow: 0 0 0 0.1em red inset;
+  }
+
+  &.beforeExtraKid,
+  &.afterExtraKid {
+    color: red;
+  }
+}
+
+@keyframes Token-appear {
+  0% {
+    transform: scaleY(1);
+  }
+
+  50% {
+    transform: scaleY(1.5);
+  }
+
+  0% {
+    transform: scaleY(1);
+  }
+}
