@@ -1357,8 +1357,8 @@
                 return function(rb) {
                   var tail3 = eqRecord1($$Proxy.value)(ra)(rb);
                   var key2 = reflectSymbol2($$Proxy.value);
-                  var get9 = unsafeGet(key2);
-                  return eq32(get9(ra))(get9(rb)) && tail3;
+                  var get8 = unsafeGet(key2);
+                  return eq32(get8(ra))(get8(rb)) && tail3;
                 };
               };
             }
@@ -1718,19 +1718,6 @@
   };
   var showInt = {
     show: showIntImpl
-  };
-  var showBoolean = {
-    show: function(v) {
-      if (v) {
-        return "true";
-      }
-      ;
-      if (!v) {
-        return "false";
-      }
-      ;
-      throw new Error("Failed pattern match at Data.Show (line 29, column 1 - line 31, column 23): " + [v.constructor.name]);
-    }
   };
   var show = function(dict) {
     return dict.show;
@@ -5467,14 +5454,6 @@
   var warn = function(s) {
     return function() {
       console.warn(s);
-    };
-  };
-
-  // output/Effect.Console/index.js
-  var logShow = function(dictShow) {
-    var show9 = show(dictShow);
-    return function(a2) {
-      return log(show9(a2));
     };
   };
 
@@ -9457,11 +9436,11 @@
       };
     };
   };
-  var lens = function(get9) {
+  var lens = function(get8) {
     return function(set2) {
       return function(dictStrong) {
         return lens$prime(function(s) {
-          return new Tuple(get9(s), function(b2) {
+          return new Tuple(get8(s), function(b2) {
             return set2(s)(b2);
           });
         })(dictStrong);
@@ -9471,13 +9450,13 @@
 
   // output/Data.Lens.Record/index.js
   var prop3 = function(dictIsSymbol) {
-    var get9 = get2(dictIsSymbol)();
+    var get8 = get2(dictIsSymbol)();
     var set2 = set(dictIsSymbol)()();
     return function() {
       return function() {
         return function(l) {
           return function(dictStrong) {
-            return lens(get9(l))(flip(set2(l)))(dictStrong);
+            return lens(get8(l))(flip(set2(l)))(dictStrong);
           };
         };
       };
@@ -14196,6 +14175,14 @@
     return liftEffect8(toBasicEditorState($124));
   });
 
+  // output/Effect.Class.Console/index.js
+  var log3 = function(dictMonadEffect) {
+    var $67 = liftEffect(dictMonadEffect);
+    return function($68) {
+      return $67(log($68));
+    };
+  };
+
   // output/Halogen.HTML.Elements.Keyed/index.js
   var div3 = /* @__PURE__ */ keyed2("div");
 
@@ -14269,10 +14256,17 @@
   };
 
   // output/Ui.Editor.Console.Messages/foreign.js
+  var max_messages = 100;
   var messages = [];
-  var get4 = () => messages;
-  var push2 = (content3) => () => {
-    messages.push({ timestamp: Date.now(), content: content3 });
+  var timestamp = Date.now();
+  var get_messages = () => messages;
+  var get_timestamp = () => timestamp;
+  var push_message = (content3) => () => {
+    timestamp = Date.now();
+    const length12 = messages.push({ timestamp, content: content3 });
+    if (length12 > max_messages) {
+      messages.splice(0, length12 - max_messages);
+    }
   };
 
   // output/Ui.Editor.Console/index.js
@@ -14294,8 +14288,11 @@
   var bindFlipped9 = /* @__PURE__ */ bindFlipped(bindHalogenM);
   var pure21 = /* @__PURE__ */ pure(applicativeHalogenM);
   var bind11 = /* @__PURE__ */ bind(bindHalogenM);
-  var get5 = /* @__PURE__ */ get(monadStateHalogenM);
-  var liftEffect12 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff));
+  var get4 = /* @__PURE__ */ get(monadStateHalogenM);
+  var monadEffectHalogenM2 = /* @__PURE__ */ monadEffectHalogenM(monadEffectAff);
+  var liftEffect12 = /* @__PURE__ */ liftEffect(monadEffectHalogenM2);
+  var when4 = /* @__PURE__ */ when(applicativeHalogenM);
+  var log4 = /* @__PURE__ */ log3(monadEffectHalogenM2);
   var modify_3 = /* @__PURE__ */ modify_2(monadStateHalogenM);
   var timer = function(dictMonadAff) {
     var MonadEffect0 = dictMonadAff.MonadEffect0();
@@ -14326,10 +14323,11 @@
   };
   var initialState = function(_input) {
     return {
-      messages: none4
+      messages: none4,
+      timestamp: 0
     };
   };
-  var delay_update = 500;
+  var delay_update = 200;
   var handleAction = function(v) {
     if (v instanceof Initialize_ConsoleAction) {
       return discard23($$void8(bindFlipped9(subscribe2)(timer1(delay_update)(Tick_ConsoleAction.value))))(function() {
@@ -14338,25 +14336,30 @@
     }
     ;
     if (v instanceof Tick_ConsoleAction) {
-      return bind11(get5)(function(state3) {
-        return bind11(liftEffect12(get4))(function(messages2) {
-          return modify_3(function(v1) {
-            var $41 = {};
-            for (var $42 in v1) {
-              if ({}.hasOwnProperty.call(v1, $42)) {
-                $41[$42] = v1[$42];
-              }
-              ;
-            }
-            ;
-            $41.messages = messages2;
-            return $41;
+      return bind11(get4)(function(state3) {
+        return bind11(liftEffect12(get_timestamp))(function(timestamp2) {
+          return bind11(liftEffect12(get_messages))(function(messages2) {
+            return when4(state3.timestamp !== timestamp2)(discard23(log4("[Console] rerender"))(function() {
+              return modify_3(function(v1) {
+                var $44 = {};
+                for (var $45 in v1) {
+                  if ({}.hasOwnProperty.call(v1, $45)) {
+                    $44[$45] = v1[$45];
+                  }
+                  ;
+                }
+                ;
+                $44.messages = messages2;
+                $44.timestamp = timestamp2;
+                return $44;
+              });
+            }));
           });
         });
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor.Console (line 43, column 1 - line 43, column 47): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor.Console (line 45, column 1 - line 45, column 47): " + [v.constructor.name]);
   };
   var $$eval = /* @__PURE__ */ function() {
     return mkEval({
@@ -14538,32 +14541,15 @@
     };
   };
 
-  // output/Effect.Class.Console/index.js
-  var logShow2 = function(dictMonadEffect) {
-    var liftEffect14 = liftEffect(dictMonadEffect);
-    return function(dictShow) {
-      var $65 = logShow(dictShow);
-      return function($66) {
-        return liftEffect14($65($66));
-      };
-    };
-  };
-  var log3 = function(dictMonadEffect) {
-    var $67 = liftEffect(dictMonadEffect);
-    return function($68) {
-      return $67(log($68));
-    };
-  };
-
   // output/Halogen.Query.Event/index.js
   var traverse_7 = /* @__PURE__ */ traverse_(applicativeEffect)(foldableMaybe);
   var eventListener2 = function(eventType) {
     return function(target6) {
       return function(f) {
-        return makeEmitter(function(push3) {
+        return makeEmitter(function(push2) {
           return function __do2() {
             var listener = eventListener(function(ev) {
-              return traverse_7(push3)(f(ev));
+              return traverse_7(push2)(f(ev));
             })();
             addEventListener(eventType)(listener)(false)(target6)();
             return removeEventListener(eventType)(listener)(false)(target6);
@@ -14729,7 +14715,7 @@
 
   // output/Ui.Editor.Buffer/index.js
   var bind18 = /* @__PURE__ */ bind(bindHalogenM);
-  var get6 = /* @__PURE__ */ get(monadStateHalogenM);
+  var get5 = /* @__PURE__ */ get(monadStateHalogenM);
   var lift4 = /* @__PURE__ */ lift(monadTransHalogenM)(monadAff);
   var toEditCtx2 = /* @__PURE__ */ toEditCtx(monadAffAff);
   var pure25 = /* @__PURE__ */ pure(applicativeHalogenM);
@@ -14747,10 +14733,8 @@
   var discard7 = /* @__PURE__ */ discard(discardUnit)(bindHalogenM);
   var max6 = /* @__PURE__ */ max(ordInt);
   var none1 = /* @__PURE__ */ none(unfoldableArray);
-  var when4 = /* @__PURE__ */ when(applicativeHalogenM);
-  var monadEffectHalogenM2 = /* @__PURE__ */ monadEffectHalogenM(monadEffectAff);
-  var log4 = /* @__PURE__ */ log3(monadEffectHalogenM2);
-  var liftEffect10 = /* @__PURE__ */ liftEffect(monadEffectHalogenM2);
+  var when5 = /* @__PURE__ */ when(applicativeHalogenM);
+  var liftEffect10 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff));
   var bind19 = /* @__PURE__ */ bind(bindEffect);
   var bindFlipped10 = /* @__PURE__ */ bindFlipped(bindHalogenM);
   var put2 = /* @__PURE__ */ put(monadStateHalogenM);
@@ -14773,7 +14757,7 @@
   }();
   var submitBuffer_keys = /* @__PURE__ */ fromFoldable4(foldableArray)(ordString)(["Tab", "Enter", " "]);
   var setQuery = function(query3) {
-    return bind18(get6)(function(state3) {
+    return bind18(get5)(function(state3) {
       return bind18(lift4(runWriterT(runMaybeT(flip(runReaderT)(toEditCtx2(state3.editor))(state3.menu(query3))))))(function(v) {
         if (v.value0 instanceof Nothing) {
           return pure25(unit);
@@ -14781,29 +14765,29 @@
         ;
         if (v.value0 instanceof Just) {
           return modify_4(function(v1) {
-            var $75 = {};
-            for (var $76 in v1) {
-              if ({}.hasOwnProperty.call(v1, $76)) {
-                $75[$76] = v1[$76];
+            var $74 = {};
+            for (var $75 in v1) {
+              if ({}.hasOwnProperty.call(v1, $75)) {
+                $74[$75] = v1[$75];
               }
               ;
             }
             ;
-            $75.query = query3;
-            $75.menu_queried = v.value0.value0;
-            $75.option_i = function() {
-              var $74 = $$null5(v.value0.value0);
-              if ($74) {
+            $74.query = query3;
+            $74.menu_queried = v.value0.value0;
+            $74.option_i = function() {
+              var $73 = $$null5(v.value0.value0);
+              if ($73) {
                 return none5;
               }
               ;
               return pure111(0);
             }();
-            return $75;
+            return $74;
           });
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor.Buffer (line 154, column 3 - line 161, column 10): " + [v.value0.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor.Buffer (line 155, column 3 - line 162, column 10): " + [v.value0.constructor.name]);
       });
     });
   };
@@ -14839,8 +14823,8 @@
       return div2([classes2(fold7([["Buffer"]]))])([input2([classes2(["query"]), ref2(refLabel_input), value13(state3.query), onInput(QueryInput_BufferAction.create), spellcheck2(false)]), div3([classes2(["menu"])])(mapWithIndex5(function(i2) {
         return function(v) {
           return new Tuple(v.value0, div2([classes2(fold7([["Edit"], function() {
-            var $88 = notEq3(new Just(i2))(state3.option_i);
-            if ($88) {
+            var $87 = notEq3(new Just(i2))(state3.option_i);
+            if ($87) {
               return [];
             }
             ;
@@ -14860,7 +14844,7 @@
               return [div2([])([text5("copy")])];
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor.Buffer (line 194, column 15 - line 208, column 20): " + [v.value1.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor.Buffer (line 195, column 15 - line 209, column 20): " + [v.value1.constructor.name]);
           }()));
         };
       })(state3.menu_queried))]);
@@ -14905,7 +14889,7 @@
   };
   var handleAction2 = function(v) {
     if (v instanceof Initialize_BufferAction) {
-      return discard7(when4(log_initializations)(log4("[Buffer] initialize")))(function() {
+      return discard7(when5(log_initializations)(liftEffect10(push_message(text5("[Buffer.initialize]")))))(function() {
         return discard7(bind18(getHTMLElementRef(refLabel_input))(function(mb_elem_input) {
           return bind18(fromMaybeM2(liftEffect10($$throw("[Buffer] input element doesn't exist")))(mb_elem_input))(function(elem_input) {
             return liftEffect10(focus(elem_input));
@@ -14913,8 +14897,8 @@
         }))(function() {
           return bind18(liftEffect10(bind19(windowImpl)(document2)))(function(doc) {
             return discard7(subscribe$prime(function(_subId) {
-              return eventListener2(keydown)(toEventTarget(doc))(function($129) {
-                return pure111(KeyDown_BufferAction.create($129));
+              return eventListener2(keydown)(toEventTarget(doc))(function($128) {
+                return pure111(KeyDown_BufferAction.create($128));
               });
             }))(function() {
               return bindFlipped10(setQuery)(resizeQueryInput1);
@@ -14932,7 +14916,7 @@
     ;
     if (v instanceof KeyDown_BufferAction) {
       var ki = fromEventToKeyInfo(v.value0);
-      return bind18(get6)(function(state3) {
+      return bind18(get5)(function(state3) {
         if (matchKeyInfoPattern$prime([keyMember(submitBuffer_keys), not_cmd, not_alt])(ki)) {
           return discard7(liftEffect10(preventDefault(v.value0)))(function() {
             if (state3.option_i instanceof Nothing) {
@@ -14945,52 +14929,52 @@
               });
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor.Buffer (line 116, column 7 - line 120, column 48): " + [state3.option_i.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor.Buffer (line 117, column 7 - line 121, column 48): " + [state3.option_i.constructor.name]);
           });
         }
         ;
         var v1 = function(v2) {
           return pure25(unit);
         };
-        var $112 = matchMapKeyInfo2(function($130) {
+        var $111 = matchMapKeyInfo2(function($129) {
           return fromKeyToCycleDir(function(v2) {
             return v2.key;
-          }(unwrap6($130)));
+          }(unwrap6($129)));
         })({
           cmd: pure111(false),
           shift: pure111(false),
           alt: pure111(false)
         })(ki);
-        if ($112 instanceof Just) {
+        if ($111 instanceof Just) {
           return discard7(liftEffect10(preventDefault(v.value0)))(function() {
-            var v2 = new Tuple(state3.option_i, $112.value0);
+            var v2 = new Tuple(state3.option_i, $111.value0);
             if (v2.value0 instanceof Just && v2.value1 instanceof Prev) {
               return modify_4(function(v3) {
-                var $114 = {};
-                for (var $115 in v3) {
-                  if ({}.hasOwnProperty.call(v3, $115)) {
-                    $114[$115] = v3[$115];
+                var $113 = {};
+                for (var $114 in v3) {
+                  if ({}.hasOwnProperty.call(v3, $114)) {
+                    $113[$114] = v3[$114];
                   }
                   ;
                 }
                 ;
-                $114.option_i = pure111(mod2(v2.value0.value0 - 1 | 0)(length11(state3.menu_queried)));
-                return $114;
+                $113.option_i = pure111(mod2(v2.value0.value0 - 1 | 0)(length11(state3.menu_queried)));
+                return $113;
               });
             }
             ;
             if (v2.value0 instanceof Just && v2.value1 instanceof Next) {
               return modify_4(function(v3) {
-                var $120 = {};
-                for (var $121 in v3) {
-                  if ({}.hasOwnProperty.call(v3, $121)) {
-                    $120[$121] = v3[$121];
+                var $119 = {};
+                for (var $120 in v3) {
+                  if ({}.hasOwnProperty.call(v3, $120)) {
+                    $119[$120] = v3[$120];
                   }
                   ;
                 }
                 ;
-                $120.option_i = pure111(mod2(v2.value0.value0 + 1 | 0)(length11(state3.menu_queried)));
-                return $120;
+                $119.option_i = pure111(mod2(v2.value0.value0 + 1 | 0)(length11(state3.menu_queried)));
+                return $119;
               });
             }
             ;
@@ -15006,7 +14990,7 @@
       return bindFlipped10(setQuery)(resizeQueryInput1);
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor.Buffer (line 91, column 1 - line 91, column 59): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor.Buffer (line 92, column 1 - line 92, column 59): " + [v.constructor.name]);
   };
   var $$eval2 = /* @__PURE__ */ function() {
     return mkEval({
@@ -15048,15 +15032,13 @@
   })()()(strongFn);
   var bind20 = /* @__PURE__ */ bind(bindHalogenM);
   var gets2 = /* @__PURE__ */ gets(monadStateHalogenM);
-  var when5 = /* @__PURE__ */ when(applicativeHalogenM);
+  var when6 = /* @__PURE__ */ when(applicativeHalogenM);
   var intersection3 = /* @__PURE__ */ intersection2(ordPointStatus);
   var pure26 = /* @__PURE__ */ pure(applicativeHalogenM);
-  var monadEffectHalogenM3 = /* @__PURE__ */ monadEffectHalogenM(monadEffectAff);
-  var liftEffect11 = /* @__PURE__ */ liftEffect(monadEffectHalogenM3);
+  var liftEffect11 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff));
   var pure112 = /* @__PURE__ */ pure(applicativeMaybe);
   var modify_5 = /* @__PURE__ */ modify_2(monadStateHalogenM);
-  var get7 = /* @__PURE__ */ get(monadStateHalogenM);
-  var log5 = /* @__PURE__ */ log3(monadEffectHalogenM3);
+  var get6 = /* @__PURE__ */ get(monadStateHalogenM);
   var put3 = /* @__PURE__ */ put(monadStateHalogenM);
   var ss_Right = /* @__PURE__ */ function() {
     return fromFoldable6([RightFocus_PointStatus.value]);
@@ -15096,7 +15078,7 @@
           return [div2([classes2(["Left"])])([]), div2([classes2(["Middle"])])([]), div2([classes2(["Right"])])([])];
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor.Point (line 100, column 5 - line 108, column 96): " + [state3.mb_bufferInput.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor.Point (line 98, column 5 - line 106, column 96): " + [state3.mb_bufferInput.constructor.name]);
       }());
     };
   };
@@ -15114,7 +15096,7 @@
         return discard8(bind20(gets2(function(v1) {
           return v1.statuses;
         }))(function(statuses) {
-          return when5(!isEmpty2(intersection3(ss_Focus)(statuses)))(bind20(getHTMLElementRef(refLabel_point))(function(mb_elem_this) {
+          return when6(!isEmpty2(intersection3(ss_Focus)(statuses)))(bind20(getHTMLElementRef(refLabel_point))(function(mb_elem_this) {
             if (mb_elem_this instanceof Nothing) {
               return pure26(unit);
             }
@@ -15123,7 +15105,7 @@
               return liftEffect11(scrollIntoView(toElement(mb_elem_this.value0)));
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor.Point (line 56, column 7 - line 58, column 98): " + [mb_elem_this.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor.Point (line 55, column 7 - line 57, column 98): " + [mb_elem_this.constructor.name]);
           }));
         }))(function() {
           return pure26(pure112(v.value1));
@@ -15133,34 +15115,32 @@
     ;
     if (v instanceof SetBufferInput_PointQuery) {
       return discard8(modify_5(function(v1) {
-        var $53 = {};
-        for (var $54 in v1) {
-          if ({}.hasOwnProperty.call(v1, $54)) {
-            $53[$54] = v1[$54];
+        var $52 = {};
+        for (var $53 in v1) {
+          if ({}.hasOwnProperty.call(v1, $53)) {
+            $52[$53] = v1[$53];
           }
           ;
         }
         ;
-        $53.mb_bufferInput = v.value0;
-        return $53;
+        $52.mb_bufferInput = v.value0;
+        return $52;
       }))(function() {
         return pure26(pure112(v.value1));
       });
     }
     ;
     if (v instanceof GetBufferInput_PointQuery) {
-      return bind20(get7)(function(state3) {
+      return bind20(get6)(function(state3) {
         return pure26(pure112(v.value0(state3.mb_bufferInput)));
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor.Point (line 48, column 1 - line 48, column 64): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor.Point (line 49, column 1 - line 49, column 64): " + [v.constructor.name]);
   };
   var handleAction3 = function(v) {
     if (v instanceof Initialize_PointAction) {
-      return discard8(when5(log_initializations)(log5("[Point] initialize")))(function() {
-        return pure26(unit);
-      });
+      return when6(log_initializations)(liftEffect11(push_message(text5("[Point.initialize]"))));
     }
     ;
     if (v instanceof Receive_PointAction) {
@@ -15168,13 +15148,13 @@
     }
     ;
     if (v instanceof MouseDown_PointAction) {
-      return bind20(get7)(function(state3) {
+      return bind20(get6)(function(state3) {
         return raise(new MouseDown_PointOutput(v.value0, state3.point));
       });
     }
     ;
     if (v instanceof MouseEnter_PointAction) {
-      return bind20(get7)(function(state3) {
+      return bind20(get6)(function(state3) {
         return raise(new MouseEnter_PointOutput(v.value0, state3.point));
       });
     }
@@ -15183,7 +15163,7 @@
       return raise(new BufferOutput_PointOutput(v.value0));
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor.Point (line 72, column 1 - line 72, column 57): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor.Point (line 71, column 1 - line 71, column 57): " + [v.constructor.name]);
   };
   var $$eval3 = /* @__PURE__ */ function() {
     return mkEval({
@@ -15191,8 +15171,8 @@
       initialize: pure112(Initialize_PointAction.value),
       handleQuery: handleQuery2,
       handleAction: handleAction3,
-      receive: function($64) {
-        return pure112(Receive_PointAction.create($64));
+      receive: function($63) {
+        return pure112(Receive_PointAction.create($63));
       }
     });
   }();
@@ -15227,50 +15207,30 @@
   var request2 = /* @__PURE__ */ request()(PointIsSymbol)(ordPoint);
   var union4 = /* @__PURE__ */ union3(ordPointStatus);
   var unless2 = /* @__PURE__ */ unless(applicativeHalogenM);
-  var monadEffectHalogenM4 = /* @__PURE__ */ monadEffectHalogenM(monadEffectAff);
-  var log6 = /* @__PURE__ */ log3(monadEffectHalogenM4);
+  var liftEffect13 = /* @__PURE__ */ liftEffect(/* @__PURE__ */ monadEffectHalogenM(monadEffectAff));
   var show1 = /* @__PURE__ */ show(showPoint);
   var difference4 = /* @__PURE__ */ difference3(ordPointStatus);
   var pure27 = /* @__PURE__ */ pure(applicativeHalogenM);
   var discard9 = /* @__PURE__ */ discard(discardUnit)(bindHalogenM);
-  var get8 = /* @__PURE__ */ get(monadStateHalogenM);
-  var liftEffect13 = /* @__PURE__ */ liftEffect(monadEffectHalogenM4);
+  var get7 = /* @__PURE__ */ get(monadStateHalogenM);
   var none7 = /* @__PURE__ */ none(unfoldableMaybe);
   var modify5 = /* @__PURE__ */ modify2(monadStateHalogenM);
   var pure113 = /* @__PURE__ */ pure(applicativeMaybe);
   var none12 = /* @__PURE__ */ none(unfoldableList);
-  var when6 = /* @__PURE__ */ when(applicativeHalogenM);
-  var showRecord3 = /* @__PURE__ */ showRecord()();
-  var showRecordFieldsCons5 = /* @__PURE__ */ showRecordFieldsCons({
-    reflectSymbol: function() {
-      return "mb_handle";
-    }
-  });
-  var showRecordFieldsConsNil5 = /* @__PURE__ */ showRecordFieldsConsNil({
-    reflectSymbol: function() {
-      return "root";
-    }
-  });
-  var showMaybe2 = /* @__PURE__ */ showMaybe(showHandle);
+  var when7 = /* @__PURE__ */ when(applicativeHalogenM);
   var lift5 = /* @__PURE__ */ lift(monadTransHalogenM)(monadAff);
   var applyEdit2 = /* @__PURE__ */ applyEdit(monadAff);
   var fold22 = /* @__PURE__ */ fold9(monoidString);
-  var show22 = /* @__PURE__ */ show(showMaybe2);
+  var show22 = /* @__PURE__ */ show(/* @__PURE__ */ showMaybe(showHandle));
   var bind110 = /* @__PURE__ */ bind(bindEffect);
   var traverse9 = /* @__PURE__ */ traverse(traversableExpr)(applicativeAff);
   var put4 = /* @__PURE__ */ put(monadStateHalogenM);
   var join3 = /* @__PURE__ */ join(bindMaybe);
-  var showRecord1 = /* @__PURE__ */ showRecord3(/* @__PURE__ */ showRecordFieldsCons({
-    reflectSymbol: function() {
-      return "bufferIsOpen";
-    }
-  })(/* @__PURE__ */ showRecordFieldsConsNil({
+  var show32 = /* @__PURE__ */ show(/* @__PURE__ */ showRecord()()(/* @__PURE__ */ showRecordFieldsConsNil({
     reflectSymbol: function() {
       return "keyInfo";
     }
-  })(showKeyInfo))(showBoolean));
-  var logShow3 = /* @__PURE__ */ logShow2(monadEffectHalogenM4)(showRecord1);
-  var show32 = /* @__PURE__ */ show(showRecord1);
+  })(showKeyInfo)));
   var tell3 = /* @__PURE__ */ tell2()(PointIsSymbol)(ordPoint);
   var toEditCtx3 = /* @__PURE__ */ toEditCtx(monadAffAff);
   var copy3 = /* @__PURE__ */ copy(monadAff);
@@ -15363,14 +15323,14 @@
             return bind21(map34(isJust)(request2($$Proxy.value)(p3)($$const(new ModifyStatuses_PointQuery(function(v) {
               return union4(v)(ss$prime);
             }, unit)))))(function(success) {
-              return unless2(success)(log6("[Editor.modifyHandle] failed to request Point " + show1(p3)));
+              return unless2(success)(liftEffect13(push_message(text5("[Editor.modifyHandle] failed to request Point " + show1(p3)))));
             });
           }
           ;
           return bind21(map34(isJust)(request2($$Proxy.value)(p3)($$const(new ModifyStatuses_PointQuery(function(v) {
             return difference4(v)(ss$prime);
           }, unit)))))(function(success) {
-            return unless2(success)(log6("[Editor.modifyHandle] failed to request Point " + show1(p3)));
+            return unless2(success)(liftEffect13(push_message(text5("[Editor.modifyHandle] failed to request Point " + show1(p3)))));
           });
         };
       };
@@ -15396,7 +15356,7 @@
           });
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor.Editor (line 487, column 7 - line 493, column 55): " + [mb_handle.value0.value1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor.Editor (line 484, column 7 - line 490, column 55): " + [mb_handle.value0.value1.constructor.name]);
       }
       ;
       if (mb_handle instanceof Just && mb_handle.value0 instanceof ZipperH_Handle) {
@@ -15441,14 +15401,14 @@
           });
         }
         ;
-        throw new Error("Failed pattern match at Ui.Editor.Editor (line 496, column 7 - line 516, column 63): " + [mb_handle.value0.value1.constructor.name]);
+        throw new Error("Failed pattern match at Ui.Editor.Editor (line 493, column 7 - line 513, column 63): " + [mb_handle.value0.value1.constructor.name]);
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor.Editor (line 481, column 3 - line 516, column 63): " + [mb_handle.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor.Editor (line 478, column 3 - line 513, column 63): " + [mb_handle.constructor.name]);
     };
   };
   var setHandle$prime = function(m_mb_handle) {
-    return bind21(get8)(function(state3) {
+    return bind21(get7)(function(state3) {
       return bind21(liftEffect13(read(state3.ref_mb_handle)))(function(mb_handle_old) {
         return discard9(modifyHandle(false)(mb_handle_old))(function() {
           return bind21(m_mb_handle)(function(mb_handle_new) {
@@ -15464,21 +15424,21 @@
     return setHandle$prime(pure27(mb_handle));
   };
   var loadSnapshot = function(s) {
-    return setHandle$prime(discard9(bind21(get8)(function(state3) {
+    return setHandle$prime(discard9(bind21(get7)(function(state3) {
       return liftEffect13(writeFlipped(state3.ref_mb_dragOrigin)(none7));
     }))(function() {
       return bind21(modify5(function(v) {
-        var $202 = {};
-        for (var $203 in v) {
-          if ({}.hasOwnProperty.call(v, $203)) {
-            $202[$203] = v[$203];
+        var $178 = {};
+        for (var $179 in v) {
+          if ({}.hasOwnProperty.call(v, $179)) {
+            $178[$179] = v[$179];
           }
           ;
         }
         ;
-        $202.mb_root = pure113(s.root);
-        $202.initial_mb_handle = s.mb_handle;
-        return $202;
+        $178.mb_root = pure113(s.root);
+        $178.initial_mb_handle = s.mb_handle;
+        return $178;
       }))(function(state3) {
         return pure27(state3.initial_mb_handle);
       });
@@ -15497,7 +15457,7 @@
       ref_future: unsafePerformEffect($$new(none12))
     };
   };
-  var getSnapshot = /* @__PURE__ */ bind21(get8)(function(state3) {
+  var getSnapshot = /* @__PURE__ */ bind21(get7)(function(state3) {
     return bind21(getRoot)(function(root) {
       return bind21(liftEffect13(read(state3.ref_mb_handle)))(function(mb_handle) {
         return pure27({
@@ -15508,10 +15468,9 @@
     });
   });
   var redo = function(dictShow) {
-    var show42 = show(showExpr(showLabel(dictShow)));
-    return bind21(get8)(function(state3) {
+    return bind21(get7)(function(state3) {
       return bind21(getRoot)(function(root) {
-        return discard9(when6(log_undo_and_redo)(log6("[redo] " + show42(root))))(function() {
+        return discard9(when7(log_undo_and_redo)(liftEffect13(push_message(text5("[Editor.redo]")))))(function() {
           return bind21(liftEffect13(read(state3.ref_future)))(function(v) {
             if (v instanceof Nil) {
               return pure27(unit);
@@ -15529,17 +15488,16 @@
               });
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor.Editor (line 348, column 50 - line 354, column 22): " + [v.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor.Editor (line 347, column 50 - line 353, column 22): " + [v.constructor.name]);
           });
         });
       });
     });
   };
   var saveSnapshot = function(dictShow) {
-    var show42 = show(showRecord3(showRecordFieldsCons5(showRecordFieldsConsNil5(showExpr(showLabel(dictShow))))(showMaybe2)));
-    return bind21(get8)(function(state3) {
+    return bind21(get7)(function(state3) {
       return bind21(getSnapshot)(function(s) {
-        return discard9(when6(log_undo_and_redo)(log6("[saveSnapshot] " + show42(s))))(function() {
+        return discard9(when7(log_undo_and_redo)(liftEffect13(push_message(text5("[Editor.saveSnapshot]")))))(function() {
           return discard9(liftEffect13(modifyFlipped(state3.ref_history)(function(v) {
             return new Cons(s, v);
           })))(function() {
@@ -15553,7 +15511,7 @@
     var saveSnapshot1 = saveSnapshot(dictShow);
     return function(f) {
       return discard9(saveSnapshot1)(function() {
-        return setHandle$prime(discard9(bind21(get8)(function(state3) {
+        return setHandle$prime(discard9(bind21(get7)(function(state3) {
           return liftEffect13(writeFlipped(state3.ref_mb_dragOrigin)(none7));
         }))(function() {
           return bind21(modify5(f))(function(state3) {
@@ -15564,10 +15522,9 @@
     };
   };
   var undo = function(dictShow) {
-    var show42 = show(showExpr(showLabel(dictShow)));
-    return bind21(get8)(function(state3) {
+    return bind21(get7)(function(state3) {
       return bind21(getRoot)(function(root) {
-        return discard9(when6(log_undo_and_redo)(log6("[undo] " + show42(root))))(function() {
+        return discard9(when7(log_undo_and_redo)(liftEffect13(push_message(text5("[Editor.undo]")))))(function() {
           return bind21(liftEffect13(read(state3.ref_history)))(function(v) {
             if (v instanceof Nil) {
               return pure27(unit);
@@ -15585,7 +15542,7 @@
               });
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor.Editor (line 334, column 51 - line 340, column 22): " + [v.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor.Editor (line 333, column 51 - line 339, column 22): " + [v.constructor.name]);
           });
         });
       });
@@ -15593,7 +15550,7 @@
   };
   var getEditCtx = function(dictMonadAff) {
     var toEditCtx1 = toEditCtx(dictMonadAff);
-    return bind21(get8)(function(state3) {
+    return bind21(get7)(function(state3) {
       return pure27(toEditCtx1(state3.editor));
     });
   };
@@ -15610,13 +15567,13 @@
         return bind21(getEditCtx1)(function(editCtx) {
           return bind21(lift5(runWriterT(runMaybeT(flip(runReaderT)(editCtx)(applyEdit1(edit)(purestate_input))))))(function(v) {
             if (v.value0 instanceof Nothing) {
-              return discard9(when6(log_edits)(log6(joinWith("\n")([fold22(replicate(10)("====")), "[log_edits]", "", "edit:", show42(edit), "input state:", "{ root: " + (show52(purestate_input.root) + ("\n, mb_handle: " + (show22(purestate_input.mb_handle) + ("\n, clipboard: " + (show62(purestate_input.clipboard) + "\n}"))))), "output state:", "{{failed}}", fold22(replicate(10)("===="))]))))(function() {
+              return discard9(when7(log_edits)(liftEffect13(push_message(text5("[Editor.submitEdit]" + joinWith("\n")([fold22(replicate(10)("====")), "[log_edits]", "", "edit:", show42(edit), "input state:", "{ root: " + (show52(purestate_input.root) + ("\n, mb_handle: " + (show22(purestate_input.mb_handle) + ("\n, clipboard: " + (show62(purestate_input.clipboard) + "\n}"))))), "output state:", "{{failed}}", fold22(replicate(10)("===="))]))))))(function() {
                 return pure27(unit);
               });
             }
             ;
             if (v.value0 instanceof Just) {
-              return discard9(when6(log_edits)(log6(joinWith("\n")([fold22(replicate(10)("====")), "[log_edits]", "", "edit:", show42(edit), "input state:", "{ root: " + (show52(purestate_input.root) + ("\n, mb_handle: " + (show22(purestate_input.mb_handle) + ("\n, clipboard: " + (show62(purestate_input.clipboard) + "\n}"))))), "output state:", "{ root: " + (show52(v.value0.value0.root) + ("\n, mb_handle: " + (show22(v.value0.value0.mb_handle) + ("\n, clipboard: " + (show62(v.value0.value0.clipboard) + "\n}"))))), fold22(replicate(10)("====")), fold22(replicate(10)("===="))]))))(function() {
+              return discard9(when7(log_edits)(liftEffect13(push_message(text5("[Editor.submitEdit]" + joinWith("\n")([fold22(replicate(10)("====")), "[log_edits]", "", "edit:", show42(edit), "input state:", "{ root: " + (show52(purestate_input.root) + ("\n, mb_handle: " + (show22(purestate_input.mb_handle) + ("\n, clipboard: " + (show62(purestate_input.clipboard) + "\n}"))))), "output state:", "{ root: " + (show52(v.value0.value0.root) + ("\n, mb_handle: " + (show22(v.value0.value0.mb_handle) + ("\n, clipboard: " + (show62(v.value0.value0.clipboard) + "\n}"))))), fold22(replicate(10)("====")), fold22(replicate(10)("===="))]))))))(function() {
                 return modifyEditorState1(function(v1) {
                   return {
                     editor: v1.editor,
@@ -15632,7 +15589,7 @@
               });
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor.Editor (line 396, column 3 - line 431, column 10): " + [v.value0.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor.Editor (line 395, column 3 - line 430, column 10): " + [v.value0.constructor.name]);
           });
         });
       });
@@ -15652,7 +15609,7 @@
               return submitEdit1(v.value0.value0);
             }
             ;
-            throw new Error("Failed pattern match at Ui.Editor.Editor (line 381, column 3 - line 383, column 33): " + [v.value0.constructor.name]);
+            throw new Error("Failed pattern match at Ui.Editor.Editor (line 380, column 3 - line 382, column 33): " + [v.value0.constructor.name]);
           });
         });
       });
@@ -15673,31 +15630,31 @@
     var submitEdit1 = submitEdit(dictShow);
     return function(v) {
       if (v instanceof Initialize_EditorAction) {
-        return discard9(when6(log_initializations)(log6("[Editor] initialize")))(function() {
+        return discard9(when7(log_initializations)(liftEffect13(push_message(text5("[Editor.initialize]")))))(function() {
           return bind21(liftEffect13(bind110(windowImpl)(document2)))(function(doc) {
             return discard9(subscribe$prime(function(_subId) {
-              return eventListener2(mouseup)(toEventTarget(doc))(function($318) {
-                return pure113(MouseUp_EditorAction.create($318));
+              return eventListener2(mouseup)(toEventTarget(doc))(function($294) {
+                return pure113(MouseUp_EditorAction.create($294));
               });
             }))(function() {
               return discard9(subscribe$prime(function(_subId) {
-                return eventListener2(keydown)(toEventTarget(doc))(function($319) {
-                  return pure113(KeyDown_EditorAction.create($319));
+                return eventListener2(keydown)(toEventTarget(doc))(function($295) {
+                  return pure113(KeyDown_EditorAction.create($295));
                 });
               }))(function() {
-                return bind21(get8)(function(v12) {
+                return bind21(get7)(function(v12) {
                   return bind21(lift5(traverse9(v12.editor.value0.stampLabel)(v12.editor.value0.initialExpr)))(function(root) {
                     return put4(function() {
-                      var $226 = {};
-                      for (var $227 in v12) {
-                        if ({}.hasOwnProperty.call(v12, $227)) {
-                          $226[$227] = v12[$227];
+                      var $202 = {};
+                      for (var $203 in v12) {
+                        if ({}.hasOwnProperty.call(v12, $203)) {
+                          $202[$203] = v12[$203];
                         }
                         ;
                       }
                       ;
-                      $226.mb_root = pure113(root);
-                      return $226;
+                      $202.mb_root = pure113(root);
+                      return $202;
                     }());
                   });
                 });
@@ -15724,13 +15681,13 @@
       }
       ;
       if (v instanceof MouseUp_EditorAction) {
-        return bind21(get8)(function(state3) {
+        return bind21(get7)(function(state3) {
           return liftEffect13(writeFlipped(state3.ref_mb_dragOrigin)(none7));
         });
       }
       ;
       if (v instanceof KeyDown_EditorAction) {
-        return bind21(get8)(function(v12) {
+        return bind21(get7)(function(v12) {
           var getShortcut = v12.editor.value0.getShortcut(monadAff);
           var getEditMenu = v12.editor.value0.getEditMenu(monadAff);
           return bind21(getRoot)(function(root) {
@@ -15743,302 +15700,296 @@
                     }
                     ;
                     if (mb_handle instanceof Just) {
-                      return map34(function($320) {
-                        return isJust(join3($320));
+                      return map34(function($296) {
+                        return isJust(join3($296));
                       })(request2($$Proxy.value)(getFocusPoint(mb_handle.value0))(GetBufferInput_PointQuery.create));
                     }
                     ;
                     throw new Error("Failed pattern match at Ui.Editor.Editor (line 116, column 19 - line 118, column 117): " + [mb_handle.constructor.name]);
                   }())(function(bufferIsOpen) {
                     var ki = fromEventToKeyInfo(v.value0);
-                    return discard9(when6(log_keyInfo)(logShow3({
-                      bufferIsOpen,
+                    return discard9(when7(log_keyInfo)(liftEffect13(push_message(text5("[Editor] " + show32({
                       keyInfo: ki
-                    })))(function() {
-                      return discard9(liftEffect13(push2(text5(show32({
-                        bufferIsOpen,
-                        keyInfo: ki
-                      })))))(function() {
-                        if (bufferIsOpen) {
-                          if (matchKeyInfoPattern$prime([keyEq("Escape"), not_cmd, not_shift, not_alt])(ki)) {
-                            return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                              if (mb_handle instanceof Nothing) {
-                                return pure27(unit);
-                              }
-                              ;
-                              if (mb_handle instanceof Just) {
-                                return tell3($$Proxy.value)(getFocusPoint(mb_handle.value0))(SetBufferInput_PointQuery.create(none7));
-                              }
-                              ;
-                              throw new Error("Failed pattern match at Ui.Editor.Editor (line 128, column 7 - line 131, column 92): " + [mb_handle.constructor.name]);
-                            });
-                          }
-                          ;
-                          return pure27(unit);
+                    }))))))(function() {
+                      if (bufferIsOpen) {
+                        if (matchKeyInfoPattern$prime([keyEq("Escape"), not_cmd, not_shift, not_alt])(ki)) {
+                          return discard9(liftEffect13(preventDefault(v.value0)))(function() {
+                            if (mb_handle instanceof Nothing) {
+                              return pure27(unit);
+                            }
+                            ;
+                            if (mb_handle instanceof Just) {
+                              return tell3($$Proxy.value)(getFocusPoint(mb_handle.value0))(SetBufferInput_PointQuery.create(none7));
+                            }
+                            ;
+                            throw new Error("Failed pattern match at Ui.Editor.Editor (line 127, column 7 - line 130, column 92): " + [mb_handle.constructor.name]);
+                          });
                         }
                         ;
-                        return bind21(lift5(runWriterT(runMaybeT(flip(runReaderT)(toEditCtx3(v12.editor))(getShortcut(ki)(purestate))))))(function(v2) {
-                          var v3 = function(v4) {
-                            var v5 = function(v6) {
-                              var v7 = function(v8) {
-                                var v9 = function(v10) {
-                                  if (matchKeyInfoPattern$prime([keyEq("Escape"), not_cmd, not_shift, not_alt])(ki)) {
-                                    return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                                      return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(none7)))(function() {
-                                        if (mb_handle instanceof Just) {
-                                          return setHandle($$escape(mb_handle.value0));
+                        return pure27(unit);
+                      }
+                      ;
+                      return bind21(lift5(runWriterT(runMaybeT(flip(runReaderT)(toEditCtx3(v12.editor))(getShortcut(ki)(purestate))))))(function(v2) {
+                        var v3 = function(v4) {
+                          var v5 = function(v6) {
+                            var v7 = function(v8) {
+                              var v9 = function(v10) {
+                                if (matchKeyInfoPattern$prime([keyEq("Escape"), not_cmd, not_shift, not_alt])(ki)) {
+                                  return discard9(liftEffect13(preventDefault(v.value0)))(function() {
+                                    return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(none7)))(function() {
+                                      if (mb_handle instanceof Just) {
+                                        return setHandle($$escape(mb_handle.value0));
+                                      }
+                                      ;
+                                      return pure27(unit);
+                                    });
+                                  });
+                                }
+                                ;
+                                if (matchKeyInfoPattern$prime([keyEq("a"), cmd, not_shift, not_alt])(ki)) {
+                                  return discard9(liftEffect13(preventDefault(v.value0)))(function() {
+                                    return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(none7)))(function() {
+                                      var j = getExtremeIndexes(root);
+                                      var h = normalizeHandle(new SpanH_Handle({
+                                        path: none12,
+                                        j_L: j["_L"],
+                                        j_R: j["_R"]
+                                      }, Left_SpanFocus.value));
+                                      return setHandle(pure113(h));
+                                    });
+                                  });
+                                }
+                                ;
+                                if (matchKeyInfoPattern$prime([keyEq("c"), cmd, not_shift, not_alt])(ki)) {
+                                  return discard9(liftEffect13(preventDefault(v.value0)))(function() {
+                                    return discard9(submitEditAt1(copy1))(function() {
+                                      return bind21(get7)(function(state$prime) {
+                                        if (state$prime.clipboard instanceof Just && state$prime.clipboard.value0 instanceof Span_Fragment) {
+                                          return liftEffect13(navigator_clibpoard_writeText(joinWith("")(map111(state$prime.editor.value0.printExpr)(state$prime.clipboard.value0.value0))));
                                         }
                                         ;
                                         return pure27(unit);
                                       });
                                     });
-                                  }
-                                  ;
-                                  if (matchKeyInfoPattern$prime([keyEq("a"), cmd, not_shift, not_alt])(ki)) {
-                                    return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                                      return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(none7)))(function() {
-                                        var j = getExtremeIndexes(root);
-                                        var h = normalizeHandle(new SpanH_Handle({
-                                          path: none12,
-                                          j_L: j["_L"],
-                                          j_R: j["_R"]
-                                        }, Left_SpanFocus.value));
-                                        return setHandle(pure113(h));
-                                      });
-                                    });
-                                  }
-                                  ;
-                                  if (matchKeyInfoPattern$prime([keyEq("c"), cmd, not_shift, not_alt])(ki)) {
-                                    return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                                      return discard9(submitEditAt1(copy1))(function() {
-                                        return bind21(get8)(function(state$prime) {
-                                          if (state$prime.clipboard instanceof Just && state$prime.clipboard.value0 instanceof Span_Fragment) {
-                                            return liftEffect13(navigator_clibpoard_writeText(joinWith("")(map111(state$prime.editor.value0.printExpr)(state$prime.clipboard.value0.value0))));
-                                          }
-                                          ;
-                                          return pure27(unit);
-                                        });
-                                      });
-                                    });
-                                  }
-                                  ;
-                                  if (matchKeyInfoPattern$prime([keyEq("Backspace"), not_cmd, not_shift, not_alt])(ki)) {
-                                    return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                                      return submitEditAt1(delete$prime1({
-                                        isValidHandle: v12.editor.value0.isValidHandle
-                                      }));
-                                    });
-                                  }
-                                  ;
-                                  if (matchKeyInfoPattern$prime([keyEq("Backspace"), not_cmd, not_shift, alt5])(ki)) {
-                                    return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                                      return submitEditAt1(delete$prime_sibling1({
-                                        isValidHandle: v12.editor.value0.isValidHandle
-                                      }));
-                                    });
-                                  }
-                                  ;
-                                  if (matchKeyInfoPattern$prime([keyEq("x"), cmd, not_shift, not_alt])(ki)) {
-                                    return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                                      return submitEditAt1(cut1);
-                                    });
-                                  }
-                                  ;
-                                  if (matchKeyInfoPattern$prime([keyEq("v"), cmd, not_shift, not_alt])(ki)) {
-                                    return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                                      return submitEditAt1(paste1);
-                                    });
-                                  }
-                                  ;
-                                  if (matchKeyInfoPattern$prime([keyEq("z"), cmd, shift, not_alt])(ki)) {
-                                    return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                                      return redo1;
-                                    });
-                                  }
-                                  ;
-                                  if (matchKeyInfoPattern$prime([keyEq("z"), cmd, not_shift, not_alt])(ki)) {
-                                    return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                                      return undo1;
-                                    });
-                                  }
-                                  ;
-                                  if (matchKeyInfoPattern$prime([keyMember(openBuffer_keys), not_cmd, not_shift, not_alt])(ki)) {
-                                    return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                                      if (mb_handle instanceof Nothing) {
-                                        return pure27(unit);
-                                      }
-                                      ;
-                                      if (mb_handle instanceof Just) {
-                                        var point = getFocusPoint(mb_handle.value0);
-                                        return bind21(lift5(runWriterT(runMaybeT(flip(runReaderT)(toEditCtx3(v12.editor))(getEditMenu(purestate))))))(function(v11) {
-                                          if (v11.value0 instanceof Nothing) {
-                                            return pure27(unit);
-                                          }
-                                          ;
-                                          if (v11.value0 instanceof Just) {
-                                            return tell3($$Proxy.value)(point)(SetBufferInput_PointQuery.create(pure113({
-                                              editor: new Editor(v12.editor.value0),
-                                              point,
-                                              menu: v11.value0.value0,
-                                              query: ""
-                                            })));
-                                          }
-                                          ;
-                                          throw new Error("Failed pattern match at Ui.Editor.Editor (line 257, column 13 - line 259, column 144): " + [v11.value0.constructor.name]);
-                                        });
-                                      }
-                                      ;
-                                      throw new Error("Failed pattern match at Ui.Editor.Editor (line 248, column 9 - line 259, column 144): " + [mb_handle.constructor.name]);
-                                    });
-                                  }
-                                  ;
-                                  if (matchKeyInfoPattern$prime([keyRegex(isNonSpace_regex), not_cmd, not_alt])(ki)) {
-                                    return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                                      if (mb_handle instanceof Nothing) {
-                                        return pure27(unit);
-                                      }
-                                      ;
-                                      if (mb_handle instanceof Just) {
-                                        var point = getFocusPoint(mb_handle.value0);
-                                        return bind21(lift5(runWriterT(runMaybeT(flip(runReaderT)(toEditCtx3(v12.editor))(getEditMenu(purestate))))))(function(v11) {
-                                          if (v11.value0 instanceof Nothing) {
-                                            return pure27(unit);
-                                          }
-                                          ;
-                                          if (v11.value0 instanceof Just) {
-                                            return tell3($$Proxy.value)(point)(SetBufferInput_PointQuery.create(pure113({
-                                              editor: new Editor(v12.editor.value0),
-                                              point,
-                                              menu: v11.value0.value0,
-                                              query: unwrap7(ki).key
-                                            })));
-                                          }
-                                          ;
-                                          throw new Error("Failed pattern match at Ui.Editor.Editor (line 271, column 13 - line 273, column 157): " + [v11.value0.constructor.name]);
-                                        });
-                                      }
-                                      ;
-                                      throw new Error("Failed pattern match at Ui.Editor.Editor (line 262, column 9 - line 273, column 157): " + [mb_handle.constructor.name]);
-                                    });
-                                  }
-                                  ;
-                                  return pure27(unit);
-                                };
-                                var $267 = fromKeyInfoToCycle(ki);
-                                if ($267 instanceof Just) {
+                                  });
+                                }
+                                ;
+                                if (matchKeyInfoPattern$prime([keyEq("Backspace"), not_cmd, not_shift, not_alt])(ki)) {
+                                  return discard9(liftEffect13(preventDefault(v.value0)))(function() {
+                                    return submitEditAt1(delete$prime1({
+                                      isValidHandle: v12.editor.value0.isValidHandle
+                                    }));
+                                  });
+                                }
+                                ;
+                                if (matchKeyInfoPattern$prime([keyEq("Backspace"), not_cmd, not_shift, alt5])(ki)) {
+                                  return discard9(liftEffect13(preventDefault(v.value0)))(function() {
+                                    return submitEditAt1(delete$prime_sibling1({
+                                      isValidHandle: v12.editor.value0.isValidHandle
+                                    }));
+                                  });
+                                }
+                                ;
+                                if (matchKeyInfoPattern$prime([keyEq("x"), cmd, not_shift, not_alt])(ki)) {
+                                  return discard9(liftEffect13(preventDefault(v.value0)))(function() {
+                                    return submitEditAt1(cut1);
+                                  });
+                                }
+                                ;
+                                if (matchKeyInfoPattern$prime([keyEq("v"), cmd, not_shift, not_alt])(ki)) {
+                                  return discard9(liftEffect13(preventDefault(v.value0)))(function() {
+                                    return submitEditAt1(paste1);
+                                  });
+                                }
+                                ;
+                                if (matchKeyInfoPattern$prime([keyEq("z"), cmd, shift, not_alt])(ki)) {
+                                  return discard9(liftEffect13(preventDefault(v.value0)))(function() {
+                                    return redo1;
+                                  });
+                                }
+                                ;
+                                if (matchKeyInfoPattern$prime([keyEq("z"), cmd, not_shift, not_alt])(ki)) {
+                                  return discard9(liftEffect13(preventDefault(v.value0)))(function() {
+                                    return undo1;
+                                  });
+                                }
+                                ;
+                                if (matchKeyInfoPattern$prime([keyMember(openBuffer_keys), not_cmd, not_shift, not_alt])(ki)) {
                                   return discard9(liftEffect13(preventDefault(v.value0)))(function() {
                                     if (mb_handle instanceof Nothing) {
                                       return pure27(unit);
                                     }
                                     ;
                                     if (mb_handle instanceof Just) {
-                                      return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(none7)))(function() {
-                                        return setHandle(pure113(cycleHandleFocus($267.value0)(mb_handle.value0)));
+                                      var point = getFocusPoint(mb_handle.value0);
+                                      return bind21(lift5(runWriterT(runMaybeT(flip(runReaderT)(toEditCtx3(v12.editor))(getEditMenu(purestate))))))(function(v11) {
+                                        if (v11.value0 instanceof Nothing) {
+                                          return pure27(unit);
+                                        }
+                                        ;
+                                        if (v11.value0 instanceof Just) {
+                                          return tell3($$Proxy.value)(point)(SetBufferInput_PointQuery.create(pure113({
+                                            editor: new Editor(v12.editor.value0),
+                                            point,
+                                            menu: v11.value0.value0,
+                                            query: ""
+                                          })));
+                                        }
+                                        ;
+                                        throw new Error("Failed pattern match at Ui.Editor.Editor (line 256, column 13 - line 258, column 144): " + [v11.value0.constructor.name]);
                                       });
                                     }
                                     ;
-                                    throw new Error("Failed pattern match at Ui.Editor.Editor (line 192, column 9 - line 196, column 73): " + [mb_handle.constructor.name]);
+                                    throw new Error("Failed pattern match at Ui.Editor.Editor (line 247, column 9 - line 258, column 144): " + [mb_handle.constructor.name]);
                                   });
                                 }
                                 ;
-                                return v9(true);
+                                if (matchKeyInfoPattern$prime([keyRegex(isNonSpace_regex), not_cmd, not_alt])(ki)) {
+                                  return discard9(liftEffect13(preventDefault(v.value0)))(function() {
+                                    if (mb_handle instanceof Nothing) {
+                                      return pure27(unit);
+                                    }
+                                    ;
+                                    if (mb_handle instanceof Just) {
+                                      var point = getFocusPoint(mb_handle.value0);
+                                      return bind21(lift5(runWriterT(runMaybeT(flip(runReaderT)(toEditCtx3(v12.editor))(getEditMenu(purestate))))))(function(v11) {
+                                        if (v11.value0 instanceof Nothing) {
+                                          return pure27(unit);
+                                        }
+                                        ;
+                                        if (v11.value0 instanceof Just) {
+                                          return tell3($$Proxy.value)(point)(SetBufferInput_PointQuery.create(pure113({
+                                            editor: new Editor(v12.editor.value0),
+                                            point,
+                                            menu: v11.value0.value0,
+                                            query: unwrap7(ki).key
+                                          })));
+                                        }
+                                        ;
+                                        throw new Error("Failed pattern match at Ui.Editor.Editor (line 270, column 13 - line 272, column 157): " + [v11.value0.constructor.name]);
+                                      });
+                                    }
+                                    ;
+                                    throw new Error("Failed pattern match at Ui.Editor.Editor (line 261, column 9 - line 272, column 157): " + [mb_handle.constructor.name]);
+                                  });
+                                }
+                                ;
+                                return pure27(unit);
                               };
-                              var $272 = fromKeyInfoToDragMoveDir(ki);
-                              if ($272 instanceof Just) {
+                              var $243 = fromKeyInfoToCycle(ki);
+                              if ($243 instanceof Just) {
                                 return discard9(liftEffect13(preventDefault(v.value0)))(function() {
                                   if (mb_handle instanceof Nothing) {
-                                    return discard9(function() {
-                                      if (mb_dragOrigin instanceof Nothing) {
-                                        return liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(pure113(v12.editor.value0.initialHandle)));
-                                      }
-                                      ;
-                                      if (mb_dragOrigin instanceof Just) {
-                                        return pure27(unit);
-                                      }
-                                      ;
-                                      throw new Error("Failed pattern match at Ui.Editor.Editor (line 168, column 13 - line 172, column 26): " + [mb_dragOrigin.constructor.name]);
-                                    }())(function() {
-                                      return setHandle(pure113(v12.editor.value0.initialHandle));
-                                    });
+                                    return pure27(unit);
                                   }
                                   ;
                                   if (mb_handle instanceof Just) {
-                                    return bind21(function() {
-                                      if (mb_dragOrigin instanceof Nothing) {
-                                        return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(pure113(mb_handle.value0))))(function() {
-                                          return pure27(mb_handle.value0);
-                                        });
-                                      }
-                                      ;
-                                      if (mb_dragOrigin instanceof Just) {
-                                        return pure27(mb_dragOrigin.value0);
-                                      }
-                                      ;
-                                      throw new Error("Failed pattern match at Ui.Editor.Editor (line 176, column 27 - line 181, column 32): " + [mb_dragOrigin.constructor.name]);
-                                    }())(function(dragOrigin) {
-                                      var v8 = movePointUntil2(root)($272.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
-                                        return bind22(drag3(dragOrigin)(p2)(root))(guardPure3(v12.editor.value0.isValidHandle(root)));
-                                      });
-                                      if (v8 instanceof Nothing) {
-                                        return pure27(unit);
-                                      }
-                                      ;
-                                      if (v8 instanceof Just) {
-                                        return setHandle(pure113(v8.value0));
-                                      }
-                                      ;
-                                      throw new Error("Failed pattern match at Ui.Editor.Editor (line 182, column 13 - line 188, column 41): " + [v8.constructor.name]);
+                                    return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(none7)))(function() {
+                                      return setHandle(pure113(cycleHandleFocus($243.value0)(mb_handle.value0)));
                                     });
                                   }
                                   ;
-                                  throw new Error("Failed pattern match at Ui.Editor.Editor (line 165, column 9 - line 188, column 41): " + [mb_handle.constructor.name]);
+                                  throw new Error("Failed pattern match at Ui.Editor.Editor (line 191, column 9 - line 195, column 73): " + [mb_handle.constructor.name]);
                                 });
                               }
                               ;
-                              return v7(true);
+                              return v9(true);
                             };
-                            var $283 = fromKeyInfoToMoveDir(ki);
-                            if ($283 instanceof Just) {
+                            var $248 = fromKeyInfoToDragMoveDir(ki);
+                            if ($248 instanceof Just) {
                               return discard9(liftEffect13(preventDefault(v.value0)))(function() {
                                 if (mb_handle instanceof Nothing) {
-                                  return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(none7)))(function() {
+                                  return discard9(function() {
+                                    if (mb_dragOrigin instanceof Nothing) {
+                                      return liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(pure113(v12.editor.value0.initialHandle)));
+                                    }
+                                    ;
+                                    if (mb_dragOrigin instanceof Just) {
+                                      return pure27(unit);
+                                    }
+                                    ;
+                                    throw new Error("Failed pattern match at Ui.Editor.Editor (line 167, column 13 - line 171, column 26): " + [mb_dragOrigin.constructor.name]);
+                                  }())(function() {
                                     return setHandle(pure113(v12.editor.value0.initialHandle));
                                   });
                                 }
                                 ;
                                 if (mb_handle instanceof Just) {
-                                  var v6 = movePointUntil2(root)($283.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
-                                    return guardPure3(v12.editor.value0.isValidHandle(root))(new Point_Handle(p2));
+                                  return bind21(function() {
+                                    if (mb_dragOrigin instanceof Nothing) {
+                                      return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(pure113(mb_handle.value0))))(function() {
+                                        return pure27(mb_handle.value0);
+                                      });
+                                    }
+                                    ;
+                                    if (mb_dragOrigin instanceof Just) {
+                                      return pure27(mb_dragOrigin.value0);
+                                    }
+                                    ;
+                                    throw new Error("Failed pattern match at Ui.Editor.Editor (line 175, column 27 - line 180, column 32): " + [mb_dragOrigin.constructor.name]);
+                                  }())(function(dragOrigin) {
+                                    var v8 = movePointUntil2(root)($248.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
+                                      return bind22(drag3(dragOrigin)(p2)(root))(guardPure3(v12.editor.value0.isValidHandle(root)));
+                                    });
+                                    if (v8 instanceof Nothing) {
+                                      return pure27(unit);
+                                    }
+                                    ;
+                                    if (v8 instanceof Just) {
+                                      return setHandle(pure113(v8.value0));
+                                    }
+                                    ;
+                                    throw new Error("Failed pattern match at Ui.Editor.Editor (line 181, column 13 - line 187, column 41): " + [v8.constructor.name]);
                                   });
-                                  if (v6 instanceof Nothing) {
-                                    return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(none7)))(function() {
-                                      return setHandle(new Just(new Point_Handle(getFocusPoint(mb_handle.value0))));
-                                    });
-                                  }
-                                  ;
-                                  if (v6 instanceof Just) {
-                                    return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(none7)))(function() {
-                                      return setHandle(new Just(v6.value0));
-                                    });
-                                  }
-                                  ;
-                                  throw new Error("Failed pattern match at Ui.Editor.Editor (line 152, column 13 - line 161, column 41): " + [v6.constructor.name]);
                                 }
                                 ;
-                                throw new Error("Failed pattern match at Ui.Editor.Editor (line 147, column 9 - line 161, column 41): " + [mb_handle.constructor.name]);
+                                throw new Error("Failed pattern match at Ui.Editor.Editor (line 164, column 9 - line 187, column 41): " + [mb_handle.constructor.name]);
                               });
                             }
                             ;
-                            return v5(true);
+                            return v7(true);
                           };
-                          if (v2.value0 instanceof Just) {
+                          var $259 = fromKeyInfoToMoveDir(ki);
+                          if ($259 instanceof Just) {
                             return discard9(liftEffect13(preventDefault(v.value0)))(function() {
-                              return submitEdit1(v2.value0.value0);
+                              if (mb_handle instanceof Nothing) {
+                                return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(none7)))(function() {
+                                  return setHandle(pure113(v12.editor.value0.initialHandle));
+                                });
+                              }
+                              ;
+                              if (mb_handle instanceof Just) {
+                                var v6 = movePointUntil2(root)($259.value0)(getFocusPoint(mb_handle.value0))(function(p2) {
+                                  return guardPure3(v12.editor.value0.isValidHandle(root))(new Point_Handle(p2));
+                                });
+                                if (v6 instanceof Nothing) {
+                                  return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(none7)))(function() {
+                                    return setHandle(new Just(new Point_Handle(getFocusPoint(mb_handle.value0))));
+                                  });
+                                }
+                                ;
+                                if (v6 instanceof Just) {
+                                  return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(none7)))(function() {
+                                    return setHandle(new Just(v6.value0));
+                                  });
+                                }
+                                ;
+                                throw new Error("Failed pattern match at Ui.Editor.Editor (line 151, column 13 - line 160, column 41): " + [v6.constructor.name]);
+                              }
+                              ;
+                              throw new Error("Failed pattern match at Ui.Editor.Editor (line 146, column 9 - line 160, column 41): " + [mb_handle.constructor.name]);
                             });
                           }
                           ;
-                          return v3(true);
-                        });
+                          return v5(true);
+                        };
+                        if (v2.value0 instanceof Just) {
+                          return discard9(liftEffect13(preventDefault(v.value0)))(function() {
+                            return submitEdit1(v2.value0.value0);
+                          });
+                        }
+                        ;
+                        return v3(true);
                       });
                     });
                   });
@@ -16050,7 +16001,7 @@
       }
       ;
       if (v instanceof PointOutput_EditorAction && v.value0 instanceof MouseDown_PointOutput) {
-        return bind21(get8)(function(v12) {
+        return bind21(get7)(function(v12) {
           return bind21(getRoot)(function(root) {
             return bind21(liftEffect13(read(v12.ref_mb_handle)))(function(mb_handle) {
               if (mb_handle instanceof Nothing) {
@@ -16060,7 +16011,7 @@
               }
               ;
               if (mb_handle instanceof Just) {
-                return when6(v12.editor.value0.isValidHandle(root)(mb_handle.value0))(function() {
+                return when7(v12.editor.value0.isValidHandle(root)(mb_handle.value0))(function() {
                   var dragOrigin = getDragOrigin(mb_handle.value0)(v.value0.value1);
                   return discard9(liftEffect13(writeFlipped(v12.ref_mb_dragOrigin)(pure113(dragOrigin))))(function() {
                     return setHandle(pure113(dragOrigin));
@@ -16068,7 +16019,7 @@
                 }());
               }
               ;
-              throw new Error("Failed pattern match at Ui.Editor.Editor (line 281, column 3 - line 289, column 36): " + [mb_handle.constructor.name]);
+              throw new Error("Failed pattern match at Ui.Editor.Editor (line 280, column 3 - line 288, column 36): " + [mb_handle.constructor.name]);
             });
           });
         });
@@ -16076,7 +16027,7 @@
       ;
       if (v instanceof PointOutput_EditorAction && v.value0 instanceof MouseEnter_PointOutput) {
         return bind21(getRoot)(function(root) {
-          return when6(buttons(v.value0.value0) === 1)(bind21(get8)(function(v12) {
+          return when7(buttons(v.value0.value0) === 1)(bind21(get7)(function(v12) {
             return bind21(liftEffect13(read(v12.ref_mb_dragOrigin)))(function(mb_dragOrigin) {
               if (mb_dragOrigin instanceof Nothing) {
                 return pure27(unit);
@@ -16089,13 +16040,13 @@
                 }
                 ;
                 if (v2 instanceof Just) {
-                  return when6(v12.editor.value0.isValidHandle(root)(mb_dragOrigin.value0))(setHandle(pure113(v2.value0)));
+                  return when7(v12.editor.value0.isValidHandle(root)(mb_dragOrigin.value0))(setHandle(pure113(v2.value0)));
                 }
                 ;
-                throw new Error("Failed pattern match at Ui.Editor.Editor (line 298, column 9 - line 302, column 34): " + [v2.constructor.name]);
+                throw new Error("Failed pattern match at Ui.Editor.Editor (line 297, column 9 - line 301, column 34): " + [v2.constructor.name]);
               }
               ;
-              throw new Error("Failed pattern match at Ui.Editor.Editor (line 295, column 5 - line 302, column 34): " + [mb_dragOrigin.constructor.name]);
+              throw new Error("Failed pattern match at Ui.Editor.Editor (line 294, column 5 - line 301, column 34): " + [mb_dragOrigin.constructor.name]);
             });
           }));
         });
@@ -16113,8 +16064,8 @@
       handleQuery: defaultEval.handleQuery,
       finalize: defaultEval.finalize,
       initialize: pure113(Initialize_EditorAction.value),
-      receive: function($321) {
-        return pure113(Receive_EditorAction.create($321));
+      receive: function($297) {
+        return pure113(Receive_EditorAction.create($297));
       },
       handleAction: handleAction4(dictShow)
     });

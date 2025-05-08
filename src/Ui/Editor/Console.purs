@@ -9,6 +9,7 @@ import Data.Unfoldable (none)
 import Effect.Aff (Aff, Milliseconds(..))
 import Effect.Aff as Aff
 import Effect.Aff.Class (class MonadAff)
+import Effect.Class.Console as Console
 import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
@@ -22,7 +23,7 @@ import Ui.Halogen (classes)
 
 --------------------------------------------------------------------------------
 
-delay_update = Milliseconds 500.0
+delay_update = Milliseconds 200.0
 
 --------------------------------------------------------------------------------
 
@@ -32,6 +33,7 @@ component = H.mkComponent { initialState, eval, render }
 initialState :: ConsoleInput -> ConsoleState
 initialState _input =
   { messages: none
+  , timestamp: 0.0
   }
 
 eval :: forall a. H.HalogenQ ConsoleQuery ConsoleAction ConsoleInput a -> H.HalogenM ConsoleState ConsoleAction ConsoleSlots ConsoleOutput Aff a
@@ -46,9 +48,14 @@ handleAction Initialize_ConsoleAction = do
   pure unit
 handleAction Tick_ConsoleAction = do
   state <- get
-  messages <- Console.Messages.get # liftEffect
-  -- TODO: properly check WHEN to update
-  modify_ _ { messages = messages }
+  timestamp <- Console.Messages.get_timestamp # liftEffect
+  messages <- Console.Messages.get_messages # liftEffect
+  when (state.timestamp /= timestamp) do
+    Console.log "[Console] rerender"
+    modify_ _
+      { messages = messages
+      , timestamp = timestamp
+      }
 
 timer :: forall m a. MonadAff m => Milliseconds -> a -> m (HS.Emitter a)
 timer delay val = do

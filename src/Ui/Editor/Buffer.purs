@@ -33,6 +33,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
 import Ui.Editor.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, BufferOutput(..), BufferQuery, BufferState, BufferSlots)
 import Ui.Editor.Config as Config
+import Ui.Editor.Console.Messages as Console.Messages
 import Ui.Event (fromEventToKeyInfo, matchKeyInfoPattern', matchMapKeyInfo) as Event
 import Ui.Event (keyMember, not_alt, not_cmd)
 import Ui.Halogen (classes)
@@ -92,7 +93,7 @@ handleAction :: forall c. BufferAction c -> BufferM c Unit
 
 handleAction Initialize_BufferAction = do
   when Config.log_initializations do
-    Console.log "[Buffer] initialize"
+    liftEffect $ Console.Messages.push_message $ HH.text $ "[Buffer.initialize]"
 
   -- resizing input
   H.getHTMLElementRef refLabel_input >>= \mb_elem_input -> do

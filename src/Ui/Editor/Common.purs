@@ -233,6 +233,7 @@ type ConsoleOutput = Void
 
 type ConsoleState =
   { messages :: Array { timestamp :: Number, content :: PlainHTML }
+  , timestamp :: Number
   }
 
 data ConsoleAction

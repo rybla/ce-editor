@@ -89,7 +89,7 @@ handleAction :: forall c. Show c => EditorAction c -> EditorM c Unit
 
 handleAction Initialize_EditorAction = do
   when Config.log_initializations do
-    Console.log "[Editor] initialize"
+    liftEffect $ Console.Messages.push_message $ HH.text $ "[Editor.initialize]"
   doc <- liftEffect $ HTML.window >>= HTML.Window.document
   H.subscribe' \_subId -> HQE.eventListener MouseEventType.mouseup (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< MouseUp_EditorAction
   H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< KeyDown_EditorAction
@@ -118,8 +118,7 @@ handleAction (KeyDown_EditorAction event) = do
     Just handle -> isJust <<< join <$> H.request (Proxy @"Point") (handle # getFocusPoint) GetBufferInput_PointQuery
   let ki = Event.fromEventToKeyInfo event
   when Config.log_keyInfo do
-    Console.logShow { bufferIsOpen, keyInfo: ki }
-  liftEffect $ Console.Messages.push $ HH.text $ show { bufferIsOpen, keyInfo: ki }
+    liftEffect $ Console.Messages.push_message $ HH.text $ "[Editor] " <> show { keyInfo: ki }
 
   if bufferIsOpen then case unit of
     -- close buffer
@@ -321,7 +320,7 @@ saveSnapshot = do
   state <- get
   s <- getSnapshot
   when Config.log_undo_and_redo do
-    Console.log $ "[saveSnapshot] " <> show s
+    liftEffect $ Console.Messages.push_message $ HH.text $ "[Editor.saveSnapshot]"
   liftEffect $ state.ref_history :%= (s : _)
   liftEffect $ state.ref_future := none
 
@@ -330,7 +329,7 @@ undo = do
   state <- get
   root <- getRoot
   when Config.log_undo_and_redo do
-    Console.log $ "[undo] " <> show root
+    liftEffect $ Console.Messages.push_message $ HH.text $ "[Editor.undo]"
   (liftEffect $ state.ref_history # Ref.read) >>= case _ of
     Nil -> pure unit
     s' : history' -> do
@@ -344,7 +343,7 @@ redo = do
   state <- get
   root <- getRoot
   when Config.log_undo_and_redo do
-    Console.log $ "[redo] " <> show root
+    liftEffect $ Console.Messages.push_message $ HH.text $ "[Editor.redo]"
   (liftEffect $ state.ref_future # Ref.read) >>= case _ of
     Nil -> pure unit
     s' : future' -> do
@@ -396,7 +395,7 @@ submitEdit edit = do
   case mb_output of
     Nothing -> do
       when Config.log_edits do
-        Console.log $ String.joinWith "\n"
+        liftEffect $ Console.Messages.push_message $ HH.text $ "[Editor.submitEdit]" <> String.joinWith "\n"
           [ Array.replicate 10 "====" # fold
           , "[log_edits]"
           , ""
@@ -411,7 +410,7 @@ submitEdit edit = do
       pure unit
     Just purestate_output -> do
       when Config.log_edits do
-        Console.log $ String.joinWith "\n"
+        liftEffect $ Console.Messages.push_message $ HH.text $ "[Editor.submitEdit]" <> String.joinWith "\n"
           [ Array.replicate 10 "====" # fold
           , "[log_edits]"
           , ""
@@ -456,10 +455,8 @@ setHandle' :: forall c. EditorM c (Maybe Handle) -> EditorM c Unit
 setHandle' m_mb_handle = do
   state <- get
   mb_handle_old <- liftEffect $ Ref.read state.ref_mb_handle
-  -- Console.log $ "[Editor.setHandle'] mb_handle_old = " <> show mb_handle_old
   modifyHandle false mb_handle_old
   mb_handle_new <- m_mb_handle
-  -- Console.log $ "[Editor.setHandle'] mb_handle_new = " <> show mb_handle_new
   modifyHandle true mb_handle_new
   liftEffect $ state.ref_mb_handle := mb_handle_new
 
@@ -472,12 +469,12 @@ modifyHandle b mb_handle = do
         -- H.tell (Proxy @"Point") p $ ModifyStatuses_PointQuery (_ `Set.union` ss')
         success <- map isJust $ H.request (Proxy @"Point") p $ const $ ModifyStatuses_PointQuery (_ `Set.union` ss') unit
         unless success do
-          Console.log $ "[Editor.modifyHandle] failed to request Point " <> show p
+          liftEffect $ Console.Messages.push_message $ HH.text $ "[Editor.modifyHandle] failed to request Point " <> show p
       else do
         -- H.tell (Proxy @"Point") p $ ModifyStatuses_PointQuery (_ `Set.difference` ss')
         success <- map isJust $ H.request (Proxy @"Point") p $ const $ ModifyStatuses_PointQuery (_ `Set.difference` ss') unit
         unless success do
-          Console.log $ "[Editor.modifyHandle] failed to request Point " <> show p
+          liftEffect $ Console.Messages.push_message $ HH.text $ "[Editor.modifyHandle] failed to request Point " <> show p
   case mb_handle of
     Nothing -> pure unit
     Just (Point_Handle p) -> do

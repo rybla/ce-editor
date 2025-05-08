@@ -9,3 +9,4 @@ log_undo_and_redo = false
 log_keyInfo = false
 
 log_initializations = false
+
