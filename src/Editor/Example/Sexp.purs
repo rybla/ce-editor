@@ -21,11 +21,9 @@ import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
 import Editor.Common (Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, getId)
 import Effect.Class (liftEffect)
-import Effect.Unsafe (unsafePerformEffect)
 import Halogen.HTML as HH
 import Halogen.HTML.Properties (id) as HP
 import Record as Record
-import Ui.Editor.Console.Messages as Console.Messages
 import Ui.Editor.Id (freshId)
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
