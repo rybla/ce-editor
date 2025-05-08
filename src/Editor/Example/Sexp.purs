@@ -21,9 +21,11 @@ import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe)
 import Editor.Common (Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, getId)
 import Effect.Class (liftEffect)
+import Effect.Unsafe (unsafePerformEffect)
 import Halogen.HTML as HH
 import Halogen.HTML.Properties (id) as HP
 import Record as Record
+import Ui.Editor.Console.Messages as Console.Messages
 import Ui.Editor.Id (freshId)
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
@@ -83,14 +85,15 @@ editor = Editor
         Expr.Edit.insert (Zipper_Fragment zipper_Group') state
       _ ->
         empty
-  , isValidHandle: \root handle -> case handle of
-      Point_Handle p -> and [ isValidPoint root p ]
-      SpanH_Handle sh _ -> and [ isValidPoint root p._L, isValidPoint root p._R ]
-        where
-        p = getEndPoints_SpanH sh
-      ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
-        where
-        p = getEndPoints_ZipperH zh
+  , isValidHandle: \root handle ->
+      case handle of
+        Point_Handle p -> and [ isValidPoint root p ]
+        SpanH_Handle sh _ -> and [ isValidPoint root p._L, isValidPoint root p._R ]
+          where
+          p = getEndPoints_SpanH sh
+        ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
+          where
+          p = getEndPoints_ZipperH zh
   , assembleExpr
   , printExpr:
       let
@@ -100,6 +103,7 @@ editor = Editor
           Expr { l: Label { con: C "Group" }, kids } -> "(" <> (kids # map f # String.joinWith " ") <> ")"
           Expr { l: Label { con: C "LineBreak" }, kids: [] } -> "\n"
           Expr _ -> "unimplemented"
+
       in
         f
   , stampLabel: \(Label l) -> do

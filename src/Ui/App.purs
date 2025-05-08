@@ -19,6 +19,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Type.Proxy (Proxy(..))
 import Ui.Editor.Common (AppAction(..), AppHTML, AppInput, AppOutput, AppQuery, AppSlots, AppState)
+import Ui.Editor.Console as Console
 import Ui.Editor.Editor as Editor
 import Ui.Halogen (classes)
 import Utility (impossible)
@@ -59,19 +60,22 @@ render state =
           [ classes [ "header" ] ]
           [ HH.div [ classes [ "title" ] ]
               [ HH.text "ce-editor" ]
-          -- , HH.div
-          --     [ classes [ "option" ] ]
-          --     [ HH.div
-          --         [ classes [ "label" ] ]
-          --         [ HH.text "language" ]
-          --     , HH.select
-          --         [ classes [ "value" ]
-          --         , HP.value $ defaultEditor # runExistsEditor \(Editor editor) -> editor.name
-          --         , HE.onValueChange case _ of
-          --             name -> SetEditor_AppAction $ editorsMenu # Map.lookup name # fromMaybe' (impossible $ "unknown editor name: " <> name)
-          --         ] $ editorsMenu # Map.toUnfoldable # map \(name /\ _) ->
-          --         HH.option [ HP.value name ] [ HH.text name ]
-          --     ]
+          , if true then
+              HH.div [ classes [ "option" ], HP.style "font-style: italic" ] [ HH.text "option placeholder" ]
+            else
+              HH.div
+                [ classes [ "option" ] ]
+                [ HH.div
+                    [ classes [ "label" ] ]
+                    [ HH.text "language" ]
+                , HH.select
+                    [ classes [ "value" ]
+                    , HP.value $ defaultEditor # runExistsEditor \(Editor editor) -> editor.name
+                    , HE.onValueChange case _ of
+                        name -> SetEditor_AppAction $ editorsMenu # Map.lookup name # fromMaybe' (impossible $ "unknown editor name: " <> name)
+                    ] $ editorsMenu # Map.toUnfoldable # map \(name /\ _) ->
+                    HH.option [ HP.value name ] [ HH.text name ]
+                ]
           ]
       ]
     , state.mb_editor # foldMap \editor_el -> editor_el # runExistsEditor \editor ->
@@ -79,6 +83,6 @@ render state =
             { editor
             }
         ]
-    -- , HH.slot_ (Proxy @"Console") unit Console.component {}
+    , [ HH.slot_ (Proxy @"Console") unit Console.component {} ]
     ]
 

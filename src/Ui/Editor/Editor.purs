@@ -39,6 +39,7 @@ import Type.Prelude (Proxy(..))
 import Ui.Browser (navigator_clibpoard_writeText)
 import Ui.Editor.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, getBasicEditorState, getRoot)
 import Ui.Editor.Config as Config
+import Ui.Editor.Console.Messages as Console.Messages
 import Ui.Editor.Point as Point
 import Ui.Event (alt, cmd, keyEq, keyMember, keyRegex, not_alt, not_cmd, not_shift, shift)
 import Ui.Event (fromEventToKeyInfo, matchKeyInfoPattern') as Event
@@ -118,6 +119,7 @@ handleAction (KeyDown_EditorAction event) = do
   let ki = Event.fromEventToKeyInfo event
   when Config.log_keyInfo do
     Console.logShow { bufferIsOpen, keyInfo: ki }
+  liftEffect $ Console.Messages.push $ HH.text $ show { bufferIsOpen, keyInfo: ki }
 
   if bufferIsOpen then case unit of
     -- close buffer

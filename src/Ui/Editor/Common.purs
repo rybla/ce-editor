@@ -13,7 +13,7 @@ import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\))
-import Editor (Editor, ExistsEditor(..), Label(..), StampedLabel)
+import Editor (Editor, ExistsEditor, Label, StampedLabel)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
@@ -21,6 +21,7 @@ import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Halogen as H
+import Halogen.HTML (PlainHTML)
 import Web.Event.Event (Event)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -230,12 +231,18 @@ type ConsoleInput = {}
 
 type ConsoleOutput = Void
 
-type ConsoleState = {}
+type ConsoleState =
+  { messages :: Array { timestamp :: Number, content :: PlainHTML }
+  }
 
-data ConsoleAction = Initialize_ConsoleAction
+data ConsoleAction
+  = Initialize_ConsoleAction
+  | Tick_ConsoleAction
 
 type ConsoleSlots :: Row Type
-type ConsoleSlots = ()
+type ConsoleSlots =
+  ( "ConsoleItem" :: forall query output. H.Slot query output Number
+  )
 
 type ConsoleM = H.HalogenM ConsoleState ConsoleAction ConsoleSlots ConsoleOutput Aff
 
