@@ -18,7 +18,7 @@ import Data.String as String
 import Data.Traversable (sequence)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Data.Unfoldable (fromMaybe)
+import Data.Unfoldable (fromMaybe, none)
 import Editor.Common (Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, getId)
 import Effect.Class (liftEffect)
 import Effect.Unsafe (unsafePerformEffect)
@@ -168,7 +168,7 @@ tokens_punctuation key str = [ mk_token key [ "punctuation" ] (pure str) ]
 
 tokens_ghost key str = [ mk_token key [ "ghost" ] (pure str) ]
 
-tokens_break key = [ mk_token key [ "break", "ghost" ] (pure "⏎") ]
+tokens_break key = [ mk_token key [ "break", "ghost" ] none ]
 
 tokens_indentation n key =
   mk_token key [ "indentation", "ghost" ] (pure "│")
