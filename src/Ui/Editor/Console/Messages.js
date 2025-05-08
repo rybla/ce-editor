@@ -13,3 +13,4 @@ export const push_message = (content) => () => {
     messages.splice(0, length - max_messages);
   }
 };
+

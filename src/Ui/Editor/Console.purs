@@ -51,7 +51,6 @@ handleAction Tick_ConsoleAction = do
   timestamp <- Console.Messages.get_timestamp # liftEffect
   messages <- Console.Messages.get_messages # liftEffect
   when (state.timestamp /= timestamp) do
-    Console.log "[Console] rerender"
     modify_ _
       { messages = messages
       , timestamp = timestamp
