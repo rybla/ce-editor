@@ -12,7 +12,7 @@ import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Effect.Aff.Class (class MonadAff, liftAff)
+import Effect.Aff.Class (class MonadAff)
 import Halogen (ComponentHTML) as H
 import Halogen (liftEffect)
 import Halogen.HTML as HH
@@ -116,8 +116,9 @@ type DiagnosticsPanelSlots = ()
 
 --------------------------------------------------------------------------------
 
+-- TODO: probably don't need this anymore
 toEditCtx :: forall m c. MonadAff m => Editor c -> EditCtx m (Label c ()) (StampedLabel c ())
-toEditCtx (Editor editor) =
+toEditCtx (Editor _editor) =
   { stampLabel: stampLabel >>> liftEffect
   , unstampLabel
   }
