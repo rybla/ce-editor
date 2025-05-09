@@ -10,6 +10,7 @@ import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (and, fold)
 import Data.List (List(..), (:))
+import Data.Monoid (mempty)
 import Data.Newtype (wrap)
 import Data.Set as Set
 import Data.String as String
@@ -102,6 +103,7 @@ editor = Editor
   , stampLabel: \(Label l) -> do
       id <- freshId # liftEffect
       pure $ Label $ l `Record.merge` { id }
+  , getDiagnostics: mempty
   }
 
 assembleExpr :: forall r. AssembleExpr (Label C r)

@@ -8,10 +8,9 @@ import Control.Monad.Reader (ReaderT, ask)
 import Control.Monad.Trans.Class (lift)
 import Control.Plus (empty)
 import Data.Array as Array
-import Data.Diagnostic as Diagnostic
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
-import Data.Foldable (class Foldable, foldr, length)
+import Data.Foldable (class Foldable, fold, foldr, length)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.Lazy (Lazy)
@@ -29,7 +28,7 @@ import Data.Traversable (class Traversable, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple.Nested (type (/\), (/\))
 import Pretty (class Pretty, parens, pretty)
-import Utility (extractAt_Array, extractSpan_Array, impossible, spaces, todo)
+import Utility (extractAt_Array, extractSpan_Array, impossible, spaces)
 
 --------------------------------------------------------------------------------
 
@@ -210,6 +209,9 @@ offset_Span (Span es) = Index $ es # Array.length
 
 type Path = List Step
 
+fromPathToString :: Path -> String
+fromPathToString steps = steps # map (unwrap >>> show) # fold
+
 pretty_Path :: Path -> String
 pretty_Path steps = "[" <> (steps # map pretty # List.intercalate " ") <> "]"
 
@@ -267,6 +269,9 @@ instance Eq Point where
 
 instance Ord Point where
   compare x = genericCompare x
+
+fromPointToString :: Point -> String
+fromPointToString (Point p) = (p.path # fromPathToString) <> "." <> show p.j
 
 --------------------------------------------------------------------------------
 

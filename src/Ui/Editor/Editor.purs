@@ -7,7 +7,7 @@ import Control.Monad.Reader (runReaderT)
 import Control.Monad.State (get, modify, put)
 import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
-import Data.Expr (Edit, EditAt, Expr, Fragment(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), EditCtx, applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
+import Data.Expr (Edit, EditAt, EditCtx, Expr, Fragment(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, fromPointToString, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
@@ -36,8 +36,9 @@ import Halogen.Query.Event as HQE
 import Type.Prelude (Proxy(..))
 import Ui.Browser (navigator_clibpoard_writeText)
 import Ui.DiagnosticsPanel as DiagnosticsPanel
-import Ui.Editor.Common (BufferOutput(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, getBasicEditorState, getRoot)
+import Ui.Editor.Common (BufferOutput(..), DiagnosticsPanelQuery(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, getBasicEditorState, getBasicEditorState_safe, getRoot)
 import Ui.Editor.Config as Config
+import Ui.Editor.Console.Messages as Console.Messages
 import Ui.Editor.Console.Messages as Console.Messages
 import Ui.Editor.Point as Point
 import Ui.Event (alt, cmd, keyEq, keyMember, keyRegex, not_alt, not_cmd, not_shift, shift)
@@ -447,11 +448,20 @@ setHandle mb_handle = setHandle' $ pure mb_handle
 -- | note that this DOES NOT reset ref_mb_dragOrigin.
 setHandle' :: forall c. EditorM c (Maybe Handle) -> EditorM c Unit
 setHandle' m_mb_handle = do
-  state <- get
+  state@{ editor: Editor editor } <- get
   mb_handle_old <- liftEffect $ Ref.read state.ref_mb_handle
   modifyHandle false mb_handle_old
   mb_handle_new <- m_mb_handle
   modifyHandle true mb_handle_new
+
+  getBasicEditorState_safe >>= case _ of
+    Nothing -> pure unit
+    Just basic_state -> do
+      liftEffect $ Console.Messages.push_message $ HH.text "getting diagnostics"
+      let diagnostics = editor.getDiagnostics basic_state
+      H.tell (Proxy @"DiagnosticsPanel") unit $ SetDiagnostics_DiagnosticsPanelQuery diagnostics
+      pure unit
+
   liftEffect $ state.ref_mb_handle := mb_handle_new
 
 modifyHandle :: forall c. Boolean -> Maybe Handle -> EditorM c Unit
@@ -560,7 +570,8 @@ renderStampedExpr (Editor editor) path expr = do
     path
     expr
   where
-  renderPoint _ label point@(Point { j }) =
-    ((label # getId) <> "_point_" <> show j) /\
+  renderPoint _ _label point =
+    -- ((label # getId) <> "_point_" <> show j) /\
+    (fromPointToString point) /\
       HH.slot (Proxy @"Point") point Point.component { editor: Editor editor, point } PointOutput_EditorAction
 

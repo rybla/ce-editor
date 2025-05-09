@@ -2,24 +2,22 @@ module Editor.Common where
 
 import Prelude
 
-import Control.Monad.Reader (ReaderT, ask)
-import Control.Monad.Trans.Class (lift)
+import Control.Monad.Writer (Writer)
 import Data.Array as Array
-import Data.Diagnostic as Diagnostic
 import Data.Expr (BasicEditorState, Edit, EditM, EditMenu, Expr, Handle, EditCtx)
 import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (fold)
-import Data.Maybe (Maybe, fromMaybe)
-import Data.Traversable (class Traversable, traverse)
+import Data.Maybe (fromMaybe)
+import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
+import Halogen (ComponentHTML) as H
 import Halogen.HTML as HH
 import Record as Record
 import Type.Prelude (Proxy(..))
 import Ui.Event (KeyInfo)
 import Ui.Halogen (classes)
-import Utility (todo)
 
 --------------------------------------------------------------------------------
 
@@ -79,6 +77,8 @@ data Editor c = Editor
   -- processing
   , stampLabel :: Label c () -> Aff (StampedLabel c ())
   , assembleExpr :: AssembleExpr (StampedLabel c ())
+  -- diagnostics
+  , getDiagnostics :: BasicEditorState (Label c ()) (StampedLabel c ()) -> Array Diagnostic
   -- printing
   , printExpr :: forall r. Expr (Label c r) -> String
   }
@@ -91,6 +91,20 @@ mkExistsEditor a = ExistsEditor \k -> k a
 
 runExistsEditor :: forall r. ExistsEditorK r -> ExistsEditor -> r
 runExistsEditor k1 (ExistsEditor k2) = k2 k1
+
+--------------------------------------------------------------------------------
+
+data Diagnostic = Diagnostic
+  { title :: String
+  , content :: DiagnosticsPanelHTML
+  }
+
+type DiagnosticsPanelHTML = H.ComponentHTML DiagnosticsPanelAction DiagnosticsPanelSlots Aff
+
+data DiagnosticsPanelAction = Initialize_DiagnosticsPanelAction
+
+type DiagnosticsPanelSlots :: Row Type
+type DiagnosticsPanelSlots = ()
 
 --------------------------------------------------------------------------------
 

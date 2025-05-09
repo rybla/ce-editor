@@ -3,10 +3,13 @@ module Data.Expr.Render where
 import Prelude
 
 import Control.Monad.Reader (Reader, runReader)
-import Data.Expr (Expr(..), ExprContext(..), Fragment(..), Path, Point(..), Span(..), SpanContext(..), SpanTooth(..), Tooth(..), Zipper(..), mapIndexes, mapIndexes_SpanTooth, mapIndexes_Tooth, mapStepsAndKids, mapStepsAndKids_SpanTooth, mapStepsAndKids_Tooth)
-import Data.Foldable (fold, length)
+import Data.Expr (Expr(..), ExprContext(..), Fragment(..), Path, Point(..), Span(..), SpanContext(..), SpanTooth(..), Step(..), Tooth(..), Zipper(..), mapIndexes, mapIndexes_SpanTooth, mapIndexes_Tooth, mapStepsAndKids, mapStepsAndKids_SpanTooth, mapStepsAndKids_Tooth)
+import Data.Foldable (fold, intercalate, length)
+import Data.FoldableWithIndex (foldMapWithIndex)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..), (:))
 import Data.List as List
+import Data.Traversable (sequence)
 import Data.Tuple.Nested (type (/\), (/\))
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
@@ -27,7 +30,8 @@ type KeyHTML w i = String /\ HTML w i
 
 type AssembleExpr l =
   forall w i
-   . { label :: l
+   . { path :: Path
+     , label :: l
      , kids :: Array (RenderM (Array (KeyHTML w i)))
      , points :: Array (KeyHTML w i)
      }
@@ -42,7 +46,8 @@ type RenderArgs l w i =
 renderExpr :: forall l w i. Show l => RenderArgs l w i -> Path -> Expr l -> RenderM (Array (KeyHTML w i))
 renderExpr { renderKid, renderPoint, assembleExpr } path (Expr e) =
   assembleExpr
-    { label: e.l
+    { path
+    , label: e.l
     , kids: Expr e # mapStepsAndKids (\i expr' -> renderKid (path `List.snoc` i) expr')
     , points: Expr e # mapIndexes \j -> renderPoint e.l (Point { path, j })
     }
@@ -53,7 +58,10 @@ renderExpr { renderKid, renderPoint, assembleExpr } path (Expr e) =
 -- -- render interactive elements into the stuff anyway
 
 renderSpan :: forall l w i. Show l => RenderArgs l w i -> Path -> Span l -> RenderM (Array (KeyHTML w i))
-renderSpan args path (Span exprs) = exprs # map (renderExpr args path) # fold
+renderSpan args path (Span exprs) =
+  exprs
+    # mapWithIndex (\i kid -> renderExpr args (path `List.snoc` Step i) kid)
+    # fold -- TODO intercalate points between items 
 
 renderZipper :: forall l w i. Show l => RenderArgs l w i -> Path -> Zipper l -> Array (RenderM (Array (KeyHTML w i))) -> RenderM (Array (KeyHTML w i))
 renderZipper args path (Zipper z) inside = fold $
@@ -65,7 +73,8 @@ renderZipper args path (Zipper z) inside = fold $
 renderTooth :: forall l w i. Show l => RenderArgs l w i -> Path -> Tooth l -> RenderM (Array (KeyHTML w i)) -> RenderM (Array (KeyHTML w i))
 renderTooth args path (Tooth t) inside =
   args.assembleExpr
-    { label: t.l
+    { path
+    , label: t.l
     , kids: Tooth t # mapStepsAndKids_Tooth (\i expr' -> args.renderKid (path `List.snoc` i) expr') inside
     , points: Tooth t # mapIndexes_Tooth (\j -> args.renderPoint t.l (Point { path: path, j }))
     }
@@ -73,7 +82,8 @@ renderTooth args path (Tooth t) inside =
 renderSpanTooth :: forall l w i. Show l => RenderArgs l w i -> Path -> SpanTooth l -> Array (RenderM (Array (KeyHTML w i))) -> RenderM (Array (KeyHTML w i))
 renderSpanTooth args path (SpanTooth st) inside =
   args.assembleExpr
-    { label: st.l
+    { path
+    , label: st.l
     , kids: SpanTooth st # mapStepsAndKids_SpanTooth (\i expr' -> args.renderKid (path `List.snoc` i) expr') inside
     , points: SpanTooth st # mapIndexes_SpanTooth (inside # length) (\j -> args.renderPoint st.l (Point { path: path, j }))
     }

@@ -87,6 +87,7 @@ editor = Editor
   , stampLabel: \(Label l) -> do
       id <- freshId # liftEffect
       pure $ Label $ l `Record.merge` { id }
+  , getDiagnostics: mempty
   }
 
 assembleExpr :: forall r. AssembleExpr (Label C r)

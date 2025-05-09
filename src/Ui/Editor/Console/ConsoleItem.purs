@@ -35,5 +35,7 @@ component = H.mkComponent { initialState, eval, render }
 
   render state =
     HH.div [ HP.ref refLabel_this, classes [ "item" ] ]
-      [ state.item.content # fromPlainHTML ]
+      [ HH.text $ show state.item.timestamp <> " "
+      , state.item.content # fromPlainHTML
+      ]
 

@@ -4,6 +4,7 @@ import Prelude
 
 import Control.Monad.State (get, gets, modify_, put)
 import Data.Array as Array
+import Data.Expr (fromPointToString)
 import Data.Foldable (foldMap)
 import Data.Lens ((%=))
 import Data.Maybe (Maybe(..))
@@ -87,6 +88,7 @@ render :: forall l. Show l => PointState l -> PointHTML l
 render state =
   HH.div
     [ HP.ref refLabel_point
+    , HP.id (state.point # fromPointToString)
     , classes $ Array.fold
         [ [ "Point" ]
         , state.statuses # Set.toUnfoldable # map show

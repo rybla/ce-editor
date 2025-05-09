@@ -2,8 +2,6 @@
 
 Priority:
 
-- [ ] fix bug in pasting since i think i messed something up in how stamping the clipboard works such that it doesn't re-stamp before inserting into program
-
 - [ ] create interface for specific Editors to add annotations to rendered output
   - to keep things simple, these annotations will be re-computed every time you make a change
 
@@ -33,6 +31,7 @@ Debatable:
 
 Done:
 
+- [x] BUG: in pasting i think i messed something up in how stamping the clipboard works such that it doesn't re-stamp before inserting into program
 - [x] IDEA: make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
   - [x] give renderPoint the appropriate inputs so that it can key properly
   - [x] dont actually need to render non-stamped stuff, right? but i have to decide how to handle that in the case of rendering the preview in an edit. i probabvly need to go back to it stamping stuff on initialization

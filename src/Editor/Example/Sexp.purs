@@ -3,11 +3,12 @@ module Editor.Example.Sexp where
 import Prelude
 
 import Control.Alternative (empty)
-import Control.Monad.Reader (ask, local)
+import Control.Monad.Reader (ask, local, runReader)
 import Data.Array as Array
-import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
+import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
-import Data.Expr.Render (AssembleExpr)
+import Data.Expr.Render (AssembleExpr, RenderArgs)
+import Data.Expr.Render as Expr.Render
 import Data.Foldable (and, fold)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..))
@@ -19,14 +20,16 @@ import Data.Traversable (sequence)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
-import Editor.Common (Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, getId)
+import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, getId)
 import Effect.Class (liftEffect)
 import Halogen.HTML as HH
+import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Properties (id) as HP
 import Record as Record
 import Ui.Editor.Id (freshId)
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
+import Utility (collapse)
 
 newtype C = C String
 
@@ -92,7 +95,7 @@ editor = Editor
         ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
           where
           p = getEndPoints_ZipperH zh
-  , assembleExpr
+  , assembleExpr: assembleStampedExpr
   , printExpr:
       let
         f = case _ of
@@ -107,12 +110,31 @@ editor = Editor
   , stampLabel: \(Label l) -> do
       id <- freshId # liftEffect
       pure $ Label $ l `Record.merge` { id }
+  , getDiagnostics: \state -> collapse
+      [ state.clipboard <#> \frag ->
+          Diagnostic
+            { title: "Clipboard"
+            , content:
+                HHK.div [ classes [ "Expr" ] ] $
+                  frag
+                    # Expr.Render.renderFragment (renderArgs assembleExpr) none
+                    # flip runReader
+                        { indentLevel: 0
+                        }
+            }
+
+      ]
   }
 
-assembleExpr :: forall r. AssembleExpr (StampedLabel C r)
-assembleExpr args = do
+assembleStampedExpr :: forall r. AssembleExpr (StampedLabel C r)
+assembleStampedExpr args = assembleExpr_helper (args.label # getId) args
+
+assembleExpr :: forall r. AssembleExpr (Label C r)
+assembleExpr args = assembleExpr_helper (args.path # show) args
+
+assembleExpr_helper :: forall r. String -> AssembleExpr (Label C r)
+assembleExpr_helper id args = do
   ctx <- ask
-  let id = args.label # getId
   case (args.label # getCon) /\ args.points /\ args.kids of
     C "Root" /\ ps /\ ks -> do
       ks' <- ks # sequence
@@ -139,6 +161,20 @@ assembleExpr args = do
         [ tokens_literal id literal
         ]
     C _ /\ _ /\ _ -> assembleExpr_default args
+
+renderArgs :: forall r w i. AssembleExpr (Label C r) -> RenderArgs (Label C r) w i
+renderArgs assembleExpr' =
+  { renderKid
+  , renderPoint
+  , assembleExpr: assembleExpr'
+  }
+  where
+  renderKid path expr = Expr.Render.renderExpr (renderArgs assembleExpr') path expr
+
+  renderPoint _label p =
+    fromPointToString p /\
+      HH.div [ classes [ "Point" ], HP.id (fromPointToString p) ]
+        [ HH.text " " ]
 
 expr_LineBreak = C "LineBreak" % []
 

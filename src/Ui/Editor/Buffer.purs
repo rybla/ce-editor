@@ -209,14 +209,14 @@ render state =
 
 renderArgs :: forall c w i. Show c => Editor c -> RenderArgs (StampedLabel c ()) w i
 renderArgs (Editor editor) =
-  { renderKid: renderExpr (Editor editor)
-  , renderPoint: renderPoint (Editor editor)
+  { renderKid
+  , renderPoint
   , assembleExpr: editor.assembleExpr
   }
   where
-  renderExpr editor' path expr = Expr.Render.renderExpr (renderArgs editor') path expr
+  renderKid path expr = Expr.Render.renderExpr (renderArgs (Editor editor)) path expr
 
-  renderPoint _ label (Point { j }) =
-    ((label # getId) <> "_point_" <> show j) /\
+  renderPoint _label p =
+    show p /\
       HH.div [ classes [ "Point" ] ] [ HH.text " " ]
 

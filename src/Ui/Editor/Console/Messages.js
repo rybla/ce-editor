@@ -1,13 +1,13 @@
 const max_messages = 100;
 const messages = [];
-var timestamp = Date.now();
+var timestamp = 0;
 
 export const get_messages = () => messages;
 
 export const get_timestamp = () => timestamp;
 
 export const push_message = (content) => () => {
-  timestamp = Date.now();
+  timestamp++;
   const length = messages.push({ timestamp, content })
   if (length > max_messages) {
     messages.splice(0, length - max_messages);

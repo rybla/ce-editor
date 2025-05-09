@@ -13,7 +13,7 @@ import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\))
-import Editor (Editor, ExistsEditor, Label, StampedLabel)
+import Editor (Diagnostic, DiagnosticsPanelAction, DiagnosticsPanelSlots, Editor, ExistsEditor, Label, StampedLabel)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
@@ -78,25 +78,30 @@ type EditorState c =
   , ref_future :: Ref (List (Snapshot c))
   }
 
+getBasicEditorState_safe :: forall c. EditorM c (Maybe (BasicEditorState (Label c ()) (StampedLabel c ())))
+getBasicEditorState_safe = do
+  state <- get
+  case state.mb_root of
+    Nothing -> pure Nothing
+    Just root -> do
+      mb_handle <- state.ref_mb_handle # Ref.read # liftEffect
+      pure $ Just
+        { root
+        , mb_handle
+        , clipboard: state.clipboard
+        }
+
 getBasicEditorState :: forall c. EditorM c (BasicEditorState (Label c ()) (StampedLabel c ()))
-getBasicEditorState = get >>= toBasicEditorState >>> liftEffect
+getBasicEditorState = getBasicEditorState_safe >>= case _ of
+  Nothing -> liftEffect $ throw "root not loaded yet"
+  Just state -> pure state
 
 getRoot :: forall c. EditorM c (Expr (StampedLabel c ()))
-getRoot = get >>= \state -> case state.mb_root of
-  Nothing -> liftEffect $ throw "root not loaded yet"
-  Just root -> pure root
-
-toBasicEditorState :: forall c. EditorState c -> Effect (BasicEditorState (Label c ()) (StampedLabel c ()))
-toBasicEditorState state = do
-  root <- case state.mb_root of
-    Nothing -> throw "root not loaded yet"
+getRoot = do
+  state <- get
+  case state.mb_root of
+    Nothing -> liftEffect $ throw "root not loaded yet"
     Just root -> pure root
-  mb_handle <- state.ref_mb_handle # Ref.read
-  pure
-    { root
-    , mb_handle
-    , clipboard: state.clipboard
-    }
 
 type Snapshot c =
   { root :: Expr (StampedLabel c ())
@@ -225,25 +230,18 @@ type BufferHTML c = H.ComponentHTML (BufferAction c) BufferSlots Aff
 -- Console
 --------------------------------------------------------------------------------
 
-type DiagnosticsPanelQuery :: Type -> Type
-type DiagnosticsPanelQuery = Const Void
+data DiagnosticsPanelQuery a =
+  SetDiagnostics_DiagnosticsPanelQuery (Array Diagnostic) a
 
 type DiagnosticsPanelInput = {}
 
 type DiagnosticsPanelOutput = Void
 
-type DiagnosticsPanelState = {}
-
-data DiagnosticsPanelAction = Initialize_DiagnosticsPanelAction
-
-type DiagnosticsPanelSlots :: Row Type
-type DiagnosticsPanelSlots = ()
+type DiagnosticsPanelState =
+  { diagnostics :: Array Diagnostic
+  }
 
 type DiagnosticsPanelM = H.HalogenM DiagnosticsPanelState DiagnosticsPanelAction DiagnosticsPanelSlots DiagnosticsPanelOutput Aff
-
-type DiagnosticsPanelHTML = H.ComponentHTML DiagnosticsPanelAction DiagnosticsPanelSlots Aff
-
--- data Diagnostic = Diagnostic DiagnosticHTML
 
 --------------------------------------------------------------------------------
 -- Console
