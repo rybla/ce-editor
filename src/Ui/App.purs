@@ -10,8 +10,8 @@ import Data.Maybe (fromMaybe')
 import Data.Tuple.Nested ((/\))
 import Editor (Editor(..), ExistsEditor, mkExistsEditor, runExistsEditor)
 import Editor.Example.Sexp as Editor.Example.Sexp
-import Editor.Example.UlcV0 as Editor.Example.UlcV0
-import Editor.Example.UlcV1 as Editor.Example.UlcV1
+-- import Editor.Example.UlcV0 as Editor.Example.UlcV0
+-- import Editor.Example.UlcV1 as Editor.Example.UlcV1
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
@@ -35,8 +35,8 @@ editorsMenu =
   where
   editors =
     [ mkExistsEditor Editor.Example.Sexp.editor
-    , mkExistsEditor Editor.Example.UlcV0.editor
-    , mkExistsEditor Editor.Example.UlcV1.editor
+    -- , mkExistsEditor Editor.Example.UlcV0.editor
+    -- , mkExistsEditor Editor.Example.UlcV1.editor
     ]
 
 defaultEditor = mkExistsEditor Editor.Example.Sexp.editor

@@ -815,6 +815,13 @@ type BasicEditorState l1 l2 =
   , clipboard :: Maybe (Fragment l1)
   }
 
+mapLabel_BasicEditorState :: forall l1 l2 l2'. (l2 -> l2') -> BasicEditorState l1 l2 -> BasicEditorState l1 l2'
+mapLabel_BasicEditorState f state =
+  { root: state.root # map f
+  , mb_handle: state.mb_handle
+  , clipboard: state.clipboard
+  }
+
 --------------------------------------------------------------------------------
 -- Utilities
 --------------------------------------------------------------------------------

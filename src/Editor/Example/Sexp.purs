@@ -5,7 +5,7 @@ import Prelude
 import Control.Alternative (empty)
 import Control.Monad.Reader (ask, local, runReader)
 import Data.Array as Array
-import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
+import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mapLabel_BasicEditorState, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (AssembleExpr, RenderArgs)
 import Data.Expr.Render as Expr.Render
@@ -20,16 +20,17 @@ import Data.Traversable (sequence, traverse)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
-import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, annotateExpr_default, annotation_default, assembleExpr_default, getCon, getId, mapLabel)
+import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, AnnotatedLabel, annotateExpr_default, annotation_default, assembleExpr_default, getCon, getId, mapLabel)
 import Effect.Class (liftEffect)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Properties (id) as HP
 import Record as Record
+import Type.Prelude (Proxy(..))
 import Ui.Editor.Id (freshId)
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse)
+import Utility (collapse, todo)
 
 newtype C = C String
 
@@ -96,7 +97,7 @@ editor = Editor
           where
           p = getEndPoints_ZipperH zh
   , assembleStampedExpr
-  , assembleAnnotatedExpr: assembleExpr_default
+  , assembleAnnotatedExpr
   , printExpr:
       let
         f = case _ of
@@ -105,7 +106,6 @@ editor = Editor
           Expr { l: Label { con: C "Group" }, kids } -> "(" <> (kids # map f # String.joinWith " ") <> ")"
           Expr { l: Label { con: C "LineBreak" }, kids: [] } -> "\n"
           Expr _ -> "unimplemented"
-
       in
         f
   , getDiagnostics: \state -> collapse
@@ -120,10 +120,12 @@ editor = Editor
                         { indentLevel: 0
                         }
             }
-
       ]
   , annotateExpr: annotateExpr_default
   }
+
+assembleAnnotatedExpr :: forall r. AssembleExpr (AnnotatedLabel C r)
+assembleAnnotatedExpr args = assembleExpr_helper (args.label # getId) args
 
 assembleStampedExpr :: forall r. AssembleExpr (StampedLabel C r)
 assembleStampedExpr args = assembleExpr_helper (args.label # getId) args

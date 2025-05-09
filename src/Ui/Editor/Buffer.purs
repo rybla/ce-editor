@@ -19,7 +19,7 @@ import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..), StampedLabel, getId, toEditCtx)
+import Editor (AnnotatedLabel, Editor(..), StampedLabel, annotation_default, getId, mkEditCtx)
 import Effect.Aff (Aff)
 import Effect.Exception (throw)
 import Halogen (liftEffect)
@@ -29,6 +29,7 @@ import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
+import Record as Record
 import Ui.Editor.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, BufferOutput(..), BufferQuery, BufferState, BufferSlots)
 import Ui.Editor.Config as Config
 import Ui.Editor.Console.Messages as Console.Messages
@@ -146,7 +147,12 @@ setQuery :: forall l. String -> BufferM l Unit
 setQuery query = do
   state <- get
   mb_menu_queried <- state.menu query
-    # flip runReaderT (state.editor # toEditCtx)
+    # flip runReaderT
+        ( mkEditCtx
+            (\{ con } -> { con })
+            (\{ con } -> { con })
+            state.editor
+        )
     # runMaybeT
     # lift
   case mb_menu_queried of
@@ -193,7 +199,7 @@ render state =
                 Edit { info: Insert_EditInfo info } ->
                   [ HHK.div [ classes [ "Expr" ] ] $
                       info.insertion
-                        # renderFragment (renderArgs state.editor) (state.point # unwrap).path
+                        # renderFragment (renderStampedArgs state.editor) (state.point # unwrap).path
                         # flip runReader
                             { indentLevel: 0
                             }
@@ -207,14 +213,27 @@ render state =
 
     ]
 
-renderArgs :: forall c w i. Show c => Editor c -> RenderArgs (StampedLabel c ()) w i
-renderArgs (Editor editor) =
+renderAnnotatedArgs :: forall c w i. Show c => Editor c -> RenderArgs (AnnotatedLabel c ()) w i
+renderAnnotatedArgs (Editor editor) =
+  { renderKid
+  , renderPoint
+  , assembleExpr: editor.assembleAnnotatedExpr
+  }
+  where
+  renderKid path expr = Expr.Render.renderExpr (renderAnnotatedArgs (Editor editor)) path expr
+
+  renderPoint _label p =
+    show p /\
+      HH.div [ classes [ "Point" ] ] [ HH.text " " ]
+
+renderStampedArgs :: forall c w i. Show c => Editor c -> RenderArgs (StampedLabel c ()) w i
+renderStampedArgs (Editor editor) =
   { renderKid
   , renderPoint
   , assembleExpr: editor.assembleStampedExpr
   }
   where
-  renderKid path expr = Expr.Render.renderExpr (renderArgs (Editor editor)) path expr
+  renderKid path expr = Expr.Render.renderExpr (renderStampedArgs (Editor editor)) path expr
 
   renderPoint _label p =
     show p /\

@@ -18,6 +18,7 @@ import Halogen (ComponentHTML) as H
 import Halogen (liftEffect)
 import Halogen.HTML (PlainHTML)
 import Halogen.HTML as HH
+import Prim.Row (class Lacks, class Nub)
 import Record as Record
 import Type.Prelude (Proxy(..))
 import Ui.Event (KeyInfo)
@@ -39,6 +40,8 @@ instance Ord c => Ord (Label c r) where
 mapLabel :: forall c r c' r'. (Record (BaseLabelRow c r) -> Record (BaseLabelRow c' r')) -> Label c r -> Label c' r'
 mapLabel f (Label l) = Label $ f l
 
+--------------------------------------------------------------------------------
+
 type BaseLabelRow (c :: Type) r =
   ( con :: c
   | r
@@ -46,6 +49,8 @@ type BaseLabelRow (c :: Type) r =
 
 getCon :: forall c r. Label c r -> c
 getCon (Label { con }) = con
+
+--------------------------------------------------------------------------------
 
 type StampedLabel c r = Label c (StampedLabelRow r)
 
@@ -56,6 +61,17 @@ type StampedLabelRow r =
 
 getId :: forall c r. StampedLabel c r -> String
 getId (Label { id }) = id
+
+stampLabel
+  :: forall c rA rB
+   . (Record (BaseLabelRow c rA) -> Record (BaseLabelRow c rB))
+  -> Label c rA
+  -> Effect (StampedLabel c rB)
+stampLabel f = \(Label l) -> do
+  id <- Id.fresh # liftEffect
+  pure $ Label $ Record.union { id } (f l)
+
+--------------------------------------------------------------------------------
 
 type AnnotatedLabel c r = StampedLabel c (AnnotatedLabelRow r)
 
@@ -73,18 +89,16 @@ annotation_default =
   { info: none
   }
 
-annotateExpr_default :: forall c. Expr (StampedLabel c ()) -> Aff (Expr (AnnotatedLabel c ()))
+annotateExpr_default :: forall c r. Expr (StampedLabel c r) -> Aff (Expr (AnnotatedLabel c r))
 annotateExpr_default =
-  traverse
-    ( pure <<< mapLabel
-        \{ con, id } ->
-          { con
-          , id
-          , ann: annotation_default
-          }
-    )
+  traverse \(Label l) ->
+    pure $ Label $ Record.union { ann: annotation_default } l
 
 --------------------------------------------------------------------------------
+
+-- TODO: when getting edits, should probably get an annotated expression so can
+-- take types into account. this probably involves making Edit parametrized by
+-- all 3 labels.
 
 data Editor c = Editor
   { name :: String
@@ -109,8 +123,8 @@ data Editor c = Editor
   , assembleStampedExpr :: AssembleExpr (StampedLabel c ())
   , assembleAnnotatedExpr :: AssembleExpr (AnnotatedLabel c ())
   -- diagnostics
-  , getDiagnostics :: BasicEditorState (Label c ()) (StampedLabel c ()) -> Array Diagnostic
-  , annotateExpr :: Expr (StampedLabel c ()) -> Aff (Expr (AnnotatedLabel c ()))
+  , getDiagnostics :: forall r1 r2. BasicEditorState (Label c r1) (AnnotatedLabel c r2) -> Array Diagnostic
+  , annotateExpr :: forall r. Expr (StampedLabel c r) -> Aff (Expr (AnnotatedLabel c r))
   -- printing
   , printExpr :: forall r. Expr (Label c r) -> String
   }
@@ -123,13 +137,6 @@ mkExistsEditor a = ExistsEditor \k -> k a
 
 runExistsEditor :: forall r. ExistsEditorK r -> ExistsEditor -> r
 runExistsEditor k1 (ExistsEditor k2) = k2 k1
-
---------------------------------------------------------------------------------
-
-stampLabel :: forall c. Label c () -> Effect (StampedLabel c ())
-stampLabel (Label l) = do
-  id <- Id.fresh
-  pure $ Label { con: l.con, id }
 
 --------------------------------------------------------------------------------
 
@@ -147,15 +154,17 @@ type DiagnosticsPanelSlots = ()
 
 --------------------------------------------------------------------------------
 
--- TODO: probably don't need this anymore
-toEditCtx :: forall m c. MonadAff m => Editor c -> EditCtx m (Label c ()) (StampedLabel c ())
-toEditCtx (Editor _editor) =
-  { stampLabel: stampLabel >>> liftEffect
-  , unstampLabel
+mkEditCtx
+  :: forall m c rA rB
+   . MonadAff m
+  => (Record (BaseLabelRow c rA) -> Record (BaseLabelRow c rB))
+  -> (Record (BaseLabelRow c (StampedLabelRow rB)) -> Record (BaseLabelRow c rA))
+  -> Editor c
+  -> EditCtx m (Label c rA) (StampedLabel c rB)
+mkEditCtx f g (Editor _editor) =
+  { stampLabel: stampLabel f >>> liftEffect
+  , unstampLabel: \(Label l) -> Label $ g l
   }
-
-unstampLabel :: forall c. StampedLabel c () -> Label c ()
-unstampLabel (Label l) = Label (l # Record.delete (Proxy @"id"))
 
 --------------------------------------------------------------------------------
 

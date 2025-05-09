@@ -8,7 +8,7 @@ import Control.Monad.State (get, modify, put)
 import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
 import Data.Either (either)
-import Data.Expr (Edit, EditAt, EditCtx, Expr, Fragment(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, fromPointToString, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
+import Data.Expr (Edit, EditAt, Expr, Fragment(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), EditCtx, applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, mapLabel_BasicEditorState, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
@@ -24,9 +24,11 @@ import Data.String as String
 import Data.Traversable (traverse)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..), Label, StampedLabel, getId, stampLabel, toEditCtx)
+import Editor (AnnotatedLabel, Editor(..), Label, StampedLabel, getId, mapLabel)
+import Editor as Editor
+import Editor.Common (stampLabel)
 import Effect.Aff (Aff)
-import Effect.Aff.Class (class MonadAff)
+import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (liftEffect)
 import Effect.Ref as Ref
 import Effect.Unsafe (unsafePerformEffect)
@@ -34,19 +36,19 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.Query.Event as HQE
+import Prim.Row (class Lacks)
+import Record as Record
 import Type.Prelude (Proxy(..))
 import Ui.Browser (navigator_clibpoard_writeText)
 import Ui.DiagnosticsPanel as DiagnosticsPanel
-import Ui.Editor.Common (BufferOutput(..), DiagnosticsPanelQuery(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, getBasicEditorState, getBasicEditorState_safe, getRoot)
+import Ui.Editor.Common (BufferOutput(..), DiagnosticsPanelQuery(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, getBasicEditorState_annotated, getBasicEditorState_safe, getBasicEditorState_stamped, getRoot)
 import Ui.Editor.Config as Config
 import Ui.Editor.Console.Messages as Console.Messages
-import Ui.Editor.Console.Messages as Console.Messages
 import Ui.Editor.Point as Point
-import Ui.Event (alt, cmd, keyEq, keyMember, keyRegex, not_alt, not_cmd, not_shift, shift)
-import Ui.Event (fromEventToKeyInfo, matchKeyInfoPattern') as Event
+import Ui.Event (alt, cmd, fromEventToKeyInfo, keyEq, keyMember, keyRegex, matchKeyInfoPattern', not_alt, not_cmd, not_shift, shift)
 import Ui.Halogen (classes)
-import Utility (guardPure, isNonSpace_regex, (:%=), (:=))
-import Web.Event.Event (preventDefault) as Event
+import Utility (guardPure, isNonSpace_regex, todo, (:%=), (:=))
+import Web.Event.Event (preventDefault) as Web.Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument
 import Web.HTML.Window as HTML.Window
@@ -62,7 +64,7 @@ component = H.mkComponent { initialState, eval, render }
 --------------------------------------------------------------------------------
 
 initialState :: forall c. EditorInput c -> EditorState c
-initialState _input@{ editor: Editor editor } =
+initialState input =
   { editor: Editor editor
   , mb_root: none
   , initial_mb_handle
@@ -73,7 +75,23 @@ initialState _input@{ editor: Editor editor } =
   , ref_future: unsafePerformEffect do Ref.new none
   }
   where
+  Editor editor = input.editor
   initial_mb_handle = none
+
+-- TODO: use this style for all things that use `{ editor: Editor editor } <- get`
+
+annotateExpr :: forall c r. Expr (StampedLabel c r) -> EditorM c (Expr (AnnotatedLabel c r))
+annotateExpr e = do
+  { editor: Editor editor } <- get
+  editor.annotateExpr e # liftAff
+
+getEditCtx :: forall m c r. Lacks "id" r => MonadAff m => EditorM c (EditCtx m (Label c r) (StampedLabel c r))
+getEditCtx = do
+  state <- get
+  pure $ Editor.mkEditCtx
+    (\r -> r)
+    (\r -> r # Record.delete (Proxy @"id"))
+    state.editor
 
 --------------------------------------------------------------------------------
 -- eval
@@ -96,12 +114,18 @@ handleAction Initialize_EditorAction = do
   H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< KeyDown_EditorAction
 
   state@{ editor: Editor editor } <- get
-  root <- editor.initialExpr # traverse stampLabel # liftEffect
+  root <- editor.initialExpr
+    # traverse (stampLabel (\r -> r))
+    # liftEffect
+    >>= annotateExpr
   put $ state { mb_root = pure root }
 
 handleAction (Receive_EditorAction input) = do
   let state@{ editor: Editor editor } = initialState input
-  root <- editor.initialExpr # traverse stampLabel # liftEffect
+  root <- editor.initialExpr
+    # traverse (stampLabel (\r -> r))
+    # liftEffect
+    >>= annotateExpr
   put $ state { mb_root = pure root }
 
 handleAction (MouseUp_EditorAction _event) = do
@@ -111,38 +135,39 @@ handleAction (MouseUp_EditorAction _event) = do
 handleAction (KeyDown_EditorAction event) = do
   state@{ editor: Editor editor } <- get
   root <- getRoot
-  purestate <- getBasicEditorState
   mb_handle <- liftEffect $ Ref.read state.ref_mb_handle
   mb_dragOrigin <- liftEffect $ Ref.read state.ref_mb_dragOrigin
   bufferIsOpen <- case mb_handle of
     Nothing -> pure false
     Just handle -> isJust <<< join <$> H.request (Proxy @"Point") (handle # getFocusPoint) GetBufferInput_PointQuery
-  let ki = Event.fromEventToKeyInfo event
+  let ki = fromEventToKeyInfo event
   when Config.log_keyInfo do
     liftEffect $ Console.Messages.push_message $ HH.text $ "[Editor] " <> show { keyInfo: ki }
 
   if bufferIsOpen then case unit of
     -- close buffer
-    _ | ki # Event.matchKeyInfoPattern' [ keyEq "Escape", not_cmd, not_shift, not_alt ] -> do
-      liftEffect $ event # Event.preventDefault
+    _ | ki # matchKeyInfoPattern' [ keyEq "Escape", not_cmd, not_shift, not_alt ] -> do
+      liftEffect $ event # Web.Event.preventDefault
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
           H.tell (Proxy @"Point") (handle # getFocusPoint) $ SetBufferInput_PointQuery none
     _ -> pure unit
   else do
+    purestate <- getBasicEditorState_stamped
+    editCtx <- getEditCtx
     mb_edit_shortcut <- editor.getShortcut ki purestate
-      # flip runReaderT (state.editor # toEditCtx)
+      # flip runReaderT editCtx
       # runMaybeT
       # lift
     case unit of
       -- shortcut
       _ | Just edit <- mb_edit_shortcut -> do
-        liftEffect $ event # Event.preventDefault
+        liftEffect $ event # Web.Event.preventDefault
         submitEdit edit
       -- move
       _ | Just dir <- ki # Expr.Move.fromKeyInfoToMoveDir -> do
-        liftEffect $ event # Event.preventDefault
+        liftEffect $ event # Web.Event.preventDefault
         case mb_handle of
           Nothing -> do
             liftEffect $ state.ref_mb_dragOrigin := none
@@ -160,7 +185,7 @@ handleAction (KeyDown_EditorAction event) = do
                 setHandle (Just handle')
       -- drag move
       _ | Just dir <- Expr.Move.fromKeyInfoToDragMoveDir ki -> do
-        liftEffect $ event # Event.preventDefault
+        liftEffect $ event # Web.Event.preventDefault
         case mb_handle of
           Nothing -> do
             -- initialize dragOrigin
@@ -187,29 +212,29 @@ handleAction (KeyDown_EditorAction event) = do
                 setHandle $ pure handle'
       -- move handle focus
       _ | Just cycle <- ki # Expr.Move.fromKeyInfoToCycle -> do
-        liftEffect $ event # Event.preventDefault
+        liftEffect $ event # Web.Event.preventDefault
         case mb_handle of
           Nothing -> pure unit
           Just handle -> do
             liftEffect $ state.ref_mb_dragOrigin := none
             setHandle $ pure $ handle # Expr.Move.cycleHandleFocus cycle
       -- escape
-      _ | ki # Event.matchKeyInfoPattern' [ keyEq "Escape", not_cmd, not_shift, not_alt ] -> do
-        liftEffect $ event # Event.preventDefault
+      _ | ki # matchKeyInfoPattern' [ keyEq "Escape", not_cmd, not_shift, not_alt ] -> do
+        liftEffect $ event # Web.Event.preventDefault
         liftEffect $ state.ref_mb_dragOrigin := none
         case mb_handle of
           Just h -> setHandle $ Expr.Move.escape h
           _ -> pure unit
       -- select all
-      _ | ki # Event.matchKeyInfoPattern' [ keyEq "a", cmd, not_shift, not_alt ] -> do
-        liftEffect $ event # Event.preventDefault
+      _ | ki # matchKeyInfoPattern' [ keyEq "a", cmd, not_shift, not_alt ] -> do
+        liftEffect $ event # Web.Event.preventDefault
         liftEffect $ state.ref_mb_dragOrigin := none
         let j = root # getExtremeIndexes
         let h = normalizeHandle $ SpanH_Handle (SpanH { path: none, j_L: j._L, j_R: j._R }) Left_SpanFocus
         setHandle $ pure h
       -- copy
-      _ | ki # Event.matchKeyInfoPattern' [ keyEq "c", cmd, not_shift, not_alt ] -> do
-        liftEffect $ event # Event.preventDefault
+      _ | ki # matchKeyInfoPattern' [ keyEq "c", cmd, not_shift, not_alt ] -> do
+        liftEffect $ event # Web.Event.preventDefault
         submitEditAt Expr.Edit.copy
         state' <- get
         case state'.clipboard of
@@ -218,51 +243,51 @@ handleAction (KeyDown_EditorAction event) = do
             liftEffect $ navigator_clibpoard_writeText $ String.joinWith "" $ map editor.printExpr es
           _ -> pure unit
       -- delete
-      _ | ki # Event.matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, not_alt ] -> do
-        liftEffect $ event # Event.preventDefault
+      _ | ki # matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, not_alt ] -> do
+        liftEffect $ event # Web.Event.preventDefault
         submitEditAt $ Expr.Edit.delete' { isValidHandle: editor.isValidHandle }
       -- delete sibling
-      _ | ki # Event.matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, alt ] -> do
-        liftEffect $ event # Event.preventDefault
+      _ | ki # matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, alt ] -> do
+        liftEffect $ event # Web.Event.preventDefault
         submitEditAt $ Expr.Edit.delete'_sibling { isValidHandle: editor.isValidHandle }
       -- cut
-      _ | ki # Event.matchKeyInfoPattern' [ keyEq "x", cmd, not_shift, not_alt ] -> do
-        liftEffect $ event # Event.preventDefault
+      _ | ki # matchKeyInfoPattern' [ keyEq "x", cmd, not_shift, not_alt ] -> do
+        liftEffect $ event # Web.Event.preventDefault
         submitEditAt Expr.Edit.cut
       -- paste
-      _ | ki # Event.matchKeyInfoPattern' [ keyEq "v", cmd, not_shift, not_alt ] -> do
-        liftEffect $ event # Event.preventDefault
+      _ | ki # matchKeyInfoPattern' [ keyEq "v", cmd, not_shift, not_alt ] -> do
+        liftEffect $ event # Web.Event.preventDefault
         submitEditAt $ Expr.Edit.paste
       -- redo
-      _ | ki # Event.matchKeyInfoPattern' [ keyEq "z", cmd, shift, not_alt ] -> do
-        liftEffect $ event # Event.preventDefault
+      _ | ki # matchKeyInfoPattern' [ keyEq "z", cmd, shift, not_alt ] -> do
+        liftEffect $ event # Web.Event.preventDefault
         redo
       -- undo
-      _ | ki # Event.matchKeyInfoPattern' [ keyEq "z", cmd, not_shift, not_alt ] -> do
-        liftEffect $ event # Event.preventDefault
+      _ | ki # matchKeyInfoPattern' [ keyEq "z", cmd, not_shift, not_alt ] -> do
+        liftEffect $ event # Web.Event.preventDefault
         undo
       -- open buffer
-      _ | ki # Event.matchKeyInfoPattern' [ keyMember openBuffer_keys, not_cmd, not_shift, not_alt ] -> do
-        liftEffect $ event # Event.preventDefault
+      _ | ki # matchKeyInfoPattern' [ keyMember openBuffer_keys, not_cmd, not_shift, not_alt ] -> do
+        liftEffect $ event # Web.Event.preventDefault
         case mb_handle of
           Nothing -> pure unit
           Just handle -> do
             let point = handle # getFocusPoint
             mb_menu <- editor.getEditMenu purestate
-              # flip runReaderT (state.editor # toEditCtx)
+              # flip runReaderT editCtx
               # runMaybeT
               # lift
             case mb_menu of
               Nothing -> pure unit
               Just menu -> H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu, query: "" }
-      _ | ki # Event.matchKeyInfoPattern' [ keyRegex isNonSpace_regex, not_cmd, not_alt ] -> do
-        liftEffect $ event # Event.preventDefault
+      _ | ki # matchKeyInfoPattern' [ keyRegex isNonSpace_regex, not_cmd, not_alt ] -> do
+        liftEffect $ event # Web.Event.preventDefault
         case mb_handle of
           Nothing -> pure unit
           Just handle -> do
             let point = handle # getFocusPoint
             mb_menu <- editor.getEditMenu purestate
-              # flip runReaderT (state.editor # toEditCtx)
+              # flip runReaderT editCtx
               # runMaybeT
               # lift
             case mb_menu of
@@ -311,7 +336,7 @@ getSnapshot = do
   state <- get
   root <- getRoot
   mb_handle <- liftEffect $ state.ref_mb_handle # Ref.read
-  pure { root: root, mb_handle }
+  pure { root, mb_handle }
 
 saveSnapshot :: forall c. Show c => EditorM c Unit
 saveSnapshot = do
@@ -325,7 +350,6 @@ saveSnapshot = do
 undo :: forall c. Show c => EditorM c Unit
 undo = do
   state <- get
-  root <- getRoot
   when Config.log_undo_and_redo do
     liftEffect $ Console.Messages.push_message $ HH.text $ "[Editor.undo]"
   (liftEffect $ state.ref_history # Ref.read) >>= case _ of
@@ -339,7 +363,6 @@ undo = do
 redo :: forall c. Show c => EditorM c Unit
 redo = do
   state <- get
-  root <- getRoot
   when Config.log_undo_and_redo do
     liftEffect $ Console.Messages.push_message $ HH.text $ "[Editor.redo]"
   (liftEffect $ state.ref_future # Ref.read) >>= case _ of
@@ -361,14 +384,9 @@ loadSnapshot s = do
 -- submitEdit
 --------------------------------------------------------------------------------
 
-getEditCtx :: forall m c. MonadAff m => EditorM c (EditCtx m (Label c ()) (StampedLabel c ()))
-getEditCtx = do
-  state <- get
-  pure $ state.editor # toEditCtx
-
 submitEditAt :: forall c. Show c => EditAt Aff (Label c ()) (StampedLabel c ()) -> EditorM c Unit
 submitEditAt editAt = do
-  state <- getBasicEditorState
+  state <- getBasicEditorState_stamped
   editCtx <- getEditCtx
   mb_edit <- editAt state
     # flip runReaderT editCtx
@@ -380,7 +398,7 @@ submitEditAt editAt = do
 
 submitEdit :: forall c. Show c => Edit Aff (Label c ()) (StampedLabel c ()) -> EditorM c Unit
 submitEdit edit = do
-  purestate_input <- getBasicEditorState
+  purestate_input <- getBasicEditorState_stamped
 
   editCtx <- getEditCtx
   mb_output <-
@@ -419,8 +437,9 @@ submitEdit edit = do
           , Array.replicate 10 "====" # fold
           , Array.replicate 10 "====" # fold
           ]
+      root' <- purestate_output.root # annotateExpr
       modifyEditorState _
-        { mb_root = pure purestate_output.root
+        { mb_root = pure root'
         , initial_mb_handle = purestate_output.mb_handle
         , clipboard = purestate_output.clipboard
         }
@@ -551,7 +570,7 @@ render state =
         [ HH.div [ classes [ "root" ] ]
             [ HHK.div [ classes [ "Expr" ] ]
                 ( root
-                    # renderStampedExpr state.editor Nil
+                    # renderAnnotatedExpr state.editor Nil
                     # runRenderM
                 )
             ]
@@ -559,6 +578,20 @@ render state =
             [ HH.slot (Proxy @"DiagnosticsPanel") unit DiagnosticsPanel.component {} absurd ]
         ]
     ]
+
+renderAnnotatedExpr :: forall c. Show c => Editor c -> Path -> Expr (AnnotatedLabel c ()) -> RenderM (Array (String /\ EditorHTML c))
+renderAnnotatedExpr (Editor editor) path expr = do
+  Expr.Render.renderExpr
+    { renderKid: renderAnnotatedExpr (Editor editor)
+    , renderPoint: renderPoint (Editor editor)
+    , assembleExpr: editor.assembleAnnotatedExpr
+    }
+    path
+    expr
+  where
+  renderPoint _ str_or_label point@(Point { j }) =
+    ((str_or_label # either identity getId) <> "_point_" <> show j) /\
+      HH.slot (Proxy @"Point") point Point.component { editor: Editor editor, point } PointOutput_EditorAction
 
 renderStampedExpr :: forall c. Show c => Editor c -> Path -> Expr (StampedLabel c ()) -> RenderM (Array (String /\ EditorHTML c))
 renderStampedExpr (Editor editor) path expr = do

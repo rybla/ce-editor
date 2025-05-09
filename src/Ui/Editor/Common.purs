@@ -5,7 +5,7 @@ import Prelude
 import Control.Monad.State (get)
 import Data.Const (Const)
 import Data.Eq.Generic (genericEq)
-import Data.Expr (Edit, EditMenu, Expr, Fragment, Handle, Point, BasicEditorState)
+import Data.Expr (BasicEditorState, Edit, EditMenu, Expr, Fragment, Handle, Point, mapLabel_BasicEditorState)
 import Data.Generic.Rep (class Generic)
 import Data.List (List)
 import Data.Maybe (Maybe(..))
@@ -13,8 +13,7 @@ import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested (type (/\))
-import Editor (Diagnostic, DiagnosticsPanelAction, DiagnosticsPanelSlots, Editor, ExistsEditor, Label, StampedLabel)
-import Effect (Effect)
+import Editor (AnnotatedLabel, Diagnostic, DiagnosticsPanelAction, DiagnosticsPanelSlots, Editor, ExistsEditor, Label, StampedLabel, mapLabel)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Exception (throw)
@@ -22,6 +21,8 @@ import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Halogen as H
 import Halogen.HTML (PlainHTML)
+import Record as Record
+import Type.Prelude (Proxy(..))
 import Web.Event.Event (Event)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -69,7 +70,8 @@ type EditorOutput = Void
 
 type EditorState c =
   { editor :: Editor c
-  , mb_root :: Maybe (Expr (StampedLabel c ()))
+  -- , mb_root :: Maybe (Expr (StampedLabel c ()))
+  , mb_root :: Maybe (Expr (AnnotatedLabel c ()))
   , initial_mb_handle :: Maybe Handle
   , ref_mb_handle :: Ref (Maybe Handle)
   , ref_mb_dragOrigin :: Ref (Maybe Handle)
@@ -78,7 +80,7 @@ type EditorState c =
   , ref_future :: Ref (List (Snapshot c))
   }
 
-getBasicEditorState_safe :: forall c. EditorM c (Maybe (BasicEditorState (Label c ()) (StampedLabel c ())))
+getBasicEditorState_safe :: forall c. EditorM c (Maybe (BasicEditorState (Label c ()) (AnnotatedLabel c ())))
 getBasicEditorState_safe = do
   state <- get
   case state.mb_root of
@@ -91,12 +93,17 @@ getBasicEditorState_safe = do
         , clipboard: state.clipboard
         }
 
-getBasicEditorState :: forall c. EditorM c (BasicEditorState (Label c ()) (StampedLabel c ()))
-getBasicEditorState = getBasicEditorState_safe >>= case _ of
+getBasicEditorState_stamped :: forall c. EditorM c (BasicEditorState (Label c ()) (StampedLabel c ()))
+getBasicEditorState_stamped = getBasicEditorState_safe >>= case _ of
+  Nothing -> liftEffect $ throw "root not loaded yet"
+  Just state -> pure (state # mapLabel_BasicEditorState (mapLabel (Record.delete (Proxy @"ann"))))
+
+getBasicEditorState_annotated :: forall c. EditorM c (BasicEditorState (Label c ()) (AnnotatedLabel c ()))
+getBasicEditorState_annotated = getBasicEditorState_safe >>= case _ of
   Nothing -> liftEffect $ throw "root not loaded yet"
   Just state -> pure state
 
-getRoot :: forall c. EditorM c (Expr (StampedLabel c ()))
+getRoot :: forall c. EditorM c (Expr (AnnotatedLabel c ()))
 getRoot = do
   state <- get
   case state.mb_root of
@@ -104,7 +111,7 @@ getRoot = do
     Just root -> pure root
 
 type Snapshot c =
-  { root :: Expr (StampedLabel c ())
+  { root :: Expr (AnnotatedLabel c ())
   , mb_handle :: Maybe Handle
   }
 
