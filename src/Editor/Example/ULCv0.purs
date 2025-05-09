@@ -84,9 +84,6 @@ editor = Editor
         p = getEndPoints_ZipperH zh
   , assembleExpr
   , printExpr: const "unimplemented"
-  , stampLabel: \(Label l) -> do
-      id <- freshId # liftEffect
-      pure $ Label $ l `Record.merge` { id }
   , getDiagnostics: mempty
   }
 

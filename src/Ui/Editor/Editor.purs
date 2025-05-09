@@ -24,7 +24,7 @@ import Data.String as String
 import Data.Traversable (traverse)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
-import Editor (Editor(..), Label, StampedLabel, getId, toEditCtx)
+import Editor (Editor(..), Label, StampedLabel, getId, stampLabel, toEditCtx)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff)
 import Effect.Class (liftEffect)
@@ -96,12 +96,12 @@ handleAction Initialize_EditorAction = do
   H.subscribe' \_subId -> HQE.eventListener KeyboardEvent.keydown (doc # HTML.HTMLDocument.toEventTarget) $ pure <<< KeyDown_EditorAction
 
   state@{ editor: Editor editor } <- get
-  root <- editor.initialExpr # traverse editor.stampLabel # lift
+  root <- editor.initialExpr # traverse stampLabel # liftEffect
   put $ state { mb_root = pure root }
 
 handleAction (Receive_EditorAction input) = do
   let state@{ editor: Editor editor } = initialState input
-  root <- editor.initialExpr # traverse editor.stampLabel # lift
+  root <- editor.initialExpr # traverse stampLabel # liftEffect
   put $ state { mb_root = pure root }
 
 handleAction (MouseUp_EditorAction _event) = do

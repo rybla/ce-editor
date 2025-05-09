@@ -2,17 +2,19 @@ module Editor.Common where
 
 import Prelude
 
-import Control.Monad.Writer (Writer)
 import Data.Array as Array
 import Data.Expr (BasicEditorState, Edit, EditM, EditMenu, Expr, Handle, EditCtx)
 import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (fold)
+import Data.Id as Id
 import Data.Maybe (fromMaybe)
 import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Halogen (ComponentHTML) as H
+import Halogen (liftEffect)
 import Halogen.HTML as HH
 import Record as Record
 import Type.Prelude (Proxy(..))
@@ -75,7 +77,6 @@ data Editor c = Editor
   -- validity
   , isValidHandle :: forall r. Expr (Label c r) -> Handle -> Boolean
   -- processing
-  , stampLabel :: Label c () -> Aff (StampedLabel c ())
   , assembleExpr :: AssembleExpr (StampedLabel c ())
   -- diagnostics
   , getDiagnostics :: BasicEditorState (Label c ()) (StampedLabel c ()) -> Array Diagnostic
@@ -91,6 +92,13 @@ mkExistsEditor a = ExistsEditor \k -> k a
 
 runExistsEditor :: forall r. ExistsEditorK r -> ExistsEditor -> r
 runExistsEditor k1 (ExistsEditor k2) = k2 k1
+
+--------------------------------------------------------------------------------
+
+stampLabel :: forall c. Label c () -> Effect (StampedLabel c ())
+stampLabel (Label l) = do
+  id <- Id.fresh
+  pure $ Label { con: l.con, id }
 
 --------------------------------------------------------------------------------
 
@@ -110,7 +118,7 @@ type DiagnosticsPanelSlots = ()
 
 toEditCtx :: forall m c. MonadAff m => Editor c -> EditCtx m (Label c ()) (StampedLabel c ())
 toEditCtx (Editor editor) =
-  { stampLabel: editor.stampLabel >>> liftAff
+  { stampLabel: stampLabel >>> liftEffect
   , unstampLabel
   }
 

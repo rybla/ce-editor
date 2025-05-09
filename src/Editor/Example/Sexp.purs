@@ -5,7 +5,7 @@ import Prelude
 import Control.Alternative (empty)
 import Control.Monad.Reader (ask, local, runReader)
 import Data.Array as Array
-import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
+import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (AssembleExpr, RenderArgs)
 import Data.Expr.Render as Expr.Render
@@ -107,9 +107,6 @@ editor = Editor
 
       in
         f
-  , stampLabel: \(Label l) -> do
-      id <- freshId # liftEffect
-      pure $ Label $ l `Record.merge` { id }
   , getDiagnostics: \state -> collapse
       [ state.clipboard <#> \frag ->
           Diagnostic

@@ -100,9 +100,6 @@ editor = Editor
           Expr _ -> "unimplemented"
       in
         f
-  , stampLabel: \(Label l) -> do
-      id <- freshId # liftEffect
-      pure $ Label $ l `Record.merge` { id }
   , getDiagnostics: mempty
   }
 
