@@ -2,6 +2,8 @@
 
 Priority:
 
+- [ ] for rendering Span, put points between the exprs at the top level
+
 - [ ] create interface for specific Editors to add annotation to rendered output, and also attach diagnostics to handle positions that can be viewed when user goes there
   - to keep things simple, these annotations will be re-computed every time you make a change
   - want to do some sort of memoization so that when you move around its not recomputing every single time

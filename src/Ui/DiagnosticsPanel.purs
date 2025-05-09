@@ -35,7 +35,6 @@ component = H.mkComponent { initialState, eval, render }
 
 handleQuery :: forall a. DiagnosticsPanelQuery a -> DiagnosticsPanelM (Maybe a)
 handleQuery (SetDiagnostics_DiagnosticsPanelQuery diagnostics a) = do
-  liftEffect $ Console.Messages.push_message $ HH.text "setting diagnostics"
   modify_ _ { diagnostics = diagnostics }
   pure (Just a)
 

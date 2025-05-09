@@ -7,6 +7,7 @@ import Control.Monad.Reader (runReaderT)
 import Control.Monad.State (get, modify, put)
 import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
+import Data.Either (either)
 import Data.Expr (Edit, EditAt, EditCtx, Expr, Fragment(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, fromPointToString, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
@@ -457,7 +458,6 @@ setHandle' m_mb_handle = do
   getBasicEditorState_safe >>= case _ of
     Nothing -> pure unit
     Just basic_state -> do
-      liftEffect $ Console.Messages.push_message $ HH.text "getting diagnostics"
       let diagnostics = editor.getDiagnostics basic_state
       H.tell (Proxy @"DiagnosticsPanel") unit $ SetDiagnostics_DiagnosticsPanelQuery diagnostics
       pure unit
@@ -570,8 +570,7 @@ renderStampedExpr (Editor editor) path expr = do
     path
     expr
   where
-  renderPoint _ _label point =
-    -- ((label # getId) <> "_point_" <> show j) /\
-    (fromPointToString point) /\
+  renderPoint _ str_or_label point@(Point { j }) =
+    ((str_or_label # either identity getId) <> "_point_" <> show j) /\
       HH.slot (Proxy @"Point") point Point.component { editor: Editor editor, point } PointOutput_EditorAction
 

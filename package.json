@@ -8,7 +8,9 @@
     "start": "spago bundle --bundle-type app --module Ui.Main --outfile ./docs/main.js && http-server docs"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "purs-tidy": "^0.11.0",
+    "purty": "^7.0.0"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

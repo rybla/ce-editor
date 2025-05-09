@@ -27,6 +27,12 @@ importers:
       '@types/bun':
         specifier: latest
         version: 1.2.12
+      purs-tidy:
+        specifier: ^0.11.0
+        version: 0.11.0
+      purty:
+        specifier: ^7.0.0
+        version: 7.0.0
 
 packages:
 
@@ -1003,6 +1009,15 @@ packages:
 
   purescript@0.15.16-4:
     resolution: {integrity: sha512-7bgZpRXniRZ0p7oUSZaAJMVOeL1Wt1X8xmHLZnD+hN3VAylLvDdIYIywHKGjbC0YGJ540ryc64ZLmymkjEh2JQ==}
+    hasBin: true
+
+  purs-tidy@0.11.0:
+    resolution: {integrity: sha512-HZ8AS6J7Ka2YVl6Gr/H5NV17TU10yGYUTxVwRd5tKuwsVdFZewXSzZ/HTpWrkhdR2gxSVk0BdnpJhyu//oRc+w==}
+    hasBin: true
+
+  purty@7.0.0:
+    resolution: {integrity: sha512-gHHghPEjRY39GUJ8KnOMRfPArJILGCXwEhX6BmEdNiLgZuCjLLBLyawGiKFjYMfy8H5Dsk5NbgwIGslrPrernA==}
+    os: [linux, darwin, win32]
     hasBin: true
 
   qs@6.14.0:
@@ -2347,6 +2362,10 @@ snapshots:
     transitivePeerDependencies:
       - bluebird
       - supports-color
+
+  purs-tidy@0.11.0: {}
+
+  purty@7.0.0: {}
 
   qs@6.14.0:
     dependencies:

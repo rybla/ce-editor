@@ -1,0 +1,23 @@
+.DiagnosticsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+
+  &>.diagnostic {
+    border: 0.1em solid black;
+    box-shadow: 0 0 0.5em 0 color-mix(in hsl, black, transparent 60%);
+
+    display: flex;
+    flex-direction: column;
+
+    &>.title {
+      padding: 0.5em;
+      border-bottom: 0.1em solid black;
+      font-size: 0.8em;
+    }
+
+    &>.content {
+      padding: 0.5em;
+    }
+  }
+}
