@@ -2,8 +2,11 @@
 
 Priority:
 
-- [ ] create interface for specific Editors to add annotations to rendered output
+- [ ] create interface for specific Editors to add annotation to rendered output, and also attach diagnostics to handle positions that can be viewed when user goes there
   - to keep things simple, these annotations will be re-computed every time you make a change
+  - want to do some sort of memoization so that when you move around its not recomputing every single time
+- [ ] sound effects when do actions (start query, submit query, move handle)
+- [ ] implement STLC with annotations and diagnostics 
 
 - [ ] IDEA: hardcode Editor label as string?
   - not doing this for now since it'll make it more difficult to add more type vars (such as for render-time annotation) later
