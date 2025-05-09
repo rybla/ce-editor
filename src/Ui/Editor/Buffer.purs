@@ -8,7 +8,7 @@ import Control.Monad.State (get, modify_, put)
 import Control.Monad.Trans.Class (lift)
 import Data.Array ((!!))
 import Data.Const (Const(..))
-import Data.Expr (EditInfo(..), Edit_(..), Point(..))
+import Data.Expr (EditInfo(..), Edit_(..))
 import Data.Expr.Render (RenderArgs, renderFragment)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (fold, length, null)
@@ -19,7 +19,7 @@ import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
-import Editor (AnnotatedLabel, Editor(..), StampedLabel, annotation_default, getId, mkEditCtx)
+import Editor (Editor(..), StampedLabel, mkEditCtx)
 import Effect.Aff (Aff)
 import Effect.Exception (throw)
 import Halogen (liftEffect)
@@ -29,7 +29,6 @@ import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
-import Record as Record
 import Ui.Editor.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, BufferOutput(..), BufferQuery, BufferState, BufferSlots)
 import Ui.Editor.Config as Config
 import Ui.Editor.Console.Messages as Console.Messages
@@ -199,7 +198,7 @@ render state =
                 Edit { info: Insert_EditInfo info } ->
                   [ HHK.div [ classes [ "Expr" ] ] $
                       info.insertion
-                        # renderFragment (renderStampedArgs state.editor) (state.point # unwrap).path
+                        # renderFragment (renderArgs_stamped state.editor) (state.point # unwrap).path
                         # flip runReader
                             { indentLevel: 0
                             }
@@ -213,27 +212,14 @@ render state =
 
     ]
 
-renderAnnotatedArgs :: forall c w i. Show c => Editor c -> RenderArgs (AnnotatedLabel c ()) w i
-renderAnnotatedArgs (Editor editor) =
-  { renderKid
-  , renderPoint
-  , assembleExpr: editor.assembleAnnotatedExpr
-  }
-  where
-  renderKid path expr = Expr.Render.renderExpr (renderAnnotatedArgs (Editor editor)) path expr
-
-  renderPoint _label p =
-    show p /\
-      HH.div [ classes [ "Point" ] ] [ HH.text " " ]
-
-renderStampedArgs :: forall c w i. Show c => Editor c -> RenderArgs (StampedLabel c ()) w i
-renderStampedArgs (Editor editor) =
+renderArgs_stamped :: forall c w i. Show c => Editor c -> RenderArgs (StampedLabel c ()) w i
+renderArgs_stamped (Editor editor) =
   { renderKid
   , renderPoint
   , assembleExpr: editor.assembleStampedExpr
   }
   where
-  renderKid path expr = Expr.Render.renderExpr (renderStampedArgs (Editor editor)) path expr
+  renderKid path expr = Expr.Render.renderExpr (renderArgs_stamped (Editor editor)) path expr
 
   renderPoint _label p =
     show p /\

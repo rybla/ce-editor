@@ -4,23 +4,19 @@ import Prelude
 
 import Data.Array as Array
 import Data.Expr (BasicEditorState, Edit, EditM, EditMenu, Expr, Handle, EditCtx)
-import Data.Expr.Render (AssembleExpr)
+import Data.Expr.Render (Annotation, AssembleExpr, annotation_default)
 import Data.Foldable (fold)
 import Data.Id as Id
-import Data.Maybe (Maybe, fromMaybe)
+import Data.Maybe (fromMaybe)
 import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
-import Data.Unfoldable (none)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff)
 import Halogen (ComponentHTML) as H
 import Halogen (liftEffect)
-import Halogen.HTML (PlainHTML)
 import Halogen.HTML as HH
-import Prim.Row (class Lacks, class Nub)
 import Record as Record
-import Type.Prelude (Proxy(..))
 import Ui.Event (KeyInfo)
 import Ui.Halogen (classes)
 
@@ -79,15 +75,6 @@ type AnnotatedLabelRow r =
   ( ann :: Annotation
   | r
   )
-
-type Annotation =
-  { info :: Maybe PlainHTML
-  }
-
-annotation_default :: Annotation
-annotation_default =
-  { info: none
-  }
 
 annotateExpr_default :: forall c r. Expr (StampedLabel c r) -> Aff (Expr (AnnotatedLabel c r))
 annotateExpr_default =

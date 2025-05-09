@@ -10,10 +10,21 @@ import Data.Foldable (fold, length)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..), (:))
 import Data.List as List
+import Data.Maybe (Maybe)
 import Data.Tuple.Nested (type (/\), (/\))
-import Halogen.HTML (HTML)
+import Data.Unfoldable (none)
+import Halogen.HTML (HTML, PlainHTML)
 import Halogen.HTML as HH
 import Ui.Halogen (classes)
+
+type Annotation =
+  { info :: Maybe PlainHTML
+  }
+
+annotation_default :: Annotation
+annotation_default =
+  { info: none
+  }
 
 type RenderM = Reader RenderCtx
 
@@ -62,7 +73,7 @@ renderSpan args path (Span exprs) = fold $
   exprs
     # mapWithIndex
         ( \i kid ->
-            (pure [ args.renderPoint (Left "Span") (Point { path, j: Index i }) ]) <>
+            pure [ args.renderPoint (Left "Span") (Point { path, j: Index i }) ] <>
               renderExpr args (path `List.snoc` Step i) kid
         )
     # flip append [ pure $ pure $ args.renderPoint (Left "Span") (Point { path, j: Index (exprs # length) }) ]
@@ -73,7 +84,7 @@ renderZipper args path (Zipper z) inside = fold $
       z.kids_L
         # mapWithIndex
             ( \i kid ->
-                (pure [ args.renderPoint (Left "Span") (Point { path, j: Index i }) ]) <>
+                pure [ args.renderPoint (Left "Span") (Point { path, j: Index i }) ] <>
                   renderExpr args (path `List.snoc` Step i) kid
             )
         # flip append [ pure $ pure $ args.renderPoint (Left "Span") (Point { path, j: Index length_L }) ]
@@ -82,7 +93,7 @@ renderZipper args path (Zipper z) inside = fold $
       z.kids_R
         # mapWithIndex
             ( \i kid ->
-                (pure [ args.renderPoint (Left "Span") (Point { path, j: Index (length_L + 1 + i) }) ]) <>
+                pure [ args.renderPoint (Left "Span") (Point { path, j: Index (length_L + 1 + i) }) ] <>
                   renderExpr args (path `List.snoc` Step i) kid
             )
         # flip append [ pure $ pure $ args.renderPoint (Left "Span") (Point { path, j: Index (length_L + 1 + length_R) }) ]

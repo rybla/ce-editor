@@ -8,7 +8,7 @@ import Control.Monad.State (get, modify, put)
 import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
 import Data.Either (either)
-import Data.Expr (Edit, EditAt, Expr, Fragment(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), EditCtx, applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, mapLabel_BasicEditorState, normalizeHandle)
+import Data.Expr (Edit, EditAt, EditCtx, Expr(..), Fragment(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
@@ -24,7 +24,7 @@ import Data.String as String
 import Data.Traversable (traverse)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
-import Editor (AnnotatedLabel, Editor(..), Label, StampedLabel, getId, mapLabel)
+import Editor (AnnotatedLabel, Editor(..), Label(..), StampedLabel, getId)
 import Editor as Editor
 import Editor.Common (stampLabel)
 import Effect.Aff (Aff)
@@ -41,13 +41,13 @@ import Record as Record
 import Type.Prelude (Proxy(..))
 import Ui.Browser (navigator_clibpoard_writeText)
 import Ui.DiagnosticsPanel as DiagnosticsPanel
-import Ui.Editor.Common (BufferOutput(..), DiagnosticsPanelQuery(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, getBasicEditorState_annotated, getBasicEditorState_safe, getBasicEditorState_stamped, getRoot)
+import Ui.Editor.Common (BufferOutput(..), DiagnosticsPanelQuery(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, getBasicEditorState_safe, getBasicEditorState_stamped, getRoot)
 import Ui.Editor.Config as Config
 import Ui.Editor.Console.Messages as Console.Messages
 import Ui.Editor.Point as Point
 import Ui.Event (alt, cmd, fromEventToKeyInfo, keyEq, keyMember, keyRegex, matchKeyInfoPattern', not_alt, not_cmd, not_shift, shift)
 import Ui.Halogen (classes)
-import Utility (guardPure, isNonSpace_regex, todo, (:%=), (:=))
+import Utility (guardPure, isNonSpace_regex, (:%=), (:=))
 import Web.Event.Event (preventDefault) as Web.Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTML.HTMLDocument

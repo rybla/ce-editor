@@ -5,32 +5,29 @@ import Prelude
 import Control.Alternative (empty)
 import Control.Monad.Reader (ask, local, runReader)
 import Data.Array as Array
-import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Point(..), Span(..), atPoint, atSubExpr, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mapLabel_BasicEditorState, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
+import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
-import Data.Expr.Render (AssembleExpr, RenderArgs)
+import Data.Expr.Render (AssembleExpr, RenderArgs, Annotation)
 import Data.Expr.Render as Expr.Render
-import Data.Foldable (and, fold)
+import Data.Foldable (and, fold, foldMap)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..))
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap)
 import Data.Set as Set
 import Data.String as String
-import Data.Traversable (sequence, traverse)
+import Data.Traversable (sequence)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
-import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, AnnotatedLabel, annotateExpr_default, annotation_default, assembleExpr_default, getCon, getId, mapLabel)
-import Effect.Class (liftEffect)
+import Editor.Common (AnnotatedLabel, Diagnostic(..), Editor(..), Label(..), StampedLabel, annotateExpr_default, assembleExpr_default, getCon)
+import Halogen.HTML (fromPlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Properties (id) as HP
-import Record as Record
-import Type.Prelude (Proxy(..))
-import Ui.Editor.Id (freshId)
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, todo)
+import Utility (collapse)
 
 newtype C = C String
 
@@ -125,24 +122,44 @@ editor = Editor
   }
 
 assembleAnnotatedExpr :: forall r. AssembleExpr (AnnotatedLabel C r)
-assembleAnnotatedExpr args = assembleExpr_helper (args.label # getId) args
+assembleAnnotatedExpr = assembleExpr_helper
+  { getId: \_path (Label l) -> l.id
+  , getAnnotation: \(Label l) -> pure l.ann
+  }
 
 assembleStampedExpr :: forall r. AssembleExpr (StampedLabel C r)
-assembleStampedExpr args = assembleExpr_helper (args.label # getId) args
+assembleStampedExpr = assembleExpr_helper
+  { getId: \_path (Label l) -> l.id
+  , getAnnotation: const none
+  }
 
 assembleExpr :: forall r. AssembleExpr (Label C r)
-assembleExpr args = assembleExpr_helper (args.path # show) args
+assembleExpr = assembleExpr_helper
+  { getId: \path _ -> fromPathToString path
+  , getAnnotation: const none
+  }
 
-assembleExpr_helper :: forall r. String -> AssembleExpr (Label C r)
-assembleExpr_helper id args = do
+assembleExpr_helper
+  :: forall r
+   . { getId :: Path -> Label C r -> String
+     , getAnnotation :: Label C r -> Maybe Annotation
+     }
+  -> AssembleExpr (Label C r)
+assembleExpr_helper opts args = do
+  let id = opts.getId args.path args.label
   ctx <- ask
-  case (args.label # getCon) /\ args.points /\ args.kids of
+  elems <- case (args.label # getCon) /\ args.points /\ args.kids of
     C "Root" /\ ps /\ ks -> do
       ks' <- ks # sequence
-      pure $ fold $ Array.zipWith (\p k -> [ p ] <> k) ps ks' <> [ ps # Array.last # fromMaybe ]
+      pure $ fold $ fold $
+        [ Array.zipWith (\p k -> [ p ] <> k) ps ks'
+        , [ ps # Array.last # fromMaybe ]
+        ]
     C "Symbol" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
       k0' <- k0
-      pure $ fold [ k0' ]
+      pure $ fold
+        [ k0'
+        ]
     C "Group" /\ ps /\ ks -> do
       ks' <- increaseIndentLevel do ks # sequence
       pure $ fold $ fold $
@@ -162,6 +179,16 @@ assembleExpr_helper id args = do
         [ tokens_literal id literal
         ]
     C _ /\ _ /\ _ -> assembleExpr_default args
+
+  let mb_ann = opts.getAnnotation args.label
+  pure $ fold $ fold
+    [ mb_ann # foldMap \ann ->
+        [ ann.info # foldMap \info ->
+            [ (id <> "_info") /\ HH.div [ classes [ "Annotation info" ] ] [ info # fromPlainHTML ]
+            ]
+        ]
+    , [ elems ]
+    ]
 
 renderArgs :: forall r w i. AssembleExpr (Label C r) -> RenderArgs (Label C r) w i
 renderArgs assembleExpr' =
