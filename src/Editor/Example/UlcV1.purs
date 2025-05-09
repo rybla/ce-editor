@@ -19,7 +19,7 @@ import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
 import Editor (Label(..), getCon)
-import Editor.Common (Editor(..), assembleExpr_default)
+import Editor.Common (Editor(..), annotateExpr_default, assembleExpr_default)
 import Editor.Notation (keyword, literal, punctuation)
 import Effect.Class (liftEffect)
 import Halogen.HTML as HH
@@ -89,7 +89,7 @@ editor = Editor
       ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
         where
         p = getEndPoints_ZipperH zh
-  , assembleExpr
+  , assembleStampedExpr
   , printExpr:
       let
         f = case _ of
@@ -101,10 +101,12 @@ editor = Editor
       in
         f
   , getDiagnostics: mempty
+  , annotateExpr: annotateExpr_default
+  , assembleAnnotatedExpr: assembleExpr_default
   }
 
-assembleExpr :: forall r. AssembleExpr (Label C r)
-assembleExpr args = do
+assembleStampedExpr :: forall r. AssembleExpr (Label C r)
+assembleStampedExpr args = do
   ctx <- ask
   case (args.label # getCon) /\ args.points /\ args.kids of
     -- C "Root" /\ ps /\ ks -> do

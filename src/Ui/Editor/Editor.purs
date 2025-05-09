@@ -565,7 +565,7 @@ renderStampedExpr (Editor editor) path expr = do
   Expr.Render.renderExpr
     { renderKid: renderStampedExpr (Editor editor)
     , renderPoint: renderPoint (Editor editor)
-    , assembleExpr: editor.assembleExpr
+    , assembleExpr: editor.assembleStampedExpr
     }
     path
     expr

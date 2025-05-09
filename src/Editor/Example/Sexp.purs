@@ -16,11 +16,11 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap)
 import Data.Set as Set
 import Data.String as String
-import Data.Traversable (sequence)
+import Data.Traversable (sequence, traverse)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
-import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, getId)
+import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, annotateExpr_default, annotation_default, assembleExpr_default, getCon, getId, mapLabel)
 import Effect.Class (liftEffect)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
@@ -95,7 +95,8 @@ editor = Editor
         ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
           where
           p = getEndPoints_ZipperH zh
-  , assembleExpr: assembleStampedExpr
+  , assembleStampedExpr
+  , assembleAnnotatedExpr: assembleExpr_default
   , printExpr:
       let
         f = case _ of
@@ -121,6 +122,7 @@ editor = Editor
             }
 
       ]
+  , annotateExpr: annotateExpr_default
   }
 
 assembleStampedExpr :: forall r. AssembleExpr (StampedLabel C r)

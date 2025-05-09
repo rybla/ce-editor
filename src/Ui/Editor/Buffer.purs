@@ -211,7 +211,7 @@ renderArgs :: forall c w i. Show c => Editor c -> RenderArgs (StampedLabel c ())
 renderArgs (Editor editor) =
   { renderKid
   , renderPoint
-  , assembleExpr: editor.assembleExpr
+  , assembleExpr: editor.assembleStampedExpr
   }
   where
   renderKid path expr = Expr.Render.renderExpr (renderArgs (Editor editor)) path expr

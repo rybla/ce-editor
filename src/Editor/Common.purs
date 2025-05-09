@@ -7,14 +7,16 @@ import Data.Expr (BasicEditorState, Edit, EditM, EditMenu, Expr, Handle, EditCtx
 import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (fold)
 import Data.Id as Id
-import Data.Maybe (fromMaybe)
+import Data.Maybe (Maybe, fromMaybe)
 import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
+import Data.Unfoldable (none)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff)
 import Halogen (ComponentHTML) as H
 import Halogen (liftEffect)
+import Halogen.HTML (PlainHTML)
 import Halogen.HTML as HH
 import Record as Record
 import Type.Prelude (Proxy(..))
@@ -55,6 +57,33 @@ type StampedLabelRow r =
 getId :: forall c r. StampedLabel c r -> String
 getId (Label { id }) = id
 
+type AnnotatedLabel c r = StampedLabel c (AnnotatedLabelRow r)
+
+type AnnotatedLabelRow r =
+  ( ann :: Annotation
+  | r
+  )
+
+type Annotation =
+  { info :: Maybe PlainHTML
+  }
+
+annotation_default :: Annotation
+annotation_default =
+  { info: none
+  }
+
+annotateExpr_default :: forall c. Expr (StampedLabel c ()) -> Aff (Expr (AnnotatedLabel c ()))
+annotateExpr_default =
+  traverse
+    ( pure <<< mapLabel
+        \{ con, id } ->
+          { con
+          , id
+          , ann: annotation_default
+          }
+    )
+
 --------------------------------------------------------------------------------
 
 data Editor c = Editor
@@ -76,10 +105,12 @@ data Editor c = Editor
       -> EditM m (Label c ()) (StampedLabel c ()) (Edit m (Label c ()) (StampedLabel c ()))
   -- validity
   , isValidHandle :: forall r. Expr (Label c r) -> Handle -> Boolean
-  -- processing
-  , assembleExpr :: AssembleExpr (StampedLabel c ())
+  -- rendering
+  , assembleStampedExpr :: AssembleExpr (StampedLabel c ())
+  , assembleAnnotatedExpr :: AssembleExpr (AnnotatedLabel c ())
   -- diagnostics
   , getDiagnostics :: BasicEditorState (Label c ()) (StampedLabel c ()) -> Array Diagnostic
+  , annotateExpr :: Expr (StampedLabel c ()) -> Aff (Expr (AnnotatedLabel c ()))
   -- printing
   , printExpr :: forall r. Expr (Label c r) -> String
   }

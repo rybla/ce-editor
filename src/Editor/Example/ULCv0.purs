@@ -13,7 +13,7 @@ import Data.Newtype (wrap)
 import Data.Tuple (Tuple(..))
 import Data.Unfoldable (none)
 import Editor (Label(..))
-import Editor.Common (Editor(..), assembleExpr_default)
+import Editor.Common (Editor(..), annotateExpr_default, assembleExpr_default)
 import Effect.Class (liftEffect)
 import Halogen.HTML as HH
 import Record as Record
@@ -82,13 +82,12 @@ editor = Editor
       ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
         where
         p = getEndPoints_ZipperH zh
-  , assembleExpr
+  , assembleStampedExpr: assembleExpr_default
   , printExpr: const "unimplemented"
   , getDiagnostics: mempty
+  , annotateExpr: annotateExpr_default
+  , assembleAnnotatedExpr: assembleExpr_default
   }
-
-assembleExpr :: forall r. AssembleExpr (Label C r)
-assembleExpr = assembleExpr_default
 
 beforeHolePoint = [ HH.div [ classes [ "Token", "beforeHolePoint" ] ] [ HH.text "" ] ]
 afterHolePoint = [ HH.div [ classes [ "Token", "afterHolePoint" ] ] [ HH.text "" ] ]
