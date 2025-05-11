@@ -47,7 +47,7 @@
 .Expr {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: start;
   justify-content: flex-start;
   flex-wrap: wrap;
 
@@ -58,6 +58,7 @@
   }
 
   &>.label,
+
   &>.Punctuation {
     display: flex;
     align-items: center;
@@ -290,6 +291,53 @@
     }
   }
 }
+
+.AnnotationPoint {
+  &>.label {
+    font-size: 1em;
+    text-align: center;
+    cursor: pointer;
+    width: 1em;
+    padding: 0 0.5em;
+    background-color: black;
+    border-radius: 1em;
+    color: red;
+  }
+
+  &.AnnotationPoint:hover {
+    &+.Annotation {
+      padding: 3em 0;
+      opacity: 1;
+
+      transition: all 0.2s linear;
+    }
+  }
+}
+
+
+.Annotation {
+  position: relative;
+  opacity: 0;
+  overflow: visible;
+
+  transition: all 0.2s linear;
+
+  &>.info {
+    padding: 0.5em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    width: 20em;
+    position: absolute;
+
+    border: 0.1em solid red;
+    background: var(--Editor--background);
+    box-shadow: 0 0 0.5em 0.1em rgba(0, 0, 0, 0.5);
+  }
+}
+
+
+
 
 @keyframes Edit-appear {
   from {

@@ -271,7 +271,7 @@ instance Ord Point where
   compare x = genericCompare x
 
 fromPointToString :: Point -> String
-fromPointToString (Point p) = (p.path # fromPathToString) <> "." <> show p.j
+fromPointToString (Point p) = (p.path # fromPathToString) <> "." <> show (unwrap p.j)
 
 --------------------------------------------------------------------------------
 

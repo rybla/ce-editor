@@ -16,15 +16,17 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap)
 import Data.Set as Set
 import Data.String as String
-import Data.Traversable (sequence)
+import Data.Traversable (sequence, traverse)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
 import Editor.Common (AnnotatedLabel, Diagnostic(..), Editor(..), Label(..), StampedLabel, annotateExpr_default, assembleExpr_default, getCon)
-import Halogen.HTML (fromPlainHTML)
+import Effect.Aff (Aff)
+import Halogen.HTML (PlainHTML, fromPlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Properties (id) as HP
+import Record as Record
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 import Utility (collapse)
@@ -118,8 +120,18 @@ editor = Editor
                         }
             }
       ]
-  , annotateExpr: annotateExpr_default
+  , annotateExpr
   }
+
+annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C r))
+annotateExpr (Expr e@{ l: Label l }) = do
+  kids <- e.kids # traverse annotateExpr
+  -- let ann = { info: Nothing @PlainHTML }
+  let
+    ann = case l.con of
+      C "Symbol" -> { info: pure $ HH.text $ "this is an annotation" }
+      _ -> { info: Nothing @PlainHTML }
+  pure $ Expr { l: Label $ Record.union { ann } l, kids }
 
 assembleAnnotatedExpr :: forall r. AssembleExpr (AnnotatedLabel C r)
 assembleAnnotatedExpr = assembleExpr_helper
@@ -149,46 +161,65 @@ assembleExpr_helper opts args = do
   let id = opts.getId args.path args.label
   ctx <- ask
   elems <- case (args.label # getCon) /\ args.points /\ args.kids of
-    C "Root" /\ ps /\ ks -> do
-      ks' <- ks # sequence
-      pure $ fold $ fold $
-        [ Array.zipWith (\p k -> [ p ] <> k) ps ks'
-        , [ ps # Array.last # fromMaybe ]
-        ]
-    C "Symbol" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
-      k0' <- k0
-      pure $ fold
-        [ k0'
-        ]
-    C "Group" /\ ps /\ ks -> do
-      ks' <- increaseIndentLevel do ks # sequence
-      pure $ fold $ fold $
-        [ [ tokens_punctuation (id <> "_begin") "(" ]
-        , Array.zipWith (\p k -> do [ p ] <> k) ps ks'
-        , [ ps # Array.last # fromMaybe ]
-        , [ tokens_punctuation (id <> "_end") ")" ]
-        ]
-    C "LineBreak" /\ [ _p0 ] /\ [] -> do
-      pure $ fold
-        [ tokens_ghost (id <> "_marker") "⏎"
-        , tokens_break (id <> "_break")
-        , tokens_indentation ctx.indentLevel (id <> "_indentation")
-        ]
-    C literal /\ [ _p0 ] /\ [] -> do
-      pure $ fold
-        [ tokens_literal id literal
-        ]
+    -- C "Root" /\ ps /\ ks -> do
+    --   ks' <- ks # sequence
+    --   pure $ fold $ fold $
+    --     [ Array.zipWith (\p k -> [ p ] <> k) ps ks'
+    --     , [ ps # Array.last # fromMaybe ]
+    --     ]
+    -- C "Symbol" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
+    --   k0' <- k0
+    --   pure $ fold
+    --     [ k0'
+    --     ]
+    -- C "Group" /\ ps /\ ks -> do
+    --   ks' <- increaseIndentLevel do ks # sequence
+    --   pure $ fold $ fold $
+    --     [ [ tokens_punctuation (id <> "_begin") "(" ]
+    --     , Array.zipWith (\p k -> do [ p ] <> k) ps ks'
+    --     , [ ps # Array.last # fromMaybe ]
+    --     , [ tokens_punctuation (id <> "_end") ")" ]
+    --     ]
+    -- C "LineBreak" /\ [ _p0 ] /\ [] -> do
+    --   pure $ fold
+    --     [ tokens_ghost (id <> "_marker") "⏎"
+    --     , tokens_break (id <> "_break")
+    --     , tokens_indentation ctx.indentLevel (id <> "_indentation")
+    --     ]
+    -- C literal /\ [ _p0 ] /\ [] -> do
+    --   pure $ fold
+    --     [ tokens_literal id literal
+    --     ]
+    -- NOTE: this lets you see the underlying syntax without notational rendering
+    -- C literal /\ ps /\ ks -> do
+    --   ks' <- ks # sequence
+    --   pure $ fold $ fold $
+    --     [ [ tokens_punctuation (id <> "_begin") "(" ]
+    --     , [ tokens_literal id literal ]
+    --     , Array.zipWith (\p k -> [ p ] <> k) ps ks'
+    --     , [ ps # Array.last # fromMaybe ]
+    --     , [ tokens_punctuation (id <> "_end") ")" ]
+    --     ]
     C _ /\ _ /\ _ -> assembleExpr_default args
 
-  let mb_ann = opts.getAnnotation args.label
-  pure $ fold $ fold
-    [ mb_ann # foldMap \ann ->
-        [ ann.info # foldMap \info ->
-            [ (id <> "_info") /\ HH.div [ classes [ "Annotation info" ] ] [ info # fromPlainHTML ]
-            ]
-        ]
-    , [ elems ]
-    ]
+  -- let mb_ann = opts.getAnnotation args.label
+  -- pure $ fold $ fold
+  --   [ mb_ann # foldMap \ann ->
+  --       [ [ (id <> "_ann_point") /\
+  --             HH.div [ classes [ "AnnotationPoint" ] ]
+  --               [ HH.div [ classes [ "label" ] ] [ HH.text "⚠️" ]
+  --               ]
+  --         ]
+  --       , ann.info # foldMap \info ->
+  --           [ (id <> "_ann") /\
+  --               HH.div [ HP.id (id <> "_ann"), classes [ "Annotation" ] ]
+  --                 [ HH.div [ classes [ "info" ] ] [ info # fromPlainHTML ]
+  --                 ]
+  --           ]
+  --       ]
+  --   , [ elems ]
+  --   ]
+  pure elems
 
 renderArgs :: forall r w i. AssembleExpr (Label C r) -> RenderArgs (Label C r) w i
 renderArgs assembleExpr' =

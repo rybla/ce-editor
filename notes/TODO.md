@@ -2,11 +2,10 @@
 
 Priority:
 
-- [ ] for rendering Span, put points between the exprs at the top level
+- [ ] BUG: why doesn't clicking, and dragging, work for moving handle?
+- [ ] BUG: why are two AnnotationPoints getting rendered in many cases?
 
-- [ ] create interface for specific Editors to add annotation to rendered output, and also attach diagnostics to handle positions that can be viewed when user goes there
-  - to keep things simple, these annotations will be re-computed every time you make a change
-  - want to do some sort of memoization so that when you move around its not recomputing every single time
+- [ ] for diagnostics, do some sort of memoization so that when you move around its not recomputing every single time
 - [ ] sound effects when do actions (start query, submit query, move handle)
 - [ ] implement STLC with annotations and diagnostics 
 
@@ -36,6 +35,8 @@ Debatable:
 
 Done:
 
+- [x] for renderi- [x] create interface for specific Editors to add annotation to rendered output, and also attach diagnostics to handle positions that can be viewed when user goes there
+  - to keep things simple, these annotations will be re-computed every time you make a changeng Span, put points between the exprs at the top level
 - [x] BUG: in pasting i think i messed something up in how stamping the clipboard works such that it doesn't re-stamp before inserting into program
 - [x] IDEA: make re-rendering more efficient by using keys. even though things are not nested, this can still work, and perhaps will work especially well since Halogen can't re-nest things via diffs, but it can re-arrange things that are all children of the same parent (which non-nesting allows)
   - [x] give renderPoint the appropriate inputs so that it can key properly
