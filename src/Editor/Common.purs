@@ -4,12 +4,13 @@ import Prelude
 
 import Data.Array as Array
 import Data.Expr (BasicEditorState, Edit, EditM, EditMenu, Expr, Handle, EditCtx)
-import Data.Expr.Render (Annotation, AssembleExpr, annotation_default)
+import Data.Expr.Render (Annotation, AssembleExpr)
 import Data.Foldable (fold)
 import Data.Id as Id
-import Data.Maybe (fromMaybe)
+import Data.Maybe (Maybe, fromMaybe)
 import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
+import Data.Unfoldable (none)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff)
@@ -72,14 +73,14 @@ stampLabel f = \(Label l) -> do
 type AnnotatedLabel c r = StampedLabel c (AnnotatedLabelRow r)
 
 type AnnotatedLabelRow r =
-  ( ann :: Annotation
+  ( ann :: Maybe (Array Annotation)
   | r
   )
 
 annotateExpr_default :: forall c r. Expr (StampedLabel c r) -> Aff (Expr (AnnotatedLabel c r))
 annotateExpr_default =
   traverse \(Label l) ->
-    pure $ Label $ Record.union { ann: annotation_default } l
+    pure $ Label $ Record.union { ann: none } l
 
 --------------------------------------------------------------------------------
 

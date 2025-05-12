@@ -7,14 +7,19 @@
   --Handle_Focus--height: 100%;
   --Handle_Focus--background: rgb(43, 0, 255);
   /* --Handle--background-color: color-mix(in hsl, var(--Handle_Focus--background), transparent 30%); */
-  --Handle--background-color: color-mix(in hsl, var(--Handle_Focus--background), transparent 90%);
-  --Handle_Focus--box-shadow:
-    0 -0.5em 0 0 var(--Handle--background-color),
+  --Handle--background-color: color-mix(
+    in hsl,
+    var(--Handle_Focus--background),
+    transparent 90%
+  );
+  --Handle_Focus--box-shadow: 0 -0.5em 0 0 var(--Handle--background-color),
     0 0.5em 0 0 var(--Handle--background-color);
 
   --Handle--border-radius: var(--Handle--width);
-  --Handle_Left--border-radius: var(--Handle--border-radius) 0 0 var(--Handle--border-radius);
-  --Handle_Right--border-radius: 0 var(--Handle--border-radius) var(--Handle--border-radius) 0;
+  --Handle_Left--border-radius: var(--Handle--border-radius) 0 0
+    var(--Handle--border-radius);
+  --Handle_Right--border-radius: 0 var(--Handle--border-radius)
+    var(--Handle--border-radius) 0;
 
   /* --Handle_inside--background: color-mix(in hsl, var(--Handle--background-color), transparent 90%); */
   --Handle_inside--background: var(--Handle--background-color);
@@ -28,14 +33,14 @@
 
   font-family: monospace;
 
-  &>.root {
+  & > .root {
     padding: 1em;
 
     flex: 1 1 auto;
     overflow-y: auto;
   }
 
-  &>.diagnostics {
+  & > .diagnostics {
     padding: 1em;
     border-left: 0.1em solid black;
 
@@ -53,13 +58,12 @@
 
   user-select: none;
 
-  &>* {
+  & > * {
     height: 1.5em;
   }
 
-  &>.label,
-
-  &>.Punctuation {
+  & > .label,
+  & > .Punctuation {
     display: flex;
     align-items: center;
 
@@ -88,134 +92,132 @@
   justify-content: flex-start;
   overflow: visible;
 
-  &>.Left,
-  &>.Middle,
-  &>.Right {
+  & > .Left,
+  & > .Middle,
+  & > .Right {
     height: 100%;
     min-width: calc(var(--Handle--width) / 3);
   }
 
   &.Point_Handle_PointStatus {
-    &>.Middle {
+    & > .Middle {
       border-radius: var(--Handle--width);
       background: var(--Handle--background-color);
       height: var(--Handle_Focus--height);
-      background: var(--Handle_Focus--background)
+      background: var(--Handle_Focus--background);
     }
   }
 
   &.SpanH_Handle_Left_PointStatus {
-    >.Left {
+    > .Left {
       background: var(--Handle--background-color);
       border-radius: var(--Handle_Left--border-radius);
     }
 
-    &.LeftFocus_PointStatus>.Left {
+    &.LeftFocus_PointStatus > .Left {
       height: var(--Handle_Focus--height);
-      background: var(--Handle_Focus--background)
+      background: var(--Handle_Focus--background);
     }
 
-    &>.Middle,
-    &>.Right,
-    &~* {
+    & > .Middle,
+    & > .Right,
+    & ~ * {
       background: var(--Handle_inside--background);
     }
   }
 
   &.SpanH_Handle_Right_PointStatus {
-
-    &>.Left,
-    &>.Middle {
+    & > .Left,
+    & > .Middle {
       background: var(--Handle_inside--background);
     }
 
-    &>.Right {
+    & > .Right {
       background: var(--Handle--background-color);
       border-radius: var(--Handle_Right--border-radius);
     }
 
-    &.RightFocus_PointStatus>.Right {
+    &.RightFocus_PointStatus > .Right {
       height: var(--Handle_Focus--height);
       background: var(--Handle_Focus--background);
     }
 
     background: var(--Editor--background);
 
-    &~* {
+    & ~ * {
       background: var(--Editor--background);
     }
   }
 
   &.ZipperH_Handle_OuterLeft_PointStatus {
-    >.Left {
+    > .Left {
       background: var(--Handle--background-color);
       border-radius: var(--Handle_Left--border-radius);
     }
 
-    &.LeftFocus_PointStatus>.Left {
+    &.LeftFocus_PointStatus > .Left {
       height: var(--Handle_Focus--height);
-      background: var(--Handle_Focus--background)
+      background: var(--Handle_Focus--background);
     }
 
-    &>.Middle,
-    &>.Right,
-    &~* {
+    & > .Middle,
+    & > .Right,
+    & ~ * {
       background: var(--Handle_inside--background);
     }
   }
 
   &.ZipperH_Handle_InnerLeft_PointStatus {
-    &>.Left {
+    & > .Left {
       background: var(--Handle--background-color);
     }
 
-    &.LeftFocus_PointStatus>.Left {
+    &.LeftFocus_PointStatus > .Left {
       height: var(--Handle_Focus--height);
-      background: var(--Handle_Focus--background)
+      background: var(--Handle_Focus--background);
     }
 
-    &~* {
+    & ~ * {
       background: var(--Editor--background);
     }
 
-    background: var(--Editor--background)
+    background: var(--Editor--background);
   }
 
   &.ZipperH_Handle_InnerRight_PointStatus {
-    >.Right {
+    > .Right {
       background: var(--Handle--background-color);
     }
 
-    &.RightFocus_PointStatus>.Right {
+    &.RightFocus_PointStatus > .Right {
       height: var(--Handle_Focus--height);
-      background: var(--Handle_Focus--background)
+      background: var(--Handle_Focus--background);
     }
 
-    &~* {
+    & ~ * {
       background: var(--Handle_inside--background);
     }
   }
 
   &.ZipperH_Handle_OuterRight_PointStatus {
-
-    &>.Left,
-    &>.Middle {
+    & > .Left,
+    & > .Middle {
       background: var(--Handle_inside--background);
     }
 
-    &>.Right {
+    & > .Right {
       background: var(--Handle--background-color);
       border-radius: var(--Handle_Right--border-radius);
     }
 
-    &.RightFocus_PointStatus>.Right {
+    &.RightFocus_PointStatus > .Right {
       height: var(--Handle_Focus--height);
-      background: var(--Handle_Focus--background)
+      background: var(--Handle_Focus--background);
     }
 
     background: transparent;
 
-    &~* {
+    & ~ * {
       background: var(--Editor--background);
     }
   }
@@ -239,10 +241,11 @@
     transition: box-shadow 0.3s ease;
     animation: Buffer-appear 0.2s forwards linear;
 
-    &>.query {
+    & > .query {
       outline: none;
       border: none;
-      border-radius: var(--Handle--width) var(--Handle--width) var(--Handle--width) 0;
+      border-radius: var(--Handle--width) var(--Handle--width)
+        var(--Handle--width) 0;
       padding: 0.5em;
 
       width: fit-content;
@@ -260,11 +263,12 @@
       font-family: inherit;
 
       &:focus {
-        box-shadow: 0 0 15px hsla(210deg 100% 60% / 0.5), 0 4px 10px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 0 15px hsla(210deg 100% 60% / 0.5),
+          0 4px 10px rgba(0, 0, 0, 0.2);
       }
     }
 
-    &>.menu {
+    & > .menu {
       overflow: visible;
 
       display: flex;
@@ -273,9 +277,10 @@
       justify-content: flex-start;
       gap: 0.5em;
 
-      &>.Edit {
+      & > .Edit {
         padding: 0.5em;
-        border-radius: 0 var(--Handle--width) var(--Handle--width) var(--Handle--width);
+        border-radius: 0 var(--Handle--width) var(--Handle--width)
+          var(--Handle--width);
 
         background: var(--Editor--background);
         box-shadow: 0 0 0 0 black inset;
@@ -293,51 +298,72 @@
 }
 
 .AnnotationPoint {
-  &>.label {
-    font-size: 1em;
-    text-align: center;
-    cursor: pointer;
-    width: 1em;
+  & > .label {
+    border-radius: 1em;
     padding: 0 0.5em;
     background-color: black;
-    border-radius: 1em;
-    color: red;
+
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+
+    font-size: 1em;
+    cursor: pointer;
   }
 
-  &.AnnotationPoint:hover {
-    &+.Annotation {
-      padding: 3em 0;
-      opacity: 1;
-
-      transition: all 0.2s linear;
+  &:hover {
+    & > .label {
+      box-shadow: 0 0 0.5em 0.1em rgba(0, 0, 0, 0.2);
     }
   }
 }
 
-
-.Annotation {
+.Annotations {
   position: relative;
-  opacity: 0;
+  width: 0;
   overflow: visible;
 
-  transition: all 0.2s linear;
+  display: none;
 
-  &>.info {
-    padding: 0.5em;
+  & > .inner {
+    padding: 3em 0;
+
     display: flex;
     flex-direction: column;
-    gap: 0.5em;
-    width: 20em;
-    position: absolute;
+    gap: 1em;
 
-    border: 0.1em solid red;
-    background: var(--Editor--background);
-    box-shadow: 0 0 0.5em 0.1em rgba(0, 0, 0, 0.5);
+    & > .item {
+      border-radius: 0.5em;
+      padding: 0.5em;
+      width: 30em;
+
+      background: var(--Editor--background);
+      box-shadow: 0 0 0.5em 0.1em rgba(0, 0, 0, 0.2);
+
+      display: flex;
+      flex-direction: column;
+      gap: 0.5em;
+    }
+
+    & > .Info {
+      border: 0.1em solid rgb(223, 197, 0);
+    }
+
+    & > .Error {
+      border: 0.1em solid red;
+    }
   }
 }
 
+.AnnotationPoint:hover + .Annotations {
+  display: block;
+  /* this allows the annotations to expand and push down the line below the annotated line */
+  height: fit-content;
+}
 
-
+.AnnotationSep {
+  width: 0.5em;
+}
 
 @keyframes Edit-appear {
   from {
@@ -375,23 +401,28 @@
 
 @keyframes rainbow-glow {
   0% {
-    box-shadow: 0 0 5px rgba(0, 255, 255, 0.7), 0 0 8px rgba(0, 255, 255, 0.5) inset, 0 0 10px #00ffff;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.7),
+      0 0 8px rgba(0, 255, 255, 0.5) inset, 0 0 10px #00ffff;
   }
 
   25% {
-    box-shadow: 0 0 10px rgba(255, 0, 255, 0.7), 0 0 16px rgba(255, 0, 255, 0.5) inset, 0 0 20px #ff00ff;
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.7),
+      0 0 16px rgba(255, 0, 255, 0.5) inset, 0 0 20px #ff00ff;
   }
 
   50% {
-    box-shadow: 0 0 5px rgba(255, 255, 0, 0.7), 0 0 8px rgba(255, 255, 0, 0.5) inset, 0 0 10px #ffff00;
+    box-shadow: 0 0 5px rgba(255, 255, 0, 0.7),
+      0 0 8px rgba(255, 255, 0, 0.5) inset, 0 0 10px #ffff00;
   }
 
   75% {
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.7), 0 0 16px rgba(0, 255, 0, 0.5) inset, 0 0 20px #00ff00;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.7),
+      0 0 16px rgba(0, 255, 0, 0.5) inset, 0 0 20px #00ff00;
   }
 
   100% {
-    box-shadow: 0 0 5px rgba(0, 255, 255, 0.7), 0 0 8px rgba(0, 255, 255, 0.5) inset, 0 0 10px #00ffff;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.7),
+      0 0 8px rgba(0, 255, 255, 0.5) inset, 0 0 10px #00ffff;
   }
 }
 

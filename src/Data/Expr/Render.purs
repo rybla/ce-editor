@@ -10,21 +10,14 @@ import Data.Foldable (fold, length)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..), (:))
 import Data.List as List
-import Data.Maybe (Maybe)
 import Data.Tuple.Nested (type (/\), (/\))
-import Data.Unfoldable (none)
 import Halogen.HTML (HTML, PlainHTML)
 import Halogen.HTML as HH
 import Ui.Halogen (classes)
 
-type Annotation =
-  { info :: Maybe PlainHTML
-  }
-
-annotation_default :: Annotation
-annotation_default =
-  { info: none
-  }
+data Annotation
+  = Info_Annotation PlainHTML
+  | Error_Annotation PlainHTML
 
 type RenderM = Reader RenderCtx
 
