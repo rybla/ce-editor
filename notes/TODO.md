@@ -5,7 +5,6 @@ Priority:
 - [ ] implement STLC with annotations and diagnostics
 - [ ] for diagnostics, do some sort of memoization so that when you move around
       its not recomputing every single time
-- [ ] sound effects when do actions (start query, submit query, move handle)
 
 - [ ] IDEA: hardcode Editor label as string?
 
@@ -44,6 +43,7 @@ Debatable:
 
 Done:
 
+- [x] sound effects when do actions (start query, submit query, move handle)
 - [x] BUG: why doesn't clicking, and dragging, work for moving handle?
 - [x] BUG: why are two AnnotationPoints getting rendered in many cases?
 - [x] for renderi- [x] create interface for specific Editors to add annotation
