@@ -2,7 +2,11 @@
 
 Priority:
 
-- [ ] implement STLC with annotations and diagnostics
+- [ ] add a `isHole :: Expr -> Handle -> Boolean` just like `isValidHandle` to
+      `Editor`
+- [ ] with `isHole`, make pressing Tab and Shift+Tab jump forwards and backward
+      at holes
+
 - [ ] for diagnostics, do some sort of memoization so that when you move around
       its not recomputing every single time
 
@@ -44,6 +48,7 @@ Debatable:
 
 Done:
 
+- [x] implement STLC with annotations and diagnostics
 - [x] sound effects when do actions (start query, submit query, move handle)
 - [x] BUG: why doesn't clicking, and dragging, work for moving handle?
 - [x] BUG: why are two AnnotationPoints getting rendered in many cases?

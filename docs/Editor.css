@@ -80,7 +80,7 @@
   width: 0.5em;
   overflow: hidden;
   /* white-space: pre; */
-  animation: rainbow-glow 20s infinite linear;
+  animation: Hole-passive 20s infinite linear;
 }
 
 .Point {
@@ -252,7 +252,7 @@
       min-width: 1ch;
       transition: width 0.3s ease-in-out;
 
-      animation: rainbow-glow 20s infinite linear;
+      animation: Buffer-query-passive 20s infinite linear;
 
       /* background: #1a1a1a;
       color: white; */
@@ -399,7 +399,34 @@
   }
 }
 
-@keyframes rainbow-glow {
+@keyframes Buffer-query-passive {
+  0% {
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.7),
+      0 0 8px rgba(0, 255, 255, 0.5) inset, 0 0 10px #00ffff;
+  }
+
+  25% {
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.7),
+      0 0 16px rgba(255, 0, 255, 0.5) inset, 0 0 20px #ff00ff;
+  }
+
+  50% {
+    box-shadow: 0 0 5px rgba(255, 255, 0, 0.7),
+      0 0 8px rgba(255, 255, 0, 0.5) inset, 0 0 10px #ffff00;
+  }
+
+  75% {
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.7),
+      0 0 16px rgba(0, 255, 0, 0.5) inset, 0 0 20px #00ff00;
+  }
+
+  100% {
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.7),
+      0 0 8px rgba(0, 255, 255, 0.5) inset, 0 0 10px #00ffff;
+  }
+}
+
+@keyframes Hole-passive {
   0% {
     box-shadow: 0 0 5px rgba(0, 255, 255, 0.7),
       0 0 8px rgba(0, 255, 255, 0.5) inset, 0 0 10px #00ffff;

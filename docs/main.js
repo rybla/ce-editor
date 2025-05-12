@@ -4408,11 +4408,11 @@
       return go2;
     },
     foldMap: function(dictMonoid) {
-      var append23 = append(dictMonoid.Semigroup0());
+      var append24 = append(dictMonoid.Semigroup0());
       var mempty3 = mempty(dictMonoid);
       return function(f) {
         return foldl(foldableList)(function(acc) {
-          var $286 = append23(acc);
+          var $286 = append24(acc);
           return function($287) {
             return $286(f($287));
           };
@@ -14297,6 +14297,7 @@
   var ask3 = /* @__PURE__ */ ask(/* @__PURE__ */ monadAskReaderT(monadIdentity));
   var applicativeReaderT4 = /* @__PURE__ */ applicativeReaderT(applicativeIdentity);
   var pure111 = /* @__PURE__ */ pure(applicativeReaderT4);
+  var append23 = /* @__PURE__ */ append(/* @__PURE__ */ semigroupReaderT(applyIdentity)(semigroupArray));
   var foldMap10 = /* @__PURE__ */ foldMap(foldableMaybe)(monoidArray);
   var map30 = /* @__PURE__ */ map(functorArray);
   var bind17 = /* @__PURE__ */ bind(/* @__PURE__ */ bindReaderT(bindAff));
@@ -14365,7 +14366,7 @@
           return new Tuple(v, div2([id2(v), classes2(append14(["Token"])(v1))])([text5(v2.value0)]));
         }
         ;
-        throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 407, column 1 - line 407, column 86): " + [v.constructor.name, v1.constructor.name, v2.constructor.name]);
+        throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 414, column 1 - line 414, column 86): " + [v.constructor.name, v1.constructor.name, v2.constructor.name]);
       };
     };
   };
@@ -14391,6 +14392,9 @@
       return [mk_token2(key2)(["literal"])(pure20(str))];
     };
   };
+  var tokens_missing = function(key2) {
+    return [mk_token2(key2 + "_missing")(["missing"])(none5)];
+  };
   var tokens_punctuation2 = function(key2) {
     return function(str) {
       return [mk_token2(key2)(["punctuation"])(pure20(str))];
@@ -14411,16 +14415,16 @@
   };
   var increaseIndentLevel2 = function(dictMonadReader) {
     return local(dictMonadReader)(function(ctx) {
-      var $142 = {};
-      for (var $143 in ctx) {
-        if ({}.hasOwnProperty.call(ctx, $143)) {
-          $142[$143] = ctx[$143];
+      var $145 = {};
+      for (var $146 in ctx) {
+        if ({}.hasOwnProperty.call(ctx, $146)) {
+          $145[$146] = ctx[$146];
         }
         ;
       }
       ;
-      $142.indentLevel = ctx.indentLevel + 1 | 0;
-      return $142;
+      $145.indentLevel = ctx.indentLevel + 1 | 0;
+      return $145;
     });
   };
   var increaseIndentLevel12 = /* @__PURE__ */ increaseIndentLevel2(/* @__PURE__ */ monadReaderReaderT(monadIdentity));
@@ -14518,6 +14522,10 @@
             return assembleSimple1(v.value1.value0)(v.value1.value1);
           }
           ;
+          if (v.value0 === "Lam_body" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
+            return append23(pure111(tokens_missing(id3)))(pure111([v["value1"]["value0"][0]]));
+          }
+          ;
           if (v.value0 === "Lam_body" && v.value1.value1.length === 1) {
             return assembleSimple1(v.value1.value0)([v["value1"]["value1"][0]]);
           }
@@ -14532,6 +14540,10 @@
                 return pure111(fold8([tokens_punctuation2(id3 + "_begin")("("), k_func$prime, tokens_punctuation2(id3 + "_op")("$"), k_args$prime, tokens_punctuation2(id3 + "_end")(")")]));
               });
             });
+          }
+          ;
+          if (v.value0 === "App_func" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
+            return append23(pure111(tokens_missing(id3)))(pure111([v["value1"]["value0"][0]]));
           }
           ;
           if (v.value0 === "App_func" && v.value1.value1.length === 1) {
@@ -14556,6 +14568,10 @@
             });
           }
           ;
+          if (v.value0 === "Let_param" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
+            return append23(pure111(tokens_missing(id3)))(pure111([v["value1"]["value0"][0]]));
+          }
+          ;
           if (v.value0 === "Let_param" && v.value1.value1.length === 1) {
             return assembleSimple1(v.value1.value0)([v["value1"]["value1"][0]]);
           }
@@ -14564,12 +14580,20 @@
             return assembleSimple1(v.value1.value0)(v.value1.value1);
           }
           ;
+          if (v.value0 === "Let_impl" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
+            return append23(pure111(tokens_missing(id3)))(pure111([v["value1"]["value0"][0]]));
+          }
+          ;
           if (v.value0 === "Let_impl" && v.value1.value1.length === 1) {
             return assembleSimple1(v.value1.value0)([v["value1"]["value1"][0]]);
           }
           ;
           if (v.value0 === "Let_impl") {
             return assembleSimple1(v.value1.value0)(v.value1.value1);
+          }
+          ;
+          if (v.value0 === "Let_body" && (v.value1.value0.length === 1 && v.value1.value1.length === 0)) {
+            return append23(pure111(tokens_missing(id3)))(pure111([v["value1"]["value0"][0]]));
           }
           ;
           if (v.value0 === "Let_body" && v.value1.value1.length === 1) {
@@ -14603,7 +14627,7 @@
                 return span3([classes2(["Error"])])([text5("\u274C")]);
               }
               ;
-              throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 320, column 63 - line 322, column 90): " + [v.constructor.name]);
+              throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 325, column 63 - line 327, column 90): " + [v.constructor.name]);
             })(anns))]))], [new Tuple(id3 + "_ann", div2([id2(id3 + "_ann"), classes2(["Annotations"])])([div2([classes2(["inner"])])(map30(function(v) {
               if (v instanceof Info_Annotation) {
                 return div2([classes2(["item", "Info"])])([fromPlainHTML(v.value0)]);
@@ -14613,7 +14637,7 @@
                 return div2([classes2(["item", "Error"])])([fromPlainHTML(v.value0)]);
               }
               ;
-              throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 327, column 63 - line 329, column 103): " + [v.constructor.name]);
+              throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 332, column 63 - line 334, column 103): " + [v.constructor.name]);
             })(anns))]))], [new Tuple(id3 + "_ann_point_sep", div2([id2(id3 + "_ann_point_sep"), classes2(["AnnotationSep"])])([]))]];
           })(mb_ann), [elems]])));
         });
@@ -14690,8 +14714,8 @@
         if (v.l.con === "Var" && v.kids.length === 1) {
           return bind17(ask1)(function(ctx) {
             var ann = fold8([function() {
-              var $273 = member5(v["kids"][0].l.con)(ctx.scope);
-              if ($273) {
+              var $301 = member5(v["kids"][0].l.con)(ctx.scope);
+              if ($301) {
                 return [];
               }
               ;
@@ -14701,8 +14725,8 @@
               return pure25({
                 l: union7({
                   ann: function() {
-                    var $274 = $$null5(ann);
-                    if ($274) {
+                    var $302 = $$null5(ann);
+                    if ($302) {
                       return none5;
                     }
                     ;
@@ -14718,16 +14742,16 @@
         return go_skip(v);
       };
       if (v.l.con === "Lam" && (v.kids.length === 2 && v["kids"][0].l.con === "Lam_params")) {
-        var $289 = map113(fromFoldable1)(sequence12(map30(function(v2) {
+        var $317 = map113(fromFoldable1)(sequence12(map30(function(v2) {
           if (v2.l.con === "Var" && v2.kids.length === 1) {
             return pure20(v2["kids"][0].l.con);
           }
           ;
           return none5;
         })(v["kids"][0].kids)));
-        if ($289 instanceof Just) {
-          return bind17(local2(modify6($$Proxy.value)(union1($289.value0)))(go2(v["kids"][0])))(function(e_params$prime) {
-            return bind17(local2(modify6($$Proxy.value)(union1($289.value0)))(go2(v["kids"][1])))(function(k_body$prime) {
+        if ($317 instanceof Just) {
+          return bind17(local2(modify6($$Proxy.value)(union1($317.value0)))(go2(v["kids"][0])))(function(e_params$prime) {
+            return bind17(local2(modify6($$Proxy.value)(union1($317.value0)))(go2(v["kids"][1])))(function(k_body$prime) {
               return pure25({
                 l: union7({
                   ann: none5
@@ -14920,8 +14944,8 @@
             return joinWith(" ")(map30(go2)(v.kids));
           }
           ;
-          if (v.l.con === "LineBreak") {
-            return "\n" + joinWith(" ")(map30(go2)(v.kids));
+          if (v.l.con === "LineBreak" && v.kids.length === 0) {
+            return "\n";
           }
           ;
           return show1(v);

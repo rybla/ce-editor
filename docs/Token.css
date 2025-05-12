@@ -39,7 +39,7 @@
     color: red;
   }
 
-  &.before-empty-Arg-kids+.Point {
+  &.before-empty-Arg-kids + .Point {
     box-shadow: 0 0 0 0.1em red inset;
   }
 
@@ -48,13 +48,25 @@
     width: var(--Handle--width);
   }
 
-  &.beforeHolePoint+.Point {
+  &.beforeHolePoint + .Point {
     box-shadow: 0 0 0 0.1em red inset;
   }
 
   &.beforeExtraKid,
   &.afterExtraKid {
     color: red;
+  }
+
+  &.missing {
+    display: none;
+
+    & + .Point {
+      margin: 0 0.5em;
+      /* box-shadow: 0 0 0 0.1em red inset; */
+      /* border-radius: 0.5em; */
+      /* animation: Hole-passive 20s infinite linear; */
+      box-shadow: 0 0 0 0.1em orange inset;
+    }
   }
 }
 
@@ -69,5 +81,32 @@
 
   0% {
     transform: scaleY(1);
+  }
+}
+
+@keyframes missing-passive {
+  0% {
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.7),
+      0 0 8px rgba(0, 255, 255, 0.5) inset, 0 0 10px #00ffff;
+  }
+
+  25% {
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.7),
+      0 0 16px rgba(255, 0, 255, 0.5) inset, 0 0 20px #ff00ff;
+  }
+
+  50% {
+    box-shadow: 0 0 5px rgba(255, 255, 0, 0.7),
+      0 0 8px rgba(255, 255, 0, 0.5) inset, 0 0 10px #ffff00;
+  }
+
+  75% {
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.7),
+      0 0 16px rgba(0, 255, 0, 0.5) inset, 0 0 20px #00ff00;
+  }
+
+  100% {
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.7),
+      0 0 8px rgba(0, 255, 255, 0.5) inset, 0 0 10px #00ffff;
   }
 }

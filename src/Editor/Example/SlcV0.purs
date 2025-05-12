@@ -260,6 +260,7 @@ assembleExpr_helper opts args = do
         , tokens_punctuation (id <> "_end") ")"
         ]
     C "Lam_params" /\ ps /\ ks -> assembleSimple ps ks
+    C "Lam_body" /\ [ p ] /\ [] -> pure (tokens_missing id) <> pure [ p ]
     C "Lam_body" /\ ps /\ [ k ] -> assembleSimple ps [ k ]
     C "Lam_body" /\ ps /\ ks -> assembleSimple ps ks -- TODO: malformed error
     -- App
@@ -273,6 +274,7 @@ assembleExpr_helper opts args = do
         , k_args'
         , tokens_punctuation (id <> "_end") ")"
         ]
+    C "App_func" /\ [ p ] /\ [] -> pure (tokens_missing id) <> pure [ p ]
     C "App_func" /\ ps /\ [ k ] -> assembleSimple ps [ k ]
     C "App_func" /\ ps /\ ks -> assembleSimple ps ks -- TODO: malformed error
     C "App_args" /\ ps /\ ks -> assembleSimple ps ks
@@ -291,10 +293,13 @@ assembleExpr_helper opts args = do
         , k_body'
         , tokens_punctuation (id <> "_end") ")"
         ]
+    C "Let_param" /\ [ p ] /\ [] -> pure (tokens_missing id) <> pure [ p ]
     C "Let_param" /\ ps /\ [ k ] -> assembleSimple ps [ k ]
     C "Let_param" /\ ps /\ ks -> assembleSimple ps ks -- TODO: malformed error
+    C "Let_impl" /\ [ p ] /\ [] -> pure (tokens_missing id) <> pure [ p ]
     C "Let_impl" /\ ps /\ [ k ] -> assembleSimple ps [ k ]
     C "Let_impl" /\ ps /\ ks -> assembleSimple ps ks -- TODO: malformed error
+    C "Let_body" /\ [ p ] /\ [] -> pure (tokens_missing id) <> pure [ p ]
     C "Let_body" /\ ps /\ [ k ] -> assembleSimple ps [ k ]
     C "Let_body" /\ ps /\ ks -> assembleSimple ps ks -- TODO: malformed error
 
@@ -403,6 +408,8 @@ tokens_indentation n key =
     # mapWithIndex \i (key' /\ e) -> (key' <> "_" <> show i) /\ e
 
 tokens_literal key str = [ mk_token key [ "literal" ] (pure str) ]
+
+tokens_missing key = [ mk_token (key <> "_missing") [ "missing" ] none ]
 
 mk_token key cs Nothing = key /\ HH.div [ HP.id key, classes ([ "Token" ] <> cs) ] []
 mk_token key cs (Just str) = key /\ HH.div [ HP.id key, classes ([ "Token" ] <> cs) ] [ HH.text str ]
