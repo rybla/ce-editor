@@ -29,6 +29,7 @@ import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
+import Ui.Browser as Browser
 import Ui.Editor.Common (BufferAction(..), BufferHTML, BufferInput, BufferM, BufferOutput(..), BufferQuery, BufferState, BufferSlots)
 import Ui.Editor.Config as Config
 import Ui.Editor.Console.Messages as Console.Messages
@@ -120,8 +121,12 @@ handleAction (KeyDown_BufferAction event) = do
     _ | Just cd <- ki # Event.matchMapKeyInfo (unwrap >>> _.key >>> fromKeyToCycleDir) { cmd: pure false, shift: pure false, alt: pure false } -> do
       liftEffect $ event # Event.preventDefault
       case state.option_i /\ cd of
-        Just i /\ Prev -> modify_ _ { option_i = pure $ (i - 1) `mod` (state.menu_queried # length) }
-        Just i /\ Next -> modify_ _ { option_i = pure $ (i + 1) `mod` (state.menu_queried # length) }
+        Just i /\ Prev -> do
+          Browser.play_audio "assets/cycle_buffer.mp3" # liftEffect
+          modify_ _ { option_i = pure $ (i - 1) `mod` (state.menu_queried # length) }
+        Just i /\ Next -> do
+          Browser.play_audio "assets/cycle_buffer.mp3" # liftEffect
+          modify_ _ { option_i = pure $ (i + 1) `mod` (state.menu_queried # length) }
         _ -> pure unit
     _ -> pure unit
 

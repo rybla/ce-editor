@@ -39,7 +39,7 @@ import Halogen.Query.Event as HQE
 import Prim.Row (class Lacks)
 import Record as Record
 import Type.Prelude (Proxy(..))
-import Ui.Browser (navigator_clibpoard_writeText)
+import Ui.Browser as Browser
 import Ui.DiagnosticsPanel as DiagnosticsPanel
 import Ui.Editor.Common (BufferOutput(..), DiagnosticsPanelQuery(..), EditorAction(..), EditorHTML, EditorInput, EditorM, EditorOutput, EditorQuery, EditorSlots, EditorState, PointOutput(..), PointQuery(..), PointStatus(..), Snapshot, getBasicEditorState_safe, getBasicEditorState_stamped, getRoot)
 import Ui.Editor.Config as Config
@@ -151,6 +151,7 @@ handleAction (KeyDown_EditorAction event) = do
       case mb_handle of
         Nothing -> pure unit
         Just handle -> do
+          Browser.play_audio "assets/escape_buffer.mp3" # liftEffect
           H.tell (Proxy @"Point") (handle # getFocusPoint) $ SetBufferInput_PointQuery none
     _ -> pure unit
   else do
@@ -240,7 +241,7 @@ handleAction (KeyDown_EditorAction event) = do
         case state'.clipboard of
           Just (Span_Fragment (Span es)) -> do
             let Editor editor = state'.editor
-            liftEffect $ navigator_clibpoard_writeText $ String.joinWith "" $ map editor.printExpr es
+            liftEffect $ Browser.navigator_clibpoard_writeText $ String.joinWith "" $ map editor.printExpr es
           _ -> pure unit
       -- delete
       _ | ki # matchKeyInfoPattern' [ keyEq "Backspace", not_cmd, not_shift, not_alt ] -> do
@@ -279,7 +280,9 @@ handleAction (KeyDown_EditorAction event) = do
               # lift
             case mb_menu of
               Nothing -> pure unit
-              Just menu -> H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu, query: "" }
+              Just menu -> do
+                Browser.play_audio "assets/open_buffer.mp3" # liftEffect
+                H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu, query: "" }
       _ | ki # matchKeyInfoPattern' [ keyRegex isNonSpace_regex, not_cmd, not_alt ] -> do
         liftEffect $ event # Web.Event.preventDefault
         case mb_handle of
@@ -292,7 +295,9 @@ handleAction (KeyDown_EditorAction event) = do
               # lift
             case mb_menu of
               Nothing -> pure unit
-              Just menu -> H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu, query: (unwrap ki).key }
+              Just menu -> do
+                Browser.play_audio "assets/open_buffer.mp3" # liftEffect
+                H.tell (Proxy @"Point") point $ SetBufferInput_PointQuery $ pure $ { editor: Editor editor, point, menu, query: (unwrap ki).key }
       -- unrecognized keyboard event
       _ -> pure unit
 
@@ -398,6 +403,7 @@ submitEditAt editAt = do
 
 submitEdit :: forall c. Show c => Edit Aff (Label c ()) (StampedLabel c ()) -> EditorM c Unit
 submitEdit edit = do
+  Browser.play_audio "assets/submit_buffer.mp3" # liftEffect
   purestate_input <- getBasicEditorState_stamped
 
   editCtx <- getEditCtx
