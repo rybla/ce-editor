@@ -56,7 +56,7 @@ infix 0 mkSpanToothC as %<*
 
 editor :: Editor C
 editor = Editor
-  { name: "Sexp"
+  { name: "s-expressions"
   , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu: \state -> do
@@ -211,7 +211,7 @@ assembleExpr_helper opts args = do
     --     , [ ps # Array.last # fromMaybe ]
     --     , [ tokens_punctuation (id <> "_end") ")" ]
     --     ]
-    C _ /\ _ /\ _ -> assembleExpr_default args
+    C _ /\ _ /\ _ -> assembleExpr_default id args
 
   let mb_ann = opts.getAnnotations args.label
   pure $ fold $ fold
@@ -266,13 +266,14 @@ indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ H
 indentations n = fold $ Array.replicate n indentation
 
 isValidPoint :: forall r. Expr (Label C r) -> Point -> Boolean
-isValidPoint e0 (Point p) = (e.l # getCon) `Set.member` ls
+isValidPoint e0 (Point p) = (e.l # getCon) `Set.member` valid_cons
   where
   Expr e = (e0 # atSubExpr p.path).here
-  ls = Set.fromFoldable $ fold
-    [ [ C "Root" ]
-    , [ C "Group" ]
-    ]
+
+valid_cons = Set.fromFoldable $ fold
+  [ [ C "Root" ]
+  , [ C "Group" ]
+  ]
 
 tokens_punctuation key str = [ mk_token key [ "punctuation" ] (pure str) ]
 

@@ -42,6 +42,9 @@ todo msg = unsafeCrashWith $ "[[TODO]]\n" <> msg
 bug :: forall a. String -> a
 bug msg = unsafeCrashWith $ "[[BUG]]\n" <> msg
 
+unimplemented :: forall a. String -> a
+unimplemented msg = unsafeCrashWith $ "[[UNIMPLEMENTED]]\n" <> msg
+
 assert :: String -> Boolean -> Unit
 assert msg b = if b then unit else bug $ "failed assertion: " <> msg
 
@@ -131,16 +134,19 @@ extractSpan_Array i_L i_R xs =
   in
     { before, here, after }
 
-isAlpha = Regex.test isAlpha_regex
-isAlpha_regex = Regex.regex "^[a-zA-Z]$" mempty # fromRight' (impossible "failed to compile isAlpha_regex")
-
-isNonSpace = Regex.test isNonSpace_regex
-isNonSpace_regex = Regex.regex "^\\s*\\S\\s*$" mempty # fromRight' (impossible "failed to compile isNonSpace_regex")
-
 infixr 2 implies as ==>
 
+isAlpha = Regex.test isAlpha_regex
+isAlpha_regex = Regex.regex "^[a-zA-Z]$" mempty # fromRight' do impossible "failed to compile isAlpha_regex"
+
+isNonSpace = Regex.test isNonSpace_regex
+isNonSpace_regex = Regex.regex "^\\s*\\S\\s*$" mempty # fromRight' do impossible "failed to compile isNonSpace_regex"
+
 isWhitespaceFree = Regex.test isWhitespaceFree_regex
-isWhitespaceFree_regex = Regex.regex "^\\S*$" mempty # fromRight' (impossible "failed to compile isWhitespaceFree_regex")
+isWhitespaceFree_regex = Regex.regex "^\\S*$" mempty # fromRight' do impossible "failed to compile isWhitespaceFree_regex"
+
+isIdentifier = Regex.test isIdentifier_regex
+isIdentifier_regex = Regex.regex "^[a-zA-Z_$][a-zA-Z0-9_]*$" mempty # fromRight' do impossible "failed to compile isIdentifier_regex"
 
 writeFlipped ∷ ∀ (a ∷ Type). Ref a → a → Effect Unit
 writeFlipped = flip Ref.write

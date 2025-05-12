@@ -10,8 +10,8 @@ import Data.Maybe (fromMaybe')
 import Data.Tuple.Nested ((/\))
 import Editor (Editor(..), ExistsEditor, mkExistsEditor, runExistsEditor)
 import Editor.Example.Sexp as Editor.Example.Sexp
--- import Editor.Example.UlcV0 as Editor.Example.UlcV0
--- import Editor.Example.UlcV1 as Editor.Example.UlcV1
+import Editor.Example.SlcV0 as Editor.Example.SlcV0
+
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
@@ -35,11 +35,13 @@ editorsMenu =
   where
   editors =
     [ mkExistsEditor Editor.Example.Sexp.editor
+    , mkExistsEditor Editor.Example.SlcV0.editor
     -- , mkExistsEditor Editor.Example.UlcV0.editor
     -- , mkExistsEditor Editor.Example.UlcV1.editor
     ]
 
-defaultEditor = mkExistsEditor Editor.Example.Sexp.editor
+-- defaultEditor = mkExistsEditor Editor.Example.Sexp.editor
+defaultEditor = mkExistsEditor Editor.Example.SlcV0.editor
 
 initialState :: AppInput -> AppState
 initialState _input = { mb_editor: pure defaultEditor }
@@ -60,7 +62,7 @@ render state =
           [ classes [ "header" ] ]
           [ HH.div [ classes [ "title" ] ]
               [ HH.text "ce-editor" ]
-          , if true then
+          , if false then
               HH.div [ classes [ "option" ], HP.style "font-style: italic" ] [ HH.text "option placeholder" ]
             else
               HH.div

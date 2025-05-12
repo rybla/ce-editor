@@ -6,6 +6,9 @@ Priority:
 - [ ] for diagnostics, do some sort of memoization so that when you move around
       its not recomputing every single time
 
+- [ ] BUG: in Data.Expr.Render, make sure that all tooth types are putting
+      points in the appropriate places
+
 - [ ] IDEA: hardcode Editor label as string?
 
   - not doing this for now since it'll make it more difficult to add more type
@@ -27,9 +30,7 @@ Priority:
 
 - [ ] IDEA: when delete right before a kid, the kid's kids could be spliced in
       place of it
-
   - but, this often breaks well-formedness
-
   - [ ] **first**: use browser tools to profile how long rendering takes
   - also, i dont know if this even works exactly
 
