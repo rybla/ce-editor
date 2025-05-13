@@ -172,75 +172,76 @@ assembleExpr_helper
      }
   -> AssembleExpr (Label C r)
 assembleExpr_helper opts args = Tuple (pure args.label) do
-  -- let id = opts.getId args.path args.label
-  -- ctx <- ask
-  -- elems <- case (args.label # getCon) /\ args.points /\ args.kids of
-  --   C "Root" /\ ps /\ ks -> do
-  --     ks' <- ks # sequence
-  --     pure $ fold $ fold $
-  --       [ Array.zipWith (\p k -> [ p ] <> k) ps ks'
-  --       , [ ps # Array.last # fromMaybe ]
-  --       ]
-  --   C "Symbol" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
-  --     k0' <- k0
-  --     pure $ fold
-  --       [ k0'
-  --       ]
-  --   C "Group" /\ ps /\ ks -> do
-  --     ks' <- increaseIndentLevel do ks # sequence
-  --     pure $ fold $ fold $
-  --       [ [ tokens_punctuation (id <> "_begin") "(" ]
-  --       , Array.zipWith (\p k -> do [ p ] <> k) ps ks'
-  --       , [ ps # Array.last # fromMaybe ]
-  --       , [ tokens_punctuation (id <> "_end") ")" ]
-  --       ]
-  --   C "LineBreak" /\ [ _p0 ] /\ [] -> do
-  --     pure $ fold
-  --       [ tokens_ghost (id <> "_marker") "⏎"
-  --       , tokens_break (id <> "_break")
-  --       , tokens_indentation ctx.indentLevel (id <> "_indentation")
-  --       ]
-  --   C literal /\ [ _p0 ] /\ [] -> do
-  --     pure $ fold
-  --       [ tokens_literal id literal
-  --       ]
-  --   -- -- NOTE: this lets you see the underlying syntax without notational rendering
-  --   -- C literal /\ ps /\ ks -> do
-  --   --   ks' <- ks # sequence
-  --   --   pure $ fold $ fold $
-  --   --     [ [ tokens_punctuation (id <> "_begin") "(" ]
-  --   --     , [ tokens_literal id literal ]
-  --   --     , Array.zipWith (\p k -> [ p ] <> k) ps ks'
-  --   --     , [ ps # Array.last # fromMaybe ]
-  --   --     , [ tokens_punctuation (id <> "_end") ")" ]
-  --   --     ]
-  --   C _ /\ _ /\ _ -> assembleExpr_default id args
+  let id = opts.getId args.path args.label
+  ctx <- ask
+  elems <- case (args.label # getCon) /\ args.points /\ args.kids of
+    C "Root" /\ ps /\ ks -> do
+      ks' <- ks # map snd # sequence
+      pure $ fold $ fold $
+        [ Array.zipWith (\p k -> [ p ] <> k) ps ks'
+        , [ ps # Array.last # fromMaybe ]
+        ]
+    C "Symbol" /\ [ _p0, _p1 ] /\ [ k0 ] -> do
+      k0' <- k0 # snd
+      pure $ fold
+        [ k0'
+        ]
+    C "Group" /\ ps /\ ks -> do
+      ks' <- increaseIndentLevel do ks # map snd # sequence
+      pure $ fold $ fold $
+        [ [ tokens_punctuation (id <> "_begin") "(" ]
+        , Array.zipWith (\p k -> do [ p ] <> k) ps ks'
+        , [ ps # Array.last # fromMaybe ]
+        , [ tokens_punctuation (id <> "_end") ")" ]
+        ]
+    C "LineBreak" /\ [ _p0 ] /\ [] -> do
+      pure $ fold
+        [ tokens_ghost (id <> "_marker") "⏎"
+        , tokens_break (id <> "_break")
+        , tokens_indentation ctx.indentLevel (id <> "_indentation")
+        ]
+    C literal /\ [ _p0 ] /\ [] -> do
+      pure $ fold
+        [ tokens_literal id literal
+        ]
+    -- -- -- NOTE: this lets you see the underlying syntax without notational rendering
+    -- -- C literal /\ ps /\ ks -> do
+    -- --   ks' <- ks # sequence
+    -- --   pure $ fold $ fold $
+    -- --     [ [ tokens_punctuation (id <> "_begin") "(" ]
+    -- --     , [ tokens_literal id literal ]
+    -- --     , Array.zipWith (\p k -> [ p ] <> k) ps ks'
+    -- --     , [ ps # Array.last # fromMaybe ]
+    -- --     , [ tokens_punctuation (id <> "_end") ")" ]
+    -- --     ]
+    C _ /\ _ /\ _ -> assembleExpr_default id args # snd
 
-  -- let mb_ann = opts.getAnnotations args.label
-  -- pure $ fold $ fold
-  --   [ mb_ann # foldMap \anns ->
-  --       [ [ (id <> "_ann_point") /\
-  --             HH.div [ HP.id (id <> "_ann_point"), classes [ "AnnotationPoint" ] ]
-  --               [ HH.div [ classes [ "label" ] ] $ anns # map case _ of
-  --                   Info_Annotation _ -> HH.span [ classes [ "Info" ] ] [ HH.text "💡" ]
-  --                   Error_Annotation _ -> HH.span [ classes [ "Error" ] ] [ HH.text "❌" ]
-  --               ]
-  --         ]
-  --       , [ (id <> "_ann") /\ do
-  --             HH.div [ HP.id (id <> "_ann"), classes [ "Annotations" ] ]
-  --               [ HH.div [ classes [ "inner" ] ] $ anns # map case _ of
-  --                   Info_Annotation e -> HH.div [ classes [ "item", "Info" ] ] [ e # fromPlainHTML ]
-  --                   Error_Annotation e -> HH.div [ classes [ "item", "Error" ] ] [ e # fromPlainHTML ]
-  --               ]
-  --         ]
-  --       , [ (id <> "_ann_point_sep") /\
-  --             HH.div [ HP.id (id <> "_ann_point_sep"), classes [ "AnnotationSep" ] ]
-  --               []
-  --         ]
-  --       ]
-  --   , [ elems ]
-  --   ]
-  pure [] -- TODO
+  let mb_ann = opts.getAnnotations args.label
+  pure $ fold $ fold
+    [ mb_ann # foldMap \anns ->
+        [ [ (id <> "_ann_point") /\
+              HH.div [ HP.id (id <> "_ann_point"), classes [ "AnnotationPoint" ] ]
+                [ HH.div [ classes [ "label" ] ] $ anns # map case _ of
+                    Info_Annotation _ -> HH.span [ classes [ "Info" ] ] [ HH.text "💡" ]
+                    Error_Annotation _ -> HH.span [ classes [ "Error" ] ] [ HH.text "❌" ]
+                ]
+          ]
+        , [ (id <> "_ann") /\ do
+              HH.div [ HP.id (id <> "_ann"), classes [ "Annotations" ] ]
+                [ HH.div [ classes [ "inner" ] ] $ anns # map case _ of
+                    Info_Annotation e -> HH.div [ classes [ "item", "Info" ] ] [ e # fromPlainHTML ]
+                    Error_Annotation e -> HH.div [ classes [ "item", "Error" ] ] [ e # fromPlainHTML ]
+                ]
+          ]
+        , [ (id <> "_ann_point_sep") /\
+              HH.div [ HP.id (id <> "_ann_point_sep"), classes [ "AnnotationSep" ] ]
+                []
+          ]
+        ]
+    , [ elems ]
+    ]
+
+-- pure [] -- TODO
 
 renderArgs :: forall r w i. AssembleExpr (Label C r) -> RenderArgs (Label C r) w i
 renderArgs assembleExpr' =

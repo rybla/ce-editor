@@ -178,7 +178,7 @@ guardPure :: forall m a. Alternative m => (a -> Boolean) -> a -> m a
 guardPure f a | f a = pure a
 guardPure _ _ = empty
 
-collapse :: forall f g a. Foldable f => Foldable g => Applicative f => Monoid (f a) => f (g a) -> f a
+collapse :: forall @f @g @a. Foldable f => Foldable g => Applicative f => Monoid (f a) => f (g a) -> f a
 collapse = foldMap (foldMap pure)
 
 mapMap ∷ ∀ (f ∷ Type -> Type) (g ∷ Type -> Type) (a ∷ Type) (b ∷ Type). Functor f ⇒ Functor g ⇒ (a → b) → f (g a) → f (g b)

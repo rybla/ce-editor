@@ -5,9 +5,9 @@ import Prelude
 import Control.Alternative (empty)
 import Control.Monad.Reader (ask, local, runReader, runReaderT)
 import Data.Array as Array
-import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
+import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), BasicEditorState, atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
-import Data.Expr.Render (Annotation(..), AssembleExpr, KeyHTML, RenderArgs, RenderKid)
+import Data.Expr.Render (Annotation(..), AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (and, fold, foldMap, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -31,7 +31,9 @@ import Record as Record
 import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, isIdentifierOrNumeric, (#.), (<##>))
+import Utility (collapse, isIdentifierOrNumeric, (#.))
+
+--------------------------------------------------------------------------------
 
 newtype C = C String
 
@@ -56,117 +58,135 @@ mkSpanToothC c es = mkSpanTooth (Label { con: c }) es
 
 infix 0 mkSpanToothC as %<*
 
+--------------------------------------------------------------------------------
+
 editor :: Editor C
 editor = Editor
   { name: "scoped untyped lambda calculus"
   , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
-  , getEditMenu: \state -> do
-      -- Lam
-      zipper_Lam_params' <- zipper_Lam_params # stampTraversable
-      edit_Lam_params <- Tuple "Lam_params" <$> Expr.Edit.insert (Zipper_Fragment zipper_Lam_params') state
-      zipper_Lam_body' <- zipper_Lam_body # stampTraversable
-      edit_Lam_body <- Tuple "Lam_body" <$> Expr.Edit.insert (Zipper_Fragment zipper_Lam_body') state
-      -- App
-      zipper_App_func' <- zipper_App_func # stampTraversable
-      edit_App_func <- Tuple "App_func" <$> Expr.Edit.insert (Zipper_Fragment zipper_App_func') state
-      zipper_App_args' <- zipper_App_args # stampTraversable
-      edit_App_args <- Tuple "App_args" <$> Expr.Edit.insert (Zipper_Fragment zipper_App_args') state
-      -- Let
-      zipper_Let_param' <- zipper_Let_param # stampTraversable
-      edit_Let_param <- Tuple "Let_param" <$> Expr.Edit.insert (Zipper_Fragment zipper_Let_param') state
-      zipper_Let_impl' <- zipper_Let_impl # stampTraversable
-      edit_Let_impl <- Tuple "Let_impl" <$> Expr.Edit.insert (Zipper_Fragment zipper_Let_impl') state
-      zipper_Let_body' <- zipper_Let_body # stampTraversable
-      edit_Let_body <- Tuple "Let_body" <$> Expr.Edit.insert (Zipper_Fragment zipper_Let_body') state
-      pure \query -> do
-        case query of
-          "fun" -> pure [ edit_Lam_params, edit_Lam_body ]
-          "app" -> pure [ edit_App_func, edit_App_args ]
-          "let" -> pure [ edit_Let_param, edit_Let_impl, edit_Let_body ]
-          -- Var
-          _ | query # isIdentifierOrNumeric -> do
-            expr_Var' <- expr_Var query # stampTraversable
-            edit_Var <- Tuple "Var" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Var' ])) state
-            pure [ edit_Var ]
-          _ -> pure []
-  , getShortcut: \ki state -> case unit of
-      _ | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] -> do
-        expr_LineBreak' <- expr_LineBreak # stampTraversable
-        Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak' ])) state
-      _ | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] -> do
-        zipper_App_func' <- zipper_App_func # stampTraversable
-        Expr.Edit.insert (Zipper_Fragment zipper_App_func') state
-      _ | ki # matchKeyInfoPattern' [ keyEq ")", not_cmd, not_alt ] -> do
-        zipper_App_args' <- zipper_App_args # stampTraversable
-        Expr.Edit.insert (Zipper_Fragment zipper_App_args') state
-      _ ->
-        empty
-  , isValidHandle: \root handle ->
-      case handle of
-        Point_Handle p -> and [ isValidPoint root p ]
-        SpanH_Handle sh _ -> and [ isValidPoint root p._L, isValidPoint root p._R ]
-          where
-          p = getEndPoints_SpanH sh
-        ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
-          where
-          p = getEndPoints_ZipperH zh
-  , isHole: \e0 (Point p) ->
-      let
-        Expr { l: Label l, kids } = (e0 # atSubExpr p.path).here
-      in
-        and
-          [ isHole_cons #. Set.member l.con
-          , kids #. Array.filter (\(Expr { l: Label l }) -> l.con /= C "LineBreak") #. length == 0
-          ]
+  , getEditMenu
+  , getShortcut
+  , isValidHandle
+  , isHole
   , assembleStampedExpr
   , assembleAnnotatedExpr
-  , printExpr:
-      let
-        go = case _ of
-          Expr { l: Label { con: C "Root" }, kids } -> kids # map go # String.joinWith " "
-          Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } -> x
-          Expr { l: Label { con: C "Let" }, kids: [ param@(Expr { l: Label { con: C "Let_param" } }), impl@(Expr { l: Label { con: C "Let_impl" } }), body@(Expr { l: Label { con: C "Let_body" } }) ] } -> "(let " <> (param # go) <> " = " <> (impl # go) <> " in " <> (body # go) <> ")"
-          Expr { l: Label { con: C "Let_param" }, kids } -> kids # map go # String.joinWith " "
-          Expr { l: Label { con: C "Let_impl" }, kids } -> kids # map go # String.joinWith " "
-          Expr { l: Label { con: C "Let_body" }, kids } -> kids # map go # String.joinWith " "
-          Expr { l: Label { con: C "Lam" }, kids: [ params@(Expr { l: Label { con: C "Lam_params" } }), body@(Expr { l: Label { con: C "Lam_body" } }) ] } -> "(fun " <> (params # go) <> " ⇒ " <> (body # go) <> ")"
-          Expr { l: Label { con: C "Lam_params" }, kids } -> kids # map go # String.joinWith " "
-          Expr { l: Label { con: C "Lam_body" }, kids } -> kids # map go # String.joinWith " "
-          Expr { l: Label { con: C "App" }, kids: [ func@(Expr { l: Label { con: C "App_func" } }), args@(Expr { l: Label { con: C "App_args" } }) ] } -> "(" <> (func # go) <> " " <> (args # go) <> ")"
-          Expr { l: Label { con: C "App_func" }, kids } -> kids # map go # String.joinWith " "
-          Expr { l: Label { con: C "App_args" }, kids } -> kids # map go # String.joinWith " "
-          Expr { l: Label { con: C "LineBreak" }, kids: [] } -> "\n"
-          e -> show e
-      in
-        go
-  , getDiagnostics: \state -> collapse
-      [ state.clipboard <#> \frag ->
-          Diagnostic
-            { title: "Clipboard"
-            , content:
-                HHK.div [ classes [ "Expr" ] ] $
-                  frag
-                    # Expr.Render.renderFragment (renderArgs assembleExpr) none
-                    # map snd
-                    # fold
-                    # flip runReader
-                        { indentLevel: 0
-                        }
-            }
-      ]
+  , printExpr
+  , getDiagnostics
   , annotateExpr
   }
 
-isHole_cons = Set.fromFoldable
-  [ C "Let_param"
-  , C "Let_impl"
-  , C "Let_body"
-  , C "Lam_params"
-  , C "Lam_body"
-  , C "App_func"
-  , C "App_args"
+--------------------------------------------------------------------------------
+-- getEditMenu
+--------------------------------------------------------------------------------
+
+getEditMenu state = do
+  -- Lam
+  zipper_Lam_params' <- zipper_Lam_params # stampTraversable
+  edit_Lam_params <- Tuple "Lam_params" <$> Expr.Edit.insert (Zipper_Fragment zipper_Lam_params') state
+  zipper_Lam_body' <- zipper_Lam_body # stampTraversable
+  edit_Lam_body <- Tuple "Lam_body" <$> Expr.Edit.insert (Zipper_Fragment zipper_Lam_body') state
+  -- App
+  zipper_App_func' <- zipper_App_func # stampTraversable
+  edit_App_func <- Tuple "App_func" <$> Expr.Edit.insert (Zipper_Fragment zipper_App_func') state
+  zipper_App_args' <- zipper_App_args # stampTraversable
+  edit_App_args <- Tuple "App_args" <$> Expr.Edit.insert (Zipper_Fragment zipper_App_args') state
+  -- Let
+  zipper_Let_param' <- zipper_Let_param # stampTraversable
+  edit_Let_param <- Tuple "Let_param" <$> Expr.Edit.insert (Zipper_Fragment zipper_Let_param') state
+  zipper_Let_impl' <- zipper_Let_impl # stampTraversable
+  edit_Let_impl <- Tuple "Let_impl" <$> Expr.Edit.insert (Zipper_Fragment zipper_Let_impl') state
+  zipper_Let_body' <- zipper_Let_body # stampTraversable
+  edit_Let_body <- Tuple "Let_body" <$> Expr.Edit.insert (Zipper_Fragment zipper_Let_body') state
+  pure \query -> do
+    case query of
+      "fun" -> pure [ edit_Lam_params, edit_Lam_body ]
+      "app" -> pure [ edit_App_func, edit_App_args ]
+      "let" -> pure [ edit_Let_param, edit_Let_impl, edit_Let_body ]
+      -- Var
+      _ | query # isIdentifierOrNumeric -> do
+        expr_Var' <- expr_Var query # stampTraversable
+        edit_Var <- Tuple "Var" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Var' ])) state
+        pure [ edit_Var ]
+      _ -> pure []
+
+--------------------------------------------------------------------------------
+-- getShortcut
+--------------------------------------------------------------------------------
+
+getShortcut ki state
+  | ki # matchKeyInfoPattern' [ keyEq "Enter", not_cmd, not_alt ] = do
+      expr_LineBreak' <- expr_LineBreak # stampTraversable
+      Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak' ])) state
+  | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] = do
+      zipper_App_func' <- zipper_App_func # stampTraversable
+      Expr.Edit.insert (Zipper_Fragment zipper_App_func') state
+  | ki # matchKeyInfoPattern' [ keyEq ")", not_cmd, not_alt ] = do
+      zipper_App_args' <- zipper_App_args # stampTraversable
+      Expr.Edit.insert (Zipper_Fragment zipper_App_args') state
+  | otherwise = empty
+
+--------------------------------------------------------------------------------
+-- printExpr
+--------------------------------------------------------------------------------
+
+printExpr = go
+  where
+  go = case _ of
+    Expr { l: Label { con: C "Root" }, kids } -> kids # map go # String.joinWith " "
+    Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } -> x
+    Expr { l: Label { con: C "Let" }, kids: [ param@(Expr { l: Label { con: C "Let_param" } }), impl@(Expr { l: Label { con: C "Let_impl" } }), body@(Expr { l: Label { con: C "Let_body" } }) ] } -> "(let " <> (param # go) <> " = " <> (impl # go) <> " in " <> (body # go) <> ")"
+    Expr { l: Label { con: C "Let_param" }, kids } -> kids # map go # String.joinWith " "
+    Expr { l: Label { con: C "Let_impl" }, kids } -> kids # map go # String.joinWith " "
+    Expr { l: Label { con: C "Let_body" }, kids } -> kids # map go # String.joinWith " "
+    Expr { l: Label { con: C "Lam" }, kids: [ params@(Expr { l: Label { con: C "Lam_params" } }), body@(Expr { l: Label { con: C "Lam_body" } }) ] } -> "(fun " <> (params # go) <> " ⇒ " <> (body # go) <> ")"
+    Expr { l: Label { con: C "Lam_params" }, kids } -> kids # map go # String.joinWith " "
+    Expr { l: Label { con: C "Lam_body" }, kids } -> kids # map go # String.joinWith " "
+    Expr { l: Label { con: C "App" }, kids: [ func@(Expr { l: Label { con: C "App_func" } }), args@(Expr { l: Label { con: C "App_args" } }) ] } -> "(" <> (func # go) <> " " <> (args # go) <> ")"
+    Expr { l: Label { con: C "App_func" }, kids } -> kids # map go # String.joinWith " "
+    Expr { l: Label { con: C "App_args" }, kids } -> kids # map go # String.joinWith " "
+    Expr { l: Label { con: C "LineBreak" }, kids: [] } -> "\n"
+    e -> show e
+
+--------------------------------------------------------------------------------
+-- getDiagnostics
+--------------------------------------------------------------------------------
+
+-- getDiagnostics :: forall r1 r2. BasicEditorState (Label c r1) (AnnotatedLabel c r2) -> Array Diagnostic
+-- getDiagnostics :: forall r. BasicEditorState (StampedLabel C r) (AnnotatedLabel C r) -> Array Diagnostic
+getDiagnostics state = collapse @Array @Maybe
+  [ state.clipboard <#> \frag ->
+      Diagnostic
+        { title: "Clipboard"
+        , content:
+            HHK.div [ classes [ "Expr" ] ] $
+              frag
+                # Expr.Render.renderFragment (renderArgs assembleExpr) none
+                # map snd
+                # fold
+                # flip runReader
+                    { indentLevel: 0
+                    }
+        }
   ]
+  where
+  renderArgs :: forall r w i. AssembleExpr (Label C r) -> RenderArgs (Label C r) w i
+  renderArgs assembleExpr' =
+    { renderKid
+    , renderPoint
+    , assembleExpr: assembleExpr'
+    }
+    where
+    renderKid path expr = Expr.Render.renderExpr (renderArgs assembleExpr') path expr
+
+    renderPoint _label p =
+      fromPointToString p /\
+        HH.div [ classes [ "Point" ], HP.id (fromPointToString p) ]
+          [ HH.text " " ]
+
+--------------------------------------------------------------------------------
+-- annotateExpr
+--------------------------------------------------------------------------------
 
 annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C r))
 annotateExpr e0 = runReaderT (go e0) ctx0
@@ -214,6 +234,7 @@ annotateExpr e0 = runReaderT (go e0) ctx0
     let
       ann = fold
         [ if ctx.scope # Set.member x then [] else [ Error_Annotation $ HH.text "variable not in scope" ]
+        , if ctx.scope # Set.member x then [] else [ Error_Annotation $ HH.text "variable not in scope" ]
         ]
     k_label' <- k_label # go
     pure $ Expr { l: Label $ l # Record.union { ann: if null ann then none else pure ann }, kids: [ k_label' ] }
@@ -226,6 +247,17 @@ annotateExpr e0 = runReaderT (go e0) ctx0
 
 -- annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C r))
 -- annotateExpr = traverse \(Label l) -> pure $ Label $ Record.union { ann: none } l
+
+--------------------------------------------------------------------------------
+-- RenderKid predicates
+--------------------------------------------------------------------------------
+
+isntFormatting_RenderKid :: forall r w i. RenderKid (Label C r) w i -> Boolean
+isntFormatting_RenderKid = fst >>> maybe true \(Label l) -> l.con /= C "LineBreak"
+
+--------------------------------------------------------------------------------
+-- assembly
+--------------------------------------------------------------------------------
 
 assembleAnnotatedExpr :: forall r. AssembleExpr (AnnotatedLabel C r)
 assembleAnnotatedExpr = assembleExpr_helper
@@ -257,72 +289,54 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
   let id = opts.getId args.path args.label
   ctx <- ask
   elems <- case (args.label # getCon) /\ args.points /\ args.kids of
+
     -- Root
     C "Root" /\ ps /\ ks -> assembleSimple (pure args.label) ps ks # snd
+
     -- LineBreak
-    C "LineBreak" /\ _ /\ [] -> do
-      pure $ fold
-        [ tokens_ghost (id <> "_marker") "⏎"
-        , tokens_break (id <> "_break")
-        , tokens_indentation ctx.indentLevel (id <> "_indentation")
-        ]
+    C "LineBreak" /\ _ /\ [] -> pure $ fold [ tokens_ghost (id <> "_marker") "⏎", tokens_break (id <> "_break"), tokens_indentation ctx.indentLevel (id <> "_indentation") ]
+
     -- Lam
     C "Lam" /\ _ /\ [ k_params, k_body ] -> do
       k_params' <- increaseIndentLevel do k_params # snd
       k_body' <- increaseIndentLevel do k_body # snd
-      pure $ fold
-        [ tokens_punctuation (id <> "_lambda") "fun"
-        , k_params'
-        , tokens_punctuation (id <> "_arrow") "⇒"
-        , k_body'
-        ]
-    C "Lam_params" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
-    C "Lam_body" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
+      pure $ fold [ tokens_punctuation (id <> "_lambda") "fun", k_params', tokens_punctuation (id <> "_arrow") "⇒", k_body' ]
+    C "Lam_params" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: none } args id ps ks
+    C "Lam_body" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks
+
     -- App
     C "App" /\ _ /\ [ k_func, k_args ] -> do
       k_func' <- increaseIndentLevel do k_func #. snd
       k_args' <- increaseIndentLevel do k_args #. snd
-      pure $ fold
-        [ tokens_punctuation (id <> "_begin") "("
-        , k_func'
-        , tokens_punctuation (id <> "_op") "$"
-        , k_args'
-        , tokens_punctuation (id <> "_end") ")"
-        ]
-    C "App_func" /\ ps /\ ks -> do
-      let
-        ks' = ks # mapWithIndex \i (mb_l /\ k) -> case mb_l of
-          Just (Label l) | cons_needParensWhenOnLeftOfApp # Set.member l.con -> mb_l /\ (pure (tokens_punctuation (id <> "_begin_" <> show i) "(") <> k <> pure (tokens_punctuation (id <> "_end_" <> show i) ")"))
-          _ -> mb_l /\ k
-      (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks' #. snd
-    C "App_args" /\ ps /\ ks -> do
-      let
-        ks' = ks # mapWithIndex \i (mb_l /\ k) -> case mb_l of
-          Just (Label l) | cons_needParensWhenOnRightOfApp # Set.member l.con -> mb_l /\ (pure (tokens_punctuation (id <> "_begin_" <> show i) "(") <> k <> pure (tokens_punctuation (id <> "_end_" <> show i) ")"))
-          _ -> mb_l /\ k
-      (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks' #. snd
+      pure $ fold [ tokens_punctuation (id <> "_begin") "(", k_func', tokens_punctuation (id <> "_op") "$", k_args', tokens_punctuation (id <> "_end") ")" ]
+    C "App_func" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks'
+      where
+      ks' = ks # mapWithIndex \i (mb_l /\ k) -> case mb_l of
+        Just (Label l) | constructors_needParensWhenOnLeftOfApp # Set.member l.con -> mb_l /\ (pure (tokens_punctuation (id <> "_begin_" <> show i) "(") <> k <> pure (tokens_punctuation (id <> "_end_" <> show i) ")"))
+        _ -> mb_l /\ k
+    C "App_args" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks'
+      where
+      ks' = ks # mapWithIndex \i (mb_l /\ k) -> case mb_l of
+        Just (Label l) | constructors_needParensWhenOnRightOfApp # Set.member l.con -> mb_l /\ (pure (tokens_punctuation (id <> "_begin_" <> show i) "(") <> k <> pure (tokens_punctuation (id <> "_end_" <> show i) ")"))
+        _ -> mb_l /\ k
+
     -- Let
     C "Let" /\ _ /\ [ k_param, k_impl, k_body ] -> do
       k_param' <- increaseIndentLevel do k_param #. snd
       k_impl' <- increaseIndentLevel do k_impl #. snd
       k_body' <- k_body #. snd
-      pure $ fold
-        [ tokens_punctuation (id <> "_let") "let"
-        , k_param'
-        , tokens_punctuation (id <> "_assign") "="
-        , k_impl'
-        , tokens_punctuation (id <> "_in") "in"
-        , k_body'
-        ]
-    C "Let_param" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
-    C "Let_impl" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
-    C "Let_body" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
+      pure $ fold [ tokens_punctuation (id <> "_let") "let", k_param', tokens_punctuation (id <> "_assign") "=", k_impl', tokens_punctuation (id <> "_in") "in", k_body' ]
+    C "Let_param" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks
+    C "Let_impl" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks
+    C "Let_body" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks
 
     -- Var
     C "Var" /\ _ /\ [ k_lit ] -> k_lit #. snd
+
     -- Literal
     C lit /\ _ /\ [] -> pure $ tokens_literal id lit
-    -- Malformed
+
+    -- foreign
     C _ /\ _ /\ _ -> assembleExpr_default id args # snd
 
   let mb_ann = opts.getAnnotations args.label
@@ -350,8 +364,25 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
     , [ elems ]
     ]
 
-renderKidIsNotLineBreak :: forall r w i. RenderKid (Label C r) w i -> Boolean
-renderKidIsNotLineBreak = fst >>> maybe true \(Label l) -> l.con /= C "LineBreak"
+assembleAdvanced
+  :: forall r w i
+   . { targetKidsLength :: Maybe Int
+     }
+  -> { path :: Path
+     , label :: Label C r
+     , kids :: Array (RenderKid (Label C r) w i)
+     , points :: Array (KeyHTML w i)
+     }
+  -> String
+  -> Array (KeyHTML w i)
+  -> Array (RenderKid (Label C r) w i)
+  -> RenderM (Array (KeyHTML w i))
+assembleAdvanced opts args id ps ks = fold
+  [ if ks # Array.filter isntFormatting_RenderKid # null then pure (tokens_missing id) else mempty
+  -- , if pure (ks #. length) == opts.targetKidsLength then pure (tokens_error id "[") else mempty
+  , assembleSimple (pure args.label) ps ks #. snd
+  -- , if pure (ks #. length) == opts.targetKidsLength then pure (tokens_error id "]") else mempty
+  ]
 
 assembleSimple :: forall l w i. Maybe l -> Array (KeyHTML w i) -> Array (RenderKid l w i) -> RenderKid l w i
 assembleSimple l ps ks = l /\ do
@@ -361,19 +392,9 @@ assembleSimple l ps ks = l /\ do
     , [ ps # Array.last # fromMaybe ]
     ]
 
-renderArgs :: forall r w i. AssembleExpr (Label C r) -> RenderArgs (Label C r) w i
-renderArgs assembleExpr' =
-  { renderKid
-  , renderPoint
-  , assembleExpr: assembleExpr'
-  }
-  where
-  renderKid path expr = Expr.Render.renderExpr (renderArgs assembleExpr') path expr
-
-  renderPoint _label p =
-    fromPointToString p /\
-      HH.div [ classes [ "Point" ], HP.id (fromPointToString p) ]
-        [ HH.text " " ]
+--------------------------------------------------------------------------------
+-- exprs and zippers
+--------------------------------------------------------------------------------
 
 expr_LineBreak = C "LineBreak" % []
 
@@ -392,31 +413,79 @@ zipper_Let_param = (expr_Let # atPoint (Point { path: Step 0 : Nil, j: Index 0 }
 zipper_Let_impl = (expr_Let # atPoint (Point { path: Step 1 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
 zipper_Let_body = (expr_Let # atPoint (Point { path: Step 2 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
 
-linebreak = [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ], HH.div [ classes [ "Token break" ] ] [] ]
-indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "│" ] ]
-indentations n = fold $ Array.replicate n indentation
+--------------------------------------------------------------------------------
+-- isValidHandle
+--------------------------------------------------------------------------------
+
+isValidHandle :: forall r. (Expr (Label C r)) -> Handle -> Boolean
+isValidHandle root handle =
+  case handle of
+    Point_Handle p -> and [ isValidPoint root p ]
+    SpanH_Handle sh _ -> and [ isValidPoint root p._L, isValidPoint root p._R ]
+      where
+      p = getEndPoints_SpanH sh
+    ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
+      where
+      p = getEndPoints_ZipperH zh
 
 isValidPoint :: forall r. Expr (Label C r) -> Point -> Boolean
-isValidPoint e0 (Point p) = (e.l # getCon) `Set.member` cons_valid
+isValidPoint e0 (Point p) = (e.l # getCon) `Set.member` constructors_valid
   where
   Expr e = (e0 # atSubExpr p.path).here
 
-cons_needParensWhenOnLeftOfApp = Set.fromFoldable
+--------------------------------------------------------------------------------
+-- isHole
+--------------------------------------------------------------------------------
+
+isHole e0 (Point p) = and
+  [ constructors_expectsNonzeroKids #. Set.member l.con
+  , kids #. Array.filter (\(Expr { l: Label l }) -> l.con /= C "LineBreak") #. length == 0
+  ]
+  where
+  Expr { l: Label l, kids } = (e0 # atSubExpr p.path).here
+
+--------------------------------------------------------------------------------
+-- constructor classes
+--------------------------------------------------------------------------------
+
+constructors_expectsNonzeroKids = Set.fromFoldable
+  [ C "Let_param"
+  , C "Let_impl"
+  , C "Let_body"
+  , C "Lam_params"
+  , C "Lam_body"
+  , C "App_func"
+  , C "App_args"
+  ]
+
+constructors_needParensWhenOnLeftOfApp = Set.fromFoldable
   [ C "Lam"
   , C "Let"
   ]
 
-cons_needParensWhenOnRightOfApp = Set.fromFoldable
+constructors_needParensWhenOnRightOfApp = Set.fromFoldable
   [ C "Lam"
   , C "Let"
   ]
 
-cons_valid = Set.fromFoldable $ fold
+constructors_valid = Set.fromFoldable $ fold
   [ [ C "Root" ]
   , [ C "Lam_params", C "Lam_body" ]
   , [ C "App_func", C "App_args" ]
   , [ C "Let_param", C "Let_impl", C "Let_body" ]
   ]
+
+--------------------------------------------------------------------------------
+-- html
+--------------------------------------------------------------------------------
+
+linebreak = [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ], HH.div [ classes [ "Token break" ] ] [] ]
+indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "│" ] ]
+indentations n = fold $ Array.replicate n indentation
+
+--------------------------------------------------------------------------------
+-- tokens
+--------------------------------------------------------------------------------
 
 tokens_punctuation key str = [ mk_token key [ "punctuation" ] (pure str) ]
 
@@ -432,6 +501,8 @@ tokens_indentation n key =
 tokens_literal key str = [ mk_token key [ "literal" ] (pure str) ]
 
 tokens_missing key = [ mk_token (key <> "_missing") [ "missing" ] none ]
+
+tokens_error key str = [ mk_token (key <> "_error") [ "error" ] (pure str) ]
 
 mk_token key cs Nothing = key /\ HH.div [ HP.id key, classes ([ "Token" ] <> cs) ] []
 mk_token key cs (Just str) = key /\ HH.div [ HP.id key, classes ([ "Token" ] <> cs) ] [ HH.text str ]

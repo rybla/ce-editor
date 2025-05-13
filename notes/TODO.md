@@ -45,6 +45,7 @@ Priority:
 
 Debatable:
 
+- [ ] click on a part of a structure to put selection around teh whole thing
 - [ ] use different colors or something to show how something different will
       happen depending on what kind of insertion you're about to do or what is
       in your clipboard

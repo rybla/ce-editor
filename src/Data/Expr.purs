@@ -736,25 +736,25 @@ atInjectDiff (i0 :| path0) f = goStep i0 path0
 -- Edit
 --------------------------------------------------------------------------------
 
-type EditM m l1 l2 = ReaderT (EditCtx m l1 l2) (MaybeT m)
+type EditM m lA lB = ReaderT (EditCtx m lA lB) (MaybeT m)
 
-type EditCtx m l1 l2 =
-  { stampLabel :: l1 -> m l2
-  , unstampLabel :: l2 -> l1
+type EditCtx m lA lB =
+  { stampLabel :: lA -> m lB
+  , unstampLabel :: lB -> lA
   }
 
-stampTraversable :: forall m l1 l2 t. Monad m => Traversable t => t l1 -> EditM m l1 l2 (t l2)
+stampTraversable :: forall m lA lB t. Monad m => Traversable t => t lA -> EditM m lA lB (t lB)
 stampTraversable t = do
   { stampLabel } <- ask
   t # traverse (stampLabel >>> lift >>> lift)
 
-unstampTraversable :: forall m l1 l2 t. Monad m => Traversable t => t l2 -> EditM m l1 l2 (t l1)
+unstampTraversable :: forall m lA lB t. Monad m => Traversable t => t lB -> EditM m lA lB (t lA)
 unstampTraversable t = do
   { unstampLabel } <- ask
   t # traverse (unstampLabel >>> pure)
 
 -- TODO: is this layer necessary? I used to merge with existing clipboard but that's already accounted for when the Edit is constructed, so no need to do it here
-applyEdit :: forall m l1 l2. Monad m => Show l1 => Show l2 => Edit m l1 l2 -> BasicEditorState l1 l2 -> EditM m l1 l2 (BasicEditorState l1 l2)
+applyEdit :: forall m lA lB. Monad m => Show lA => Show lB => Edit m lA lB -> BasicEditorState lA lB -> EditM m lA lB (BasicEditorState lA lB)
 applyEdit (Edit edit) _state = do
   state' <- edit.output # Lazy.force
   pure
@@ -767,16 +767,16 @@ applyEdit (Edit edit) _state = do
 -- Edit
 --------------------------------------------------------------------------------
 
-type EditMenu m l1 l2 = String -> EditM m l1 l2 (Array (String /\ Edit m l1 l2))
+type EditMenu m lA lB = String -> EditM m lA lB (Array (String /\ Edit m lA lB))
 
-type EditAt m l1 l2 = BasicEditorState l1 l2 -> EditM m l1 l2 (Edit m l1 l2)
+type EditAt m lA lB = BasicEditorState lA lB -> EditM m lA lB (Edit m lA lB)
 
-type Edit m l1 l2 =
-  Edit_ l2
-    ( EditM m l1 l2
-        { root :: Expr l2
+type Edit m lA lB =
+  Edit_ lB
+    ( EditM m lA lB
+        { root :: Expr lB
         , mb_handle :: Maybe Handle
-        , clipboard :: Maybe (Fragment l1)
+        , clipboard :: Maybe (Fragment lA)
         }
     )
 
@@ -809,13 +809,13 @@ instance Show l => Pretty (EditInfo l) where
   pretty x = show x
 
 -- | The essence of the editor state that is exposed to `Expr`-level computations.
-type BasicEditorState l1 l2 =
-  { root :: Expr l2
+type BasicEditorState lA lB =
+  { root :: Expr lB
   , mb_handle :: Maybe Handle
-  , clipboard :: Maybe (Fragment l1)
+  , clipboard :: Maybe (Fragment lA)
   }
 
-mapLabel_BasicEditorState :: forall l1 l2 l2'. (l2 -> l2') -> BasicEditorState l1 l2 -> BasicEditorState l1 l2'
+mapLabel_BasicEditorState :: forall lA lB lB'. (lB -> lB') -> BasicEditorState lA lB -> BasicEditorState lA lB'
 mapLabel_BasicEditorState f state =
   { root: state.root # map f
   , mb_handle: state.mb_handle
