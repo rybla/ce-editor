@@ -22,6 +22,7 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.String as String
 import Data.Traversable (traverse)
+import Data.Tuple (snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Editor (AnnotatedLabel, Editor(..), Label(..), StampedLabel, getId)
@@ -577,6 +578,7 @@ render state =
             [ HHK.div [ classes [ "Expr" ] ]
                 ( root
                     # renderAnnotatedExpr state.editor Nil
+                    # snd
                     # runRenderM
                 )
             ]
@@ -585,7 +587,7 @@ render state =
         ]
     ]
 
-renderAnnotatedExpr :: forall c. Show c => Editor c -> Path -> Expr (AnnotatedLabel c ()) -> RenderM (Array (String /\ EditorHTML c))
+renderAnnotatedExpr :: forall c. Show c => Editor c -> Path -> Expr (AnnotatedLabel c ()) -> Maybe (AnnotatedLabel c ()) /\ RenderM (Array (String /\ EditorHTML c))
 renderAnnotatedExpr (Editor editor) path expr = do
   Expr.Render.renderExpr
     { renderKid: renderAnnotatedExpr (Editor editor)
@@ -599,7 +601,7 @@ renderAnnotatedExpr (Editor editor) path expr = do
     ((str_or_label # either identity getId) <> "_point_" <> show j) /\
       HH.slot (Proxy @"Point") point Point.component { editor: Editor editor, point } PointOutput_EditorAction
 
-renderStampedExpr :: forall c. Show c => Editor c -> Path -> Expr (StampedLabel c ()) -> RenderM (Array (String /\ EditorHTML c))
+renderStampedExpr :: forall c. Show c => Editor c -> Path -> Expr (StampedLabel c ()) -> (Maybe (StampedLabel c ())) /\ RenderM (Array (String /\ EditorHTML c))
 renderStampedExpr (Editor editor) path expr = do
   Expr.Render.renderExpr
     { renderKid: renderStampedExpr (Editor editor)

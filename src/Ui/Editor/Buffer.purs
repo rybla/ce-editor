@@ -17,6 +17,7 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Set as Set
 import Data.String.CodePoints as String.CodePoints
+import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Editor (Editor(..), StampedLabel, mkEditCtx)
@@ -204,6 +205,8 @@ render state =
                   [ HHK.div [ classes [ "Expr" ] ] $
                       info.insertion
                         # renderFragment (renderArgs_stamped state.editor) (state.point # unwrap).path
+                        # map snd
+                        # fold
                         # flip runReader
                             { indentLevel: 0
                             }

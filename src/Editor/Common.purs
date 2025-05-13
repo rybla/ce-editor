@@ -9,6 +9,7 @@ import Data.Foldable (fold)
 import Data.Id as Id
 import Data.Maybe (Maybe, fromMaybe)
 import Data.Traversable (traverse)
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (none)
 import Effect (Effect)
@@ -159,21 +160,22 @@ mkEditCtx f g (Editor _editor) =
 --------------------------------------------------------------------------------
 
 assembleStampedExpr_default :: forall c r. Show c => AssembleExpr (StampedLabel c r)
-assembleStampedExpr_default { label: label@(Label l), kids, points } = do
-  kidsAndPoints <- map fold $ Array.zip points kids # traverse \(point /\ m_kid) -> do
+assembleStampedExpr_default { label, kids, points } = Tuple (pure label) do
+  let Label { id } = label
+  kidsAndPoints <- map fold $ Array.zip points kids # traverse \(point /\ (_ /\ m_kid)) -> do
     kid <- m_kid
     pure $ [ point ] <> kid
   pure $ fold
-    [ [ (l.id <> "_begin") /\ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text "(" ] ]
-    , [ (l.id <> "_label") /\ HH.div [ classes [ "Token", "foreign" ] ] [ HH.text $ show label ] ]
+    [ [ (id <> "_begin") /\ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text "(" ] ]
+    , [ (id <> "_label") /\ HH.div [ classes [ "Token", "foreign" ] ] [ HH.text $ show label ] ]
     , kidsAndPoints
-    , [ points # Array.last # fromMaybe ((l.id <> "_missingLastPoint") /\ renderWarning "missing last point") ]
-    , [ (l.id <> "_end") /\ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text ")" ] ]
+    , [ points # Array.last # fromMaybe ((id <> "_missingLastPoint") /\ renderWarning "missing last point") ]
+    , [ (id <> "_end") /\ HH.div [ classes [ "Token", "punctuation" ] ] [ HH.text ")" ] ]
     ]
 
 assembleExpr_default :: forall c r. Show c => String -> AssembleExpr (Label c r)
-assembleExpr_default id { label, kids, points } = do
-  kidsAndPoints <- map fold $ Array.zip points kids # traverse \(point /\ m_kid) -> do
+assembleExpr_default id { label, kids, points } = Tuple (pure label) do
+  kidsAndPoints <- map fold $ Array.zip points kids # traverse \(point /\ (_ /\ m_kid)) -> do
     kid <- m_kid
     pure $ [ point ] <> kid
   pure $ fold

@@ -148,6 +148,9 @@ isWhitespaceFree_regex = Regex.regex "^\\S*$" mempty # fromRight' do impossible 
 isIdentifier = Regex.test isIdentifier_regex
 isIdentifier_regex = Regex.regex "^[a-zA-Z_$][a-zA-Z0-9_]*$" mempty # fromRight' do impossible "failed to compile isIdentifier_regex"
 
+isIdentifierOrNumeric = Regex.test isIdentifierOrNumeric_regex
+isIdentifierOrNumeric_regex = Regex.regex "^[a-zA-Z0-9_]+$" mempty # fromRight' do impossible "failed to compile isIdentifierOrNumeric_regex"
+
 writeFlipped ∷ ∀ (a ∷ Type). Ref a → a → Effect Unit
 writeFlipped = flip Ref.write
 

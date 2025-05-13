@@ -99,7 +99,7 @@ movePoint args e p L_hole = movePointUntil' e p L \p' -> do
   guard $ args.isHole e p'
   pure p'
 movePoint args e p R_hole = movePointUntil' e p R \p' -> do
-  Debug.traceM $ "movePointUntil " <> show p'
+  -- Debug.traceM $ "movePointUntil " <> show p'
   guard $ args.isHole e p'
   pure p'
 

@@ -7,18 +7,18 @@ import Control.Monad.Reader (ask, local, runReader, runReaderT)
 import Data.Array as Array
 import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
-import Data.Expr.Render (Annotation(..), AssembleExpr, RenderArgs)
+import Data.Expr.Render (Annotation(..), AssembleExpr, KeyHTML, RenderArgs, RenderKid)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (and, fold, foldMap, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..), (:))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, wrap)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as String
 import Data.Traversable (sequence, traverse)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
 import Editor.Common (AnnotatedLabel, Diagnostic(..), Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon)
@@ -31,7 +31,7 @@ import Record as Record
 import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, isIdentifier, (#.))
+import Utility (collapse, isIdentifierOrNumeric, (#.))
 
 newtype C = C String
 
@@ -85,7 +85,7 @@ editor = Editor
           "app" -> pure [ edit_App_func, edit_App_args ]
           "let" -> pure [ edit_Let_param, edit_Let_impl, edit_Let_body ]
           -- Var
-          _ | query # isIdentifier -> do
+          _ | query # isIdentifierOrNumeric -> do
             expr_Var' <- expr_Var query # stampTraversable
             edit_Var <- Tuple "Var" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Var' ])) state
             pure [ edit_Var ]
@@ -117,7 +117,7 @@ editor = Editor
       in
         and
           [ isHole_cons #. Set.member l.con
-          , kids #. length == 0
+          , kids #. Array.filter (\(Expr { l: Label l }) -> l.con /= C "LineBreak") #. length == 0
           ]
   , assembleStampedExpr
   , assembleAnnotatedExpr
@@ -148,6 +148,8 @@ editor = Editor
                 HHK.div [ classes [ "Expr" ] ] $
                   frag
                     # Expr.Render.renderFragment (renderArgs assembleExpr) none
+                    # map snd
+                    # fold
                     # flip runReader
                         { indentLevel: 0
                         }
@@ -251,12 +253,12 @@ assembleExpr_helper
      , getAnnotations :: Label C r -> Maybe (Array Annotation)
      }
   -> AssembleExpr (Label C r)
-assembleExpr_helper opts args = do
+assembleExpr_helper opts args = Tuple (pure args.label) do
   let id = opts.getId args.path args.label
   ctx <- ask
   elems <- case (args.label # getCon) /\ args.points /\ args.kids of
     -- Root
-    C "Root" /\ ps /\ ks -> assembleSimple ps ks
+    C "Root" /\ ps /\ ks -> assembleSimple (pure args.label) ps ks # snd
     -- LineBreak
     C "LineBreak" /\ _ /\ [] -> do
       pure $ fold
@@ -266,8 +268,8 @@ assembleExpr_helper opts args = do
         ]
     -- Lam
     C "Lam" /\ _ /\ [ k_params, k_body ] -> do
-      k_params' <- increaseIndentLevel do k_params
-      k_body' <- increaseIndentLevel do k_body
+      k_params' <- increaseIndentLevel do k_params # snd
+      k_body' <- increaseIndentLevel do k_body # snd
       pure $ fold
         [ tokens_punctuation (id <> "_begin") "("
         , tokens_punctuation (id <> "_lambda") "fun"
@@ -276,14 +278,12 @@ assembleExpr_helper opts args = do
         , k_body'
         , tokens_punctuation (id <> "_end") ")"
         ]
-    C "Lam_params" /\ ps /\ ks -> assembleSimple ps ks
-    C "Lam_body" /\ [ p ] /\ [] -> pure (tokens_missing id) <> pure [ p ]
-    C "Lam_body" /\ ps /\ [ k ] -> assembleSimple ps [ k ]
-    C "Lam_body" /\ ps /\ ks -> assembleSimple ps ks -- TODO: malformed error
+    C "Lam_params" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
+    C "Lam_body" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
     -- App
     C "App" /\ _ /\ [ k_func, k_args ] -> do
-      k_func' <- increaseIndentLevel do k_func
-      k_args' <- increaseIndentLevel do k_args
+      k_func' <- increaseIndentLevel do k_func #. snd
+      k_args' <- increaseIndentLevel do k_args #. snd
       pure $ fold
         [ tokens_punctuation (id <> "_begin") "("
         , k_func'
@@ -291,15 +291,13 @@ assembleExpr_helper opts args = do
         , k_args'
         , tokens_punctuation (id <> "_end") ")"
         ]
-    C "App_func" /\ [ p ] /\ [] -> pure (tokens_missing id) <> pure [ p ]
-    C "App_func" /\ ps /\ [ k ] -> assembleSimple ps [ k ]
-    C "App_func" /\ ps /\ ks -> assembleSimple ps ks -- TODO: malformed error
-    C "App_args" /\ ps /\ ks -> assembleSimple ps ks
+    C "App_func" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
+    C "App_args" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
     -- Let
     C "Let" /\ _ /\ [ k_param, k_impl, k_body ] -> do
-      k_param' <- increaseIndentLevel do k_param
-      k_impl' <- increaseIndentLevel do k_impl
-      k_body' <- k_body
+      k_param' <- increaseIndentLevel do k_param #. snd
+      k_impl' <- increaseIndentLevel do k_impl #. snd
+      k_body' <- k_body #. snd
       pure $ fold
         [ tokens_punctuation (id <> "_begin") "("
         , tokens_punctuation (id <> "_let") "let"
@@ -310,29 +308,16 @@ assembleExpr_helper opts args = do
         , k_body'
         , tokens_punctuation (id <> "_end") ")"
         ]
-    C "Let_param" /\ [ p ] /\ [] -> pure (tokens_missing id) <> pure [ p ]
-    C "Let_param" /\ ps /\ [ k ] -> assembleSimple ps [ k ]
-    C "Let_param" /\ ps /\ ks -> assembleSimple ps ks -- TODO: malformed error
-    C "Let_impl" /\ [ p ] /\ [] -> pure (tokens_missing id) <> pure [ p ]
-    C "Let_impl" /\ ps /\ [ k ] -> assembleSimple ps [ k ]
-    C "Let_impl" /\ ps /\ ks -> assembleSimple ps ks -- TODO: malformed error
-    C "Let_body" /\ [ p ] /\ [] -> pure (tokens_missing id) <> pure [ p ]
-    C "Let_body" /\ ps /\ [ k ] -> assembleSimple ps [ k ]
-    C "Let_body" /\ ps /\ ks -> assembleSimple ps ks -- TODO: malformed error
+    C "Let_param" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
+    C "Let_impl" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
+    C "Let_body" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
 
     -- Var
-    C "Var" /\ _ /\ [ k_lit ] -> do
-      k_lit' <- k_lit
-      pure $ fold
-        [ k_lit'
-        ]
+    C "Var" /\ _ /\ [ k_lit ] -> k_lit #. snd
     -- Literal
-    C lit /\ _ /\ [] -> do
-      pure $ fold
-        [ tokens_literal id lit
-        ]
+    C lit /\ _ /\ [] -> pure $ tokens_literal id lit
     -- Malformed
-    C _ /\ _ /\ _ -> assembleExpr_default id args
+    C _ /\ _ /\ _ -> assembleExpr_default id args # snd
 
   let mb_ann = opts.getAnnotations args.label
   pure $ fold $ fold
@@ -359,8 +344,12 @@ assembleExpr_helper opts args = do
     , [ elems ]
     ]
 
-assembleSimple ps ks = do
-  ks' <- ks # sequence
+renderKidIsNotLineBreak :: forall r w i. RenderKid (Label C r) w i -> Boolean
+renderKidIsNotLineBreak = fst >>> maybe true \(Label l) -> l.con /= C "LineBreak"
+
+assembleSimple :: forall l w i. Maybe l -> Array (KeyHTML w i) -> Array (RenderKid l w i) -> RenderKid l w i
+assembleSimple l ps ks = l /\ do
+  ks' <- ks # traverse snd
   pure $ fold $ fold $
     [ Array.zipWith (\p k -> [ p ] <> k) ps ks'
     , [ ps # Array.last # fromMaybe ]
