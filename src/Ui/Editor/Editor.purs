@@ -175,7 +175,7 @@ handleAction (KeyDown_EditorAction event) = do
             setHandle $ pure editor.initialHandle
           Just handle -> do
             case
-              Expr.Move.movePointUntil root dir (handle # getFocusPoint) \p ->
+              Expr.Move.movePointUntil { isHole: editor.isHole } root (handle # getFocusPoint) dir \p ->
                 guardPure (editor.isValidHandle root) (Point_Handle p)
               of
               Nothing -> do
@@ -205,7 +205,7 @@ handleAction (KeyDown_EditorAction event) = do
               Just dragOrigin -> do
                 pure dragOrigin
             case
-              Expr.Move.movePointUntil root dir (handle # getFocusPoint) \p ->
+              Expr.Move.movePointUntil { isHole: editor.isHole } root (handle # getFocusPoint) dir \p ->
                 root # Expr.Drag.drag dragOrigin p >>= guardPure (editor.isValidHandle root)
               of
               Nothing -> pure unit

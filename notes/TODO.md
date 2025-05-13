@@ -2,6 +2,8 @@
 
 Priority:
 
+- [ ] put annotations _below_ the thing their annotating (will take up vertical
+      space), instead of _before_
 - [ ] add a `isHole :: Expr -> Handle -> Boolean` just like `isValidHandle` to
       `Editor`
 - [ ] with `isHole`, make pressing Tab and Shift+Tab jump forwards and backward

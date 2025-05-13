@@ -183,3 +183,5 @@ mapMap f = map (map f)
 
 infixl 4 mapMap as <$$>
 
+infixl 1000 applyFlipped as #.
+

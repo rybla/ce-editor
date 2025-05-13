@@ -2,6 +2,7 @@ module Data.Expr.Move where
 
 import Prelude
 
+import Control.Alternative (guard)
 import Data.Eq.Generic (genericEq)
 import Data.Expr (Expr, Handle(..), Index(..), Point(..), SpanFocus(..), ZipperFocus(..), atSubExpr, getExtremeIndexes, getFocusPoint, getIndexesAroundStep, getInnerSpanH_ZipperH, getKid_Expr, getOuterSpanH_ZipperH, getStepsAroundIndex)
 import Data.Generic.Rep (class Generic)
@@ -10,6 +11,7 @@ import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Unfoldable (none)
+import Debug as Debug
 import Ui.Event (KeyInfo(..))
 
 data Dir = Dir' Dir' | L_hole | R_hole
@@ -59,26 +61,68 @@ fromKeyInfoToDragMoveDir (KeyInfo { key: "ArrowLeft", shift: true, alt: false, c
 fromKeyInfoToDragMoveDir (KeyInfo { key: "ArrowLeft", shift: true, alt: true, cmd: false }) = pure $ Dir' L_sibling
 fromKeyInfoToDragMoveDir (KeyInfo { key: "ArrowRight", shift: true, alt: false, cmd: false }) = pure $ Dir' R
 fromKeyInfoToDragMoveDir (KeyInfo { key: "ArrowRight", shift: true, alt: true, cmd: false }) = pure $ Dir' R_sibling
-fromKeyInfoToDragMoveDir (KeyInfo { key: " ", shift: true, alt: false, cmd: false }) = pure $ Dir' R
-fromKeyInfoToDragMoveDir (KeyInfo { key: " ", shift: true, alt: true, cmd: false }) = pure $ Dir' R_sibling
 fromKeyInfoToDragMoveDir _ = Nothing
 
-movePointUntil :: forall l a. Show l => Expr l -> Dir' -> Point -> (Point -> Maybe a) -> Maybe a
-movePointUntil e dir h f = case movePoint' e dir h of
+type Args l =
+  { isHole :: Expr l -> Point -> Boolean
+  }
+
+movePointUntil
+  :: forall l a
+   . Show l
+  => Args l
+  -> Expr l
+  -> Point
+  -> Dir
+  -> (Point -> Maybe a)
+  -> Maybe a
+movePointUntil args e p0 dir f = case movePoint args e p0 dir of
   Nothing -> Nothing
   Just p -> go p
   where
   go p = case f p of
-    Nothing -> case movePoint' e dir p of
+    Nothing -> case movePoint args e p dir of
       Nothing -> Nothing
       Just p' -> go p'
     Just a -> pure a
 
-movePoint :: forall l. Show l => Expr l -> Dir' -> Point -> Maybe Point
-movePoint e dir p = movePoint' e dir p
+movePoint
+  :: forall l
+   . Show l
+  => Args l
+  -> Expr l
+  -> Point
+  -> Dir
+  -> Maybe Point
+movePoint _args e p (Dir' dir) = movePoint' e p dir
+movePoint args e p L_hole = movePointUntil' e p L \p' -> do
+  guard $ args.isHole e p'
+  pure p'
+movePoint args e p R_hole = movePointUntil' e p R \p' -> do
+  Debug.traceM $ "movePointUntil " <> show p'
+  guard $ args.isHole e p'
+  pure p'
 
-movePoint' :: forall l. Show l => Expr l -> Dir' -> Point -> Maybe Point
-movePoint' e dir (Point p) = case dir of
+movePointUntil'
+  :: forall l a
+   . Show l
+  => Expr l
+  -> Point
+  -> Dir'
+  -> (Point -> Maybe a)
+  -> Maybe a
+movePointUntil' e p0 dir f = case movePoint' e p0 dir of
+  Nothing -> Nothing
+  Just p -> go p
+  where
+  go p = case f p of
+    Nothing -> case movePoint' e p dir of
+      Nothing -> Nothing
+      Just p' -> go p'
+    Just a -> pure a
+
+movePoint' :: forall l. Show l => Expr l -> Point -> Dir' -> Maybe Point
+movePoint' e (Point p) dir = case dir of
   -- 
   L | extreme_j._L == p.j, Just { init: path', last: i } <- p.path # List.unsnoc -> pure $ Point { path: path', j: (i # getIndexesAroundStep)._L }
   L_sibling | extreme_j._L == p.j, Just { init: path', last: i } <- p.path # List.unsnoc -> pure $ Point { path: path', j: (i # getIndexesAroundStep)._L }

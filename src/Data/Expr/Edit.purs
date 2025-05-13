@@ -10,7 +10,7 @@ import Data.Lazy as Lazy
 import Data.List ((:))
 import Data.Maybe (Maybe(..))
 import Data.Unfoldable (none)
-import Utility (guardPure, todo)
+import Utility (guardPure)
 
 --------------------------------------------------------------------------------
 -- insert
@@ -220,7 +220,7 @@ delete state = do
 delete' :: forall m l1 l2. Monad m => Show l1 => Show l2 => { isValidHandle :: Expr l2 -> Handle -> Boolean } -> EditAt m l1 l2
 delete' { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } = do
   let
-    mb_handle' = Expr.Move.movePointUntil state.root Expr.Move.L p0 \p ->
+    mb_handle' = Expr.Move.movePointUntil' state.root p0 Expr.Move.L \p ->
       e # Expr.Drag.drag (Point_Handle p0) p >>= guardPure (isValidHandle e)
   case mb_handle' of
     Nothing -> empty
@@ -230,7 +230,7 @@ delete' _ state = delete state
 delete'_sibling :: forall m l1 l2. Monad m => Show l1 => Show l2 => { isValidHandle :: Expr l2 -> Handle -> Boolean } -> EditAt m l1 l2
 delete'_sibling { isValidHandle } state@{ root: e, mb_handle: Just (Point_Handle p0) } = do
   let
-    mb_handle' = Expr.Move.movePointUntil state.root Expr.Move.L_sibling p0 \p ->
+    mb_handle' = Expr.Move.movePointUntil' state.root p0 Expr.Move.L_sibling \p ->
       e # Expr.Drag.drag (Point_Handle p0) p >>= guardPure (isValidHandle e)
   case mb_handle' of
     Nothing -> empty

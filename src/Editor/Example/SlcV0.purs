@@ -9,7 +9,7 @@ import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..)
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (Annotation(..), AssembleExpr, RenderArgs)
 import Data.Expr.Render as Expr.Render
-import Data.Foldable (and, fold, foldMap, null)
+import Data.Foldable (and, fold, foldMap, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
@@ -26,13 +26,12 @@ import Effect.Aff (Aff)
 import Halogen.HTML (fromPlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
-import Halogen.HTML.Properties (id)
-import Halogen.HTML.Properties (id) as HP
+import Halogen.HTML.Properties as HP
 import Record as Record
 import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, isIdentifier, todo, unimplemented)
+import Utility (collapse, isIdentifier, (#.))
 
 newtype C = C String
 
@@ -114,9 +113,12 @@ editor = Editor
           p = getEndPoints_ZipperH zh
   , isHole: \e0 (Point p) ->
       let
-        Expr { l: Label l } = (e0 # atSubExpr p.path).here
+        Expr { l: Label l, kids } = (e0 # atSubExpr p.path).here
       in
-        l.con `Set.member` isHole_cons
+        and
+          [ isHole_cons #. Set.member l.con
+          , kids #. length == 0
+          ]
   , assembleStampedExpr
   , assembleAnnotatedExpr
   , printExpr:
@@ -157,6 +159,7 @@ editor = Editor
 isHole_cons = Set.fromFoldable
   [ C "Let_param"
   , C "Let_impl"
+  , C "Let_body"
   , C "Lam_params"
   , C "Lam_body"
   , C "App_func"
