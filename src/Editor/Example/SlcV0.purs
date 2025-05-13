@@ -31,7 +31,7 @@ import Record as Record
 import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, isIdentifierOrNumeric, (#.))
+import Utility (collapse, isIdentifierOrNumeric, (#.), (<##>))
 
 newtype C = C String
 
@@ -271,12 +271,10 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
       k_params' <- increaseIndentLevel do k_params # snd
       k_body' <- increaseIndentLevel do k_body # snd
       pure $ fold
-        [ tokens_punctuation (id <> "_begin") "("
-        , tokens_punctuation (id <> "_lambda") "fun"
+        [ tokens_punctuation (id <> "_lambda") "fun"
         , k_params'
         , tokens_punctuation (id <> "_arrow") "⇒"
         , k_body'
-        , tokens_punctuation (id <> "_end") ")"
         ]
     C "Lam_params" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
     C "Lam_body" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
@@ -291,22 +289,30 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
         , k_args'
         , tokens_punctuation (id <> "_end") ")"
         ]
-    C "App_func" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
-    C "App_args" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
+    C "App_func" /\ ps /\ ks -> do
+      let
+        ks' = ks # mapWithIndex \i (mb_l /\ k) -> case mb_l of
+          Just (Label l) | cons_needParensWhenOnLeftOfApp # Set.member l.con -> mb_l /\ (pure (tokens_punctuation (id <> "_begin_" <> show i) "(") <> k <> pure (tokens_punctuation (id <> "_end_" <> show i) ")"))
+          _ -> mb_l /\ k
+      (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks' #. snd
+    C "App_args" /\ ps /\ ks -> do
+      let
+        ks' = ks # mapWithIndex \i (mb_l /\ k) -> case mb_l of
+          Just (Label l) | cons_needParensWhenOnRightOfApp # Set.member l.con -> mb_l /\ (pure (tokens_punctuation (id <> "_begin_" <> show i) "(") <> k <> pure (tokens_punctuation (id <> "_end_" <> show i) ")"))
+          _ -> mb_l /\ k
+      (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks' #. snd
     -- Let
     C "Let" /\ _ /\ [ k_param, k_impl, k_body ] -> do
       k_param' <- increaseIndentLevel do k_param #. snd
       k_impl' <- increaseIndentLevel do k_impl #. snd
       k_body' <- k_body #. snd
       pure $ fold
-        [ tokens_punctuation (id <> "_begin") "("
-        , tokens_punctuation (id <> "_let") "let"
+        [ tokens_punctuation (id <> "_let") "let"
         , k_param'
         , tokens_punctuation (id <> "_assign") "="
         , k_impl'
         , tokens_punctuation (id <> "_in") "in"
         , k_body'
-        , tokens_punctuation (id <> "_end") ")"
         ]
     C "Let_param" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
     C "Let_impl" /\ ps /\ ks -> (if (ks # Array.filter renderKidIsNotLineBreak # null) then pure (tokens_missing id) else mempty) <> assembleSimple (pure args.label) ps ks #. snd
@@ -391,11 +397,21 @@ indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ H
 indentations n = fold $ Array.replicate n indentation
 
 isValidPoint :: forall r. Expr (Label C r) -> Point -> Boolean
-isValidPoint e0 (Point p) = (e.l # getCon) `Set.member` valid_cons
+isValidPoint e0 (Point p) = (e.l # getCon) `Set.member` cons_valid
   where
   Expr e = (e0 # atSubExpr p.path).here
 
-valid_cons = Set.fromFoldable $ fold
+cons_needParensWhenOnLeftOfApp = Set.fromFoldable
+  [ C "Lam"
+  , C "Let"
+  ]
+
+cons_needParensWhenOnRightOfApp = Set.fromFoldable
+  [ C "Lam"
+  , C "Let"
+  ]
+
+cons_valid = Set.fromFoldable $ fold
   [ [ C "Root" ]
   , [ C "Lam_params", C "Lam_body" ]
   , [ C "App_func", C "App_args" ]

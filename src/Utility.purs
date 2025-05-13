@@ -186,5 +186,9 @@ mapMap f = map (map f)
 
 infixl 4 mapMap as <$$>
 
+mapMapFlipped = flip mapMap
+
+infixl 4 mapMapFlipped as <##>
+
 infixl 1000 applyFlipped as #.
 
