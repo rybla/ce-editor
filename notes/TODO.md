@@ -18,7 +18,7 @@ Priority:
 - [ ] BUG: in Data.Expr.Render, make sure that all tooth types are putting
       points in the appropriate places
 
-- [ ] IDEA: hardcode Editor label as string?
+- [ ] IDEA: hardcode Editor label as string (or `data C = C String`)?
 
   - not doing this for now since it'll make it more difficult to add more type
     vars (such as for render-time annotation) later
@@ -45,6 +45,7 @@ Priority:
 
 Debatable:
 
+- [ ] project with mutliple files
 - [ ] click on a part of a structure to put selection around teh whole thing
 - [ ] use different colors or something to show how something different will
       happen depending on what kind of insertion you're about to do or what is
