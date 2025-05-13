@@ -13987,7 +13987,7 @@
           return new Tuple(v, div2([id2(v), classes2(append11(["Token"])(v1))])([text5(v2.value0)]));
         }
         ;
-        throw new Error("Failed pattern match at Editor.Example.Sexp (line 291, column 1 - line 291, column 86): " + [v.constructor.name, v1.constructor.name, v2.constructor.name]);
+        throw new Error("Failed pattern match at Editor.Example.Sexp (line 292, column 1 - line 292, column 86): " + [v.constructor.name, v1.constructor.name, v2.constructor.name]);
       };
     };
   };
@@ -14033,16 +14033,16 @@
   };
   var increaseIndentLevel = function(dictMonadReader) {
     return local(dictMonadReader)(function(ctx) {
-      var $112 = {};
-      for (var $113 in ctx) {
-        if ({}.hasOwnProperty.call(ctx, $113)) {
-          $112[$113] = ctx[$113];
+      var $114 = {};
+      for (var $115 in ctx) {
+        if ({}.hasOwnProperty.call(ctx, $115)) {
+          $114[$115] = ctx[$115];
         }
         ;
       }
       ;
-      $112.indentLevel = ctx.indentLevel + 1 | 0;
-      return $112;
+      $114.indentLevel = ctx.indentLevel + 1 | 0;
+      return $114;
     });
   };
   var increaseIndentLevel1 = /* @__PURE__ */ increaseIndentLevel(/* @__PURE__ */ monadReaderReaderT(monadIdentity));
@@ -14110,7 +14110,7 @@
                 return span3([classes2(["Error"])])([text5("\u274C")]);
               }
               ;
-              throw new Error("Failed pattern match at Editor.Example.Sexp (line 221, column 63 - line 223, column 90): " + [v.constructor.name]);
+              throw new Error("Failed pattern match at Editor.Example.Sexp (line 222, column 63 - line 224, column 90): " + [v.constructor.name]);
             })(anns))]))], [new Tuple(id3 + "_ann", div2([id2(id3 + "_ann"), classes2(["Annotations"])])([div2([classes2(["inner"])])(map29(function(v) {
               if (v instanceof Info_Annotation) {
                 return div2([classes2(["item", "Info"])])([fromPlainHTML(v.value0)]);
@@ -14120,7 +14120,7 @@
                 return div2([classes2(["item", "Error"])])([fromPlainHTML(v.value0)]);
               }
               ;
-              throw new Error("Failed pattern match at Editor.Example.Sexp (line 228, column 63 - line 230, column 103): " + [v.constructor.name]);
+              throw new Error("Failed pattern match at Editor.Example.Sexp (line 229, column 63 - line 231, column 103): " + [v.constructor.name]);
             })(anns))]))], [new Tuple(id3 + "_ann_point_sep", div2([id2(id3 + "_ann_point_sep"), classes2(["AnnotationSep"])])([]))]];
           })(mb_ann), [elems]])));
         });
@@ -14244,6 +14244,11 @@
           throw new Error("Failed pattern match at Editor.Example.Sexp (line 90, column 7 - line 97, column 38): " + [handle.constructor.name]);
         };
       },
+      isHole: function(v) {
+        return function(v1) {
+          return false;
+        };
+      },
       assembleStampedExpr,
       assembleAnnotatedExpr,
       printExpr: /* @__PURE__ */ function() {
@@ -14336,8 +14341,9 @@
   var show1 = /* @__PURE__ */ show(/* @__PURE__ */ showExpr(showLabel3));
   var renderFragment3 = /* @__PURE__ */ renderFragment(showLabel3);
   var ordC2 = ordString;
+  var fromFoldable22 = /* @__PURE__ */ fromFoldable5(ordC2);
   var member1 = /* @__PURE__ */ member2(ordC2);
-  var valid_cons2 = /* @__PURE__ */ fromFoldable5(ordC2)(/* @__PURE__ */ fold8([["Root"], ["Lam_params", "Lam_body"], ["App_func", "App_args"], ["Let_param", "Let_impl", "Let_body"]]));
+  var valid_cons2 = /* @__PURE__ */ fromFoldable22(/* @__PURE__ */ fold8([["Root"], ["Lam_params", "Lam_body"], ["App_func", "App_args"], ["Let_param", "Let_impl", "Let_body"]]));
   var renderArgs2 = function(assembleExpr$prime) {
     var renderPoint = function(_label) {
       return function(p2) {
@@ -14366,7 +14372,7 @@
           return new Tuple(v, div2([id2(v), classes2(append14(["Token"])(v1))])([text5(v2.value0)]));
         }
         ;
-        throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 414, column 1 - line 414, column 86): " + [v.constructor.name, v1.constructor.name, v2.constructor.name]);
+        throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 428, column 1 - line 428, column 86): " + [v.constructor.name, v1.constructor.name, v2.constructor.name]);
       };
     };
   };
@@ -14413,18 +14419,19 @@
       return member1(getCon(v1.l))(valid_cons2);
     };
   };
+  var isHole_cons = /* @__PURE__ */ fromFoldable22(["Let_param", "Let_impl", "Lam_params", "Lam_body", "App_func", "App_args"]);
   var increaseIndentLevel2 = function(dictMonadReader) {
     return local(dictMonadReader)(function(ctx) {
-      var $145 = {};
-      for (var $146 in ctx) {
-        if ({}.hasOwnProperty.call(ctx, $146)) {
-          $145[$146] = ctx[$146];
+      var $147 = {};
+      for (var $148 in ctx) {
+        if ({}.hasOwnProperty.call(ctx, $148)) {
+          $147[$148] = ctx[$148];
         }
         ;
       }
       ;
-      $145.indentLevel = ctx.indentLevel + 1 | 0;
-      return $145;
+      $147.indentLevel = ctx.indentLevel + 1 | 0;
+      return $147;
     });
   };
   var increaseIndentLevel12 = /* @__PURE__ */ increaseIndentLevel2(/* @__PURE__ */ monadReaderReaderT(monadIdentity));
@@ -14627,7 +14634,7 @@
                 return span3([classes2(["Error"])])([text5("\u274C")]);
               }
               ;
-              throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 325, column 63 - line 327, column 90): " + [v.constructor.name]);
+              throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 339, column 63 - line 341, column 90): " + [v.constructor.name]);
             })(anns))]))], [new Tuple(id3 + "_ann", div2([id2(id3 + "_ann"), classes2(["Annotations"])])([div2([classes2(["inner"])])(map30(function(v) {
               if (v instanceof Info_Annotation) {
                 return div2([classes2(["item", "Info"])])([fromPlainHTML(v.value0)]);
@@ -14637,7 +14644,7 @@
                 return div2([classes2(["item", "Error"])])([fromPlainHTML(v.value0)]);
               }
               ;
-              throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 332, column 63 - line 334, column 103): " + [v.constructor.name]);
+              throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 346, column 63 - line 348, column 103): " + [v.constructor.name]);
             })(anns))]))], [new Tuple(id3 + "_ann_point_sep", div2([id2(id3 + "_ann_point_sep"), classes2(["AnnotationSep"])])([]))]];
           })(mb_ann), [elems]])));
         });
@@ -14714,8 +14721,8 @@
         if (v.l.con === "Var" && v.kids.length === 1) {
           return bind17(ask1)(function(ctx) {
             var ann = fold8([function() {
-              var $301 = member5(v["kids"][0].l.con)(ctx.scope);
-              if ($301) {
+              var $303 = member5(v["kids"][0].l.con)(ctx.scope);
+              if ($303) {
                 return [];
               }
               ;
@@ -14725,8 +14732,8 @@
               return pure25({
                 l: union7({
                   ann: function() {
-                    var $302 = $$null5(ann);
-                    if ($302) {
+                    var $304 = $$null5(ann);
+                    if ($304) {
                       return none5;
                     }
                     ;
@@ -14742,16 +14749,16 @@
         return go_skip(v);
       };
       if (v.l.con === "Lam" && (v.kids.length === 2 && v["kids"][0].l.con === "Lam_params")) {
-        var $317 = map113(fromFoldable1)(sequence12(map30(function(v2) {
+        var $319 = map113(fromFoldable1)(sequence12(map30(function(v2) {
           if (v2.l.con === "Var" && v2.kids.length === 1) {
             return pure20(v2["kids"][0].l.con);
           }
           ;
           return none5;
         })(v["kids"][0].kids)));
-        if ($317 instanceof Just) {
-          return bind17(local2(modify6($$Proxy.value)(union1($317.value0)))(go2(v["kids"][0])))(function(e_params$prime) {
-            return bind17(local2(modify6($$Proxy.value)(union1($317.value0)))(go2(v["kids"][1])))(function(k_body$prime) {
+        if ($319 instanceof Just) {
+          return bind17(local2(modify6($$Proxy.value)(union1($319.value0)))(go2(v["kids"][0])))(function(e_params$prime) {
+            return bind17(local2(modify6($$Proxy.value)(union1($319.value0)))(go2(v["kids"][1])))(function(k_body$prime) {
               return pure25({
                 l: union7({
                   ann: none5
@@ -14890,6 +14897,12 @@
           }
           ;
           throw new Error("Failed pattern match at Editor.Example.SlcV0 (line 107, column 7 - line 114, column 38): " + [handle.constructor.name]);
+        };
+      },
+      isHole: function(e0) {
+        return function(v) {
+          var v1 = atSubExpr3(v.path)(e0).here;
+          return member1(v1.l.con)(isHole_cons);
         };
       },
       assembleStampedExpr: assembleStampedExpr2,

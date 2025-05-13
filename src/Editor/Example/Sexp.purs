@@ -95,6 +95,7 @@ editor = Editor
         ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
           where
           p = getEndPoints_ZipperH zh
+  , isHole: \_ _ -> false
   , assembleStampedExpr
   , assembleAnnotatedExpr
   , printExpr:

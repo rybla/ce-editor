@@ -3,7 +3,7 @@ module Editor.Common where
 import Prelude
 
 import Data.Array as Array
-import Data.Expr (BasicEditorState, Edit, EditM, EditMenu, Expr, Handle, EditCtx)
+import Data.Expr (BasicEditorState, Edit, EditCtx, EditM, EditMenu, Expr, Handle, Point(..))
 import Data.Expr.Render (Annotation, AssembleExpr)
 import Data.Foldable (fold)
 import Data.Id as Id
@@ -108,6 +108,7 @@ data Editor c = Editor
       -> EditM m (Label c ()) (StampedLabel c ()) (Edit m (Label c ()) (StampedLabel c ()))
   -- validity
   , isValidHandle :: forall r. Expr (Label c r) -> Handle -> Boolean
+  , isHole :: forall r. Expr (Label c r) -> Point -> Boolean
   -- rendering
   , assembleStampedExpr :: AssembleExpr (StampedLabel c ())
   , assembleAnnotatedExpr :: AssembleExpr (AnnotatedLabel c ())

@@ -12,7 +12,7 @@ import Data.Show.Generic (genericShow)
 import Data.Unfoldable (none)
 import Ui.Event (KeyInfo(..))
 
-data Dir = L | R | L_sibling | R_sibling
+data Dir = Dir' Dir' | L_hole | R_hole
 
 derive instance Generic Dir _
 
@@ -22,64 +22,77 @@ instance Show Dir where
 instance Eq Dir where
   eq x = genericEq x
 
+data Dir' = L | R | L_sibling | R_sibling
+
+derive instance Generic Dir' _
+
+instance Show Dir' where
+  show x = genericShow x
+
+instance Eq Dir' where
+  eq x = genericEq x
+
 fromKeyInfoToMoveDir :: KeyInfo -> Maybe Dir
 -- ArrowRight
-fromKeyInfoToMoveDir (KeyInfo { key: "ArrowRight", shift: false, alt: false, cmd: false }) = Just R
-fromKeyInfoToMoveDir (KeyInfo { key: "ArrowRight", shift: false, alt: true, cmd: false }) = Just R_sibling
+fromKeyInfoToMoveDir (KeyInfo { key: "ArrowRight", shift: false, alt: false, cmd: false }) = pure $ Dir' R
+fromKeyInfoToMoveDir (KeyInfo { key: "ArrowRight", shift: false, alt: true, cmd: false }) = pure $ Dir' R_sibling
 -- ArrowLeft
-fromKeyInfoToMoveDir (KeyInfo { key: "ArrowLeft", shift: false, alt: false, cmd: false }) = Just L
-fromKeyInfoToMoveDir (KeyInfo { key: "ArrowLeft", shift: false, alt: true, cmd: false }) = Just L_sibling
+fromKeyInfoToMoveDir (KeyInfo { key: "ArrowLeft", shift: false, alt: false, cmd: false }) = pure $ Dir' L
+fromKeyInfoToMoveDir (KeyInfo { key: "ArrowLeft", shift: false, alt: true, cmd: false }) = pure $ Dir' L_sibling
 -- Space
-fromKeyInfoToMoveDir (KeyInfo { key: " ", shift: false, alt: false, cmd: false }) = Just R
-fromKeyInfoToMoveDir (KeyInfo { key: " ", shift: false, alt: true, cmd: false }) = Just R_sibling
+fromKeyInfoToMoveDir (KeyInfo { key: " ", shift: false, alt: false, cmd: false }) = pure $ Dir' R
+fromKeyInfoToMoveDir (KeyInfo { key: " ", shift: false, alt: true, cmd: false }) = pure $ Dir' R_sibling
 -- Shift+Space
-fromKeyInfoToMoveDir (KeyInfo { key: " ", shift: true, alt: false, cmd: false }) = Just L
-fromKeyInfoToMoveDir (KeyInfo { key: " ", shift: true, alt: true, cmd: false }) = Just L_sibling
+fromKeyInfoToMoveDir (KeyInfo { key: " ", shift: true, alt: false, cmd: false }) = pure $ Dir' L
+fromKeyInfoToMoveDir (KeyInfo { key: " ", shift: true, alt: true, cmd: false }) = pure $ Dir' L_sibling
 -- Tab
-fromKeyInfoToMoveDir (KeyInfo { key: "Tab", shift: false, alt: false, cmd: false }) = Just R
-fromKeyInfoToMoveDir (KeyInfo { key: "Tab", shift: false, alt: true, cmd: false }) = Just R_sibling
+fromKeyInfoToMoveDir (KeyInfo { key: "Tab", shift: false, alt: false, cmd: false }) = pure $ R_hole
+fromKeyInfoToMoveDir (KeyInfo { key: "Tab", shift: false, alt: true, cmd: false }) = pure $ Dir' R_sibling
 -- Shift+Tab
-fromKeyInfoToMoveDir (KeyInfo { key: "Tab", shift: true, alt: false, cmd: false }) = Just L
-fromKeyInfoToMoveDir (KeyInfo { key: "Tab", shift: true, alt: true, cmd: false }) = Just L_sibling
+fromKeyInfoToMoveDir (KeyInfo { key: "Tab", shift: true, alt: false, cmd: false }) = pure $ L_hole
+fromKeyInfoToMoveDir (KeyInfo { key: "Tab", shift: true, alt: true, cmd: false }) = pure $ Dir' L_sibling
 -- 
 fromKeyInfoToMoveDir _ = Nothing
 
 fromKeyInfoToDragMoveDir :: KeyInfo -> Maybe Dir
-fromKeyInfoToDragMoveDir (KeyInfo { key: "ArrowLeft", shift: true, alt: false, cmd: false }) = Just L
-fromKeyInfoToDragMoveDir (KeyInfo { key: "ArrowLeft", shift: true, alt: true, cmd: false }) = Just L_sibling
-fromKeyInfoToDragMoveDir (KeyInfo { key: "ArrowRight", shift: true, alt: false, cmd: false }) = Just R
-fromKeyInfoToDragMoveDir (KeyInfo { key: "ArrowRight", shift: true, alt: true, cmd: false }) = Just R_sibling
-fromKeyInfoToDragMoveDir (KeyInfo { key: " ", shift: true, alt: false, cmd: false }) = Just R
-fromKeyInfoToDragMoveDir (KeyInfo { key: " ", shift: true, alt: true, cmd: false }) = Just R_sibling
+fromKeyInfoToDragMoveDir (KeyInfo { key: "ArrowLeft", shift: true, alt: false, cmd: false }) = pure $ Dir' L
+fromKeyInfoToDragMoveDir (KeyInfo { key: "ArrowLeft", shift: true, alt: true, cmd: false }) = pure $ Dir' L_sibling
+fromKeyInfoToDragMoveDir (KeyInfo { key: "ArrowRight", shift: true, alt: false, cmd: false }) = pure $ Dir' R
+fromKeyInfoToDragMoveDir (KeyInfo { key: "ArrowRight", shift: true, alt: true, cmd: false }) = pure $ Dir' R_sibling
+fromKeyInfoToDragMoveDir (KeyInfo { key: " ", shift: true, alt: false, cmd: false }) = pure $ Dir' R
+fromKeyInfoToDragMoveDir (KeyInfo { key: " ", shift: true, alt: true, cmd: false }) = pure $ Dir' R_sibling
 fromKeyInfoToDragMoveDir _ = Nothing
 
-movePointUntil :: forall l a. Show l => Expr l -> Dir -> Point -> (Point -> Maybe a) -> Maybe a
-movePointUntil e dir h f = case movePoint e dir h of
+movePointUntil :: forall l a. Show l => Expr l -> Dir' -> Point -> (Point -> Maybe a) -> Maybe a
+movePointUntil e dir h f = case movePoint' e dir h of
   Nothing -> Nothing
   Just p -> go p
   where
   go p = case f p of
-    Nothing -> case movePoint e dir p of
+    Nothing -> case movePoint' e dir p of
       Nothing -> Nothing
       Just p' -> go p'
     Just a -> pure a
 
-movePoint :: forall l. Show l => Expr l -> Dir -> Point -> Maybe Point
-movePoint e dir (Point p) = case dir of
+movePoint :: forall l. Show l => Expr l -> Dir' -> Point -> Maybe Point
+movePoint e dir p = movePoint' e dir p
+
+movePoint' :: forall l. Show l => Expr l -> Dir' -> Point -> Maybe Point
+movePoint' e dir (Point p) = case dir of
   -- 
-  L | extreme_j._L == p.j, Just { init: path', last: i } <- p.path # List.unsnoc -> Just $ Point { path: path', j: (i # getIndexesAroundStep)._L }
-  L_sibling | extreme_j._L == p.j, Just { init: path', last: i } <- p.path # List.unsnoc -> Just $ Point { path: path', j: (i # getIndexesAroundStep)._L }
-  L | extreme_j._L < p.j, i <- (getStepsAroundIndex p.j)._L, Just kid <- at_e.here # getKid_Expr i -> Just $ Point { path: p.path <> (i : Nil), j: (kid # getExtremeIndexes)._R }
-  L | extreme_j._L < p.j, i <- (getStepsAroundIndex p.j)._L, Nothing <- at_e.here # getKid_Expr i -> Just $ Point { path: p.path, j: p.j - Index 1 }
-  L_sibling | extreme_j._L < p.j, i <- (getStepsAroundIndex p.j)._L -> Just $ Point { path: p.path, j: p.j - Index 1 }
+  L | extreme_j._L == p.j, Just { init: path', last: i } <- p.path # List.unsnoc -> pure $ Point { path: path', j: (i # getIndexesAroundStep)._L }
+  L_sibling | extreme_j._L == p.j, Just { init: path', last: i } <- p.path # List.unsnoc -> pure $ Point { path: path', j: (i # getIndexesAroundStep)._L }
+  L | extreme_j._L < p.j, i <- (getStepsAroundIndex p.j)._L, Just kid <- at_e.here # getKid_Expr i -> pure $ Point { path: p.path <> (i : Nil), j: (kid # getExtremeIndexes)._R }
+  L | extreme_j._L < p.j, i <- (getStepsAroundIndex p.j)._L, Nothing <- at_e.here # getKid_Expr i -> pure $ Point { path: p.path, j: p.j - Index 1 }
+  L_sibling | extreme_j._L < p.j, i <- (getStepsAroundIndex p.j)._L -> pure $ Point { path: p.path, j: p.j - Index 1 }
   --
-  R | p.j == extreme_j._R, Just { init: path', last: i } <- p.path # List.unsnoc -> Just $ Point { path: path', j: (i # getIndexesAroundStep)._R }
-  R_sibling | p.j == extreme_j._R, Just { init: path', last: i } <- p.path # List.unsnoc -> Just $ Point { path: path', j: (i # getIndexesAroundStep)._R }
-  R | p.j < extreme_j._R, i <- (getStepsAroundIndex p.j)._R, Nothing <- at_e.here # getKid_Expr i -> Just $ Point { path: p.path, j: p.j + Index 1 }
-  R | p.j < extreme_j._R, i <- (getStepsAroundIndex p.j)._R, Just kid <- at_e.here # getKid_Expr i -> Just $ Point { path: p.path <> (i : Nil), j: (kid # getExtremeIndexes)._L }
-  R_sibling | p.j < extreme_j._R, i <- (getStepsAroundIndex p.j)._R -> Just $ Point { path: p.path, j: p.j + Index 1 }
+  R | p.j == extreme_j._R, Just { init: path', last: i } <- p.path # List.unsnoc -> pure $ Point { path: path', j: (i # getIndexesAroundStep)._R }
+  R_sibling | p.j == extreme_j._R, Just { init: path', last: i } <- p.path # List.unsnoc -> pure $ Point { path: path', j: (i # getIndexesAroundStep)._R }
+  R | p.j < extreme_j._R, i <- (getStepsAroundIndex p.j)._R, Nothing <- at_e.here # getKid_Expr i -> pure $ Point { path: p.path, j: p.j + Index 1 }
+  R | p.j < extreme_j._R, i <- (getStepsAroundIndex p.j)._R, Just kid <- at_e.here # getKid_Expr i -> pure $ Point { path: p.path <> (i : Nil), j: (kid # getExtremeIndexes)._L }
+  R_sibling | p.j < extreme_j._R, i <- (getStepsAroundIndex p.j)._R -> pure $ Point { path: p.path, j: p.j + Index 1 }
   -- 
-  _ -> Nothing
+  _ -> none
   where
   at_e = e # atSubExpr p.path
   extreme_j = at_e.here # getExtremeIndexes

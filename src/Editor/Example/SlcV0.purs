@@ -32,7 +32,7 @@ import Record as Record
 import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, isIdentifier, unimplemented)
+import Utility (collapse, isIdentifier, todo, unimplemented)
 
 newtype C = C String
 
@@ -112,6 +112,11 @@ editor = Editor
         ZipperH_Handle zh _ -> and [ isValidPoint root p._OL, isValidPoint root p._IL, isValidPoint root p._IR, isValidPoint root p._OR ]
           where
           p = getEndPoints_ZipperH zh
+  , isHole: \e0 (Point p) ->
+      let
+        Expr { l: Label l } = (e0 # atSubExpr p.path).here
+      in
+        l.con `Set.member` isHole_cons
   , assembleStampedExpr
   , assembleAnnotatedExpr
   , printExpr:
@@ -148,6 +153,15 @@ editor = Editor
       ]
   , annotateExpr
   }
+
+isHole_cons = Set.fromFoldable
+  [ C "Let_param"
+  , C "Let_impl"
+  , C "Lam_params"
+  , C "Lam_body"
+  , C "App_func"
+  , C "App_args"
+  ]
 
 annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C r))
 annotateExpr e0 = runReaderT (go e0) ctx0
