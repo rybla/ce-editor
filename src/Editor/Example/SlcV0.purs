@@ -5,7 +5,7 @@ import Prelude
 import Control.Alternative (empty)
 import Control.Monad.Reader (ask, local, runReader, runReaderT)
 import Data.Array as Array
-import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), BasicEditorState, atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
+import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (Annotation(..), AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
 import Data.Expr.Render as Expr.Render
@@ -219,12 +219,16 @@ annotateExpr e0 = runReaderT (go e0) ctx0
     pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: [ k_func', k_args' ] }
 
   -- Let
-  go (Expr { l: Label l@{ con: C "Let" }, kids: [ k_param@(Expr { l: Label { con: C "Let_param" }, kids: [ Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } ] }), k_impl, k_body ] }) = do
-    k_param' <- local (Record.modify (Proxy @"scope") (Set.insert x)) do
+  go (Expr { l: Label l@{ con: C "Let" }, kids: [ k_param@(Expr { l: Label { con: C "Let_param" }, kids: params }), k_impl, k_body ] }) = do
+    let
+      xs = params # foldMap case _ of
+        Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } -> Set.singleton x
+        _ -> Set.empty
+    k_param' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
       k_param # go
-    k_impl' <- local (Record.modify (Proxy @"scope") (Set.insert x)) do
+    k_impl' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
       k_impl # go
-    k_body' <- local (Record.modify (Proxy @"scope") (Set.insert x)) do
+    k_body' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
       k_body # go
     pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: [ k_param', k_impl', k_body' ] }
 
@@ -234,7 +238,6 @@ annotateExpr e0 = runReaderT (go e0) ctx0
     let
       ann = fold
         [ if ctx.scope # Set.member x then [] else [ Error_Annotation $ HH.text "variable not in scope" ]
-        , if ctx.scope # Set.member x then [] else [ Error_Annotation $ HH.text "variable not in scope" ]
         ]
     k_label' <- k_label # go
     pure $ Expr { l: Label $ l # Record.union { ann: if null ann then none else pure ann }, kids: [ k_label' ] }
@@ -379,9 +382,9 @@ assembleAdvanced
   -> RenderM (Array (KeyHTML w i))
 assembleAdvanced opts args id ps ks = fold
   [ if ks # Array.filter isntFormatting_RenderKid # null then pure (tokens_missing id) else mempty
-  -- , if pure (ks #. length) == opts.targetKidsLength then pure (tokens_error id "[") else mempty
+  , if pure (ks #. length) > opts.targetKidsLength then pure (tokens_error (id <> "_excessiveKids_begin") "[") else mempty
   , assembleSimple (pure args.label) ps ks #. snd
-  -- , if pure (ks #. length) == opts.targetKidsLength then pure (tokens_error id "]") else mempty
+  , if pure (ks #. length) > opts.targetKidsLength then pure (tokens_error (id <> "_excessiveKids_end") "]") else mempty
   ]
 
 assembleSimple :: forall l w i. Maybe l -> Array (KeyHTML w i) -> Array (RenderKid l w i) -> RenderKid l w i

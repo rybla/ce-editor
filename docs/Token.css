@@ -68,6 +68,10 @@
       box-shadow: 0 0 0 0.1em orange inset;
     }
   }
+
+  &.error {
+    color: red;
+  }
 }
 
 @keyframes Token-appear {
