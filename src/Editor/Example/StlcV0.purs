@@ -9,16 +9,15 @@ import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..)
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (Annotation(..), AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
 import Data.Expr.Render as Expr.Render
-import Data.Foldable (and, fold, foldMap, length, null)
+import Data.Foldable (and, any, fold, foldMap, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, wrap)
-import Data.Set (Set)
 import Data.Set as Set
 import Data.Traversable (sequence, traverse)
 import Data.Tuple (Tuple(..), fst, snd)
-import Data.Tuple.Nested ((/\))
+import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (fromMaybe, none)
 import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, AnnotatedLabel, assembleExpr_default, getCon)
 import Effect.Aff (Aff)
@@ -27,7 +26,6 @@ import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Properties as HP
 import Record as Record
-import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 import Utility (collapse, isIdentifierOrNumeric, unWords, (#.))
@@ -59,7 +57,14 @@ infix 0 mkSpanToothC as %<*
 
 --------------------------------------------------------------------------------
 
-editor :: Editor C (Array Annotation)
+newtype StlcAnn = StlcAnn
+  { annotations :: Array Annotation
+  , inferred_type :: Maybe (Expr (Label C ()))
+  }
+
+--------------------------------------------------------------------------------
+
+editor :: Editor C StlcAnn
 editor = Editor
   { name: "simply typed lambda calculus (v0)"
   , initialExpr: C "Root" % []
@@ -144,7 +149,7 @@ printExpr = go
 -- getDiagnostics
 --------------------------------------------------------------------------------
 
-getDiagnostics :: forall rA rB. BasicEditorState (Label C rA) (AnnotatedLabel C (Array Annotation) rB) -> Array Diagnostic
+getDiagnostics :: forall rA rB. BasicEditorState (Label C rA) (AnnotatedLabel C StlcAnn rB) -> Array Diagnostic
 getDiagnostics state = collapse @Array @Maybe
   [ state.clipboard <#> \frag ->
       Diagnostic
@@ -177,11 +182,11 @@ getDiagnostics state = collapse @Array @Maybe
 -- annotateExpr
 --------------------------------------------------------------------------------
 
-annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C (Array Annotation) r))
+annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C StlcAnn r))
 annotateExpr e0 = runReaderT (go e0) ctx0
   where
   ctx0 =
-    { scope: Set.empty :: Set String
+    { context: [] :: Array (String /\ Expr (Label C ()))
     }
 
   -- Lam
@@ -195,10 +200,12 @@ annotateExpr e0 = runReaderT (go e0) ctx0
               )
           # sequence
           # map Set.fromFoldable = do
-        e_params' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
-          e_params # go
-        k_body' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
-          k_body # go
+        -- e_params' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
+        --   e_params # go
+        e_params' <- e_params # go
+        -- k_body' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
+        --   k_body # go
+        k_body' <- k_body # go
         pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: [ e_params', k_body' ] }
 
   -- App
@@ -208,28 +215,31 @@ annotateExpr e0 = runReaderT (go e0) ctx0
     pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: [ k_func', k_args' ] }
 
   -- Let
-  go (Expr { l: Label l@{ con: C "Let" }, kids: [ k_param@(Expr { l: Label { con: C "Let_param" }, kids: params }), k_impl, k_body ] }) = do
-    let
-      xs = params # foldMap case _ of
-        Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } -> Set.singleton x
-        _ -> Set.empty
-    k_param' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
-      k_param # go
-    k_impl' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
-      k_impl # go
-    k_body' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
-      k_body # go
+  go (Expr { l: Label l@{ con: C "Let" }, kids: [ k_param@(Expr { l: Label { con: C "Let_param" }, kids: _params }), k_impl, k_body ] }) = do
+    -- let
+    --   xs = params # foldMap case _ of
+    --     Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } -> Set.singleton x
+    --     _ -> Set.empty
+    -- k_param' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
+    --   k_param # go
+    k_param' <- k_param # go
+    -- k_impl' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
+    --   k_impl # go
+    k_impl' <- k_impl # go
+    -- k_body' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
+    --   k_body # go
+    k_body' <- k_body # go
     pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: [ k_param', k_impl', k_body' ] }
 
   -- Var
   go (Expr { l: Label l@{ con: C "Var" }, kids: [ k_label@(Expr { l: Label { con: C x } }) ] }) = do
     ctx <- ask
     let
-      ann = fold
-        [ if ctx.scope # Set.member x then [] else [ Error_Annotation $ HH.text "variable not in scope" ]
-        ]
+      ann = case unit of
+        _ | not (ctx.context # any ((x == _) <<< fst)) -> pure $ StlcAnn { annotations: [ Error_Annotation $ HH.text "variable not in scope" ], inferred_type: none }
+        _ -> none
     k_label' <- k_label # go
-    pure $ Expr { l: Label $ l # Record.union { ann: if null ann then none else pure ann }, kids: [ k_label' ] }
+    pure $ Expr { l: Label $ l # Record.union { ann }, kids: [ k_label' ] }
   -- 
   go e = go_skip e
 
@@ -237,7 +247,7 @@ annotateExpr e0 = runReaderT (go e0) ctx0
     kids' <- kids # traverse go
     pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: kids' }
 
--- annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C (Array Annotation) r))
+-- annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C StlcAnn r))
 -- annotateExpr = traverse \(Label l) -> pure $ Label $ Record.union { ann: none } l
 
 --------------------------------------------------------------------------------
@@ -251,7 +261,7 @@ isntFormatting_RenderKid = fst >>> maybe true \(Label l) -> l.con /= C "LineBrea
 -- assembly
 --------------------------------------------------------------------------------
 
-assembleAnnotatedExpr :: forall r. AssembleExpr (AnnotatedLabel C (Array Annotation) r)
+assembleAnnotatedExpr :: forall r. AssembleExpr (AnnotatedLabel C StlcAnn r)
 assembleAnnotatedExpr = assembleExpr_helper
   { getId: \_path (Label l) -> l.id
   , getAnnotations: \(Label l) -> l.ann
@@ -274,7 +284,7 @@ increaseIndentLevel = local \ctx -> ctx { indentLevel = ctx.indentLevel + 1 }
 assembleExpr_helper
   :: forall r
    . { getId :: Path -> Label C r -> String
-     , getAnnotations :: Label C r -> Maybe (Array Annotation)
+     , getAnnotations :: Label C r -> Maybe StlcAnn
      }
   -> AssembleExpr (Label C r)
 assembleExpr_helper opts args = Tuple (pure args.label) do
@@ -319,17 +329,17 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
 
   let mb_ann = opts.getAnnotations args.label
   pure $ fold $ fold
-    [ mb_ann # foldMap \anns ->
+    [ mb_ann # foldMap \(StlcAnn { annotations }) ->
         [ [ (id <> "_ann_point") /\
               HH.div [ HP.id (id <> "_ann_point"), classes [ "AnnotationPoint" ] ]
-                [ HH.div [ classes [ "label" ] ] $ anns # map case _ of
+                [ HH.div [ classes [ "label" ] ] $ annotations # map case _ of
                     Info_Annotation _ -> HH.span [ classes [ "Info" ] ] [ HH.text "💡" ]
                     Error_Annotation _ -> HH.span [ classes [ "Error" ] ] [ HH.text "❌" ]
                 ]
           ]
         , [ (id <> "_ann") /\ do
               HH.div [ HP.id (id <> "_ann"), classes [ "Annotations" ] ]
-                [ HH.div [ classes [ "inner" ] ] $ anns # map case _ of
+                [ HH.div [ classes [ "inner" ] ] $ annotations # map case _ of
                     Info_Annotation e -> HH.div [ classes [ "item", "Info" ] ] [ e # fromPlainHTML ]
                     Error_Annotation e -> HH.div [ classes [ "item", "Error" ] ] [ e # fromPlainHTML ]
                 ]
