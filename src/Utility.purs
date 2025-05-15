@@ -194,4 +194,5 @@ infixl 4 mapMapFlipped as <##>
 infixl 1000 applyFlipped as #.
 
 unWords = Options.Applicative.Util.Internal.unWords
+unLines = Options.Applicative.Util.Internal.unLines
 
