@@ -116,8 +116,6 @@ editor = Editor
                 HHK.div [ classes [ "Expr" ] ] $
                   frag
                     # Expr.Render.renderFragment (renderArgs assembleExpr) none
-                    # map snd
-                    # fold
                     # flip runReader
                         { indentLevel: 0
                         }

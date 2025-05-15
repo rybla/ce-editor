@@ -31,7 +31,7 @@ import Record as Record
 import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, isIdentifierOrNumeric, (#.))
+import Utility (collapse, isIdentifierOrNumeric, (#.), (<##>))
 
 --------------------------------------------------------------------------------
 
@@ -162,8 +162,6 @@ getDiagnostics state = collapse @Array @Maybe
             HHK.div [ classes [ "Expr" ] ] $
               frag
                 # Expr.Render.renderFragment (renderArgs assembleExpr) none
-                # map snd
-                # fold
                 # flip runReader
                     { indentLevel: 0
                     }
@@ -382,10 +380,17 @@ assembleAdvanced
   -> RenderM (Array (KeyHTML w i))
 assembleAdvanced opts args id ps ks = fold
   [ if ks # Array.filter isntFormatting_RenderKid # null then pure (tokens_missing id) else mempty
-  , if pure (ks #. length) > opts.targetKidsLength then pure (tokens_error (id <> "_excessiveKids_begin") "[") else mempty
-  , assembleSimple (pure args.label) ps ks #. snd
-  , if pure (ks #. length) > opts.targetKidsLength then pure (tokens_error (id <> "_excessiveKids_end") "]") else mempty
+  , if excessiveKids then fold
+      [ pure (tokens_error (id <> "_excessiveKids_begin") "[")
+      , assembleSimple (pure args.label) ps (ks # mapWithIndex (\i -> map (_ <> pure (tokens_error (id <> "_excessiveKids_sep_" <> show i) " |")))) #. snd
+      , pure (tokens_error (id <> "_excessiveKids_end") "]")
+      ]
+    else
+      assembleSimple (pure args.label) ps ks #. snd
   ]
+  where
+  excessiveKids = opts.targetKidsLength # maybe false \targetKidsLength ->
+    ks #. Array.filter isntFormatting_RenderKid #. length > targetKidsLength
 
 assembleSimple :: forall l w i. Maybe l -> Array (KeyHTML w i) -> Array (RenderKid l w i) -> RenderKid l w i
 assembleSimple l ps ks = l /\ do

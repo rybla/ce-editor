@@ -2,6 +2,8 @@
 
 Priority:
 
+- [ ] do simply-typed lambda calculus with typed holes
+
 - [ ] make an SlcV1, and make App be just a list of kids rather than having the
       2 kid positions. this makes the UI easier and makes more sense overall
 

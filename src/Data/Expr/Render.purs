@@ -3,13 +3,17 @@ module Data.Expr.Render where
 import Prelude
 
 import Control.Monad.Reader (Reader, runReader)
+import Data.Array as Array
+import Data.Either (Either(..))
 import Data.Either.Nested (type (\/))
-import Data.Expr (Expr(..), ExprContext(..), Fragment(..), Path, Point(..), Span(..), SpanContext(..), SpanTooth(..), Step(..), Tooth(..), Zipper(..), mapIndexes, mapIndexes_SpanTooth, mapIndexes_Tooth, mapStepsAndKids, mapStepsAndKids_SpanTooth, mapStepsAndKids_Tooth)
-import Data.Foldable (fold, length)
+import Data.Expr (Expr(..), ExprContext(..), Fragment(..), Index(..), Path, Point(..), Span(..), SpanContext(..), SpanTooth(..), Step(..), Tooth(..), Zipper(..), mapIndexes, mapIndexes_SpanTooth, mapIndexes_Tooth, mapStepsAndKids, mapStepsAndKids_SpanTooth, mapStepsAndKids_Tooth)
+import Data.Foldable (fold, foldM, length)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..), (:))
 import Data.List as List
 import Data.Maybe (Maybe)
+import Data.Traversable (sequence, traverse)
+import Data.Tuple (snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Halogen.HTML (HTML, PlainHTML)
@@ -64,42 +68,34 @@ renderExpr { renderKid, renderPoint, assembleExpr } path (Expr e) =
 -- anything other than renderExpr is called is at hte Buffer which doesn't
 -- render interactive elements into the stuff anyway
 
-renderSpan :: forall l w i. Show l => RenderArgs l w i -> Path -> Span l -> Array (RenderKid l w i)
+renderSpan :: forall l w i. Show l => RenderArgs l w i -> Path -> Span l -> RenderM (Array (KeyHTML w i))
 renderSpan args path (Span exprs) =
   exprs
-    -- # mapWithIndex
-    --     ( \i ->
-    --         pure [ args.renderPoint (Left "Span") (Point { path, j: Index i }) ] <>
-    --           renderExpr args (path `List.snoc` Step i)
-    --     )
-    -- # flip append [ pure $ pure $ args.renderPoint (Left "Span") (Point { path, j: Index (exprs # length) }) ]
-    # mapWithIndex \i -> renderExpr args (path `List.snoc` Step i)
+    # mapWithIndex
+        ( \i ->
+            renderExpr args (path `List.snoc` Step i)
+              >>> snd
+              >>> (pure [ args.renderPoint (Left "Span") (Point { path, j: Index i }) ] <> _)
+        )
+    # (_ <> [ pure $ pure $ args.renderPoint (Left "Span") (Point { path, j: Index (exprs # length) }) ])
+    # sequence
+    # map fold
 
-renderZipper :: forall l w i. Show l => RenderArgs l w i -> Path -> Zipper l -> Array (RenderKid l w i) -> Array (RenderKid l w i)
-renderZipper args path (Zipper z) inside = fold $
-  [ -- fold $
-    --   z.kids_L
-    --     # mapWithIndex
-    --         ( \i kid ->
-    --             pure [ args.renderPoint (Left "Span") (Point { path, j: Index i }) ] <>
-    --               renderExpr args (path `List.snoc` Step i) kid
-    --         )
-    --     # flip append [ pure $ pure $ args.renderPoint (Left "Span") (Point { path, j: Index length_L }) ]
-    z.kids_L # mapWithIndex \i -> renderExpr args (path `List.snoc` Step i)
-  , [ renderSpanContext args (path `List.snoc` Step length_L) z.inside inside ]
-  -- , fold $
-  --     z.kids_R
-  --       # mapWithIndex
-  --           ( \i kid ->
-  --               pure [ args.renderPoint (Left "Span") (Point { path, j: Index (length_L + 1 + i) }) ] <>
-  --                 renderExpr args (path `List.snoc` Step i) kid
-  --           )
-  --       # flip append [ pure $ pure $ args.renderPoint (Left "Span") (Point { path, j: Index (length_L + 1 + length_R) }) ]
-  , z.kids_R # mapWithIndex \i -> renderExpr args (path `List.snoc` Step (length_L + 1 + i))
+renderZipper :: forall l w i. Show l => RenderArgs l w i -> Path -> Zipper l -> Array (RenderKid l w i) -> RenderM (Array (KeyHTML w i))
+renderZipper args path (Zipper z) inside = map Array.fold $ sequence $ fold
+  [ z.kids_L # mapWithIndex \i ->
+      renderExpr args (path `List.snoc` Step i)
+        >>> snd
+        >>> (pure [ args.renderPoint (Left "Zipper") (Point { path, j: Index i }) ] <> _)
+  , [ renderSpanContext args (path `List.snoc` Step length_L) z.inside inside # snd ]
+  , z.kids_R # mapWithIndex \i ->
+      renderExpr args (path `List.snoc` Step (length_L + 1 + i))
+        >>> snd
+        >>> (pure [ args.renderPoint (Left "Zipper") (Point { path, j: Index (length_L + 1 + i) }) ] <> _)
   ]
   where
   length_L = z.kids_L # length :: Int
-  length_R = z.kids_R # length :: Int
+  _length_R = z.kids_R # length :: Int
 
 renderTooth :: forall l w i. Show l => RenderArgs l w i -> Path -> Tooth l -> RenderKid l w i -> RenderKid l w i
 renderTooth args path (Tooth t) inside =
@@ -126,7 +122,7 @@ renderExprContext args path (ExprContext (t : ts)) inside = renderTooth args pat
 renderSpanContext :: forall l w i. Show l => RenderArgs l w i -> Path -> SpanContext l -> Array (RenderKid l w i) -> RenderKid l w i
 renderSpanContext args path (SpanContext sc) inside = renderExprContext args path sc._O $ renderSpanTooth args path sc._I inside
 
-renderFragment :: forall l w i. Show l => RenderArgs l w i -> Path -> Fragment l -> Array (RenderKid l w i)
+renderFragment :: forall l w i. Show l => RenderArgs l w i -> Path -> Fragment l -> RenderM (Array (KeyHTML w i))
 renderFragment args path (Span_Fragment s) = renderSpan args path s
 renderFragment args path (Zipper_Fragment z) = renderZipper args path z [ none /\ pure (hole "Zipper_Fragment") ]
 

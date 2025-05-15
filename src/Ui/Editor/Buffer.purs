@@ -205,8 +205,6 @@ render state =
                   [ HHK.div [ classes [ "Expr" ] ] $
                       info.insertion
                         # renderFragment (renderArgs_stamped state.editor) (state.point # unwrap).path
-                        # map snd
-                        # fold
                         # flip runReader
                             { indentLevel: 0
                             }

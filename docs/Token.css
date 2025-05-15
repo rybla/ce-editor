@@ -62,15 +62,15 @@
 
     & + .Point {
       margin: 0 0.5em;
-      /* box-shadow: 0 0 0 0.1em red inset; */
-      /* border-radius: 0.5em; */
-      /* animation: Hole-passive 20s infinite linear; */
-      box-shadow: 0 0 0 0.1em orange inset;
+      box-shadow: 0 0 0 0.1em var(--Editor--background) inset,
+        0 0 0 0.2em red inset;
     }
   }
 
   &.error {
     color: red;
+    font-weight: bold;
+    white-space: pre;
   }
 }
 
