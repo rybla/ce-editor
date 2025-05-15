@@ -12,6 +12,7 @@ import Editor (Editor(..), ExistsEditor, mkExistsEditor, runExistsEditor)
 import Editor.Example.Sexp as Editor.Example.Sexp
 import Editor.Example.SlcV0 as Editor.Example.SlcV0
 import Editor.Example.SlcV1 as Editor.Example.SlcV1
+import Editor.Example.StlcV0 as Editor.Example.StlcV0
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
@@ -37,12 +38,14 @@ editorsMenu =
     [ mkExistsEditor Editor.Example.Sexp.editor
     , mkExistsEditor Editor.Example.SlcV0.editor
     , mkExistsEditor Editor.Example.SlcV1.editor
+    , mkExistsEditor Editor.Example.StlcV0.editor
     -- , mkExistsEditor Editor.Example.UlcV0.editor
     -- , mkExistsEditor Editor.Example.UlcV1.editor
     ]
 
 -- defaultEditor = mkExistsEditor Editor.Example.Sexp.editor
-defaultEditor = mkExistsEditor Editor.Example.SlcV1.editor
+-- defaultEditor = mkExistsEditor Editor.Example.SlcV1.editor
+defaultEditor = mkExistsEditor Editor.Example.StlcV0.editor
 
 initialState :: AppInput -> AppState
 initialState _input = { mb_editor: pure defaultEditor }
