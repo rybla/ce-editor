@@ -4,12 +4,13 @@ import Prelude
 
 import Control.Alternative (empty)
 import Control.Monad.Reader (ask, local, runReader, runReaderT)
+import Control.Monad.State (evalStateT, runStateT)
 import Data.Array as Array
 import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), BasicEditorState, atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (Annotation(..), AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
 import Data.Expr.Render as Expr.Render
-import Data.Foldable (and, any, fold, foldMap, length, null)
+import Data.Foldable (and, any, findMap, fold, foldMap, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..), maybe)
@@ -58,8 +59,8 @@ infix 0 mkSpanToothC as %<*
 --------------------------------------------------------------------------------
 
 newtype StlcAnn = StlcAnn
-  { annotations :: Array Annotation
-  , inferred_type :: Maybe (Expr (Label C ()))
+  { annotations :: Maybe (Array Annotation)
+  , mb_ty :: Maybe (Expr (Label C ()))
   }
 
 --------------------------------------------------------------------------------
@@ -183,11 +184,14 @@ getDiagnostics state = collapse @Array @Maybe
 --------------------------------------------------------------------------------
 
 annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C StlcAnn r))
-annotateExpr e0 = runReaderT (go e0) ctx0
+annotateExpr e0 = go e0
+  # flip runReaderT ctx0
+  # flip evalStateT env0
   where
   ctx0 =
-    { context: [] :: Array (String /\ Expr (Label C ()))
+    { context: [] :: Array { name :: String, ty :: Expr (Label C ()) }
     }
+  env0 = {}
 
   -- Lam
   go (Expr { l: Label l@{ con: C "Lam" }, kids: [ e_params@(Expr { l: Label { con: C "Lam_params" }, kids: es_params }), k_body ] })
@@ -198,8 +202,7 @@ annotateExpr e0 = runReaderT (go e0) ctx0
                   Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } -> pure x
                   _ -> none
               )
-          # sequence
-          # map Set.fromFoldable = do
+          # sequence = do
         -- e_params' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
         --   e_params # go
         e_params' <- e_params # go
@@ -215,7 +218,7 @@ annotateExpr e0 = runReaderT (go e0) ctx0
     pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: [ k_func', k_args' ] }
 
   -- Let
-  go (Expr { l: Label l@{ con: C "Let" }, kids: [ k_param@(Expr { l: Label { con: C "Let_param" }, kids: _params }), k_impl, k_body ] }) = do
+  go (Expr { l: Label l@{ con: C "Let" }, kids: [ k_param@(Expr { l: Label { con: C "Let_param" }, kids: params }), k_impl, k_body ] }) = do
     -- let
     --   xs = params # foldMap case _ of
     --     Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } -> Set.singleton x
@@ -229,15 +232,19 @@ annotateExpr e0 = runReaderT (go e0) ctx0
     -- k_body' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
     --   k_body # go
     k_body' <- k_body # go
+    -- 
     pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: [ k_param', k_impl', k_body' ] }
 
   -- Var
   go (Expr { l: Label l@{ con: C "Var" }, kids: [ k_label@(Expr { l: Label { con: C x } }) ] }) = do
     ctx <- ask
     let
-      ann = case unit of
-        _ | not (ctx.context # any ((x == _) <<< fst)) -> pure $ StlcAnn { annotations: [ Error_Annotation $ HH.text "variable not in scope" ], inferred_type: none }
-        _ -> none
+      ann = case ctx.context # findMap (\{ name, ty } -> if x == name then pure ty else none) of
+        Just ty ->
+          pure $ StlcAnn { annotations: none, mb_ty: pure ty }
+        Nothing ->
+          pure $ StlcAnn { annotations: pure [ Error_Annotation $ HH.text "variable not in scope" ], mb_ty: none }
+
     k_label' <- k_label # go
     pure $ Expr { l: Label $ l # Record.union { ann }, kids: [ k_label' ] }
   -- 
@@ -329,17 +336,17 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
 
   let mb_ann = opts.getAnnotations args.label
   pure $ fold $ fold
-    [ mb_ann # foldMap \(StlcAnn { annotations }) ->
+    [ mb_ann # foldMap \(StlcAnn { annotations }) -> annotations # foldMap \as ->
         [ [ (id <> "_ann_point") /\
               HH.div [ HP.id (id <> "_ann_point"), classes [ "AnnotationPoint" ] ]
-                [ HH.div [ classes [ "label" ] ] $ annotations # map case _ of
+                [ HH.div [ classes [ "label" ] ] $ as # map case _ of
                     Info_Annotation _ -> HH.span [ classes [ "Info" ] ] [ HH.text "💡" ]
                     Error_Annotation _ -> HH.span [ classes [ "Error" ] ] [ HH.text "❌" ]
                 ]
           ]
         , [ (id <> "_ann") /\ do
               HH.div [ HP.id (id <> "_ann"), classes [ "Annotations" ] ]
-                [ HH.div [ classes [ "inner" ] ] $ annotations # map case _ of
+                [ HH.div [ classes [ "inner" ] ] $ as # map case _ of
                     Info_Annotation e -> HH.div [ classes [ "item", "Info" ] ] [ e # fromPlainHTML ]
                     Error_Annotation e -> HH.div [ classes [ "item", "Error" ] ] [ e # fromPlainHTML ]
                 ]
