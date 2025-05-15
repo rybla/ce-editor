@@ -59,7 +59,7 @@ infix 0 mkSpanToothC as %<*
 
 --------------------------------------------------------------------------------
 
-editor :: Editor C
+editor :: Editor C (Array Annotation)
 editor = Editor
   { name: "simply typed lambda calculus (v0)"
   , initialExpr: C "Root" % []
@@ -144,7 +144,7 @@ printExpr = go
 -- getDiagnostics
 --------------------------------------------------------------------------------
 
-getDiagnostics :: forall rA rB. BasicEditorState (Label C rA) (AnnotatedLabel C rB) -> Array Diagnostic
+getDiagnostics :: forall rA rB. BasicEditorState (Label C rA) (AnnotatedLabel C (Array Annotation) rB) -> Array Diagnostic
 getDiagnostics state = collapse @Array @Maybe
   [ state.clipboard <#> \frag ->
       Diagnostic
@@ -177,7 +177,7 @@ getDiagnostics state = collapse @Array @Maybe
 -- annotateExpr
 --------------------------------------------------------------------------------
 
-annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C r))
+annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C (Array Annotation) r))
 annotateExpr e0 = runReaderT (go e0) ctx0
   where
   ctx0 =
@@ -237,7 +237,7 @@ annotateExpr e0 = runReaderT (go e0) ctx0
     kids' <- kids # traverse go
     pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: kids' }
 
--- annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C r))
+-- annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C (Array Annotation) r))
 -- annotateExpr = traverse \(Label l) -> pure $ Label $ Record.union { ann: none } l
 
 --------------------------------------------------------------------------------
@@ -251,7 +251,7 @@ isntFormatting_RenderKid = fst >>> maybe true \(Label l) -> l.con /= C "LineBrea
 -- assembly
 --------------------------------------------------------------------------------
 
-assembleAnnotatedExpr :: forall r. AssembleExpr (AnnotatedLabel C r)
+assembleAnnotatedExpr :: forall r. AssembleExpr (AnnotatedLabel C (Array Annotation) r)
 assembleAnnotatedExpr = assembleExpr_helper
   { getId: \_path (Label l) -> l.id
   , getAnnotations: \(Label l) -> l.ann

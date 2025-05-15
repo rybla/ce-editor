@@ -62,25 +62,25 @@ type AppHTML = H.ComponentHTML AppAction AppSlots Aff
 type EditorQuery :: Type -> Type
 type EditorQuery = Const Void
 
-type EditorInput c =
-  { editor :: Editor c
+type EditorInput c ann =
+  { editor :: Editor c ann
   }
 
 type EditorOutput = Void
 
-type EditorState c =
-  { editor :: Editor c
+type EditorState c ann =
+  { editor :: Editor c ann
   -- , mb_root :: Maybe (Expr (StampedLabel c ()))
-  , mb_root :: Maybe (Expr (AnnotatedLabel c ()))
+  , mb_root :: Maybe (Expr (AnnotatedLabel c ann ()))
   , initial_mb_handle :: Maybe Handle
   , ref_mb_handle :: Ref (Maybe Handle)
   , ref_mb_dragOrigin :: Ref (Maybe Handle)
   , clipboard :: Maybe (Fragment (Label c ()))
-  , ref_history :: Ref (List (Snapshot c))
-  , ref_future :: Ref (List (Snapshot c))
+  , ref_history :: Ref (List (Snapshot c ann))
+  , ref_future :: Ref (List (Snapshot c ann))
   }
 
-getBasicEditorState_safe :: forall c. EditorM c (Maybe (BasicEditorState (Label c ()) (AnnotatedLabel c ())))
+getBasicEditorState_safe :: forall c ann. EditorM c ann (Maybe (BasicEditorState (Label c ()) (AnnotatedLabel c ann ())))
 getBasicEditorState_safe = do
   state <- get
   case state.mb_root of
@@ -93,55 +93,55 @@ getBasicEditorState_safe = do
         , clipboard: state.clipboard
         }
 
-getBasicEditorState_stamped :: forall c. EditorM c (BasicEditorState (Label c ()) (StampedLabel c ()))
+getBasicEditorState_stamped :: forall c ann. EditorM c ann (BasicEditorState (Label c ()) (StampedLabel c ()))
 getBasicEditorState_stamped = getBasicEditorState_safe >>= case _ of
   Nothing -> liftEffect $ throw "root not loaded yet"
   Just state -> pure (state # mapLabel_BasicEditorState (mapLabel (Record.delete (Proxy @"ann"))))
 
-getBasicEditorState_annotated :: forall c. EditorM c (BasicEditorState (Label c ()) (AnnotatedLabel c ()))
+getBasicEditorState_annotated :: forall c ann. EditorM c ann (BasicEditorState (Label c ()) (AnnotatedLabel c ann ()))
 getBasicEditorState_annotated = getBasicEditorState_safe >>= case _ of
   Nothing -> liftEffect $ throw "root not loaded yet"
   Just state -> pure state
 
-getRoot :: forall c. EditorM c (Expr (AnnotatedLabel c ()))
+getRoot :: forall c ann. EditorM c ann (Expr (AnnotatedLabel c ann ()))
 getRoot = do
   state <- get
   case state.mb_root of
     Nothing -> liftEffect $ throw "root not loaded yet"
     Just root -> pure root
 
-type Snapshot c =
-  { root :: Expr (AnnotatedLabel c ())
+type Snapshot c ann =
+  { root :: Expr (AnnotatedLabel c ann ())
   , mb_handle :: Maybe Handle
   }
 
-data EditorAction c
+data EditorAction c ann
   = Initialize_EditorAction
-  | Receive_EditorAction (EditorInput c)
+  | Receive_EditorAction (EditorInput c ann)
   | PointOutput_EditorAction (PointOutput c)
   | MouseUp_EditorAction Event
   | KeyDown_EditorAction Event
 
-type EditorSlots c =
-  ( "Point" :: H.Slot (PointQuery c) (PointOutput c) Point
+type EditorSlots c ann =
+  ( "Point" :: H.Slot (PointQuery c ann) (PointOutput c) Point
   , "DiagnosticsPanel" :: H.Slot DiagnosticsPanelQuery DiagnosticsPanelOutput Unit
   )
 
-type EditorM c = H.HalogenM (EditorState c) (EditorAction c) (EditorSlots c) EditorOutput Aff
+type EditorM c ann = H.HalogenM (EditorState c ann) (EditorAction c ann) (EditorSlots c ann) EditorOutput Aff
 
-type EditorHTML c = H.ComponentHTML (EditorAction c) (EditorSlots c) Aff
+type EditorHTML c ann = H.ComponentHTML (EditorAction c ann) (EditorSlots c ann) Aff
 
 --------------------------------------------------------------------------------
 -- Point
 --------------------------------------------------------------------------------
 
-data PointQuery c a
+data PointQuery c ann a
   = ModifyStatuses_PointQuery (Set PointStatus -> Set PointStatus) a
-  | SetBufferInput_PointQuery (Maybe (BufferInput c)) a
-  | GetBufferInput_PointQuery (Maybe (BufferInput c) -> a)
+  | SetBufferInput_PointQuery (Maybe (BufferInput c ann)) a
+  | GetBufferInput_PointQuery (Maybe (BufferInput c ann) -> a)
 
-type PointInput c =
-  { editor :: Editor c
+type PointInput c ann =
+  { editor :: Editor c ann
   , point :: Point
   }
 
@@ -150,11 +150,11 @@ data PointOutput c
   | MouseEnter_PointOutput MouseEvent Point
   | BufferOutput_PointOutput (BufferOutput c)
 
-type PointState c =
-  { editor :: Editor c
+type PointState c ann =
+  { editor :: Editor c ann
   , point :: Point
   , statuses :: Set PointStatus
-  , mb_bufferInput :: Maybe (BufferInput c)
+  , mb_bufferInput :: Maybe (BufferInput c ann)
   }
 
 data PointStatus
@@ -179,18 +179,18 @@ instance Eq PointStatus where
 instance Ord PointStatus where
   compare x = genericCompare x
 
-data PointAction c
+data PointAction c ann
   = Initialize_PointAction
-  | Receive_PointAction (PointInput c)
+  | Receive_PointAction (PointInput c ann)
   | MouseDown_PointAction MouseEvent
   | MouseEnter_PointAction MouseEvent
   | BufferOutput_PointAction (BufferOutput c)
 
 type PointSlots c = ("Buffer" :: H.Slot BufferQuery (BufferOutput c) Unit)
 
-type PointM c = H.HalogenM (PointState c) (PointAction c) (PointSlots c) (PointOutput c) Aff
+type PointM c ann = H.HalogenM (PointState c ann) (PointAction c ann) (PointSlots c) (PointOutput c) Aff
 
-type PointHTML c = H.ComponentHTML (PointAction c) (PointSlots c) Aff
+type PointHTML c ann = H.ComponentHTML (PointAction c ann) (PointSlots c) Aff
 
 --------------------------------------------------------------------------------
 -- Buffer
@@ -202,8 +202,8 @@ type BufferQuery = Const Void
 -- TODO: what stuff does the buffer need to know about? can't it just have a
 -- list of edits that have already been computed and then the buffer is justt
 -- searching through them, right?
-type BufferInput c =
-  { editor :: Editor c
+type BufferInput c ann =
+  { editor :: Editor c ann
   , point :: Point
   , query :: String
   , menu :: EditMenu Aff (Label c ()) (StampedLabel c ())
@@ -211,8 +211,8 @@ type BufferInput c =
 
 data BufferOutput c = SubmitBuffer_BufferOutput (Edit Aff (Label c ()) (StampedLabel c ()))
 
-type BufferState c =
-  { editor :: Editor c
+type BufferState c ann =
+  { editor :: Editor c ann
   , point :: Point
   , query :: String
   , menu :: EditMenu Aff (Label c ()) (StampedLabel c ())
@@ -220,18 +220,18 @@ type BufferState c =
   , menu_queried :: Array (String /\ Edit Aff (Label c ()) (StampedLabel c ()))
   }
 
-data BufferAction c
+data BufferAction c ann
   = Initialize_BufferAction
-  | Receive_BufferAction (BufferInput c)
+  | Receive_BufferAction (BufferInput c ann)
   | KeyDown_BufferAction Event
   | QueryInput_BufferAction Event
 
 type BufferSlots :: Row Type
 type BufferSlots = ()
 
-type BufferM c = H.HalogenM (BufferState c) (BufferAction c) BufferSlots (BufferOutput c) Aff
+type BufferM c ann = H.HalogenM (BufferState c ann) (BufferAction c ann) BufferSlots (BufferOutput c) Aff
 
-type BufferHTML c = H.ComponentHTML (BufferAction c) BufferSlots Aff
+type BufferHTML c ann = H.ComponentHTML (BufferAction c ann) BufferSlots Aff
 
 --------------------------------------------------------------------------------
 -- Console

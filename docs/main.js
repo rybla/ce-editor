@@ -17887,7 +17887,7 @@
       return bindFlipped10(setQuery)(resizeQueryInput1);
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor.Buffer (line 92, column 1 - line 92, column 59): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor.Buffer (line 92, column 1 - line 92, column 71): " + [v.constructor.name]);
   };
   var $$eval2 = /* @__PURE__ */ function() {
     return mkEval({
@@ -18033,7 +18033,7 @@
       });
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor.Point (line 50, column 1 - line 50, column 64): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor.Point (line 50, column 1 - line 50, column 76): " + [v.constructor.name]);
   };
   var handleAction4 = function(v) {
     if (v instanceof Initialize_PointAction) {
@@ -18060,7 +18060,7 @@
       return raise(new BufferOutput_PointOutput(v.value0));
     }
     ;
-    throw new Error("Failed pattern match at Ui.Editor.Point (line 72, column 1 - line 72, column 57): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Ui.Editor.Point (line 72, column 1 - line 72, column 69): " + [v.constructor.name]);
   };
   var $$eval3 = /* @__PURE__ */ function() {
     return mkEval({
@@ -19010,7 +19010,7 @@
         return submitEdit1(v.value0.value0.value0);
       }
       ;
-      throw new Error("Failed pattern match at Ui.Editor.Editor (line 108, column 1 - line 108, column 69): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Ui.Editor.Editor (line 108, column 1 - line 108, column 81): " + [v.constructor.name]);
     };
   };
   var $$eval4 = function(dictShow) {

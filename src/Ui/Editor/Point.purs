@@ -28,10 +28,10 @@ import Ui.Halogen (classes)
 import Utility (prop)
 import Web.HTML.HTMLElement as HTMLElement
 
-component :: forall l. Show l => H.Component (PointQuery l) (PointInput l) (PointOutput l) Aff
+component :: forall l ann. Show l => H.Component (PointQuery l ann) (PointInput l ann) (PointOutput l) Aff
 component = H.mkComponent { initialState, eval, render }
 
-initialState :: forall l. PointInput l -> PointState l
+initialState :: forall l ann. PointInput l ann -> PointState l ann
 initialState input =
   { editor: input.editor
   , point: input.point
@@ -39,7 +39,7 @@ initialState input =
   , mb_bufferInput: none
   }
 
-eval :: forall l a. H.HalogenQ (PointQuery l) (PointAction l) (PointInput l) a -> H.HalogenM (PointState l) (PointAction l) (PointSlots l) (PointOutput l) Aff a
+eval :: forall l ann a. H.HalogenQ (PointQuery l ann) (PointAction l ann) (PointInput l ann) a -> H.HalogenM (PointState l ann) (PointAction l ann) (PointSlots l) (PointOutput l) Aff a
 eval = H.mkEval H.defaultEval
   { initialize = pure Initialize_PointAction
   , handleQuery = handleQuery
@@ -47,7 +47,7 @@ eval = H.mkEval H.defaultEval
   , receive = pure <<< Receive_PointAction
   }
 
-handleQuery :: forall l a. PointQuery l a -> PointM l (Maybe a)
+handleQuery :: forall l ann a. PointQuery l ann a -> PointM l ann (Maybe a)
 handleQuery (ModifyStatuses_PointQuery f a) = do
   prop @"statuses" %= f
   gets _.statuses >>= \statuses -> do
@@ -69,7 +69,7 @@ ss_Left = Set.fromFoldable [ LeftFocus_PointStatus ] :: Set PointStatus
 ss_Middle = Set.fromFoldable [ Point_Handle_PointStatus ] :: Set PointStatus
 ss_Right = Set.fromFoldable [ RightFocus_PointStatus ] :: Set PointStatus
 
-handleAction :: forall l. PointAction l -> PointM l Unit
+handleAction :: forall l ann. PointAction l ann -> PointM l ann Unit
 handleAction Initialize_PointAction = do
   when Config.log_initializations do
     liftEffect $ Console.Messages.push_message $ HH.text $ "[Point.initialize]"
@@ -84,7 +84,7 @@ handleAction (MouseEnter_PointAction event) = do
 handleAction (BufferOutput_PointAction bufferOutput) = do
   H.raise $ BufferOutput_PointOutput bufferOutput
 
-render :: forall l. Show l => PointState l -> PointHTML l
+render :: forall l ann. Show l => PointState l ann -> PointHTML l ann
 render state =
   HH.div
     [ HP.ref refLabel_point

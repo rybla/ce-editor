@@ -8,7 +8,7 @@ import Control.Monad.State (get, modify, put)
 import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
 import Data.Either (either)
-import Data.Expr (Edit, EditAt, EditCtx, Expr(..), Fragment(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
+import Data.Expr (Edit, EditAt, EditCtx, Expr, Fragment(..), Handle(..), Path, Point(..), Span(..), SpanFocus(..), SpanH(..), ZipperFocus(..), applyEdit, getEndPoints_SpanH, getEndPoints_ZipperH, getExtremeIndexes, getFocusPoint, normalizeHandle)
 import Data.Expr.Drag as Expr.Drag
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Move as Expr.Move
@@ -25,7 +25,7 @@ import Data.Traversable (traverse)
 import Data.Tuple (snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
-import Editor (AnnotatedLabel, Editor(..), Label(..), StampedLabel, getId)
+import Editor (AnnotatedLabel, Editor(..), Label, StampedLabel, getId)
 import Editor as Editor
 import Editor.Common (stampLabel)
 import Effect.Aff (Aff)
@@ -57,14 +57,14 @@ import Web.UIEvent.KeyboardEvent.EventTypes as KeyboardEvent
 import Web.UIEvent.MouseEvent as MouseEvent
 import Web.UIEvent.MouseEvent.EventTypes as MouseEventType
 
-component :: forall c. Show c => H.Component EditorQuery (EditorInput c) EditorOutput Aff
+component :: forall c ann. Show c => H.Component EditorQuery (EditorInput c ann) EditorOutput Aff
 component = H.mkComponent { initialState, eval, render }
 
 --------------------------------------------------------------------------------
 -- initialState
 --------------------------------------------------------------------------------
 
-initialState :: forall c. EditorInput c -> EditorState c
+initialState :: forall c ann. EditorInput c ann -> EditorState c ann
 initialState input =
   { editor: Editor editor
   , mb_root: none
@@ -81,12 +81,12 @@ initialState input =
 
 -- TODO: use this style for all things that use `{ editor: Editor editor } <- get`
 
-annotateExpr :: forall c r. Expr (StampedLabel c r) -> EditorM c (Expr (AnnotatedLabel c r))
+annotateExpr :: forall c ann r. Expr (StampedLabel c r) -> EditorM c ann (Expr (AnnotatedLabel c ann r))
 annotateExpr e = do
   { editor: Editor editor } <- get
   editor.annotateExpr e # liftAff
 
-getEditCtx :: forall m c r. Lacks "id" r => MonadAff m => EditorM c (EditCtx m (Label c r) (StampedLabel c r))
+getEditCtx :: forall m c ann r. Lacks "id" r => MonadAff m => EditorM c ann (EditCtx m (Label c r) (StampedLabel c r))
 getEditCtx = do
   state <- get
   pure $ Editor.mkEditCtx
@@ -98,14 +98,14 @@ getEditCtx = do
 -- eval
 --------------------------------------------------------------------------------
 
-eval :: forall c a. Show c => H.HalogenQ EditorQuery (EditorAction c) (EditorInput c) a -> H.HalogenM (EditorState c) (EditorAction c) (EditorSlots c) EditorOutput Aff a
+eval :: forall c ann a. Show c => H.HalogenQ EditorQuery (EditorAction c ann) (EditorInput c ann) a -> H.HalogenM (EditorState c ann) (EditorAction c ann) (EditorSlots c ann) EditorOutput Aff a
 eval = H.mkEval H.defaultEval
   { initialize = pure Initialize_EditorAction
   , receive = pure <<< Receive_EditorAction
   , handleAction = handleAction
   }
 
-handleAction :: forall c. Show c => EditorAction c -> EditorM c Unit
+handleAction :: forall c ann. Show c => EditorAction c ann -> EditorM c ann Unit
 
 handleAction Initialize_EditorAction = do
   when Config.log_initializations do
@@ -337,14 +337,14 @@ openBuffer_keys = Set.fromFoldable [ "Tab" ]
 -- undo and redo
 --------------------------------------------------------------------------------
 
-getSnapshot :: forall c. EditorM c (Snapshot c)
+getSnapshot :: forall c ann. EditorM c ann (Snapshot c ann)
 getSnapshot = do
   state <- get
   root <- getRoot
   mb_handle <- liftEffect $ state.ref_mb_handle # Ref.read
   pure { root, mb_handle }
 
-saveSnapshot :: forall c. Show c => EditorM c Unit
+saveSnapshot :: forall c ann. Show c => EditorM c ann Unit
 saveSnapshot = do
   state <- get
   s <- getSnapshot
@@ -353,7 +353,7 @@ saveSnapshot = do
   liftEffect $ state.ref_history :%= (s : _)
   liftEffect $ state.ref_future := none
 
-undo :: forall c. Show c => EditorM c Unit
+undo :: forall c ann. Show c => EditorM c ann Unit
 undo = do
   state <- get
   when Config.log_undo_and_redo do
@@ -366,7 +366,7 @@ undo = do
       liftEffect $ state.ref_future :%= (s : _)
       loadSnapshot s'
 
-redo :: forall c. Show c => EditorM c Unit
+redo :: forall c ann. Show c => EditorM c ann Unit
 redo = do
   state <- get
   when Config.log_undo_and_redo do
@@ -379,7 +379,7 @@ redo = do
       liftEffect $ state.ref_future := future'
       loadSnapshot s'
 
-loadSnapshot :: forall c. Snapshot c -> EditorM c Unit
+loadSnapshot :: forall c ann. Snapshot c ann -> EditorM c ann Unit
 loadSnapshot s = do
   setHandle' do
     get >>= \state -> liftEffect $ state.ref_mb_dragOrigin := none
@@ -390,7 +390,7 @@ loadSnapshot s = do
 -- submitEdit
 --------------------------------------------------------------------------------
 
-submitEditAt :: forall c. Show c => EditAt Aff (Label c ()) (StampedLabel c ()) -> EditorM c Unit
+submitEditAt :: forall c ann. Show c => EditAt Aff (Label c ()) (StampedLabel c ()) -> EditorM c ann Unit
 submitEditAt editAt = do
   state <- getBasicEditorState_stamped
   editCtx <- getEditCtx
@@ -402,7 +402,7 @@ submitEditAt editAt = do
     Nothing -> pure unit
     Just edit -> submitEdit edit
 
-submitEdit :: forall c. Show c => Edit Aff (Label c ()) (StampedLabel c ()) -> EditorM c Unit
+submitEdit :: forall c ann. Show c => Edit Aff (Label c ()) (StampedLabel c ()) -> EditorM c ann Unit
 submitEdit edit = do
   Browser.play_audio "assets/submit_buffer.mp3" # liftEffect
   purestate_input <- getBasicEditorState_stamped
@@ -455,7 +455,7 @@ submitEdit edit = do
 -- modifyEditorState
 --------------------------------------------------------------------------------
 
-modifyEditorState :: forall c. Show c => (EditorState c -> EditorState c) -> EditorM c Unit
+modifyEditorState :: forall c ann. Show c => (EditorState c ann -> EditorState c ann) -> EditorM c ann Unit
 modifyEditorState f = do
   saveSnapshot
   setHandle' do
@@ -468,12 +468,12 @@ modifyEditorState f = do
 --------------------------------------------------------------------------------
 
 -- | turns off old handle, then turns on new handle
-setHandle :: forall c. Maybe Handle -> EditorM c Unit
+setHandle :: forall c ann. Maybe Handle -> EditorM c ann Unit
 setHandle mb_handle = setHandle' $ pure mb_handle
 
 -- | turns off old handle, then computes new handle, then turns on new handle.
 -- | note that this DOES NOT reset ref_mb_dragOrigin.
-setHandle' :: forall c. EditorM c (Maybe Handle) -> EditorM c Unit
+setHandle' :: forall c ann. EditorM c ann (Maybe Handle) -> EditorM c ann Unit
 setHandle' m_mb_handle = do
   state@{ editor: Editor editor } <- get
   mb_handle_old <- liftEffect $ Ref.read state.ref_mb_handle
@@ -490,10 +490,10 @@ setHandle' m_mb_handle = do
 
   liftEffect $ state.ref_mb_handle := mb_handle_new
 
-modifyHandle :: forall c. Boolean -> Maybe Handle -> EditorM c Unit
+modifyHandle :: forall c ann. Boolean -> Maybe Handle -> EditorM c ann Unit
 modifyHandle b mb_handle = do
   let
-    modifyClass :: Point -> Set PointStatus -> EditorM c Unit
+    modifyClass :: Point -> Set PointStatus -> EditorM c ann Unit
     modifyClass p ss' =
       if b then do
         -- H.tell (Proxy @"Point") p $ ModifyStatuses_PointQuery (_ `Set.union` ss')
@@ -570,7 +570,7 @@ ss_ZipperH_Handle_OuterRight_Focus = Set.fromFoldable [ ZipperH_Handle_OuterRigh
 -- render
 --------------------------------------------------------------------------------
 
-render :: forall c. Show c => EditorState c -> EditorHTML c
+render :: forall c ann. Show c => EditorState c ann -> EditorHTML c ann
 render state =
   HH.div [ classes [ "Editor" ] ] $ fold
     [ state.mb_root # foldMap \root ->
@@ -587,7 +587,7 @@ render state =
         ]
     ]
 
-renderAnnotatedExpr :: forall c. Show c => Editor c -> Path -> Expr (AnnotatedLabel c ()) -> Maybe (AnnotatedLabel c ()) /\ RenderM (Array (String /\ EditorHTML c))
+renderAnnotatedExpr :: forall c ann. Show c => Editor c ann -> Path -> Expr (AnnotatedLabel c ann ()) -> Maybe (AnnotatedLabel c ann ()) /\ RenderM (Array (String /\ EditorHTML c ann))
 renderAnnotatedExpr (Editor editor) path expr = do
   Expr.Render.renderExpr
     { renderKid: renderAnnotatedExpr (Editor editor)
@@ -601,7 +601,7 @@ renderAnnotatedExpr (Editor editor) path expr = do
     ((str_or_label # either identity getId) <> "_point_" <> show j) /\
       HH.slot (Proxy @"Point") point Point.component { editor: Editor editor, point } PointOutput_EditorAction
 
-renderStampedExpr :: forall c. Show c => Editor c -> Path -> Expr (StampedLabel c ()) -> (Maybe (StampedLabel c ())) /\ RenderM (Array (String /\ EditorHTML c))
+renderStampedExpr :: forall c ann. Show c => Editor c ann -> Path -> Expr (StampedLabel c ()) -> (Maybe (StampedLabel c ())) /\ RenderM (Array (String /\ EditorHTML c ann))
 renderStampedExpr (Editor editor) path expr = do
   Expr.Render.renderExpr
     { renderKid: renderStampedExpr (Editor editor)

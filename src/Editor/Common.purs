@@ -3,8 +3,8 @@ module Editor.Common where
 import Prelude
 
 import Data.Array as Array
-import Data.Expr (BasicEditorState, Edit, EditCtx, EditM, EditMenu, Expr, Handle, Point(..))
-import Data.Expr.Render (Annotation, AssembleExpr)
+import Data.Expr (BasicEditorState, Edit, EditCtx, EditM, EditMenu, Expr, Handle, Point)
+import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (fold)
 import Data.Id as Id
 import Data.Maybe (Maybe, fromMaybe)
@@ -72,14 +72,14 @@ stampLabel f = \(Label l) -> do
 
 --------------------------------------------------------------------------------
 
-type AnnotatedLabel c r = StampedLabel c (AnnotatedLabelRow r)
+type AnnotatedLabel c ann r = StampedLabel c (AnnotatedLabelRow ann r)
 
-type AnnotatedLabelRow r =
-  ( ann :: Maybe (Array Annotation)
+type AnnotatedLabelRow ann r =
+  ( ann :: Maybe ann
   | r
   )
 
-annotateExpr_default :: forall c r. Expr (StampedLabel c r) -> Aff (Expr (AnnotatedLabel c r))
+annotateExpr_default :: forall c ann r. Expr (StampedLabel c r) -> Aff (Expr (AnnotatedLabel c ann r))
 annotateExpr_default =
   traverse \(Label l) ->
     pure $ Label $ Record.union { ann: none } l
@@ -90,7 +90,7 @@ annotateExpr_default =
 -- take types into account. this probably involves making Edit parametrized by
 -- all 3 labels.
 
-data Editor c = Editor
+data Editor c ann = Editor
   { name :: String
   -- initializing
   , initialExpr :: Expr (Label c ())
@@ -112,16 +112,16 @@ data Editor c = Editor
   , isHole :: forall r. Expr (Label c r) -> Point -> Boolean
   -- rendering
   , assembleStampedExpr :: AssembleExpr (StampedLabel c ())
-  , assembleAnnotatedExpr :: AssembleExpr (AnnotatedLabel c ())
+  , assembleAnnotatedExpr :: AssembleExpr (AnnotatedLabel c ann ())
   -- diagnostics
-  , getDiagnostics :: forall r1 r2. BasicEditorState (Label c r1) (AnnotatedLabel c r2) -> Array Diagnostic
-  , annotateExpr :: forall r. Expr (StampedLabel c r) -> Aff (Expr (AnnotatedLabel c r))
+  , getDiagnostics :: forall r1 r2. BasicEditorState (Label c r1) (AnnotatedLabel c ann r2) -> Array Diagnostic
+  , annotateExpr :: forall r. Expr (StampedLabel c r) -> Aff (Expr (AnnotatedLabel c ann r))
   -- printing
   , printExpr :: forall r. Expr (Label c r) -> String
   }
 
 newtype ExistsEditor = ExistsEditor (forall r. ExistsEditorK r -> r)
-type ExistsEditorK r = forall c. Show c => Editor c -> r
+type ExistsEditorK r = forall c ann. Show c => Editor c ann -> r
 
 mkExistsEditor :: ExistsEditorK ExistsEditor
 mkExistsEditor a = ExistsEditor \k -> k a
@@ -146,11 +146,11 @@ type DiagnosticsPanelSlots = ()
 --------------------------------------------------------------------------------
 
 mkEditCtx
-  :: forall m c rA rB
+  :: forall m c ann rA rB
    . MonadAff m
   => (Record (BaseLabelRow c rA) -> Record (BaseLabelRow c rB))
   -> (Record (BaseLabelRow c (StampedLabelRow rB)) -> Record (BaseLabelRow c rA))
-  -> Editor c
+  -> Editor c ann
   -> EditCtx m (Label c rA) (StampedLabel c rB)
 mkEditCtx f g (Editor _editor) =
   { stampLabel: stampLabel f >>> liftEffect

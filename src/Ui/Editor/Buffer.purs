@@ -37,7 +37,7 @@ import Ui.Editor.Console.Messages as Console.Messages
 import Ui.Event (fromEventToKeyInfo, matchKeyInfoPattern', matchMapKeyInfo) as Event
 import Ui.Event (keyMember, not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (fromMaybeM)
+import Utility (fromMaybeM, todo)
 import Web.Event.Event (preventDefault) as Event
 import Web.HTML as HTML
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -50,14 +50,14 @@ import Web.UIEvent.KeyboardEvent.EventTypes as KeyboardEvent
 -- component
 --------------------------------------------------------------------------------
 
-component :: forall c. Show c => H.Component BufferQuery (BufferInput c) (BufferOutput c) Aff
+component :: forall c ann. Show c => H.Component BufferQuery (BufferInput c ann) (BufferOutput c) Aff
 component = H.mkComponent { initialState, eval, render }
 
 --------------------------------------------------------------------------------
 -- initialState
 --------------------------------------------------------------------------------
 
-initialState :: forall l. BufferInput l -> BufferState l
+initialState :: forall l ann. BufferInput l ann -> BufferState l ann
 initialState input =
   { editor: input.editor
   , point: input.point
@@ -71,7 +71,7 @@ initialState input =
 -- eval
 --------------------------------------------------------------------------------
 
-eval :: forall l a. H.HalogenQ BufferQuery (BufferAction l) (BufferInput l) a -> H.HalogenM (BufferState l) (BufferAction l) BufferSlots (BufferOutput l) Aff a
+eval :: forall l ann a. H.HalogenQ BufferQuery (BufferAction l ann) (BufferInput l ann) a -> H.HalogenM (BufferState l ann) (BufferAction l ann) BufferSlots (BufferOutput l) Aff a
 eval = H.mkEval H.defaultEval
   { initialize = pure Initialize_BufferAction
   , handleQuery = handleQuery
@@ -82,14 +82,14 @@ eval = H.mkEval H.defaultEval
 -- handleQuery
 --------------------------------------------------------------------------------
 
-handleQuery :: forall l a. BufferQuery a -> BufferM l (Maybe a)
+handleQuery :: forall l ann a. BufferQuery a -> BufferM l ann (Maybe a)
 handleQuery (Const x) = absurd x
 
 --------------------------------------------------------------------------------
 -- handleAction
 --------------------------------------------------------------------------------
 
-handleAction :: forall c. BufferAction c -> BufferM c Unit
+handleAction :: forall c ann. BufferAction c ann -> BufferM c ann Unit
 
 handleAction Initialize_BufferAction = do
   when Config.log_initializations do
@@ -148,7 +148,7 @@ resizeQueryInput = do
 -- setQuery
 --------------------------------------------------------------------------------
 
-setQuery :: forall l. String -> BufferM l Unit
+setQuery :: forall l ann. String -> BufferM l ann Unit
 setQuery query = do
   state <- get
   mb_menu_queried <- state.menu query
@@ -186,7 +186,7 @@ fromKeyToCycleDir _ = none
 
 refLabel_input = H.RefLabel "input"
 
-render :: forall c. Show c => BufferState c -> BufferHTML c
+render :: forall c ann. Show c => BufferState c ann -> BufferHTML c ann
 render state =
   HH.div [ classes $ fold [ [ "Buffer" ] ] ]
     [ HH.input
@@ -218,7 +218,7 @@ render state =
 
     ]
 
-renderArgs_stamped :: forall c w i. Show c => Editor c -> RenderArgs (StampedLabel c ()) w i
+renderArgs_stamped :: forall c ann w i. Show c => Editor c ann -> RenderArgs (StampedLabel c ()) w i
 renderArgs_stamped (Editor editor) =
   { renderKid
   , renderPoint

@@ -54,7 +54,7 @@ mkSpanToothC c es = mkSpanTooth (Label { con: c }) es
 
 infix 0 mkSpanToothC as %<*
 
-editor :: Editor C
+editor :: Editor C (Array Annotation)
 editor = Editor
   { name: "s-expressions"
   , initialExpr: C "Root" % []
@@ -142,10 +142,10 @@ editor = Editor
 --       _ -> none
 --   pure $ Expr { l: Label $ Record.union { ann } l, kids }
 
-annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C r))
+annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C (Array Annotation) r))
 annotateExpr = traverse \(Label l) -> pure $ Label $ Record.union { ann: none } l
 
-assembleAnnotatedExpr :: forall r. AssembleExpr (AnnotatedLabel C r)
+assembleAnnotatedExpr :: forall r. AssembleExpr (AnnotatedLabel C (Array Annotation) r)
 assembleAnnotatedExpr = assembleExpr_helper
   { getId: \_path (Label l) -> l.id
   , getAnnotations: \(Label l) -> l.ann
