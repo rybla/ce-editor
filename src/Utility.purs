@@ -29,6 +29,7 @@ import Effect (Effect)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Foreign.Object as Object
+import Options.Applicative.Internal.Utils as Options.Applicative.Util.Internal
 import Partial.Unsafe (unsafeCrashWith)
 import Prim.Row (class Cons)
 import Prim.TypeError (class Warn, Text)
@@ -191,4 +192,6 @@ mapMapFlipped = flip mapMap
 infixl 4 mapMapFlipped as <##>
 
 infixl 1000 applyFlipped as #.
+
+unWords = Options.Applicative.Util.Internal.unWords
 

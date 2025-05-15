@@ -16,7 +16,6 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, wrap)
 import Data.Set (Set)
 import Data.Set as Set
-import Data.String as String
 import Data.Traversable (sequence, traverse)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
@@ -31,7 +30,7 @@ import Record as Record
 import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, isIdentifierOrNumeric, (#.))
+import Utility (collapse, isIdentifierOrNumeric, unWords, (#.))
 
 --------------------------------------------------------------------------------
 
@@ -133,18 +132,16 @@ getShortcut ki state
 printExpr = go
   where
   go = case _ of
-    Expr { l: Label { con: C "Root" }, kids } -> kids # map go # String.joinWith " "
+    Expr { l: Label { con: C "Root" }, kids } -> kids # map go # unWords
     Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } -> x
-    Expr { l: Label { con: C "Let" }, kids: [ param@(Expr { l: Label { con: C "Let_param" } }), impl@(Expr { l: Label { con: C "Let_impl" } }), body@(Expr { l: Label { con: C "Let_body" } }) ] } -> "(let " <> (param # go) <> " = " <> (impl # go) <> " in " <> (body # go) <> ")"
-    Expr { l: Label { con: C "Let_param" }, kids } -> kids # map go # String.joinWith " "
-    Expr { l: Label { con: C "Let_impl" }, kids } -> kids # map go # String.joinWith " "
-    Expr { l: Label { con: C "Let_body" }, kids } -> kids # map go # String.joinWith " "
-    Expr { l: Label { con: C "Lam" }, kids: [ params@(Expr { l: Label { con: C "Lam_params" } }), body@(Expr { l: Label { con: C "Lam_body" } }) ] } -> "(fun " <> (params # go) <> " ⇒ " <> (body # go) <> ")"
-    Expr { l: Label { con: C "Lam_params" }, kids } -> kids # map go # String.joinWith " "
-    Expr { l: Label { con: C "Lam_body" }, kids } -> kids # map go # String.joinWith " "
-    Expr { l: Label { con: C "App" }, kids: [ func@(Expr { l: Label { con: C "App_func" } }), args@(Expr { l: Label { con: C "App_args" } }) ] } -> "(" <> (func # go) <> " " <> (args # go) <> ")"
-    Expr { l: Label { con: C "App_func" }, kids } -> kids # map go # String.joinWith " "
-    Expr { l: Label { con: C "App_args" }, kids } -> kids # map go # String.joinWith " "
+    Expr { l: Label { con: C "Let" }, kids: [ param, impl, body ] } -> "(let " <> param #. go <> " = " <> impl #. go <> " in " <> body #. go <> ")"
+    Expr { l: Label { con: C "Let_param" }, kids } -> kids # map go # unWords
+    Expr { l: Label { con: C "Let_impl" }, kids } -> kids # map go # unWords
+    Expr { l: Label { con: C "Let_body" }, kids } -> kids # map go # unWords
+    Expr { l: Label { con: C "Lam" }, kids: [ params, body ] } -> "(fun " <> params #. go <> " ⇒ " <> body #. go <> ")"
+    Expr { l: Label { con: C "Lam_params" }, kids } -> kids # map go # unWords
+    Expr { l: Label { con: C "Lam_body" }, kids } -> kids # map go # unWords
+    Expr { l: Label { con: C "App" }, kids } -> "(" <> kids #. map go #. unWords <> ")"
     Expr { l: Label { con: C "LineBreak" }, kids: [] } -> "\n"
     e -> show e
 

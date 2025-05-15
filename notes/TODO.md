@@ -3,28 +3,19 @@
 Priority:
 
 - [ ] do simply-typed lambda calculus with typed holes
-
-- [ ] make an SlcV1, and make App be just a list of kids rather than having the
-      2 kid positions. this makes the UI easier and makes more sense overall
-
 - [ ] put annotations _below_ the thing their annotating (will take up vertical
       space), instead of _before_
 - [ ] add a `isHole :: Expr -> Handle -> Boolean` just like `isValidHandle` to
       `Editor`
 - [ ] with `isHole`, make pressing Tab and Shift+Tab jump forwards and backward
       at holes
-
 - [ ] for diagnostics, do some sort of memoization so that when you move around
       its not recomputing every single time
-
 - [ ] BUG: in Data.Expr.Render, make sure that all tooth types are putting
       points in the appropriate places
-
 - [ ] IDEA: hardcode Editor label as string (or `data C = C String`)?
-
   - not doing this for now since it'll make it more difficult to add more type
     vars (such as for render-time annotation) later
-
 - [ ] make a simple little way for the user to "run" their program, just for fun
 - [ ] refactor to allow for diagnostics reporting some places
   - reorg modules to make more sense now that diagnostics are allowed in Expr
@@ -36,9 +27,7 @@ Priority:
         it
 - [ ] when move across grouping boundaries, doesnt quite go where expected (when
       move from inner to outer, should go to the innermost)
-
   - example of this?
-
 - [ ] IDEA: when delete right before a kid, the kid's kids could be spliced in
       place of it
   - but, this often breaks well-formedness
@@ -57,6 +46,8 @@ Debatable:
 
 Done:
 
+- [x] make an SlcV1, and make App be just a list of kids rather than having the
+      2 kid positions. this makes the UI easier and makes more sense overall
 - [x] implement STLC with annotations and diagnostics
 - [x] sound effects when do actions (start query, submit query, move handle)
 - [x] BUG: why doesn't clicking, and dragging, work for moving handle?

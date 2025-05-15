@@ -26,13 +26,12 @@ import Effect.Aff (Aff)
 import Halogen.HTML (fromPlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
-import Halogen.HTML.Properties (id)
 import Halogen.HTML.Properties as HP
 import Record as Record
 import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, isIdentifierOrNumeric, (#.))
+import Utility (collapse, isIdentifierOrNumeric, unWords, (#.))
 
 --------------------------------------------------------------------------------
 
@@ -63,7 +62,7 @@ infix 0 mkSpanToothC as %<*
 
 editor :: Editor C
 editor = Editor
-  { name: "scoped lambda calculus"
+  { name: "scoped untyped lambda calculus"
   , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu
@@ -88,10 +87,8 @@ getEditMenu state = do
   zipper_Lam_body' <- zipper_Lam_body # stampTraversable
   edit_Lam_body <- Tuple "Lam_body" <$> Expr.Edit.insert (Zipper_Fragment zipper_Lam_body') state
   -- App
-  zipper_App_func' <- zipper_App_func # stampTraversable
-  edit_App_func <- Tuple "App_func" <$> Expr.Edit.insert (Zipper_Fragment zipper_App_func') state
-  zipper_App_args' <- zipper_App_args # stampTraversable
-  edit_App_args <- Tuple "App_args" <$> Expr.Edit.insert (Zipper_Fragment zipper_App_args') state
+  zipper_App' <- zipper_App # stampTraversable
+  edit_App <- Tuple "App_func" <$> Expr.Edit.insert (Zipper_Fragment zipper_App') state
   -- Let
   zipper_Let_param' <- zipper_Let_param # stampTraversable
   edit_Let_param <- Tuple "Let_param" <$> Expr.Edit.insert (Zipper_Fragment zipper_Let_param') state
@@ -102,7 +99,7 @@ getEditMenu state = do
   pure \query -> do
     case query of
       "fun" -> pure [ edit_Lam_params, edit_Lam_body ]
-      "app" -> pure [ edit_App_func, edit_App_args ]
+      "app" -> pure [ edit_App ]
       "let" -> pure [ edit_Let_param, edit_Let_impl, edit_Let_body ]
       -- Var
       _ | query # isIdentifierOrNumeric -> do
@@ -120,11 +117,8 @@ getShortcut ki state
       expr_LineBreak' <- expr_LineBreak # stampTraversable
       Expr.Edit.insert (Span_Fragment (Span [ expr_LineBreak' ])) state
   | ki # matchKeyInfoPattern' [ keyEq "(", not_cmd, not_alt ] = do
-      zipper_App_func' <- zipper_App_func # stampTraversable
-      Expr.Edit.insert (Zipper_Fragment zipper_App_func') state
-  | ki # matchKeyInfoPattern' [ keyEq ")", not_cmd, not_alt ] = do
-      zipper_App_args' <- zipper_App_args # stampTraversable
-      Expr.Edit.insert (Zipper_Fragment zipper_App_args') state
+      zipper_App' <- zipper_App # stampTraversable
+      Expr.Edit.insert (Zipper_Fragment zipper_App') state
   | otherwise = empty
 
 --------------------------------------------------------------------------------
@@ -134,18 +128,16 @@ getShortcut ki state
 printExpr = go
   where
   go = case _ of
-    Expr { l: Label { con: C "Root" }, kids } -> kids # map go # String.joinWith " "
+    Expr { l: Label { con: C "Root" }, kids } -> kids # map go # unWords
     Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } -> x
-    Expr { l: Label { con: C "Let" }, kids: [ param@(Expr { l: Label { con: C "Let_param" } }), impl@(Expr { l: Label { con: C "Let_impl" } }), body@(Expr { l: Label { con: C "Let_body" } }) ] } -> "(let " <> (param # go) <> " = " <> (impl # go) <> " in " <> (body # go) <> ")"
-    Expr { l: Label { con: C "Let_param" }, kids } -> kids # map go # String.joinWith " "
-    Expr { l: Label { con: C "Let_impl" }, kids } -> kids # map go # String.joinWith " "
-    Expr { l: Label { con: C "Let_body" }, kids } -> kids # map go # String.joinWith " "
-    Expr { l: Label { con: C "Lam" }, kids: [ params@(Expr { l: Label { con: C "Lam_params" } }), body@(Expr { l: Label { con: C "Lam_body" } }) ] } -> "(fun " <> (params # go) <> " ⇒ " <> (body # go) <> ")"
-    Expr { l: Label { con: C "Lam_params" }, kids } -> kids # map go # String.joinWith " "
-    Expr { l: Label { con: C "Lam_body" }, kids } -> kids # map go # String.joinWith " "
-    Expr { l: Label { con: C "App" }, kids: [ func@(Expr { l: Label { con: C "App_func" } }), args@(Expr { l: Label { con: C "App_args" } }) ] } -> "(" <> (func # go) <> " " <> (args # go) <> ")"
-    Expr { l: Label { con: C "App_func" }, kids } -> kids # map go # String.joinWith " "
-    Expr { l: Label { con: C "App_args" }, kids } -> kids # map go # String.joinWith " "
+    Expr { l: Label { con: C "Let" }, kids: [ param, impl, body ] } -> "(let " <> param #. go <> " = " <> impl #. go <> " in " <> body #. go <> ")"
+    Expr { l: Label { con: C "Let_param" }, kids } -> kids # map go # unWords
+    Expr { l: Label { con: C "Let_impl" }, kids } -> kids # map go # unWords
+    Expr { l: Label { con: C "Let_body" }, kids } -> kids # map go # unWords
+    Expr { l: Label { con: C "Lam" }, kids: [ params, body ] } -> "(fun " <> params #. go <> " ⇒ " <> body #. go <> ")"
+    Expr { l: Label { con: C "Lam_params" }, kids } -> kids # map go # unWords
+    Expr { l: Label { con: C "Lam_body" }, kids } -> kids # map go # unWords
+    Expr { l: Label { con: C "App" }, kids } -> "(" <> kids #. map go #. unWords <> ")"
     Expr { l: Label { con: C "LineBreak" }, kids: [] } -> "\n"
     e -> show e
 
@@ -305,13 +297,7 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
     C "Lam_params" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: none } args id ps ks
     C "Lam_body" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks
 
-    -- App
-    C "App" /\ _ /\ [ k_func, k_args ] -> do
-      k_func' <- increaseIndentLevel do k_func #. snd
-      k_args' <- increaseIndentLevel do k_args #. snd
-      pure $ fold [ tokens_punctuation (id <> "_begin") "(", k_func', tokens_punctuation (id <> "_op") "$", k_args', tokens_punctuation (id <> "_end") ")" ]
-    C "App_func" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks
-    C "App_args" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks
+    C "App" /\ ps /\ ks -> pure (tokens_punctuation (id <> "_begin") "(") <> assembleAdvanced { targetKidsLength: none } args id ps ks <> pure (tokens_punctuation (id <> "_end") ")")
 
     -- Let
     C "Let" /\ _ /\ [ k_param, k_impl, k_body ] -> do
@@ -404,9 +390,8 @@ expr_Lam = C "Lam" % [ C "Lam_params" % [], C "Lam_body" % [] ]
 zipper_Lam_params = (expr_Lam # atPoint (Point { path: Step 0 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
 zipper_Lam_body = (expr_Lam # atPoint (Point { path: Step 1 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
 
-expr_App = C "App" % [ C "App_func" % [], C "App_args" % [] ]
-zipper_App_func = (expr_App # atPoint (Point { path: Step 0 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
-zipper_App_args = (expr_App # atPoint (Point { path: Step 1 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
+expr_App = C "App" % []
+zipper_App = (expr_App # atPoint (Point { path: mempty, j: Index 0 })).outside # fromSpanContextToZipper
 
 expr_Let = C "Let" % [ C "Let_param" % [], C "Let_impl" % [], C "Let_body" % [] ]
 zipper_Let_param = (expr_Let # atPoint (Point { path: Step 0 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
@@ -429,7 +414,7 @@ isValidHandle root handle =
       p = getEndPoints_ZipperH zh
 
 isValidPoint :: forall r. Expr (Label C r) -> Point -> Boolean
-isValidPoint e0 (Point p) = (e.l # getCon) `Set.member` constructors_valid
+isValidPoint e0 (Point p) = (e.l # getCon) `Set.member` constructors_canHaveAnyNumberOrKids
   where
   Expr e = (e0 # atSubExpr p.path).here
 
@@ -468,10 +453,10 @@ constructors_needParensWhenOnRightOfApp = Set.fromFoldable
   , C "Let"
   ]
 
-constructors_valid = Set.fromFoldable $ fold
+constructors_canHaveAnyNumberOrKids = Set.fromFoldable $ fold
   [ [ C "Root" ]
   , [ C "Lam_params", C "Lam_body" ]
-  , [ C "App_func", C "App_args" ]
+  , [ C "App" ]
   , [ C "Let_param", C "Let_impl", C "Let_body" ]
   ]
 
