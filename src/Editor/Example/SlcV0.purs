@@ -5,7 +5,7 @@ import Prelude
 import Control.Alternative (empty)
 import Control.Monad.Reader (ask, local, runReader, runReaderT)
 import Data.Array as Array
-import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
+import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), BasicEditorState, atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (Annotation(..), AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
 import Data.Expr.Render as Expr.Render
@@ -21,7 +21,7 @@ import Data.Traversable (sequence, traverse)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
-import Editor.Common (AnnotatedLabel, Diagnostic(..), Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon)
+import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, AnnotatedLabel, assembleExpr_default, getCon)
 import Effect.Aff (Aff)
 import Halogen.HTML (fromPlainHTML)
 import Halogen.HTML as HH
@@ -31,7 +31,7 @@ import Record as Record
 import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, isIdentifierOrNumeric, (#.), (<##>))
+import Utility (collapse, isIdentifierOrNumeric, (#.))
 
 --------------------------------------------------------------------------------
 
@@ -152,8 +152,7 @@ printExpr = go
 -- getDiagnostics
 --------------------------------------------------------------------------------
 
--- getDiagnostics :: forall r1 r2. BasicEditorState (Label c r1) (AnnotatedLabel c r2) -> Array Diagnostic
--- getDiagnostics :: forall r. BasicEditorState (StampedLabel C r) (AnnotatedLabel C r) -> Array Diagnostic
+getDiagnostics :: forall rA rB. BasicEditorState (Label C rA) (AnnotatedLabel C rB) -> Array Diagnostic
 getDiagnostics state = collapse @Array @Maybe
   [ state.clipboard <#> \frag ->
       Diagnostic
