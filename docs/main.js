@@ -15254,7 +15254,7 @@
   };
   var editor2 = /* @__PURE__ */ function() {
     return new Editor({
-      name: "scoped untyped lambda calculus",
+      name: "scoped untyped lambda calculus (v0)",
       initialExpr: mkExprC2("Root")([]),
       initialHandle: new Point_Handle({
         path: mempty(monoidList),
@@ -15959,7 +15959,7 @@
   };
   var editor3 = /* @__PURE__ */ function() {
     return new Editor({
-      name: "scoped untyped lambda calculus",
+      name: "scoped untyped lambda calculus (v1)",
       initialExpr: mkExprC3("Root")([]),
       initialHandle: new Point_Handle({
         path: mempty4,

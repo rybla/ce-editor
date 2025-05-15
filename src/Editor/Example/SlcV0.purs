@@ -61,7 +61,7 @@ infix 0 mkSpanToothC as %<*
 
 editor :: Editor C
 editor = Editor
-  { name: "scoped untyped lambda calculus"
+  { name: "scoped untyped lambda calculus (v0)"
   , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu
