@@ -335,7 +335,7 @@
     & > .item {
       border-radius: 0.5em;
       padding: 0.5em;
-      width: 30em;
+      width: 20em;
 
       background: var(--Editor--background);
       box-shadow: 0 0 0.5em 0.1em rgba(0, 0, 0, 0.2);

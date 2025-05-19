@@ -3,24 +3,31 @@ module Editor.Example.StlcV0 where
 import Prelude
 
 import Control.Alternative (empty)
-import Control.Monad.Reader (ask, local, runReader, runReaderT)
-import Control.Monad.State (evalStateT, runStateT)
+import Control.Monad.Except (ExceptT, runExceptT, throwError)
+import Control.Monad.Reader (ask, local, runReader)
+import Control.Monad.State (StateT, get, modify, modify_, runStateT)
+import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
+import Data.Either (Either(..))
 import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), BasicEditorState, atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (Annotation(..), AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
 import Data.Expr.Render as Expr.Render
-import Data.Foldable (and, any, findMap, fold, foldMap, length, null)
+import Data.Foldable (and, fold, foldMap, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
+import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
+import Data.Map (Map)
+import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, wrap)
+import Data.Newtype as Newtype
 import Data.Set as Set
-import Data.Traversable (sequence, traverse)
+import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (fromMaybe, none)
-import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, AnnotatedLabel, assembleExpr_default, getCon)
+import Editor.Common (AnnotatedLabel, Diagnostic(..), Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, mapLabel)
 import Effect.Aff (Aff)
 import Halogen.HTML (fromPlainHTML)
 import Halogen.HTML as HH
@@ -29,7 +36,7 @@ import Halogen.HTML.Properties as HP
 import Record as Record
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, isIdentifierOrNumeric, unWords, (#.))
+import Utility (collapse, fromMaybeM, isIdentifierOrNumeric, unWords, (#.))
 
 --------------------------------------------------------------------------------
 
@@ -58,14 +65,7 @@ infix 0 mkSpanToothC as %<*
 
 --------------------------------------------------------------------------------
 
-newtype StlcAnn = StlcAnn
-  { annotations :: Maybe (Array Annotation)
-  , mb_ty :: Maybe (Expr (Label C ()))
-  }
-
---------------------------------------------------------------------------------
-
-editor :: Editor C StlcAnn
+editor :: Editor C Ann
 editor = Editor
   { name: "simply typed lambda calculus (v0)"
   , initialExpr: C "Root" % []
@@ -150,7 +150,7 @@ printExpr = go
 -- getDiagnostics
 --------------------------------------------------------------------------------
 
-getDiagnostics :: forall rA rB. BasicEditorState (Label C rA) (AnnotatedLabel C StlcAnn rB) -> Array Diagnostic
+getDiagnostics :: forall rA rB. BasicEditorState (Label C rA) (AnnotatedLabel C Ann rB) -> Array Diagnostic
 getDiagnostics state = collapse @Array @Maybe
   [ state.clipboard <#> \frag ->
       Diagnostic
@@ -183,79 +183,254 @@ getDiagnostics state = collapse @Array @Maybe
 -- annotateExpr
 --------------------------------------------------------------------------------
 
-annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C StlcAnn r))
-annotateExpr e0 = go e0
-  # flip runReaderT ctx0
-  # flip evalStateT env0
-  where
-  ctx0 =
-    { context: [] :: Array { name :: String, ty :: Expr (Label C ()) }
-    }
-  env0 = {}
+newtype Ann = Ann
+  { annotations :: Array Annotation
+  , mb_ty :: Maybe Ty
+  }
 
-  -- Lam
-  go (Expr { l: Label l@{ con: C "Lam" }, kids: [ e_params@(Expr { l: Label { con: C "Lam_params" }, kids: es_params }), k_body ] })
-    | Just xs <-
-        es_params
-          # map
-              ( case _ of
-                  Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } -> pure x
-                  _ -> none
+derive instance Newtype Ann _
+
+data Ty
+  = IntTy
+  | BoolTy
+  | ArrTy Ty Ty
+  | HoleTy Int
+
+derive instance Generic Ty _
+
+instance Show Ty where
+  show = case _ of
+    IntTy -> "Int"
+    BoolTy -> "Bool"
+    ArrTy a b -> "(" <> show a <> " -> " <> show b <> ")"
+    HoleTy n -> "?" <> show n
+
+type Tm r = Expr (StampedLabel C r)
+type Tm_checked r = Expr (AnnotatedLabel C Ann r)
+
+type TcMT m = StateT Env m
+type TcMT_E m = ExceptT (Array Annotation) (StateT Env m)
+
+type Env =
+  { holeIndex :: Int
+  , sigma :: Map Int Ty
+  }
+
+newtype Ctx = Ctx (Map String Ty)
+
+derive instance Newtype Ctx _
+
+instance Show Ctx where
+  show (Ctx gamma) =
+    gamma
+      # Map.toUnfoldable
+      # map (\(x /\ ty) -> show x <> ": " <> show ty)
+      # Array.intercalate ", "
+      # \s -> "[" <> s <> "]"
+
+getAnn :: forall m r. Monad m => Tm_checked r -> TcMT_E m Ann
+getAnn (Expr { l: Label l }) = l.ann # fromMaybeM do throwError [ Error_Annotation $ HH.text "no annotation" ]
+
+addAnnotations :: forall r. Array Annotation -> Tm_checked r -> Tm_checked r
+addAnnotations as (Expr e@{ l: Label l }) = Expr e
+  { l = Label l
+      { ann =
+          case l.ann of
+            Nothing -> pure (Ann { annotations: as, mb_ty: none })
+            Just (Ann ann) -> pure (Ann { annotations: ann.annotations <> as, mb_ty: ann.mb_ty })
+      }
+  }
+
+getTy :: forall m r. Monad m => Tm_checked r -> TcMT_E m Ty
+getTy t = do
+  Ann ann <- t # getAnn
+  ann.mb_ty # fromMaybeM do throwError [ Error_Annotation $ HH.text "no type annotation" ]
+
+runTcMT :: forall m a. Monad m => TcMT m a -> m (a /\ Env)
+runTcMT = flip runStateT
+  { holeIndex: 0
+  , sigma: Map.empty
+  }
+
+inferVar :: forall m. Monad m => Ctx -> String -> TcMT_E m Ty
+inferVar (Ctx gamma) x = gamma # Map.lookup x # fromMaybeM do throwError [ Error_Annotation $ HH.text $ "variable not in scope: " <> x ]
+
+setTyOfVar :: String -> Ty -> Ctx -> Ctx
+setTyOfVar x ty = Newtype.over Ctx (Map.insert x ty)
+
+freshHoleTy :: forall m. Monad m => TcMT m Ty
+freshHoleTy = do
+  env <- modify \env -> env { holeIndex = env.holeIndex + 1 }
+  pure (HoleTy env.holeIndex)
+
+mentionsHoleTy :: Int -> Ty -> Boolean
+mentionsHoleTy _ IntTy = false
+mentionsHoleTy _ BoolTy = false
+mentionsHoleTy n (ArrTy dom cod) = mentionsHoleTy n dom || mentionsHoleTy n cod
+mentionsHoleTy n (HoleTy m) = n == m
+
+unifyHole :: forall m. Monad m => Int -> Ty -> TcMT_E m Ty
+unifyHole n ty = do
+  when (ty # mentionsHoleTy n) do
+    throwError [ Error_Annotation $ HH.text $ "cannot unify " <> show (HoleTy n) <> " with " <> show ty <> " due to cyclic dependency" ]
+  env <- get
+  modify_ _ { sigma = env.sigma # Map.insert n ty }
+  pure ty
+
+normTy :: forall m. Monad m => Ty -> TcMT m Ty
+normTy IntTy = pure IntTy
+normTy BoolTy = pure BoolTy
+normTy (ArrTy a b) = ArrTy <$> normTy a <*> normTy b
+normTy (HoleTy n) = do
+  env <- get
+  case env.sigma # Map.lookup n of
+    Nothing -> pure (HoleTy n)
+    Just ty' -> normTy ty'
+
+normTy_Ann :: forall m. Monad m => Ann -> TcMT m Ann
+normTy_Ann (Ann ann) = do
+  case ann.mb_ty of
+    Nothing -> pure (Ann ann)
+    Just ty -> do
+      ty' <- normTy ty
+      pure (Ann ann { mb_ty = pure ty' })
+
+normTy_Tm :: forall m r. Monad m => Tm_checked r -> TcMT m (Tm_checked r)
+normTy_Tm (Expr e@{ l: Label l }) = do
+  case l.ann of
+    Nothing -> pure (Expr e)
+    Just ann -> do
+      ann' <- normTy_Ann ann
+      pure (Expr e { l = Label l { ann = pure ann' } })
+
+unify :: forall m. Monad m => Ty -> Ty -> TcMT_E m Ty
+unify ty1 ty2 = do
+  -- tell [ "unify " <> show ty1 <> " " <> show ty2 ]
+  ty1' <- normTy ty1 # lift
+  ty2' <- normTy ty2 # lift
+  unify' ty1' ty2'
+
+unify' :: forall m. Monad m => Ty -> Ty -> TcMT_E m Ty
+unify' ty1 (HoleTy n) = unifyHole n ty1
+unify' (HoleTy n) ty2 = unifyHole n ty2
+unify' IntTy IntTy = pure IntTy
+unify' BoolTy BoolTy = pure BoolTy
+unify' (ArrTy a1 b1) (ArrTy a2 b2) = do
+  a <- unify a1 a2
+  b <- unify b1 b2
+  pure (ArrTy a b)
+unify' ty1 ty2 = do
+  throwError [ Error_Annotation $ HH.text $ "cannot unify " <> show ty1 <> " with " <> show ty2 ]
+
+check :: forall m r. Monad m => Ctx -> Ty -> Tm r -> TcMT m (Tm_checked r)
+check gamma ty tm = do
+  -- tell [ "check " <> show gamma <> " " <> show ty <> " " <> show tm ]
+  tm' <- infer gamma tm
+  (unify ty =<< tm' #. getTy) #. runExceptT >>= case _ of
+    Left anns -> pure (tm' # addAnnotations anns)
+    Right _ -> normTy_Tm tm'
+
+-- TODO: sensible feedback when wrong number of kids, rather than "foregin"
+infer :: forall m r. Monad m => Ctx -> Tm r -> TcMT m (Tm_checked r)
+infer gamma tm = do
+  -- tell [ "infer " <> show gamma <> " " <> show tm ]
+  tm' <- infer' gamma tm
+  normTy_Tm tm'
+
+infer' :: forall m r. Monad m => Ctx -> Tm r -> TcMT m (Tm_checked r)
+
+infer' gamma (Expr { l: Label l@{ con: C "Root" }, kids }) = do
+  kids' <- kids # traverse (infer' gamma)
+  pure (Expr { l: Label (l # Record.union { ann: none }), kids: kids' })
+
+infer' _gamma (Expr { l: Label l@{ con: C "LineBreak" }, kids: [] }) = pure (Expr { l: Label (l # Record.union { ann: none }), kids: [] })
+
+infer' _gamma (Expr { l: Label l@{ con: C "Int" }, kids }) = do
+  pure (Expr { l: Label (l # Record.union { ann: pure (Ann { mb_ty: pure IntTy, annotations: [] }) }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) })
+
+infer' _gamma (Expr { l: Label l@{ con: C "Bool" }, kids }) = do
+  pure (Expr { l: Label (l # Record.union { ann: pure (Ann { mb_ty: pure BoolTy, annotations: [] }) }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) })
+
+infer' gamma (Expr { l: Label l@{ con: C "Var" }, kids: kids@[ Expr { l: Label { con: C x } } ] }) = do
+  inferVar gamma x #. runExceptT >>= case _ of
+    Left annotations -> do
+      pure (Expr { l: Label (l # Record.union { ann: pure (Ann { mb_ty: none, annotations }) }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) })
+    Right ty -> do
+      pure (Expr { l: Label (l # Record.union { ann: pure (Ann { mb_ty: pure ty, annotations: [] }) }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) })
+
+-- TODO: handle multiple parameters
+infer'
+  gamma
+  ( Expr
+      { l: Label l@{ con: C "Lam" }
+      , kids:
+          [ Expr { l: Label l_params@{ con: C "Lam_params" }, kids: [ Expr { l: Label l_var@{ con: C "Var" }, kids: [ Expr { l: Label l_x@{ con: C x } } ] } ] }
+          , Expr { l: Label l_body@{ con: C "Lam_body" }, kids: [ b ] }
+          ]
+      }
+  ) = do
+  dom <- freshHoleTy
+  b' <- infer (gamma # setTyOfVar x dom) b
+
+  let
+    go mb_ty annotations = pure
+      ( Expr
+          { l: Label (l # Record.union { ann: pure (Ann { mb_ty, annotations }) })
+          , kids:
+              [ Expr { l: Label (l_params # Record.union { ann: none }), kids: [ Expr { l: Label (l_var # Record.union { ann: none }), kids: [ Expr { l: Label (l_x # Record.union { ann: none }), kids: [] } ] } ] }
+              , Expr { l: Label (l_body # Record.union { ann: none }), kids: [ b' ] }
+              ]
+          }
+      )
+
+  b' #. getTy #. runExceptT >>= case _ of
+    -- TODO: I COULD put partial info here in the annotation since we DO know what dom is at this point
+    Left annotations -> go none annotations
+    Right cod -> go (pure (ArrTy dom cod)) none
+
+-- TODO: handle multiple arguments
+infer'
+  gamma
+  ( Expr
+      { l: Label l@{ con: C "App" }
+      , kids:
+          [ f
+          , a
+          ]
+      }
+  ) = do
+  dom <- freshHoleTy
+  cod <- freshHoleTy
+  f' <- check gamma (ArrTy dom cod) f
+  a' <- check gamma dom a
+  pure
+    ( Expr
+        { l: Label (l # Record.union { ann: pure (Ann { mb_ty: pure cod, annotations: [] }) })
+        , kids: [ f', a' ]
+        }
+    )
+
+-- TODO: C: "Let"
+
+infer' _ e@(Expr { l: Label l }) = pure (e # map (mapLabel (Record.union { ann: pure (Ann { mb_ty: none, annotations: [ Info_Annotation $ HH.text $ "foreign constructor: " <> show l.con ] }) })))
+
+--------------------------------------------------------------------------------
+
+annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C Ann r))
+annotateExpr e = do
+  e' /\ _env <- infer (Ctx Map.empty) e # runTcMT
+  let
+    e'' = e' # map
+      ( Newtype.over Label \l -> l
+          { ann =
+              ( do
+                  Ann ann <- l.ann
+                  ty <- ann.mb_ty
+                  pure (Ann ann { annotations = ann.annotations <> [ Info_Annotation $ HH.text $ "type: " <> show ty ] })
               )
-          # sequence = do
-        -- e_params' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
-        --   e_params # go
-        e_params' <- e_params # go
-        -- k_body' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
-        --   k_body # go
-        k_body' <- k_body # go
-        pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: [ e_params', k_body' ] }
-
-  -- App
-  go (Expr { l: Label l@{ con: C "App" }, kids: [ k_func, k_args ] }) = do
-    k_func' <- k_func # go
-    k_args' <- k_args # go
-    pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: [ k_func', k_args' ] }
-
-  -- Let
-  go (Expr { l: Label l@{ con: C "Let" }, kids: [ k_param@(Expr { l: Label { con: C "Let_param" }, kids: params }), k_impl, k_body ] }) = do
-    -- let
-    --   xs = params # foldMap case _ of
-    --     Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } -> Set.singleton x
-    --     _ -> Set.empty
-    -- k_param' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
-    --   k_param # go
-    k_param' <- k_param # go
-    -- k_impl' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
-    --   k_impl # go
-    k_impl' <- k_impl # go
-    -- k_body' <- local (Record.modify (Proxy @"scope") (Set.union xs)) do
-    --   k_body # go
-    k_body' <- k_body # go
-    -- 
-    pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: [ k_param', k_impl', k_body' ] }
-
-  -- Var
-  go (Expr { l: Label l@{ con: C "Var" }, kids: [ k_label@(Expr { l: Label { con: C x } }) ] }) = do
-    ctx <- ask
-    let
-      ann = case ctx.context # findMap (\{ name, ty } -> if x == name then pure ty else none) of
-        Just ty ->
-          pure $ StlcAnn { annotations: none, mb_ty: pure ty }
-        Nothing ->
-          pure $ StlcAnn { annotations: pure [ Error_Annotation $ HH.text "variable not in scope" ], mb_ty: none }
-
-    k_label' <- k_label # go
-    pure $ Expr { l: Label $ l # Record.union { ann }, kids: [ k_label' ] }
-  -- 
-  go e = go_skip e
-
-  go_skip (Expr { l: Label l, kids }) = do
-    kids' <- kids # traverse go
-    pure $ Expr { l: Label $ l # Record.union { ann: none }, kids: kids' }
-
--- annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C StlcAnn r))
--- annotateExpr = traverse \(Label l) -> pure $ Label $ Record.union { ann: none } l
+          }
+      )
+  pure e''
 
 --------------------------------------------------------------------------------
 -- RenderKid predicates
@@ -268,7 +443,7 @@ isntFormatting_RenderKid = fst >>> maybe true \(Label l) -> l.con /= C "LineBrea
 -- assembly
 --------------------------------------------------------------------------------
 
-assembleAnnotatedExpr :: forall r. AssembleExpr (AnnotatedLabel C StlcAnn r)
+assembleAnnotatedExpr :: forall r. AssembleExpr (AnnotatedLabel C Ann r)
 assembleAnnotatedExpr = assembleExpr_helper
   { getId: \_path (Label l) -> l.id
   , getAnnotations: \(Label l) -> l.ann
@@ -291,7 +466,7 @@ increaseIndentLevel = local \ctx -> ctx { indentLevel = ctx.indentLevel + 1 }
 assembleExpr_helper
   :: forall r
    . { getId :: Path -> Label C r -> String
-     , getAnnotations :: Label C r -> Maybe StlcAnn
+     , getAnnotations :: Label C r -> Maybe Ann
      }
   -> AssembleExpr (Label C r)
 assembleExpr_helper opts args = Tuple (pure args.label) do
@@ -336,17 +511,19 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
 
   let mb_ann = opts.getAnnotations args.label
   pure $ fold $ fold
-    [ mb_ann # foldMap \(StlcAnn { annotations }) -> annotations # foldMap \as ->
-        [ [ (id <> "_ann_point") /\
-              HH.div [ HP.id (id <> "_ann_point"), classes [ "AnnotationPoint" ] ]
-                [ HH.div [ classes [ "label" ] ] $ as # map case _ of
-                    Info_Annotation _ -> HH.span [ classes [ "Info" ] ] [ HH.text "💡" ]
-                    Error_Annotation _ -> HH.span [ classes [ "Error" ] ] [ HH.text "❌" ]
-                ]
-          ]
+    [ mb_ann # foldMap \(Ann ann) ->
+        [ if null ann.annotations then []
+          else
+            [ (id <> "_ann_point") /\
+                HH.div [ HP.id (id <> "_ann_point"), classes [ "AnnotationPoint" ] ]
+                  [ HH.div [ classes [ "label" ] ] $ ann.annotations # map case _ of
+                      Info_Annotation _ -> HH.span [ classes [ "Info" ] ] [ HH.text "💡" ]
+                      Error_Annotation _ -> HH.span [ classes [ "Error" ] ] [ HH.text "❌" ]
+                  ]
+            ]
         , [ (id <> "_ann") /\ do
               HH.div [ HP.id (id <> "_ann"), classes [ "Annotations" ] ]
-                [ HH.div [ classes [ "inner" ] ] $ as # map case _ of
+                [ HH.div [ classes [ "inner" ] ] $ ann.annotations # map case _ of
                     Info_Annotation e -> HH.div [ classes [ "item", "Info" ] ] [ e # fromPlainHTML ]
                     Error_Annotation e -> HH.div [ classes [ "item", "Error" ] ] [ e # fromPlainHTML ]
                 ]

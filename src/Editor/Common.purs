@@ -8,6 +8,7 @@ import Data.Expr.Render (AssembleExpr)
 import Data.Foldable (fold)
 import Data.Id as Id
 import Data.Maybe (Maybe, fromMaybe)
+import Data.Newtype (class Newtype)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
@@ -26,6 +27,8 @@ import Ui.Halogen (classes)
 --------------------------------------------------------------------------------
 
 newtype Label c r = Label (Record (BaseLabelRow c r))
+
+derive instance Newtype (Label c r) _
 
 instance Show c => Show (Label c r) where
   show (Label l) = show l.con
