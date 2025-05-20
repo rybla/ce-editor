@@ -13,7 +13,7 @@ import Data.Expr (BasicEditorState, Expr(..), Fragment(..), Handle(..), Index(..
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (Annotation(..), AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
 import Data.Expr.Render as Expr.Render
-import Data.Foldable (and, fold, foldMap, length, null)
+import Data.Foldable (and, fold, foldMap, foldl, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
@@ -28,7 +28,7 @@ import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Data.Unfoldable as Unfoldable
-import Editor.Common (AnnotatedLabel, Diagnostic(..), Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, mapLabel)
+import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, AnnotatedLabel, assembleExpr_default, getCon, mapLabel)
 import Effect.Aff (Aff)
 import Halogen.HTML (fromPlainHTML)
 import Halogen.HTML as HH
@@ -37,7 +37,7 @@ import Halogen.HTML.Properties as HP
 import Record as Record
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, fromMaybeM, isIdentifierOrNumeric, unWords, (#.))
+import Utility (collapse, fromMaybeM, isIdentifierOrNumeric, todo, unWords, (#.))
 
 --------------------------------------------------------------------------------
 
@@ -362,45 +362,62 @@ infer' gamma (Expr { l: Label l@{ con: C "Var" }, kids: kids@[ Expr { l: Label {
     Right ty -> do
       pure (Expr { l: Label (l # Record.union { ann: pure (Ann { mb_ty: pure ty, annotations: [] }) }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) })
 
--- TODO: handle multiple parameters
 infer'
   gamma
   ( Expr
       { l: Label l@{ con: C "Lam" }
       , kids:
-          [ Expr { l: Label l_params@{ con: C "Lam_params" }, kids: [ Expr { l: Label l_var@{ con: C "Var" }, kids: [ Expr { l: Label l_x@{ con: C x } } ] } ] }
-          , Expr { l: Label l_body@{ con: C "Lam_body" }, kids: [ b ] }
+          [ Expr { l: Label l_params@{ con: C "Lam_params" }, kids: xs } -- [ Expr { l: Label l_var@{ con: C "Var" }, kids: [ Expr { l: Label l_x@{ con: C x } } ] } ]
+          , Expr { l: Label l_body@{ con: C "Lam_body" }, kids: bs } -- [ b ] 
           ]
       }
   ) = do
-  dom <- freshHoleTy
-  b' <- infer (gamma # setTyOfVar x dom) b
-
-  let
-    go mb_ty annotations = pure
-      ( Expr
-          { l: Label (l # Record.union { ann: pure (Ann { mb_ty, annotations }) })
-          , kids:
-              [ Expr { l: Label (l_params # Record.union { ann: none }), kids: [ Expr { l: Label (l_var # Record.union { ann: none }), kids: [ Expr { l: Label (l_x # Record.union { ann: none }), kids: [] } ] } ] }
-              , Expr { l: Label (l_body # Record.union { ann: none }), kids: [ b' ] }
-              ]
-          }
+  -- check xs
+  xs' :: Array (Expr (AnnotatedLabel C Ann r)) <- xs # traverse case _ of
+    Expr { l: Label l_var@{ con: C "Var" }, kids: [ Expr { l: Label l_x@{ con: C _x }, kids: [] } ] } -> do
+      pure $ Expr { l: Label (l_var # Record.union { ann: none }), kids: [ Expr { l: Label (l_x # Record.union { ann: none }), kids: [] } ] }
+    Expr { l: Label l_foreign, kids } -> do
+      pure $ Expr { l: Label (l_foreign # Record.union { ann: pure (Ann { mb_ty: none, annotations: [ Error_Annotation $ HH.text "non-Var in a parameter position" ] }) }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) }
+  -- extract params
+  params <- xs'
+    #
+      ( traverse case _ of
+          Expr { l: Label { con: C "Var" }, kids: [ Expr { l: Label { con: C x } } ] } -> freshHoleTy <#> \ty -> [ (x /\ ty) ]
+          _ -> pure []
       )
+    # map fold
+  -- define context for b
+  let gamma_b = params # foldl (\gamma' (x /\ ty) -> setTyOfVar x ty gamma') gamma
+  -- check bs
+  let
+    mk mb_ty annotations bs' = pure $
+      Expr
+        { l: Label (l # Record.union { ann: pure (Ann { mb_ty, annotations }) })
+        , kids:
+            [ Expr { l: Label (l_params # Record.union { ann: none }), kids: xs' }
+            , Expr { l: Label (l_body # Record.union { ann: none }), kids: bs' }
+            ]
+        }
+  case bs of
+    [] -> do
+      ty <- freshHoleTy
+      mk (pure ty) [ Error_Annotation $ HH.text "missing body" ] []
+    [ b ] -> do
+      b' <- b # infer gamma_b
+      b' #. getTy #. runExceptT >>= case _ of
+        -- TODO: I COULD put partial info here in the annotation since we DO know what dom is at this point
+        Left annotations -> mk none annotations [ b' ]
+        Right cod -> mk (pure (params # foldl (\cod' (_ /\ dom) -> ArrTy dom cod') cod)) none [ b' ]
+    _ -> do
+      bs' <- bs # traverse (infer gamma_b)
+      mk none [ Error_Annotation $ HH.text $ "excessive bodies" ] bs'
 
-  b' #. getTy #. runExceptT >>= case _ of
-    -- TODO: I COULD put partial info here in the annotation since we DO know what dom is at this point
-    Left annotations -> go none annotations
-    Right cod -> go (pure (ArrTy dom cod)) none
-
--- TODO: handle multiple arguments
+-- handle multple args
 infer'
   gamma
   ( Expr
       { l: Label l@{ con: C "App" }
-      , kids:
-          [ f
-          , a
-          ]
+      , kids: [ f, a ]
       }
   ) = do
   dom <- freshHoleTy
@@ -422,7 +439,9 @@ infer' _ e@(Expr { l: Label l }) = pure (e # map (mapLabel (Record.union { ann: 
 
 annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C Ann r))
 annotateExpr e = do
-  e' /\ _env <- infer (Ctx Map.empty) e # runTcMT
+  e' /\ _env <- runTcMT do
+    e' <- infer (Ctx Map.empty) e
+    normTy_Tm e'
   let
     e'' = e'
       # map
