@@ -3,12 +3,9 @@
 Priority:
 
 - [ ] do simply-typed lambda calculus with typed holes
+
 - [ ] put annotations _below_ the thing their annotating (will take up vertical
       space), instead of _before_
-- [ ] add a `isHole :: Expr -> Handle -> Boolean` just like `isValidHandle` to
-      `Editor`
-- [ ] with `isHole`, make pressing Tab and Shift+Tab jump forwards and backward
-      at holes
 - [ ] for diagnostics, do some sort of memoization so that when you move around
       its not recomputing every single time
 - [ ] BUG: in Data.Expr.Render, make sure that all tooth types are putting
@@ -46,6 +43,10 @@ Debatable:
 
 Done:
 
+- [x] add a `isHole :: Expr -> Handle -> Boolean` just like `isValidHandle` to
+      `Editor`
+- [ ] with `isHole`, make pressing Tab and Shift+Tab jump forwards and backward
+      at holes
 - [x] make an SlcV1, and make App be just a list of kids rather than having the
       2 kid positions. this makes the UI easier and makes more sense overall
 - [x] implement STLC with annotations and diagnostics
