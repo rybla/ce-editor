@@ -3,6 +3,7 @@
 Priority:
 
 - [ ] do simply-typed lambda calculus with typed holes
+- [ ] dont have a hard-coded type for annotations at all -- just leave all that up to the specific editor instance how to render it. can make library functions for common features
 
 - [ ] put annotations _below_ the thing their annotating (will take up vertical
       space), instead of _before_

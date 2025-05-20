@@ -9,7 +9,7 @@ import Control.Monad.State (StateT, get, modify, modify_, runStateT)
 import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
 import Data.Either (Either(..))
-import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), BasicEditorState, atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
+import Data.Expr (BasicEditorState, Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (Annotation(..), AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
 import Data.Expr.Render as Expr.Render
@@ -19,14 +19,15 @@ import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype, wrap)
 import Data.Newtype as Newtype
 import Data.Set as Set
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested (type (/\), (/\))
-import Data.Unfoldable (fromMaybe, none)
+import Data.Unfoldable (none)
+import Data.Unfoldable as Unfoldable
 import Editor.Common (AnnotatedLabel, Diagnostic(..), Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, mapLabel)
 import Effect.Aff (Aff)
 import Halogen.HTML (fromPlainHTML)
@@ -189,6 +190,9 @@ newtype Ann = Ann
   }
 
 derive instance Newtype Ann _
+
+instance Show Ann where
+  show (Ann ann) = "{ annotations: Array[" <> show (ann.annotations # Array.length) <> "], mb_ty: " <> show ann.mb_ty <> " }"
 
 data Ty
   = IntTy
@@ -420,16 +424,15 @@ annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C
 annotateExpr e = do
   e' /\ _env <- infer (Ctx Map.empty) e # runTcMT
   let
-    e'' = e' # map
-      ( Newtype.over Label \l -> l
-          { ann =
-              ( do
-                  Ann ann <- l.ann
+    e'' = e'
+      # map
+          ( Newtype.over Label \l -> l
+              { ann = l.ann # map \(Ann ann) -> fromMaybe (Ann ann) do
                   ty <- ann.mb_ty
-                  pure (Ann ann { annotations = ann.annotations <> [ Info_Annotation $ HH.text $ "type: " <> show ty ] })
-              )
-          }
-      )
+                  let annotations_new = ann.annotations <> [ Info_Annotation $ HH.text $ "type: " <> show ty ]
+                  pure $ Ann ann { annotations = annotations_new }
+              }
+          )
   pure e''
 
 --------------------------------------------------------------------------------
@@ -568,7 +571,7 @@ assembleSimple l ps ks = l /\ do
   ks' <- ks # traverse snd
   pure $ fold $ fold $
     [ Array.zipWith (\p k -> [ p ] <> k) ps ks'
-    , [ ps # Array.last # fromMaybe ]
+    , [ ps # Array.last # Unfoldable.fromMaybe ]
     ]
 
 --------------------------------------------------------------------------------
