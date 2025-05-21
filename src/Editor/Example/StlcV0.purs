@@ -19,7 +19,7 @@ import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:))
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..), fromMaybe, isNothing, maybe)
 import Data.Newtype (class Newtype, wrap)
 import Data.Newtype as Newtype
 import Data.Set as Set
@@ -28,16 +28,19 @@ import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Data.Unfoldable as Unfoldable
-import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, AnnotatedLabel, assembleExpr_default, getCon, mapLabel)
+import Debug as Debug
+import Editor (BaseLabelRow)
+import Editor.Common (AnnotatedLabel, AnnotatedLabelRow, Diagnostic(..), Editor(..), Label(..), StampedLabel, StampedLabelRow, assembleExpr_default, getCon, mapLabel)
 import Effect.Aff (Aff)
 import Halogen.HTML (fromPlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Properties as HP
 import Record as Record
+import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, fromMaybeM, isIdentifierOrNumeric, todo, unWords, (#.))
+import Utility (collapse, fromMaybeM, isIdentifier, parseBoolean, parseInt, unWords, (#.))
 
 --------------------------------------------------------------------------------
 
@@ -102,13 +105,27 @@ getEditMenu state = do
   edit_Let_impl <- Tuple "Let_impl" <$> Expr.Edit.insert (Zipper_Fragment zipper_Let_impl') state
   zipper_Let_body' <- zipper_Let_body # stampTraversable
   edit_Let_body <- Tuple "Let_body" <$> Expr.Edit.insert (Zipper_Fragment zipper_Let_body') state
+  -- Hole
+  expr_Hole' <- expr_Hole # stampTraversable
+  edit_Hole <- Tuple "Hole" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Hole' ])) state
   pure \query -> do
     case query of
       "fun" -> pure [ edit_Lam_params, edit_Lam_body ]
       "app" -> pure [ edit_App ]
       "let" -> pure [ edit_Let_param, edit_Let_impl, edit_Let_body ]
+      "?" -> pure [ edit_Hole ]
+      -- Int
+      _ | Just i <- query # parseInt -> do
+        expr_Int' <- expr_Int i # stampTraversable
+        edit_Int <- Tuple "Int" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Int' ])) state
+        pure [ edit_Int ]
+      -- Bool
+      _ | Just b <- query # parseBoolean -> do
+        expr_Boolean' <- expr_Boolean b # stampTraversable
+        edit_Bool <- Tuple "Boolean" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Boolean' ])) state
+        pure [ edit_Bool ]
       -- Var
-      _ | query # isIdentifierOrNumeric -> do
+      _ | query # isIdentifier -> do
         expr_Var' <- expr_Var query # stampTraversable
         edit_Var <- Tuple "Var" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Var' ])) state
         pure [ edit_Var ]
@@ -145,6 +162,7 @@ printExpr = go
     Expr { l: Label { con: C "Lam_body" }, kids } -> kids # map go # unWords
     Expr { l: Label { con: C "App" }, kids } -> "(" <> kids #. map go #. unWords <> ")"
     Expr { l: Label { con: C "LineBreak" }, kids: [] } -> "\n"
+    Expr { l: Label { con: C "Hole" }, kids: [] } -> "_"
     e -> show e
 
 --------------------------------------------------------------------------------
@@ -205,8 +223,8 @@ derive instance Generic Ty _
 instance Show Ty where
   show = case _ of
     IntTy -> "Int"
-    BoolTy -> "Bool"
-    ArrTy a b -> "(" <> show a <> " -> " <> show b <> ")"
+    BoolTy -> "Boolean"
+    ArrTy a b -> "(" <> show a <> " → " <> show b <> ")"
     HoleTy n -> "?" <> show n
 
 type Tm r = Expr (StampedLabel C r)
@@ -345,22 +363,27 @@ infer' :: forall m r. Monad m => Ctx -> Tm r -> TcMT m (Tm_checked r)
 
 infer' gamma (Expr { l: Label l@{ con: C "Root" }, kids }) = do
   kids' <- kids # traverse (infer' gamma)
-  pure (Expr { l: Label (l # Record.union { ann: none }), kids: kids' })
+  pure $ Expr { l: Label (l # Record.union { ann: none }), kids: kids' }
 
-infer' _gamma (Expr { l: Label l@{ con: C "LineBreak" }, kids: [] }) = pure (Expr { l: Label (l # Record.union { ann: none }), kids: [] })
+infer' _gamma (Expr { l: Label l@{ con: C "LineBreak" }, kids: [] }) = do
+  pure $ Expr { l: Label (l # Record.union { ann: none }), kids: [] }
+
+infer' _gamma (Expr { l: Label l@{ con: C "Hole" }, kids: [] }) = do
+  ty <- freshHoleTy
+  pure $ Expr { l: Label (l # Record.union { ann: pure $ Ann { mb_ty: pure ty, annotations: [] } }), kids: [] }
 
 infer' _gamma (Expr { l: Label l@{ con: C "Int" }, kids }) = do
-  pure (Expr { l: Label (l # Record.union { ann: pure (Ann { mb_ty: pure IntTy, annotations: [] }) }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) })
+  pure $ Expr { l: Label (l # Record.union { ann: pure $ Ann { mb_ty: pure IntTy, annotations: [] } }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) }
 
-infer' _gamma (Expr { l: Label l@{ con: C "Bool" }, kids }) = do
-  pure (Expr { l: Label (l # Record.union { ann: pure (Ann { mb_ty: pure BoolTy, annotations: [] }) }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) })
+infer' _gamma (Expr { l: Label l@{ con: C "Boolean" }, kids }) = do
+  pure $ Expr { l: Label (l # Record.union { ann: pure $ Ann { mb_ty: pure BoolTy, annotations: [] } }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) }
 
 infer' gamma (Expr { l: Label l@{ con: C "Var" }, kids: kids@[ Expr { l: Label { con: C x } } ] }) = do
   inferVar gamma x #. runExceptT >>= case _ of
     Left annotations -> do
-      pure (Expr { l: Label (l # Record.union { ann: pure (Ann { mb_ty: none, annotations }) }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) })
+      pure $ Expr { l: Label (l # Record.union { ann: pure $ Ann { mb_ty: none, annotations } }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) }
     Right ty -> do
-      pure (Expr { l: Label (l # Record.union { ann: pure (Ann { mb_ty: pure ty, annotations: [] }) }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) })
+      pure $ Expr { l: Label (l # Record.union { ann: pure $ Ann { mb_ty: pure ty, annotations: [] } }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) }
 
 infer'
   gamma
@@ -417,23 +440,53 @@ infer'
   gamma
   ( Expr
       { l: Label l@{ con: C "App" }
-      , kids: [ f, a ]
+      , kids -- [ f, a ]
       }
   ) = do
-  dom <- freshHoleTy
-  cod <- freshHoleTy
-  f' <- check gamma (ArrTy dom cod) f
-  a' <- check gamma dom a
-  pure
-    ( Expr
-        { l: Label (l # Record.union { ann: pure (Ann { mb_ty: pure cod, annotations: [] }) })
-        , kids: [ f', a' ]
-        }
-    )
+  case kids # Array.uncons of
+    Nothing -> pure $ Expr { l: Label (l # Record.union { ann: pure (Ann { mb_ty: none, annotations: [ Error_Annotation $ HH.text "missing function to apply" ] }) }), kids: [] }
+    Just { head: f, tail: as0 } -> do
+      f' <- infer gamma f
+      let
+        go :: Maybe Ty -> Array (Expr _) -> TcMT m (Maybe Ty /\ (Array (Expr _)))
+        go mb_phi as = case mb_phi /\ as #. Array.uncons of
+          _ /\ Nothing -> pure $ mb_phi /\ []
+          Nothing /\ Just { head: a, tail: as' } -> do
+            a' <- infer gamma a
+            _ /\ as'' <- go none as'
+            pure $ none /\ Array.cons a' as''
+          Just phi /\ Just { head: a, tail: as' } -> do
+            dom <- freshHoleTy
+            cod <- freshHoleTy
+            unify phi (ArrTy dom cod) #. runExceptT >>= case _ of
+              Left _annotations -> do
+                a' <- infer gamma a
+                _ /\ as'' <- go none as'
+                pure $ none /\ Array.cons a' as''
+              Right phi' -> do
+                dom' <- normTy dom
+                cod' <- normTy cod
+                a' <- check gamma dom' a
+                mb_phi' /\ as'' <- go (pure cod') as'
+                pure $ mb_phi' /\ Array.cons a' as''
+      getTy f' #. runExceptT >>= case _ of
+        Left annotations -> do
+          mb_ty /\ as' <- go none as0
+          pure $ Expr
+            { l: Label (l # Record.union { ann: pure (Ann { mb_ty, annotations: annotations }) })
+            , kids: [ f' ] <> as'
+            }
+        Right phi -> do
+          mb_ty /\ as' <- go (pure phi) as0
+          pure $ Expr
+            { l: Label (l # Record.union { ann: pure (Ann { mb_ty, annotations: if isNothing mb_ty then [ Error_Annotation $ HH.text $ "attempting to apply a non-function" ] else [] }) })
+            , kids: [ f' ] <> as'
+            }
 
 -- TODO: C: "Let"
 
-infer' _ e@(Expr { l: Label l }) = pure (e # map (mapLabel (Record.union { ann: pure (Ann { mb_ty: none, annotations: [ Info_Annotation $ HH.text $ "foreign constructor: " <> show l.con ] }) })))
+infer' _ (Expr { l: Label l, kids }) = do
+  pure $ Expr { l: Label (l # Record.union { ann: pure (Ann { mb_ty: none, annotations: [ Info_Annotation $ HH.text $ "foreign constructor: " <> show l.con ] }) }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) }
 
 --------------------------------------------------------------------------------
 
@@ -441,7 +494,12 @@ annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C
 annotateExpr e = do
   e' /\ _env <- runTcMT do
     e' <- infer (Ctx Map.empty) e
-    normTy_Tm e'
+    e' # traverse
+      ( \(Label l) -> do
+          mb_ann <- l.ann # traverse normTy_Ann
+          pure $ Label (l # Record.set (Proxy @"ann") mb_ann)
+      )
+  -- normTy_Tm e'
   let
     e'' = e'
       # map
@@ -521,6 +579,12 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
     C "Let_param" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks
     C "Let_impl" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks
     C "Let_body" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks
+
+    -- Hole
+    C "Hole" /\ _ /\ [] -> pure $ tokens_literal id "?"
+
+    C "Int" /\ _ /\ [ Just (Label { con: C x }) /\ _ ] -> pure $ tokens_value id x
+    C "Boolean" /\ _ /\ [ Just (Label { con: C x }) /\ _ ] -> pure $ tokens_value id x
 
     -- Var
     C "Var" /\ _ /\ [ k_lit ] -> k_lit #. snd
@@ -613,6 +677,11 @@ zipper_Let_param = (expr_Let # atPoint (Point { path: Step 0 : Nil, j: Index 0 }
 zipper_Let_impl = (expr_Let # atPoint (Point { path: Step 1 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
 zipper_Let_body = (expr_Let # atPoint (Point { path: Step 2 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
 
+expr_Hole = C "Hole" % []
+
+expr_Int x = C "Int" % [ C (show @Int x) % [] ]
+expr_Boolean x = C "Boolean" % [ C (show @Boolean x) % [] ]
+
 --------------------------------------------------------------------------------
 -- isValidHandle
 --------------------------------------------------------------------------------
@@ -658,30 +727,12 @@ constructors_expectsNonzeroKids = Set.fromFoldable
   , C "App_args"
   ]
 
-constructors_needParensWhenOnLeftOfApp = Set.fromFoldable
-  [ C "Lam"
-  , C "Let"
-  ]
-
-constructors_needParensWhenOnRightOfApp = Set.fromFoldable
-  [ C "Lam"
-  , C "Let"
-  ]
-
 constructors_canHaveAnyNumberOrKids = Set.fromFoldable $ fold
   [ [ C "Root" ]
   , [ C "Lam_params", C "Lam_body" ]
   , [ C "App" ]
   , [ C "Let_param", C "Let_impl", C "Let_body" ]
   ]
-
---------------------------------------------------------------------------------
--- html
---------------------------------------------------------------------------------
-
-linebreak = [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ], HH.div [ classes [ "Token break" ] ] [] ]
-indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "│" ] ]
-indentations n = fold $ Array.replicate n indentation
 
 --------------------------------------------------------------------------------
 -- tokens
@@ -700,9 +751,19 @@ tokens_indentation n key =
 
 tokens_literal key str = [ mk_token key [ "literal" ] (pure str) ]
 
+tokens_value key str = [ mk_token key [ "value" ] (pure str) ]
+
 tokens_missing key = [ mk_token (key <> "_missing") [ "missing" ] none ]
 
 tokens_error key str = [ mk_token (key <> "_error") [ "error" ] (pure str) ]
 
 mk_token key cs Nothing = key /\ HH.div [ HP.id key, classes ([ "Token" ] <> cs) ] []
 mk_token key cs (Just str) = key /\ HH.div [ HP.id key, classes ([ "Token" ] <> cs) ] [ HH.text str ]
+
+--------------------------------------------------------------------------------
+-- html
+--------------------------------------------------------------------------------
+
+linebreak = [ HH.div [ classes [ "Token punctuation ghost" ] ] [ HH.text "⏎" ], HH.div [ classes [ "Token break" ] ] [] ]
+indentation = [ HH.div [ classes [ "Token punctuation indentation ghost" ] ] [ HH.text "│" ] ]
+indentations n = fold $ Array.replicate n indentation

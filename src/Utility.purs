@@ -4,11 +4,14 @@ import Prelude
 
 import Control.Alternative (class Alternative, empty)
 import Control.Monad.ST.Internal as STRef
+import Data.Argonaut (decodeJson)
+import Data.Argonaut.Decode (fromJsonString)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEArray
 import Data.Array.ST as STArray
-import Data.Either (fromRight')
+import Data.Bifunctor (lmap)
+import Data.Either (either, fromRight')
 import Data.Foldable (class Foldable, foldMap)
 import Data.FoldableWithIndex (traverseWithIndex_)
 import Data.Function (applyFlipped)
@@ -25,6 +28,7 @@ import Data.String.Regex as Regex
 import Data.Symbol (class IsSymbol)
 import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
+import Data.Unfoldable (none)
 import Effect (Effect)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
@@ -151,6 +155,18 @@ isIdentifier_regex = Regex.regex "^[a-zA-Z_$][a-zA-Z0-9_]*$" mempty # fromRight'
 
 isIdentifierOrNumeric = Regex.test isIdentifierOrNumeric_regex
 isIdentifierOrNumeric_regex = Regex.regex "^[a-zA-Z0-9_]+$" mempty # fromRight' do impossible "failed to compile isIdentifierOrNumeric_regex"
+
+isInt = Regex.test isInt_regex
+isInt_regex = Regex.regex "^-?[0-9]+$" mempty # fromRight' do impossible "failed to compile isInt_regex"
+
+isBool = Regex.test isBool_regex
+isBool_regex = Regex.regex "^(true|false)$" mempty # fromRight' do impossible "failed to compile isBool_regex"
+
+parseBoolean :: String -> Maybe Boolean
+parseBoolean = (fromJsonString :: _ -> _ Boolean) >>> either (const none) pure
+
+parseInt :: String -> Maybe Int
+parseInt = (fromJsonString :: _ -> _ Int) >>> either (const none) pure
 
 writeFlipped ∷ ∀ (a ∷ Type). Ref a → a → Effect Unit
 writeFlipped = flip Ref.write

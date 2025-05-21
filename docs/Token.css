@@ -72,6 +72,12 @@
     font-weight: bold;
     white-space: pre;
   }
+
+  &.value {
+    color: darkgreen;
+    font-weight: bold;
+    text-decoration: underline;
+  }
 }
 
 @keyframes Token-appear {

@@ -3,7 +3,9 @@
 Priority:
 
 - [ ] do simply-typed lambda calculus with typed holes
-- [ ] dont have a hard-coded type for annotations at all -- just leave all that up to the specific editor instance how to render it. can make library functions for common features
+- [ ] dont have a hard-coded type for annotations at all -- just leave all that
+      up to the specific editor instance how to render it. can make library
+      functions for common features
 
 - [ ] put annotations _below_ the thing their annotating (will take up vertical
       space), instead of _before_
@@ -34,6 +36,8 @@ Priority:
 
 Debatable:
 
+- [ ] how to actually do typed holes? since then the hole itself is something
+      that exists at a position, but when it's filled it should go away somehow?
 - [ ] project with mutliple files
 - [ ] click on a part of a structure to put selection around teh whole thing
 - [ ] use different colors or something to show how something different will
