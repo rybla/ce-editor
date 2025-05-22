@@ -2,10 +2,6 @@
 
 Priority:
 
-- [ ] dont have a hard-coded type for annotations at all -- just leave all that
-      up to the specific editor instance how to render it. can make library
-      functions for common features
-
 - [ ] put annotations _below_ the thing their annotating (will take up vertical
       space), instead of _before_
 - [ ] for diagnostics, do some sort of memoization so that when you move around
@@ -47,6 +43,9 @@ Debatable:
 
 Done:
 
+- [x] dont have a hard-coded type for annotations at all -- just leave all that
+      up to the specific editor instance how to render it. can make library
+      functions for common features
 - [x] do simply-typed lambda calculus with typed holes
 - [x] add a `isHole :: Expr -> Handle -> Boolean` just like `isValidHandle` to
       `Editor`
