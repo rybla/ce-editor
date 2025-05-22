@@ -1,11 +1,11 @@
-module Editor.Example.StlcV0 where
+module Editor.Example.StlcV1 where
 
 import Prelude
 
 import Control.Alternative (empty)
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Control.Monad.Reader (ask, local, runReader)
-import Control.Monad.State (StateT, get, modify, modify_, runStateT)
+import Control.Monad.State (StateT, get, modify, modify_, put, runStateT)
 import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
 import Data.Either (Either(..))
@@ -28,7 +28,7 @@ import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Data.Unfoldable as Unfoldable
-import Editor.Common (AnnotatedLabel, Diagnostic(..), Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, mapLabel)
+import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, AnnotatedLabel, assembleExpr_default, getCon, mapLabel)
 import Effect.Aff (Aff)
 import Halogen.HTML (PlainHTML, fromPlainHTML)
 import Halogen.HTML as HH
@@ -38,11 +38,12 @@ import Record as Record
 import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (flatten, fromMaybeM, isIdentifier, parseBoolean, parseInt, unWords, (#.))
+import Utility (flatten, fromMaybeM, isIdentifier, parseBoolean, parseInt, todo, unWords, (#.))
 
 data Annotation
   = Info_Annotation PlainHTML
   | Error_Annotation PlainHTML
+  | Success_Annotation PlainHTML
 
 --------------------------------------------------------------------------------
 
@@ -73,7 +74,7 @@ infix 0 mkSpanToothC as %<*
 
 editor :: Editor C Ann
 editor = Editor
-  { name: "simply typed lambda calculus (v0)"
+  { name: "simply typed lambda calculus (v1)"
   , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu
@@ -108,8 +109,8 @@ getEditMenu state = do
   zipper_Let_body' <- zipper_Let_body # stampTraversable
   edit_Let_body <- Tuple "Let_body" <$> Expr.Edit.insert (Zipper_Fragment zipper_Let_body') state
   -- Hole
-  expr_Hole' <- expr_Hole # stampTraversable
-  edit_Hole <- Tuple "Hole" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Hole' ])) state
+  zipper_Hole' <- zipper_Hole # stampTraversable
+  edit_Hole <- Tuple "Hole" <$> Expr.Edit.insert (Zipper_Fragment zipper_Hole') state
   pure \query -> do
     case query of
       "fun" -> pure [ edit_Lam_params, edit_Lam_body ]
@@ -164,7 +165,7 @@ printExpr = go
     Expr { l: Label { con: C "Lam_body" }, kids } -> kids # map go # unWords
     Expr { l: Label { con: C "App" }, kids } -> "(" <> kids #. map go #. unWords <> ")"
     Expr { l: Label { con: C "LineBreak" }, kids: [] } -> "\n"
-    Expr { l: Label { con: C "Hole" }, kids: [] } -> "_"
+    Expr { l: Label { con: C "Hole" }, kids: kids } -> "{! " <> kids #. map go #. unWords <> " !}"
     e -> show e
 
 --------------------------------------------------------------------------------
@@ -381,9 +382,14 @@ infer' gamma (Expr { l: Label l@{ con: C "Root" }, kids }) = do
 infer' _gamma (Expr { l: Label l@{ con: C "LineBreak" }, kids: [] }) = do
   pure $ Expr { l: Label (l # Record.union { ann: none }), kids: [] }
 
-infer' _gamma (Expr { l: Label l@{ con: C "Hole" }, kids: [] }) = do
+-- infer' _gamma (Expr { l: Label l@{ con: C "Hole" }, kids: [] }) = do
+--   ty <- freshHoleTy
+--   pure $ Expr { l: Label (l # Record.union { ann: pure $ Ann { mb_ty: pure ty, annotations: [] } }), kids: [] }
+
+infer' gamma (Expr { l: Label l@{ con: C "Hole" }, kids }) = do
   ty <- freshHoleTy
-  pure $ Expr { l: Label (l # Record.union { ann: pure $ Ann { mb_ty: pure ty, annotations: [] } }), kids: [] }
+  kids' <- kids # traverse (infer gamma)
+  pure $ Expr { l: Label (l # Record.union { ann: pure $ Ann { mb_ty: pure ty, annotations: [] } }), kids: kids' }
 
 infer' _gamma (Expr { l: Label l@{ con: C "Int" }, kids }) = do
   pure $ Expr { l: Label (l # Record.union { ann: pure $ Ann { mb_ty: pure IntTy, annotations: [] } }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) }
@@ -408,6 +414,7 @@ infer'
           ]
       }
   ) = do
+  -- TODO: handle formatting
   -- check xs
   xs' :: Array (Expr (AnnotatedLabel C Ann r)) <- xs # traverse case _ of
     Expr { l: Label l_var@{ con: C "Var" }, kids: [ Expr { l: Label l_x@{ con: C _x }, kids: [] } ] } -> do
@@ -434,26 +441,28 @@ infer'
             , Expr { l: Label (l_body # Record.union { ann: none }), kids: bs' }
             ]
         }
-  case bs of
+
+  bs' <- bs # traverse (infer gamma_b)
+  let
+    ixbs'_nonFormatting = bs' # Array.filter \(Expr { l: Label l' }) -> case l'.con of
+      C "LineBreak" -> false
+      _ -> true
+  case ixbs'_nonFormatting of
     [] -> do
       ty <- freshHoleTy
-      mk (pure ty) [ Error_Annotation $ HH.text "missing body" ] []
-    [ b ] -> do
-      b' <- b # infer gamma_b
+      mk (pure ty) [ Error_Annotation $ HH.text "missing body" ] bs'
+    [ b' ] -> do
       b' #. getTy #. runExceptT >>= case _ of
         -- TODO: I COULD put partial info here in the annotation since we DO know what dom is at this point
         Left annotations -> mk none annotations [ b' ]
-        Right cod -> mk (pure (params # foldl (\cod' (_ /\ dom) -> ArrTy dom cod') cod)) none [ b' ]
-    _ -> do
-      bs' <- bs # traverse (infer gamma_b)
-      mk none [ Error_Annotation $ HH.text $ "excessive bodies" ] bs'
-
+        Right cod -> mk (pure (params # foldl (\cod' (_ /\ dom) -> ArrTy dom cod') cod)) none bs'
+    _ -> mk none [ Error_Annotation $ HH.text $ "excessive bodies" ] bs'
 -- handle multple args
 infer'
   gamma
   ( Expr
       { l: Label l@{ con: C "App" }
-      , kids -- [ f, a ]
+      , kids
       }
   ) = do
   case kids # Array.uncons of
@@ -476,7 +485,7 @@ infer'
                 a' <- infer gamma a
                 _ /\ as'' <- go none as'
                 pure $ none /\ Array.cons a' as''
-              Right phi' -> do
+              Right _phi' -> do
                 dom' <- normTy dom
                 cod' <- normTy cod
                 a' <- check gamma dom' a
@@ -501,13 +510,34 @@ infer'
 infer' _ (Expr { l: Label l, kids }) = do
   pure $ Expr { l: Label (l # Record.union { ann: pure (Ann { mb_ty: none, annotations: [ Info_Annotation $ HH.text $ "foreign constructor: " <> show l.con ] }) }), kids: kids # map (map (mapLabel (Record.union { ann: none }))) }
 
+checkHoles :: forall m r. Monad m => Expr (AnnotatedLabel C Ann r) -> TcMT m (Expr (AnnotatedLabel C Ann r))
+checkHoles e@(Expr { l: Label l@{ con: C "Hole" }, kids: kids@[ a ] }) = do
+  env <- get
+  result /\ env' <- flip runStateT env $ runExceptT do
+    ty_hole <- getTy e
+    ty_a <- getTy a
+    unify ty_hole ty_a
+  case result of
+    Left annotations -> do
+      kids' <- kids # traverse checkHoles
+      -- pure (Expr { l: Label l, kids: kids' })
+      pure (Expr { l: Label (l # Record.modify (Proxy @"ann") (map \(Ann ann) -> Ann ann { annotations = ann.annotations <> annotations })), kids: kids' })
+    Right _ -> do
+      put env'
+      kids' <- kids # traverse checkHoles
+      pure (Expr { l: Label (l # Record.modify (Proxy @"ann") (map \(Ann ann) -> Ann ann { annotations = ann.annotations <> [ Success_Annotation $ HH.text "hole is satisfied" ] })), kids: kids' })
+checkHoles (Expr { l: l, kids }) = do
+  kids' <- kids # traverse checkHoles
+  pure (Expr { l, kids: kids' })
+
 --------------------------------------------------------------------------------
 
 annotateExpr :: forall r. Expr (StampedLabel C r) -> Aff (Expr (AnnotatedLabel C Ann r))
 annotateExpr e = do
   e' /\ _env <- runTcMT do
-    e' <- infer (Ctx Map.empty) e
-    e' # traverse
+    e' <- e # infer (Ctx Map.empty)
+    e'' <- e' # checkHoles
+    e'' # traverse
       ( \(Label l) -> do
           mb_ann <- l.ann # traverse normTy_Ann
           pure $ Label (l # Record.set (Proxy @"ann") mb_ann)
@@ -594,7 +624,7 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
     C "Let_body" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks
 
     -- Hole
-    C "Hole" /\ _ /\ [] -> pure $ tokens_literal id "?"
+    C "Hole" /\ ps /\ ks -> pure (tokens_punctuation (id <> "_begin") "{") <> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks <> pure (tokens_punctuation (id <> "_end") "}")
 
     C "Int" /\ _ /\ [ Just (Label { con: C x }) /\ _ ] -> pure $ tokens_value id x
     C "Boolean" /\ _ /\ [ Just (Label { con: C x }) /\ _ ] -> pure $ tokens_value id x
@@ -618,6 +648,7 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
                   [ HH.div [ classes [ "label" ] ] $ ann.annotations # map case _ of
                       Info_Annotation _ -> HH.span [ classes [ "Info" ] ] [ HH.text "💡" ]
                       Error_Annotation _ -> HH.span [ classes [ "Error" ] ] [ HH.text "❌" ]
+                      Success_Annotation _ -> HH.span [ classes [ "Success" ] ] [ HH.text "✅" ]
                   ]
             ]
         , [ (id <> "_ann") /\ do
@@ -625,6 +656,7 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
                 [ HH.div [ classes [ "inner" ] ] $ ann.annotations # map case _ of
                     Info_Annotation e -> HH.div [ classes [ "item", "Info" ] ] [ e # fromPlainHTML ]
                     Error_Annotation e -> HH.div [ classes [ "item", "Error" ] ] [ e # fromPlainHTML ]
+                    Success_Annotation e -> HH.div [ classes [ "item", "Success" ] ] [ e # fromPlainHTML ]
                 ]
           ]
         , [ (id <> "_ann_point_sep") /\
@@ -691,6 +723,7 @@ zipper_Let_impl = (expr_Let # atPoint (Point { path: Step 1 : Nil, j: Index 0 })
 zipper_Let_body = (expr_Let # atPoint (Point { path: Step 2 : Nil, j: Index 0 })).outside # fromSpanContextToZipper
 
 expr_Hole = C "Hole" % []
+zipper_Hole = (expr_Hole # atPoint (Point { path: Nil, j: Index 0 })).outside # fromSpanContextToZipper
 
 expr_Int x = C "Int" % [ C (show @Int x) % [] ]
 expr_Boolean x = C "Boolean" % [ C (show @Boolean x) % [] ]
@@ -738,6 +771,7 @@ constructors_expectsNonzeroKids = Set.fromFoldable
   , C "Lam_body"
   , C "App_func"
   , C "App_args"
+  , C "Hole"
   ]
 
 constructors_canHaveAnyNumberOrKids = Set.fromFoldable $ fold
@@ -745,6 +779,7 @@ constructors_canHaveAnyNumberOrKids = Set.fromFoldable $ fold
   , [ C "Lam_params", C "Lam_body" ]
   , [ C "App" ]
   , [ C "Let_param", C "Let_impl", C "Let_body" ]
+  , [ C "Hole" ]
   ]
 
 --------------------------------------------------------------------------------
