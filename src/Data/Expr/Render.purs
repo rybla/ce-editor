@@ -16,7 +16,7 @@ import Data.Traversable (sequence)
 import Data.Tuple (snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
-import Halogen.HTML (HTML, PlainHTML)
+import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Ui.Halogen (classes)
 

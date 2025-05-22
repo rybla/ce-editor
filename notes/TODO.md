@@ -2,7 +2,6 @@
 
 Priority:
 
-- [ ] do simply-typed lambda calculus with typed holes
 - [ ] dont have a hard-coded type for annotations at all -- just leave all that
       up to the specific editor instance how to render it. can make library
       functions for common features
@@ -48,9 +47,10 @@ Debatable:
 
 Done:
 
+- [x] do simply-typed lambda calculus with typed holes
 - [x] add a `isHole :: Expr -> Handle -> Boolean` just like `isValidHandle` to
       `Editor`
-- [ ] with `isHole`, make pressing Tab and Shift+Tab jump forwards and backward
+- [x] with `isHole`, make pressing Tab and Shift+Tab jump forwards and backward
       at holes
 - [x] make an SlcV1, and make App be just a list of kids rather than having the
       2 kid positions. this makes the UI easier and makes more sense overall

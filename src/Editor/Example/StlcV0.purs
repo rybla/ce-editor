@@ -392,8 +392,8 @@ infer'
   ( Expr
       { l: Label l@{ con: C "Lam" }
       , kids:
-          [ Expr { l: Label l_params@{ con: C "Lam_params" }, kids: xs } -- [ Expr { l: Label l_var@{ con: C "Var" }, kids: [ Expr { l: Label l_x@{ con: C x } } ] } ]
-          , Expr { l: Label l_body@{ con: C "Lam_body" }, kids: bs } -- [ b ] 
+          [ Expr { l: Label l_params@{ con: C "Lam_params" }, kids: xs }
+          , Expr { l: Label l_body@{ con: C "Lam_body" }, kids: bs }
           ]
       }
   ) = do
