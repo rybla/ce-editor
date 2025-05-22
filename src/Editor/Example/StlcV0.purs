@@ -11,7 +11,7 @@ import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Expr (BasicEditorState, Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
-import Data.Expr.Render (Annotation(..), AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
+import Data.Expr.Render (AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (and, fold, foldMap, foldl, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -28,11 +28,9 @@ import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Data.Unfoldable (none)
 import Data.Unfoldable as Unfoldable
-import Debug as Debug
-import Editor (BaseLabelRow)
-import Editor.Common (AnnotatedLabel, AnnotatedLabelRow, Diagnostic(..), Editor(..), Label(..), StampedLabel, StampedLabelRow, assembleExpr_default, getCon, mapLabel)
+import Editor.Common (AnnotatedLabel, Diagnostic(..), Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon, mapLabel)
 import Effect.Aff (Aff)
-import Halogen.HTML (fromPlainHTML)
+import Halogen.HTML (PlainHTML, fromPlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Properties as HP
@@ -41,6 +39,10 @@ import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 import Utility (collapse, fromMaybeM, isIdentifier, parseBoolean, parseInt, unWords, (#.))
+
+data Annotation
+  = Info_Annotation PlainHTML
+  | Error_Annotation PlainHTML
 
 --------------------------------------------------------------------------------
 

@@ -7,7 +7,7 @@ import Control.Monad.Reader (ask, local, runReader)
 import Data.Array as Array
 import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
-import Data.Expr.Render (Annotation(..), AssembleExpr, RenderArgs)
+import Data.Expr.Render (AssembleExpr, RenderArgs)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (and, fold, foldMap)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -22,7 +22,7 @@ import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
 import Editor.Common (AnnotatedLabel, Diagnostic(..), Editor(..), Label(..), StampedLabel, assembleExpr_default, getCon)
 import Effect.Aff (Aff)
-import Halogen.HTML (fromPlainHTML)
+import Halogen.HTML (PlainHTML, fromPlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Properties (id) as HP
@@ -30,6 +30,10 @@ import Record as Record
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 import Utility (collapse)
+
+data Annotation
+  = Info_Annotation PlainHTML
+  | Error_Annotation PlainHTML
 
 newtype C = C String
 

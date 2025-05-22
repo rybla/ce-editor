@@ -20,10 +20,6 @@ import Halogen.HTML (HTML, PlainHTML)
 import Halogen.HTML as HH
 import Ui.Halogen (classes)
 
-data Annotation
-  = Info_Annotation PlainHTML
-  | Error_Annotation PlainHTML
-
 type RenderM = Reader RenderCtx
 
 runRenderM :: forall a. RenderM a -> a

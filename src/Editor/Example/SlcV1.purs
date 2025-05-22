@@ -7,7 +7,7 @@ import Control.Monad.Reader (ask, local, runReader, runReaderT)
 import Data.Array as Array
 import Data.Expr (Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), BasicEditorState, atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
-import Data.Expr.Render (Annotation(..), AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
+import Data.Expr.Render (AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
 import Data.Expr.Render as Expr.Render
 import Data.Foldable (and, fold, foldMap, length, null)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -22,7 +22,7 @@ import Data.Tuple.Nested ((/\))
 import Data.Unfoldable (fromMaybe, none)
 import Editor.Common (Diagnostic(..), Editor(..), Label(..), StampedLabel, AnnotatedLabel, assembleExpr_default, getCon)
 import Effect.Aff (Aff)
-import Halogen.HTML (fromPlainHTML)
+import Halogen.HTML (PlainHTML, fromPlainHTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Elements.Keyed as HHK
 import Halogen.HTML.Properties as HP
@@ -31,6 +31,10 @@ import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
 import Utility (collapse, isIdentifierOrNumeric, unWords, (#.))
+
+data Annotation
+  = Info_Annotation PlainHTML
+  | Error_Annotation PlainHTML
 
 --------------------------------------------------------------------------------
 
