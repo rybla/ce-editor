@@ -9,7 +9,7 @@ import Control.Monad.State (StateT, get, modify, modify_, runStateT)
 import Control.Monad.Trans.Class (lift)
 import Data.Array as Array
 import Data.Either (Either(..))
-import Data.Expr (BasicEditorState, Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), atPoint, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
+import Data.Expr (BasicEditorState, Expr(..), Fragment(..), Handle(..), Index(..), Path, Point(..), Span(..), Step(..), atPoint, atSpan, atSubExpr, fromPathToString, fromPointToString, fromSpanContextToZipper, getEndPoints_SpanH, getEndPoints_ZipperH, mkExpr, mkSpanTooth, mkTooth, stampTraversable)
 import Data.Expr.Edit as Expr.Edit
 import Data.Expr.Render (AssembleExpr, KeyHTML, RenderArgs, RenderKid, RenderM)
 import Data.Expr.Render as Expr.Render
@@ -38,7 +38,7 @@ import Record as Record
 import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, fromMaybeM, isIdentifier, parseBoolean, parseInt, unWords, (#.))
+import Utility (flatten, fromMaybeM, isIdentifier, parseBoolean, parseInt, todo, unWords, (#.))
 
 data Annotation
   = Info_Annotation PlainHTML
@@ -172,7 +172,7 @@ printExpr = go
 --------------------------------------------------------------------------------
 
 getDiagnostics :: forall rA rB. BasicEditorState (Label C rA) (AnnotatedLabel C Ann rB) -> Array Diagnostic
-getDiagnostics state = collapse @Array @Maybe
+getDiagnostics state = flatten @Array @Maybe
   [ state.clipboard <#> \frag ->
       Diagnostic
         { title: "Clipboard"
@@ -184,6 +184,17 @@ getDiagnostics state = collapse @Array @Maybe
                     { indentLevel: 0
                     }
         }
+  , state.mb_handle >>= case _ of
+      SpanH_Handle spanH _ -> do
+        case atSpan spanH state.root of
+          { here: Span [ (Expr { l: Label { ann } }) ] } | Just (Ann { mb_ty: Just ty }) <- ann -> pure $
+            Diagnostic
+              { title: "Type"
+              , content: HHK.div [ classes [ "Type" ] ] [ "type" /\ HH.text (show ty) ]
+              }
+          _ -> none
+      _ -> none
+
   ]
   where
   renderArgs :: forall r w i. AssembleExpr (Label C r) -> RenderArgs (Label C r) w i

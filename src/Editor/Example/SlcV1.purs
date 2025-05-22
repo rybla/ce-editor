@@ -30,7 +30,7 @@ import Record as Record
 import Type.Proxy (Proxy(..))
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse, isIdentifierOrNumeric, unWords, (#.))
+import Utility (flatten, isIdentifierOrNumeric, unWords, (#.))
 
 data Annotation
   = Info_Annotation PlainHTML
@@ -149,7 +149,7 @@ printExpr = go
 --------------------------------------------------------------------------------
 
 getDiagnostics :: forall rA rB. BasicEditorState (Label C rA) (AnnotatedLabel C (Array Annotation) rB) -> Array Diagnostic
-getDiagnostics state = collapse @Array @Maybe
+getDiagnostics state = flatten @Array @Maybe
   [ state.clipboard <#> \frag ->
       Diagnostic
         { title: "Clipboard"

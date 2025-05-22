@@ -481,6 +481,7 @@ setHandle' m_mb_handle = do
   mb_handle_new <- m_mb_handle
   modifyHandle true mb_handle_new
 
+  -- TODO: why don't diagnostics get set after moving cursor?
   getBasicEditorState_safe >>= case _ of
     Nothing -> pure unit
     Just basic_state -> do

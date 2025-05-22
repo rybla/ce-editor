@@ -29,7 +29,7 @@ import Halogen.HTML.Properties (id) as HP
 import Record as Record
 import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 import Ui.Halogen (classes)
-import Utility (collapse)
+import Utility (flatten)
 
 data Annotation
   = Info_Annotation PlainHTML
@@ -112,7 +112,7 @@ editor = Editor
           Expr _ -> "unimplemented"
       in
         f
-  , getDiagnostics: \state -> collapse
+  , getDiagnostics: \state -> flatten
       [ state.clipboard <#> \frag ->
           Diagnostic
             { title: "Clipboard"

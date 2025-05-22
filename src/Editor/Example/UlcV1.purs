@@ -27,7 +27,7 @@ module Editor.Example.UlcV1 where
 -- import Ui.Editor.Id (freshId)
 -- import Ui.Event (keyEq, matchKeyInfoPattern', not_alt, not_cmd)
 -- import Ui.Halogen (classes)
--- import Utility (collapse, todo)
+-- import Utility (flatten, todo)
 
 -- newtype C = C String
 
@@ -55,7 +55,7 @@ module Editor.Example.UlcV1 where
 --   { name: "UlcV1"
 --   , initialExpr: C "Root" % []
 --   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
---   -- , getEditMenu: \state query -> collapse case query of
+--   -- , getEditMenu: \state query -> flatten case query of
 --   --     "lam" ->
 --   --       [ Tuple "Var" <$> Expr.Edit.insert (Span_Fragment (Span [ expr_Var query ])) state
 --   --       , Tuple "LamParams" <$> Expr.Edit.insert (Zipper_Fragment zipper_LamParams) state
