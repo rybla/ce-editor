@@ -74,7 +74,7 @@ infix 0 mkSpanToothC as %<*
 
 editor :: Editor C Ann
 editor = Editor
-  { name: "simply typed lambda calculus (v1)"
+  { name: "simply typed lambda calculus (v1: hole is a ?{ _ } construct)"
   , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu
@@ -624,7 +624,7 @@ assembleExpr_helper opts args = Tuple (pure args.label) do
     C "Let_body" /\ ps /\ ks -> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks
 
     -- Hole
-    C "Hole" /\ ps /\ ks -> pure (tokens_punctuation (id <> "_begin") "{") <> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks <> pure (tokens_punctuation (id <> "_end") "}")
+    C "Hole" /\ ps /\ ks -> pure (tokens_error (id <> "_begin") "?{") <> assembleAdvanced { targetKidsLength: pure 1 } args id ps ks <> pure (tokens_error (id <> "_end") "}")
 
     C "Int" /\ _ /\ [ Just (Label { con: C x }) /\ _ ] -> pure $ tokens_value id x
     C "Boolean" /\ _ /\ [ Just (Label { con: C x }) /\ _ ] -> pure $ tokens_value id x

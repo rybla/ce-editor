@@ -73,7 +73,7 @@ infix 0 mkSpanToothC as %<*
 
 editor :: Editor C Ann
 editor = Editor
-  { name: "simply typed lambda calculus (v0)"
+  { name: "simply typed lambda calculus (v0: hole is ? term)"
   , initialExpr: C "Root" % []
   , initialHandle: Point_Handle $ Point { path: mempty, j: wrap 0 }
   , getEditMenu

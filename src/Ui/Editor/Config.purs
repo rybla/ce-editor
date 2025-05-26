@@ -8,5 +8,5 @@ log_keyInfo = false
 
 log_initializations = false
 
-sound_effects = true
+sound_effects = false
 
