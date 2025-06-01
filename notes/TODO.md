@@ -2,12 +2,18 @@
 
 Priority:
 
+- [ ] When you copy and paste a C expression it should actually get the raw
+      syntax and put that in your clipboard as text and then can interpret it
+      from the clipboard when you paste
 - [ ] BUG: why don't diagnostics get set after moving cursor?
 - [ ] clicking on an atom
   - [ ] half and half atom should corrresponds to the point before and after
   - [ ] when drag, should get the whole atom even if you are only over part of
         it
-  - [ ] ALTERNATIVELY: which could line up with a way of doing typed holes -- you click on a term to put your cursor around it as a span. when you do this, it shows you the type of the term, and you can replace the hole by starting to type (its like your cursor is _in_ the hole)
+  - [ ] ALTERNATIVELY: which could line up with a way of doing typed holes --
+        you click on a term to put your cursor around it as a span. when you do
+        this, it shows you the type of the term, and you can replace the hole by
+        starting to type (its like your cursor is _in_ the hole)
 - [ ] put annotations _below_ the thing their annotating (will take up vertical
       space), instead of _before_
 - [ ] for diagnostics, do some sort of memoization so that when you move around
